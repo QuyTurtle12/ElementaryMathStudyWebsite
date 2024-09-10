@@ -400,3 +400,4 @@ FodyWeavers.xsd
 # Others
 appsettings.json
 launchSettings.json
+appsettings.Development.json

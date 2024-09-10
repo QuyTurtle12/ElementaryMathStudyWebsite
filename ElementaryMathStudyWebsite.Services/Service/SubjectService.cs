@@ -2,7 +2,7 @@
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class UserService : IUserService
+    public class SubjectService : ISubjectService
     {
     }
 }

@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Repositories.Context;
 using ElementaryMathStudyWebsite.Services;
+using ElementaryMathStudyWebsite.Contract.Services.Interface;
+using ElementaryMathStudyWebsite.Services.Service;
 
 namespace ElementaryMathStudyWebsite
 {
@@ -30,7 +32,18 @@ namespace ElementaryMathStudyWebsite
         public static void AddServices(this IServiceCollection services)
         {
             // Add services here
-            //services.AddScoped<IUserService, UserService>()
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IOptionService, OptionService>();
+            services.AddScoped<IUserAnswerService, UserAnswer>();
+            services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IOrderDetailService, OrderDetailService>();
+            services.AddScoped<IProgressService, ProgressService>();
+            services.AddScoped<IQuizService, QuizService>();
+            services.AddScoped<IQuestionService, QuestionService>();
+            services.AddScoped<ISubjectService, SubjectService>();
+            services.AddScoped<IChapterService, ChapterService>();
+            services.AddScoped<ITopicService, TopicService>();
         }
     }
 }
