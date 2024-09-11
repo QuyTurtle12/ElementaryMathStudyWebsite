@@ -1,6 +1,7 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.Repositories.IUOW;
 using ElementaryMathStudyWebsite.Contract.Services.Interface;
+using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Repositories.DTOs;
 
 namespace ElementaryMathStudyWebsite.Services.Service
@@ -10,7 +11,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IGenericRepository<Order> _repository;
         private readonly IUnitOfWork _unitOfWork;
 
-        public OrderService() { }
+        public OrderService(IGenericRepository<Order> repository, IUnitOfWork unitOfWork)
+        {
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        }
 
         public Task<bool> AddOrderAsync(OrderCreateDto dto, string userID)
         {
@@ -32,11 +37,24 @@ namespace ElementaryMathStudyWebsite.Services.Service
             throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<Order>> GetOrdersAsync(int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<Order>> GetOrdersAsync(int pageNumber, int pageSize)
         {
-             IEnumerable<Order> orders =  _repository.GetAll();
-            return orders;
+            // Get all orders from database
+            // If null then return empty collection
+            IEnumerable<Order> orders = await _repository.GetAllAsync() ?? Enumerable.Empty<Order>(); 
+            IQueryable<Order> query = orders.AsQueryable();
+
+            // If pageNumber or pageSize are 0 or negative, show all orders
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                var allOrders = query.ToList();
+                return new BasePaginatedList<Order>(allOrders, allOrders.Count, 1, allOrders.Count);
+            }
+
+            // Use the GetPagging method for pagination
+            return await _repository.GetPagging(query, pageNumber, pageSize);
         }
+
 
         public Task<string?> IsGenerallyValidated()
         {

@@ -13,6 +13,10 @@ namespace ElementaryMathStudyWebsite.Services
         }
         public static void AddRepositories(this IServiceCollection services)
         {
+            // Register generic repository with a scoped lifetime
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+            // Register UnitOfWork
             services.AddScoped<IUnitOfWork, UnitOfWork>();
         }
     }

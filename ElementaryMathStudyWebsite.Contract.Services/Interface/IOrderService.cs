@@ -1,11 +1,12 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Repositories.DTOs;
 
 namespace ElementaryMathStudyWebsite.Contract.Services.Interface
 {
     public interface IOrderService
     {
-        Task<IEnumerable<Order>> GetOrdersAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<Order>> GetOrdersAsync(int pageNumber, int pageSize);
 
         Task<Order> GetOrderByOrderIdAsync(int orderId);
 
