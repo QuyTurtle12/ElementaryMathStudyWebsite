@@ -24,7 +24,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         [Route("manager")]
         [SwaggerOperation(
             Summary = "Authorization: Manager & Admin",
-            Description = "View order list for Manager and Admin Role"    
+            Description = "View order list for Manager and Admin Role. Insert -1 to get all items"    
             )]
         public async Task<ActionResult<BasePaginatedList<Order>>> GetOrders(int pageNumber = -1, int pageSize = -1)
         {

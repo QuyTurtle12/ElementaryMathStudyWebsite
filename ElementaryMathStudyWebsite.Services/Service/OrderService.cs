@@ -3,17 +3,18 @@ using ElementaryMathStudyWebsite.Contract.Repositories.IUOW;
 using ElementaryMathStudyWebsite.Contract.Services.Interface;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Repositories.DTOs;
+using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
     public class OrderService : IOrderService
     {
-        private readonly IGenericRepository<Order> _repository;
+        private readonly IGenericRepository<Order> _orderRepository;
         private readonly IUnitOfWork _unitOfWork;
 
-        public OrderService(IGenericRepository<Order> repository, IUnitOfWork unitOfWork)
+        public OrderService(IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork)
         {
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         }
 
@@ -41,8 +42,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             // Get all orders from database
             // If null then return empty collection
-            IEnumerable<Order> orders = await _repository.GetAllAsync() ?? Enumerable.Empty<Order>(); 
-            IQueryable<Order> query = orders.AsQueryable();
+            IEnumerable<Order> orders = await _orderRepository.GetAllAsync() ?? Enumerable.Empty<Order>(); 
+            IQueryable<Order> query = _orderRepository.Entities;
 
             // If pageNumber or pageSize are 0 or negative, show all orders
             if (pageNumber <= 0 || pageSize <= 0)
@@ -52,7 +53,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Use the GetPagging method for pagination
-            return await _repository.GetPagging(query, pageNumber, pageSize);
+            return await _orderRepository.GetPagging(query, pageNumber, pageSize);
         }
 
 
