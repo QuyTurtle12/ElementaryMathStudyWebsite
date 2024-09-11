@@ -1,9 +1,9 @@
-﻿using ElementaryMathStudyWebsite.Contract.Services.Interface;
-using Swashbuckle.AspNetCore.Annotations;
+﻿using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.AspNetCore.Mvc;
-using ElementaryMathStudyWebsite.Contract.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Base;
 using System.ComponentModel.DataAnnotations;
+using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {

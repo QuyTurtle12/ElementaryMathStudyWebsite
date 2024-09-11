@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using ElementaryMathStudyWebsite.Repositories.UOW;
-using ElementaryMathStudyWebsite.Contract.Repositories.IUOW;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using ElementaryMathStudyWebsite.Infrastructure.UOW;
 
 namespace ElementaryMathStudyWebsite.Services
 {
@@ -21,4 +21,3 @@ namespace ElementaryMathStudyWebsite.Services
         }
     }
 }
-    

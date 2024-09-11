@@ -1,7 +1,7 @@
-﻿using ElementaryMathStudyWebsite.Repositories.Context;
-using ElementaryMathStudyWebsite.Contract.Services.Interface.Authentication;
-using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Repositories.DTOs.UserDto.RequestDto;
+﻿using Microsoft.EntityFrameworkCore;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 
 namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 {

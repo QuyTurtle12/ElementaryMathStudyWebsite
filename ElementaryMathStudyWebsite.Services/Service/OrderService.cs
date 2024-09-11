@@ -1,8 +1,8 @@
-﻿using ElementaryMathStudyWebsite.Contract.Repositories.Entity;
-using ElementaryMathStudyWebsite.Contract.Repositories.IUOW;
-using ElementaryMathStudyWebsite.Contract.Services.Interface;
+﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Repositories.DTOs;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -44,7 +44,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             // Get all orders from database
             // If null then return empty collection
-            IEnumerable<Order> orders = await _orderRepository.GetAllAsync() ?? Enumerable.Empty<Order>(); 
+            IEnumerable<Order> orders = await _orderRepository.GetAllAsync() ?? Enumerable.Empty<Order>();
             IQueryable<Order> query = _orderRepository.Entities;
 
             // If pageNumber or pageSize are 0 or negative, show all orders
