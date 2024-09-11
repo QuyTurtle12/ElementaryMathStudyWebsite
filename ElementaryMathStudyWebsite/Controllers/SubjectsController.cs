@@ -1,5 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Services.Interface;
-using ElementaryMathStudyWebsite.Repositories.DTOs;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElementaryMathStudyWebsite.Controllers
@@ -49,7 +49,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // POST: api/Subjects
         [HttpPost]
-        public async Task<IActionResult> CreateSubject([FromBody] CreateSubjectDTO subjectDTO)
+        public async Task<IActionResult> CreateSubject([FromBody] SubjectCreateDTO subjectDTO)
         {
             if (!ModelState.IsValid)
             {

@@ -1,7 +1,7 @@
-﻿using ElementaryMathStudyWebsite.Contract.Repositories.Entity;
-using ElementaryMathStudyWebsite.Contract.Services.Interface;
-using ElementaryMathStudyWebsite.Repositories.Context;
-using ElementaryMathStudyWebsite.Repositories.DTOs;
+﻿using ElementaryMathStudyWebsite.Contract.Services.Interface;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
