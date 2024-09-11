@@ -97,7 +97,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Context
             modelBuilder.Entity<UserAnswer>()
                 .HasOne(a => a.Question)
                 .WithMany(q => q.Answers)
-                .HasForeignKey(a => a.OptionId)
+                .HasForeignKey(a => a.QuestionId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.NoAction);
 
