@@ -3,6 +3,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using ElementaryMathStudyWebsite.Contract.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Base;
+using System.ComponentModel.DataAnnotations;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -19,12 +20,12 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/Orders/page
         // Get orders for Manager & Admin
-        //[Authorize(Policy = "Manager")]
+        //[Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("manager")]
         [SwaggerOperation(
             Summary = "Authorization: Manager & Admin",
-            Description = "View order list for Manager and Admin Role. Insert -1 to get all items"    
+            Description = "View order list for Manager and Admin Role. Insert -1 to get all items"
             )]
         public async Task<ActionResult<BasePaginatedList<Order>>> GetOrders(int pageNumber = -1, int pageSize = -1)
         {
@@ -35,7 +36,33 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Invalid input" + ex.Message);
+                return StatusCode(500, "Invalid input: " + ex.Message);
+            }
+        }
+
+        // GET: api/Orders/{id}
+        // Get orders for Manager & Admin
+        //[Authorize(Policy = "Admin-Manager")]
+        [HttpGet]
+        [Route("{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Manager & Admin",
+            Description = "View order for Manager and Admin Role."
+            )]
+        public async Task<ActionResult<Order>> GetOrder([Required] string id)
+        {
+            try
+            {
+                Order order = await _orderService.GetOrderByOrderIdAsync(id);
+                if (order == null)
+                {
+                    return BadRequest("Invalid Order Id");
+                }
+                return Ok(order);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
             }
         }
     }

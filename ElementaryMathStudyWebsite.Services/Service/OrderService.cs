@@ -3,7 +3,6 @@ using ElementaryMathStudyWebsite.Contract.Repositories.IUOW;
 using ElementaryMathStudyWebsite.Contract.Services.Interface;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Repositories.DTOs;
-using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -23,21 +22,24 @@ namespace ElementaryMathStudyWebsite.Services.Service
             throw new NotImplementedException();
         }
 
-        public Task<Order> GetOrderByOrderIdAsync(int orderId)
+        // Get one order with all properties
+        public async Task<Order> GetOrderByOrderIdAsync(string orderId)
+        {
+            Order? order = await _orderRepository.GetByIdAsync(orderId);
+            return order;
+        }
+
+        public Task<OrderViewDto> GetOrderDtoByOrderIdAsync(string orderId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<OrderViewDto> GetOrderDtoByOrderIdAsync(int orderId)
+        public Task<BasePaginatedList<OrderViewDto>> GetOrderDtos(int pageNumber, int pageSize)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<OrderViewDto>> GetOrderDtos(int pageNumber, int pageSize)
-        {
-            throw new NotImplementedException();
-        }
-
+        // Get orders with all properties
         public async Task<BasePaginatedList<Order>> GetOrdersAsync(int pageNumber, int pageSize)
         {
             // Get all orders from database
@@ -62,12 +64,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             throw new NotImplementedException();
         }
 
-        public Task<bool> IsValidOrderAsync(int orderId)
+        public Task<bool> IsValidOrderAsync(string orderId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<OrderViewDto>> searchOrderDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter)
+        public Task<BasePaginatedList<OrderViewDto>> searchOrderDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter)
         {
             throw new NotImplementedException();
         }
