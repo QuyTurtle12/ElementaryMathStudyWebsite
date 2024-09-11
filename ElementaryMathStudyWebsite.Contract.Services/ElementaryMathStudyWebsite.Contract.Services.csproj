@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Contract.Repositories\ElementaryMathStudyWebsite.Contract.Repositories.csproj" />
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Repositories\ElementaryMathStudyWebsite.Repositories.csproj" />
+  </ItemGroup>
+
 </Project>

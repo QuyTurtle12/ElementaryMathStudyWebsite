@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Contract.Repositories\ElementaryMathStudyWebsite.Contract.Repositories.csproj" />
     <ProjectReference Include="..\ElementaryMathStudyWebsite.Contract.Services\ElementaryMathStudyWebsite.Contract.Services.csproj" />
     <ProjectReference Include="..\ElementaryMathStudyWebsite.Repositories\ElementaryMathStudyWebsite.Repositories.csproj" />
   </ItemGroup>
