@@ -1,8 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Repositories.Context;
 using ElementaryMathStudyWebsite.Services;
-using ElementaryMathStudyWebsite.Contract.Services.Interface;
 using ElementaryMathStudyWebsite.Services.Service;
+using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using ElementaryMathStudyWebsite.Infrastructure.UOW;
+
+
 
 namespace ElementaryMathStudyWebsite
 {

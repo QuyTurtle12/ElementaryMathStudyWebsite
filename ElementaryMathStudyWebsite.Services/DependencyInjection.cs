@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using ElementaryMathStudyWebsite.Repositories.UOW;
-using ElementaryMathStudyWebsite.Contract.Repositories.IUOW;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using ElementaryMathStudyWebsite.Infrastructure.UOW;
 
 namespace ElementaryMathStudyWebsite.Services
 {
@@ -13,8 +13,11 @@ namespace ElementaryMathStudyWebsite.Services
         }
         public static void AddRepositories(this IServiceCollection services)
         {
+            // Register generic repository with a scoped lifetime
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+            // Register UnitOfWork
             services.AddScoped<IUnitOfWork, UnitOfWork>();
         }
     }
 }
-    

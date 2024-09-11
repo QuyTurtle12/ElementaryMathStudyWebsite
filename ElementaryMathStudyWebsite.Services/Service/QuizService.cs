@@ -1,4 +1,4 @@
-﻿using ElementaryMathStudyWebsite.Contract.Services.Interface;
+﻿using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {

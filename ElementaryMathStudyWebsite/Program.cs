@@ -18,7 +18,10 @@ namespace ElementaryMathStudyWebsite
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.EnableAnnotations(); // Enable annotations for Swagger
+            });
             builder.Services.AddConfig(builder.Configuration);
             builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
               policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));

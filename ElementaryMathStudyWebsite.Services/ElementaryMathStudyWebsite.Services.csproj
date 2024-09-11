@@ -7,14 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.0.2" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ElementaryMathStudyWebsite.Contract.Repositories\ElementaryMathStudyWebsite.Contract.Repositories.csproj" />
-    <ProjectReference Include="..\ElementaryMathStudyWebsite.Contract.Services\ElementaryMathStudyWebsite.Contract.Services.csproj" />
-    <ProjectReference Include="..\ElementaryMathStudyWebsite.Repositories\ElementaryMathStudyWebsite.Repositories.csproj" />
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Contract.Core\ElementaryMathStudyWebsite.Contract.Core.csproj" />
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Contract.UseCases\ElementaryMathStudyWebsite.Contract.UseCases.csproj" />
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Core\ElementaryMathStudyWebsite.Core.csproj" />
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Infrastructure\ElementaryMathStudyWebsite.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
