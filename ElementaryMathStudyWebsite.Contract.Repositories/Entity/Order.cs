@@ -9,7 +9,12 @@ namespace ElementaryMathStudyWebsite.Contract.Repositories.Entity
         public required double TotalPrice { get; set; }
 
         public required virtual User User { get; set; } // Navigation property, one order has one user
-        public required virtual ICollection<OrderDetail> OrderDetails { get; set; } // Navigation property, one order has many order detail
+
+        // Navigation properties
+        public virtual User? CreatedByUser { get; set; }
+        public virtual User? LastUpdatedByUser { get; set; }
+        public virtual User? DeletedByUser { get; set; }
+        public virtual ICollection<OrderDetail>? OrderDetails { get; set; } // Navigation property, one order has many order detail
                                                                             
         public Order() { }
 

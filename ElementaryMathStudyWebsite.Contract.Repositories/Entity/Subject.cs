@@ -10,6 +10,10 @@ namespace ElementaryMathStudyWebsite.Contract.Repositories.Entity
 
         public bool Status { get; set; }
 
+        // Navigation properties
+        public virtual User? CreatedByUser { get; set; }
+        public virtual User? LastUpdatedByUser { get; set; }
+        public virtual User? DeletedByUser { get; set; }
         public virtual ICollection<OrderDetail>? Detail { get; set; } // Navigation property, one subject may belong to many order detail
         public virtual ICollection<Chapter>? Chapters { get; set; } // Navigation property, one subject has many chapters
         public virtual ICollection<Progress>? Progresses { get; set; } // Navigation property, one subject has many progresses

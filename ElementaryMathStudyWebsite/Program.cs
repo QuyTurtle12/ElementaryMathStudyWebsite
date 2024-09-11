@@ -1,4 +1,3 @@
-
 namespace ElementaryMathStudyWebsite
 {
     public class Program

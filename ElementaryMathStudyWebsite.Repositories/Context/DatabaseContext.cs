@@ -1,4 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Repositories.Context
@@ -7,7 +8,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Context
     {
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
-        public DbSet<User> Users { get; set; }
+        public DbSet<User> User { get; set; }
         public DbSet<Chapter> Chapter { get; set; }
         public DbSet<Option> Option { get; set; }
         public DbSet<Order> Order { get; set; }
@@ -34,6 +35,31 @@ namespace ElementaryMathStudyWebsite.Repositories.Context
             // Composite key
             modelBuilder.Entity<UserAnswer>()
                 .HasKey(a => new { a.QuestionId, a.UserId});
+
+            // Configure the relationships for all entities that inherit from BaseEntity
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+                {
+                    modelBuilder.Entity(entityType.ClrType)
+                        .HasOne(typeof(User), "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    modelBuilder.Entity(entityType.ClrType)
+                        .HasOne(typeof(User), "LastUpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("LastUpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    modelBuilder.Entity(entityType.ClrType)
+                        .HasOne(typeof(User), "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+                }
+            }
 
             // User - Role Relationship
             modelBuilder.Entity<User>()

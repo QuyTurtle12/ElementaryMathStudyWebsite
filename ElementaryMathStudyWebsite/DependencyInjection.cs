@@ -22,13 +22,15 @@ namespace ElementaryMathStudyWebsite
                 options.LowercaseUrls = true;
             });
         }
+
         public static void AddDatabase(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<DatabaseContext>(options =>
             {
-                options.UseSqlServer().UseSqlServer(configuration.GetConnectionString("MyElementaryMathStudyDb"));
+                options.UseSqlServer(configuration.GetConnectionString("MyElementaryMathStudyDb"));
             });
         }
+
         public static void AddServices(this IServiceCollection services)
         {
             // Add services here
