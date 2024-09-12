@@ -3,6 +3,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
+
 namespace ElementaryMathStudyWebsite.Core.Services.IDomainService
 {
     public interface IUserService
@@ -10,5 +11,10 @@ namespace ElementaryMathStudyWebsite.Core.Services.IDomainService
         Task<User> CreateUserAsync(CreateUserDto dto);
         // Other user-related methods can be added here
         Task<BasePaginatedList<UserResponseDto>> GetAllUsersAsync(int pageNumber, int pageSize);
+        Task<string?> GetUserNameAsync(string userId);
+
+        Task<User?> GetUserByIdAsync(string userId);
+
+        Task<bool> IsCustomerChildren(string parentId, string studentId);
     }
 }

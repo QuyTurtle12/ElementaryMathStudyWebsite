@@ -1,6 +1,7 @@
 ﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Base;
 using Microsoft.EntityFrameworkCore;
+using ElementaryMathStudyWebsite.Core.Entity;
 
 namespace ElementaryMathStudyWebsite.Infrastructure.Context
 {
@@ -20,6 +21,7 @@ namespace ElementaryMathStudyWebsite.Infrastructure.Context
         public DbSet<Subject> Subject { get; set; }
         public DbSet<Topic> Topic { get; set; }
         public DbSet<UserAnswer> UserAnswer { get; set; }
+        public DbSet<Payment> Payment { get; set; }
 
         // Mapping Configuration
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -66,113 +68,130 @@ namespace ElementaryMathStudyWebsite.Infrastructure.Context
                 .HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // User - Order Relationship
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Orders)
                 .WithOne(o => o.User)
                 .HasForeignKey(o => o.CustomerId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // User - UserAnswer Relationship
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Answers)
                 .WithOne(a => a.User)
                 .HasForeignKey(a => a.UserId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // UserAnswer - Option Relationship
             modelBuilder.Entity<UserAnswer>()
                 .HasOne(a => a.Option)
                 .WithMany(o => o.Answers)
                 .HasForeignKey(a => a.OptionId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // UserAnswer - Question Relationship
             modelBuilder.Entity<UserAnswer>()
                 .HasOne(a => a.Question)
                 .WithMany(q => q.Answers)
                 .HasForeignKey(a => a.QuestionId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // Question - Option Relationship
             modelBuilder.Entity<Question>()
                 .HasMany(q => q.Options)
                 .WithOne(o => o.Question)
                 .HasForeignKey(a => a.QuestionId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // Question - Quiz Relationship
             modelBuilder.Entity<Question>()
                 .HasOne(q => q.Quiz)
                 .WithMany(question => question.Questions)
                 .HasForeignKey(q => q.QuizId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // Quiz - Topic Relationship
             modelBuilder.Entity<Quiz>()
                 .HasOne(q => q.Topic)
                 .WithOne(t => t.Quiz)
                 .HasForeignKey<Topic>(t => t.QuizId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // Quiz - Progress Relationship
             modelBuilder.Entity<Quiz>()
                 .HasMany(q => q.Progresses)
                 .WithOne(p => p.Quiz)
                 .HasForeignKey(p => p.QuizId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // Quiz - Chapter Relationship
             modelBuilder.Entity<Quiz>()
                 .HasOne(q => q.Chapter)
                 .WithOne(c => c.Quiz)
                 .HasForeignKey<Chapter>(c => c.QuizId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // Topic - Chapter Relationship
             modelBuilder.Entity<Topic>()
                 .HasOne(t => t.Chapter)
                 .WithMany(c => c.Topics)
                 .HasForeignKey(t => t.ChapterId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // Chapter - Subject Relationship
             modelBuilder.Entity<Chapter>()
                 .HasOne(c => c.Subject)
                 .WithMany(s => s.Chapters)
                 .HasForeignKey(c => c.SubjectId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // Subject - Progress Relationship
             modelBuilder.Entity<Subject>()
                 .HasMany(s => s.Progresses)
                 .WithOne(p => p.Subject)
                 .HasForeignKey(c => c.SubjectId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // Subject - Order Detail Relationship
             modelBuilder.Entity<Subject>()
                 .HasMany(s => s.Detail)
                 .WithOne(d => d.Subject)
                 .HasForeignKey(d => d.SubjectId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // Order Detail - Order Relationship
             modelBuilder.Entity<OrderDetail>()
                 .HasOne(d => d.Order)
                 .WithMany(o => o.OrderDetails)
                 .HasForeignKey(d => d.OrderId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // Order Detail - User Relationship
             modelBuilder.Entity<OrderDetail>()
                 .HasOne(d => d.User)
                 .WithMany(u => u.OrderDetails)
                 .HasForeignKey(d => d.StudentId)
-                .OnDelete(DeleteBehavior.NoAction); // Removed .IsRequired()
+                .OnDelete(DeleteBehavior.NoAction);
 
+            // Define the Payment's primary key
+            modelBuilder.Entity<Payment>()
+                .HasKey(p => p.Id); 
+
+            // Payment - User Relationship
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.User)
+                .WithMany(u => u.Payments)
+                .HasForeignKey(p => p.CustomerId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Payment - Order Relationship
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.Order)
+                .WithOne(o => o.Payment)
+                .HasForeignKey<Payment>(p => p.OrderId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

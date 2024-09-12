@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
@@ -12,11 +12,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IGenericRepository<User> _userRepository;
         private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public UserService(IGenericRepository<User> userRepository, IMapper mapper)
+        public UserService(IGenericRepository<User> userRepository, IMapper mapper, IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         }
 
         public async Task<User> CreateUserAsync(CreateUserDto dto)
@@ -61,5 +63,49 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
 
         // Implement other domain methods here
+
+        public Task<User?> GetUserByIdAsync(string userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<string?> GetUserNameAsync(string userId)
+        {
+            try
+            {
+                User user = await _userRepository.GetByIdAsync(userId);
+
+                if (user == null)
+                {
+                    return string.Empty;
+                }
+
+                return user.FullName;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+
+        }
+
+        public async Task<bool> IsCustomerChildren(string parentId, string studentId)
+        {
+            User? student = await _userRepository.GetByIdAsync(studentId);
+            if (student == null)
+            {
+                return false;
+            }
+
+            string? creatorId = student.CreatedBy;
+
+            if (creatorId.Equals(parentId))
+            {
+                return true;
+            } 
+                
+            return false;
+            
+        }
     }
 }
