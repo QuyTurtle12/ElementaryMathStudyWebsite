@@ -24,9 +24,66 @@ namespace ElementaryMathStudyWebsite.Controllers
         [HttpGet]
         [SwaggerOperation(
             Summary = "Authorization: Anyone",
-            Description = "Get all subjects with pagination; set pageSize to -1 to get all"
+            Description = "Get all active subjects with pagination; set pageSize to -1 to get all"
         )]
-        public async Task<IActionResult> GetAllSubjects(int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> GetAllActiveSubjects(int pageNumber = 1, int pageSize = 10)
+        {
+            if (pageSize != -1 && (pageNumber < 1 || pageNumber > pageSize))
+            {
+                return BadRequest("pageNumber must be between 1 and " + pageSize);
+            }
+
+            var activeSubjects = pageSize > 0
+                                 ? (await _subjectService.GetAllSubjectsAsync())
+                                    .Where(s => (bool)s.GetType().GetProperty("Status").GetValue(s)) // Filter by active status
+                                    .Skip((pageNumber - 1) * pageSize)
+                                    .Take(pageSize)
+                                 : (await _subjectService.GetAllSubjectsAsync())
+                                    .Where(s => (bool)s.GetType().GetProperty("Status").GetValue(s));
+
+            return Ok(activeSubjects);
+        }
+
+        // GET: api/Subjects/{id}
+        [HttpGet("{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Anyone",
+            Description = "Get subject by ID if it is active"
+        )]
+        public async Task<IActionResult> GetActiveSubjectById(string id)
+        {
+            try
+            {
+                var subject = await _subjectService.GetSubjectByIDAsync(id);
+
+                // Ensure the subject is active
+                if (subject.Status == false)
+                {
+                    return NotFound(new { message = $"Subject with ID '{id}' is inactive." });
+                }
+
+                var subjectDTO = new SubjectDTO
+                {
+                    SubjectName = subject.SubjectName,
+                    Price = subject.Price,
+                    Status = subject.Status
+                };
+
+                return Ok(subjectDTO);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/Subjects/Admin
+        [HttpGet("admin")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin, Content Manager",
+            Description = "Get all subjects regardless of their status with pagination; set pageSize to -1 to get all"
+        )]
+        public async Task<IActionResult> GetAllSubjectsForAdmin(int pageNumber = 1, int pageSize = 10)
         {
             if (pageSize != -1 && (pageNumber < 1 || pageNumber > pageSize))
             {
@@ -34,19 +91,20 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
 
             var subjects = pageSize > 0 ? (await _subjectService.GetAllSubjectsAsync())
-                                  .Skip((pageNumber - 1) * pageSize)
-                                 .Take(pageSize) : await _subjectService.GetAllSubjectsAsync();
+                                        .Skip((pageNumber - 1) * pageSize)
+                                        .Take(pageSize)
+                                        : await _subjectService.GetAllSubjectsAsync();
 
             return Ok(subjects);
         }
 
-        // GET: api/Subjects/{id}
-        [HttpGet("{id}")]
+        // GET: api/Subjects/Admin/{id}
+        [HttpGet("admin/{id}")]
         [SwaggerOperation(
-            Summary = "Authorization: Anyone",
-            Description = "Get subject by ID"
+            Summary = "Authorization: Admin, Content Manager",
+            Description = "Get subject by ID regardless of status"
         )]
-        public async Task<IActionResult> GetSubjectById(string id)
+        public async Task<IActionResult> GetSubjectByIdForAdmin(string id)
         {
             try
             {
@@ -89,7 +147,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             var subject = await _appSubjectServices.CreateSubjectAsync(createdSubjectDTO);
 
 
-            return CreatedAtAction(nameof(GetSubjectById), new { id = subject.Id }, createdSubjectDTO);
+            return CreatedAtAction(nameof(GetSubjectByIdForAdmin), new { id = subject.Id }, createdSubjectDTO);
         }
 
         // PUT: api/Subjects/{id}
