@@ -4,6 +4,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -37,20 +38,30 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 var user = await _userService.CreateUserAsync(createUserDto);
 
+                // Map the user entity to the response DTO
+                var userResponseDto = new UserResponseDto
+                {
+                    Id = user.Id,
+                    FullName = user.FullName,
+                    PhoneNumber = user.PhoneNumber,
+                    Gender = user.Gender,
+                    Email = user.Email,
+                    RoleId = user.RoleId,
+                    Username = user.Username
+                };
+
                 // Return 201 Created with the location of the newly created user
-                return CreatedAtAction(nameof(CreateUser), new { id = user.Id }, user);
+                return CreatedAtAction(nameof(CreateUser), new { id = userResponseDto.Id }, userResponseDto);
             }
             catch (ArgumentException ex)
             {
-                // Handle specific validation exceptions
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                // Log the exception if needed
-                // e.g., _logger.LogError(ex, "An error occurred while creating the user.");
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
             }
         }
+
     }
 }
