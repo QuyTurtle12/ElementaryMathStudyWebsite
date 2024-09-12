@@ -3,12 +3,11 @@ using ElementaryMathStudyWebsite.Services;
 using ElementaryMathStudyWebsite.Services.Service;
 using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
-using ElementaryMathStudyWebsite.Contract.Core.IUOW;
-using ElementaryMathStudyWebsite.Infrastructure.UOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Services.Service.Authentication;
 using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
-
+using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles;
 
 
 namespace ElementaryMathStudyWebsite
@@ -21,6 +20,7 @@ namespace ElementaryMathStudyWebsite
             services.AddDatabase(configuration);
             services.AddInfrastructure(configuration);
             services.AddServices();
+            services.AddMapping();
         }
         public static void ConfigRoute(this IServiceCollection services)
         {
@@ -60,6 +60,11 @@ namespace ElementaryMathStudyWebsite
             // Add authentication services
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<ITokenService, TokenService>();
+        }
+        public static void AddMapping(this IServiceCollection services)
+        {
+            // Register AutoMapper with all profiles
+            services.AddAutoMapper(typeof(UserMappingProfile)); // Add any mapping profiles here
         }
     }
 }

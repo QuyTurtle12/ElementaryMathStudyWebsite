@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using ElementaryMathStudyWebsite.Core.Services.IDomainService;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -13,10 +11,12 @@ namespace ElementaryMathStudyWebsite.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IMapper _mapper;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, IMapper mapper)
         {
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         [HttpPost]
@@ -28,7 +28,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return BadRequest("User data is required.");
             }
 
-            // Validate input data here if needed
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -37,20 +36,8 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var user = await _userService.CreateUserAsync(createUserDto);
+                var userResponseDto = _mapper.Map<UserResponseDto>(user); 
 
-                // Map the user entity to the response DTO
-                var userResponseDto = new UserResponseDto
-                {
-                    Id = user.Id,
-                    FullName = user.FullName,
-                    PhoneNumber = user.PhoneNumber,
-                    Gender = user.Gender,
-                    Email = user.Email,
-                    RoleId = user.RoleId,
-                    Username = user.Username
-                };
-
-                // Return 201 Created with the location of the newly created user
                 return CreatedAtAction(nameof(CreateUser), new { id = userResponseDto.Id }, userResponseDto);
             }
             catch (ArgumentException ex)
@@ -63,5 +50,19 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("all")]
+        public async Task<IActionResult> GetAllUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var paginatedUsers = await _userService.GetAllUsersAsync(pageNumber, pageSize);
+                return Ok(paginatedUsers);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }

@@ -20,6 +20,7 @@ namespace ElementaryMathStudyWebsite.Contract.Core.IUOW
         // async
         Task<IList<T>> GetAllAsync();
         Task<BasePaginatedList<T>> GetPagging(IQueryable<T> query, int index, int pageSize);
+        Task<BasePaginatedList<T>> GetPaggingDto(IQueryable<T> query, int index, int pageSize);
         Task<T?> GetByIdAsync(object id);
         Task InsertAsync(T obj);
         Task UpdateAsync(T obj);

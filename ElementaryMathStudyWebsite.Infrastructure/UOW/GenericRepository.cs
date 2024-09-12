@@ -57,6 +57,21 @@ namespace ElementaryMathStudyWebsite.Infrastructure.UOW
             return new BasePaginatedList<T>(items, count, index, pageSize);
         }
 
+        public async Task<BasePaginatedList<T>> GetPaggingDto(IQueryable<T> query, int pageNumber, int pageSize)
+        {
+            // Calculate total count
+            int count = await query.CountAsync();
+
+            // Apply pagination
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new BasePaginatedList<T>(items, count, pageNumber, pageSize);
+        }
+
+
         public void Insert(T obj)
         {
             _dbSet.Add(obj);
