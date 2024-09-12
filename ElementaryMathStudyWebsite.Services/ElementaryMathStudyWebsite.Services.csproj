@@ -15,8 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ElementaryMathStudyWebsite.Contract.Services\ElementaryMathStudyWebsite.Contract.Services.csproj" />
-    <ProjectReference Include="..\ElementaryMathStudyWebsite.Repositories\ElementaryMathStudyWebsite.Repositories.csproj" />
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Contract.Core\ElementaryMathStudyWebsite.Contract.Core.csproj" />
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Contract.UseCases\ElementaryMathStudyWebsite.Contract.UseCases.csproj" />
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Core\ElementaryMathStudyWebsite.Core.csproj" />
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Infrastructure\ElementaryMathStudyWebsite.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
