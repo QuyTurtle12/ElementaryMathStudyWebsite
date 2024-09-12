@@ -7,7 +7,7 @@ namespace ElementaryMathStudyWebsite.Core.Base
     {
         protected BaseEntity()
         {
-            Id = Guid.NewGuid().ToString("N"); // "N" format string removes the hyphens and returns a 32-character string
+            Id = Guid.NewGuid().ToString();
             CreatedTime = LastUpdatedTime = CoreHelper.SystemTimeNow;
         }
 
