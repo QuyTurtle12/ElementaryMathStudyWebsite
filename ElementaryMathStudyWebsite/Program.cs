@@ -23,6 +23,8 @@ namespace ElementaryMathStudyWebsite
                 c.EnableAnnotations(); // Enable annotations for Swagger
             });
             builder.Services.AddConfig(builder.Configuration);
+            builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+              policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
