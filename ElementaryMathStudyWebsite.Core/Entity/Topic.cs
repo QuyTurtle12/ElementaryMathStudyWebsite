@@ -10,8 +10,6 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public bool Status { get; set; }
 
-        public double? Criteria { get; set; } // Mark that need to be achieved to passed
-
         public string? QuizId { get; set; }
 
         public required string ChapterId { get; set; }
@@ -25,12 +23,11 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public Topic() { }
 
-        public Topic(int? number, string topicName, double? criteria, string chapterId, string? quizId)
+        public Topic(int? number, string topicName, string chapterId, string? quizId)
         {
             Number = number;
             TopicName = topicName;
             Status = true; // Always true when initialized
-            Criteria = criteria;
             ChapterId = chapterId;
             QuizId = quizId;
         }

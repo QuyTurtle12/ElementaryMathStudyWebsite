@@ -6,6 +6,8 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
     {
         public string QuizName { get; set; } = string.Empty;
 
+        public double? Criteria { get; set; } // Mark that need to be achieved to passed
+
         public bool Status { get; set; }
 
         // Navigation properties
@@ -19,10 +21,11 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public Quiz() { }
 
-        public Quiz(string quizName)
+        public Quiz(string quizName, double? criteria)
         {
             QuizName = quizName;
             Status = true; // Always true when initialized
+            Criteria = criteria;
         }
     }
 }

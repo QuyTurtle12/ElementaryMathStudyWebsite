@@ -1,4 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Entity;
 
 namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 {
@@ -29,6 +30,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public virtual ICollection<OrderDetail>? OrderDetails { get; set; } // Navigation property, one user can be assigned to many order detail
         public virtual ICollection<UserAnswer>? Answers { get; set; } // Navigation property, one user has many answers
         public virtual ICollection<Progress>? Progresses { get; set; } // Navigation property, one user has many subject progresses
+        public virtual ICollection<Payment>? Payments { get; set; } // Navigation property, one user has many payments
 
         public User() { }
 
