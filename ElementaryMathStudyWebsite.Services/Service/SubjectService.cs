@@ -74,7 +74,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Search subjects by name
-        public async Task<IEnumerable<object>> SearchSubject(string searchTerm)
+        public async Task<IEnumerable<object>> SearchSubjectAsync(string searchTerm)
         {
             if (string.IsNullOrEmpty(searchTerm))
             {

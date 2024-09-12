@@ -15,7 +15,7 @@ namespace ElementaryMathStudyWebsite.Contract.Services.Interface
         Task<Subject> GetSubjectByIDAsync(string id);
 
         // Search subjects by name
-        Task<IEnumerable<object>> SearchSubject(string searchTerm);
+        Task<IEnumerable<object>> SearchSubjectAsync(string searchTerm);
 
         // Update a subject by ID
         Task UpdateSubjectAsync(string id, SubjectDTO subjectDTO);
