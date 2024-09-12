@@ -1,4 +1,5 @@
-﻿using ElementaryMathStudyWebsite.Contract.Services.Interface;
+﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using ElementaryMathStudyWebsite.Contract.Services.Interface;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
@@ -9,11 +10,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
 {
     public class SubjectService : ISubjectService, IAppSubjectServices
     {
-        private readonly DatabaseContext _context;
+        //private readonly DatabaseContext _context;
+        private readonly IGenericRepository<Subject> _subjectRepository;
 
-        public SubjectService(DatabaseContext context)
+        public SubjectService(IGenericRepository<Subject> subjectRepository)
         {
-            _context = context;
+            _subjectRepository = subjectRepository ?? throw new ArgumentNullException(nameof(subjectRepository));
         }
 
         // Helper method for validation
@@ -43,8 +45,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 Status = subjectDTO.Status,
             };
 
-            _context.Subject.Add(subject);
-            await _context.SaveChangesAsync();
+            _subjectRepository.Insert(subject);
+            await _subjectRepository.SaveAsync();
 
             return subject;
         }
@@ -52,38 +54,37 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get all subjects, returning as objects
         public async Task<IEnumerable<object>> GetAllSubjectsAsync()
         {
-            return await _context.Subject
-                .Select(s => new
-                {
-                    s.SubjectName,
-                    s.Price,
-                    s.Status
-                })
-                .ToListAsync();
+            var subjects = await _subjectRepository.GetAllAsync();
+            return subjects.Select(s => new
+            {
+                s.SubjectName,
+                s.Price,
+                s.Status
+            }).ToList();
         }
 
         // Get a specific subject by ID
         public async Task<Subject> GetSubjectByIDAsync(string id)
         {
-            var subject = await _context.Subject.FindAsync(id);
+            var subject = await _subjectRepository.GetByIdAsync(id);
             if (subject == null)
             {
                 throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
             }
-
             return subject;
         }
 
         // Search subjects by name
         public async Task<IEnumerable<object>> SearchSubjectAsync(string searchTerm)
         {
-            if (string.IsNullOrEmpty(searchTerm))
+            var query = _subjectRepository.Entities.Where(s => s.Status == true);
+
+            if (!string.IsNullOrEmpty(searchTerm))
             {
-                return await GetAllSubjectsAsync();
+                query = query.Where(s => EF.Functions.Like(s.SubjectName, $"%{searchTerm}%"));
             }
 
-            var subjects = await _context.Subject
-                .Where(s => EF.Functions.Like(s.SubjectName, $"%{searchTerm}%"))
+            var subjects = await query
                 .Select(s => new
                 {
                     s.SubjectName,
@@ -100,10 +101,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return subjects;
         }
 
+
+
         // Update subject
         public async Task<Subject> UpdateSubjectAsync(string id, SubjectDTO subjectDTO)
         {
-            var subject = await _context.Subject.FindAsync(id);
+            var subject = await _subjectRepository.GetByIdAsync(id);
             if (subject == null)
             {
                 throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
@@ -117,15 +120,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
             subject.Price = subjectDTO.Price;
             subject.Status = subjectDTO.Status;
 
-            _context.Subject.Update(subject);
-            await _context.SaveChangesAsync();
+            _subjectRepository.Update(subject);
+            await _subjectRepository.SaveAsync();
             return subject;
         }
 
-        // Delete subject by ID
+
+        // Change subject status by ID
         public async Task<Subject> ChangeSubjectStatusAsync(string id)
         {
-            var subject = await _context.Subject.FindAsync(id);
+            var subject = await _subjectRepository.GetByIdAsync(id);
             if (subject == null)
             {
                 throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
@@ -133,9 +137,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             subject.Status = !subject.Status;
 
-            _context.Subject.Update(subject);
-            await _context.SaveChangesAsync();
+            _subjectRepository.Update(subject);
+            await _subjectRepository.SaveAsync();
             return subject;
         }
+
     }
 }
