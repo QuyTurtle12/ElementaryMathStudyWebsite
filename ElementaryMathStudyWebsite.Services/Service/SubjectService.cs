@@ -1,12 +1,13 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Services.Interface;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class SubjectService : ISubjectService
+    public class SubjectService : ISubjectService, IAppSubjectServices
     {
         private readonly DatabaseContext _context;
 
@@ -100,7 +101,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Update subject
-        public async Task UpdateSubjectAsync(string id, SubjectDTO subjectDTO)
+        public async Task<Subject> UpdateSubjectAsync(string id, SubjectDTO subjectDTO)
         {
             var subject = await _context.Subject.FindAsync(id);
             if (subject == null)
@@ -118,10 +119,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             _context.Subject.Update(subject);
             await _context.SaveChangesAsync();
+            return subject;
         }
 
         // Delete subject by ID
-        public async Task ChangeSubjectStatusAsync(string id)
+        public async Task<Subject> ChangeSubjectStatusAsync(string id)
         {
             var subject = await _context.Subject.FindAsync(id);
             if (subject == null)
@@ -133,6 +135,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             _context.Subject.Update(subject);
             await _context.SaveChangesAsync();
+            return subject;
         }
     }
 }

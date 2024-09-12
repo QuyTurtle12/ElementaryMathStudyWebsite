@@ -12,10 +12,12 @@ namespace ElementaryMathStudyWebsite.Controllers
     public class SubjectsController : ControllerBase
     {
         private readonly ISubjectService _subjectService;
+        private readonly IAppSubjectServices _appSubjectServices;
 
-        public SubjectsController(ISubjectService subjectService)
+        public SubjectsController(ISubjectService subjectService, IAppSubjectServices appSubjectServices)
         {
             _subjectService = subjectService;
+            _appSubjectServices = appSubjectServices;
         }
 
         // GET: api/Subjects
@@ -84,7 +86,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                 Price = subjectDTO.Price,
                 Status = true
             };
-            var subject = await _subjectService.CreateSubjectAsync(createdSubjectDTO);
+            var subject = await _appSubjectServices.CreateSubjectAsync(createdSubjectDTO);
 
 
             return CreatedAtAction(nameof(GetSubjectById), new { id = subject.Id }, createdSubjectDTO);
@@ -105,8 +107,8 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             try
             {
-                await _subjectService.UpdateSubjectAsync(id, subjectDTO);
-                return Ok();
+                var subject = await _appSubjectServices.UpdateSubjectAsync(id, subjectDTO);
+                return Ok(new {subject.Id, subject.SubjectName, subject.Price, subject.Status});
             }
             catch (KeyNotFoundException ex)
             {
@@ -129,8 +131,8 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             try
             {
-                await _subjectService.ChangeSubjectStatusAsync(id);
-                return Ok();
+                var subject = await _appSubjectServices.ChangeSubjectStatusAsync(id);
+                return Ok(new {subject.Id, subject.SubjectName, subject.Price, subject.Status});
             }
             catch (KeyNotFoundException ex)
             {
@@ -164,7 +166,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             try
             {
-                var subjects = (await _subjectService.SearchSubjectAsync(searchTerm))
+                var subjects = (await _appSubjectServices.SearchSubjectAsync(searchTerm))
                                                     .Skip((pageNumber - 1) * pageSize)
                                                     .Take(pageSize);
                 return Ok(subjects);
