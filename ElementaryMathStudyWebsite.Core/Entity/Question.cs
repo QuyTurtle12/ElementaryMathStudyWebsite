@@ -7,8 +7,6 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public string QuestionContext { get; set; } = string.Empty; // avoid null reference issues
                                                                     // Question Context include one question and many options
 
-        public char Answer { get; set; }
-
         public required string QuizId { get; set; }
 
         // Navigation properties
@@ -21,10 +19,9 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public Question() { }
 
-        public Question(string questionContext, char answer, string quizId)
+        public Question(string questionContext, string quizId)
         {
             QuestionContext = questionContext;
-            Answer = answer;
             QuizId = quizId;
         }
     }
