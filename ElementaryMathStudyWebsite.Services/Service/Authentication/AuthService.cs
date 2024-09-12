@@ -1,5 +1,8 @@
-﻿using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+﻿using Microsoft.EntityFrameworkCore;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
@@ -16,7 +19,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 
         public async Task<string> LoginAsync(LoginDto loginDto)
         {
-            // Validate user credentials using the domain-level service
+            // Validate user credentials and retrieve the user
             User? user = await _authenticationService.ValidateUserCredentialsAsync(loginDto.Username, loginDto.Password);
 
             if (user == null)
@@ -24,16 +27,14 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
                 throw new UnauthorizedAccessException("Invalid username or password.");
             }
 
-            // Check if the user's status is active
-            bool isActive = await _authenticationService.IsUserActiveAsync(loginDto.Username);
-
-            if (!isActive)
+            // Check if the user's status is active directly
+            if (!user.Status)
             {
                 throw new UnauthorizedAccessException("User account is not active.");
             }
 
             // Generate and return the JWT token
-            return await _authenticationService.GenerateJwtTokenAsync(user);
+            return _authenticationService.GenerateJwtToken(user);
         }
     }
 }
