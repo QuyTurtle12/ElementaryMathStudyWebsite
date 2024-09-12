@@ -1,8 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Repositories.Context;
 using ElementaryMathStudyWebsite.Services;
-using ElementaryMathStudyWebsite.Contract.Services.Interface;
 using ElementaryMathStudyWebsite.Services.Service;
+using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using ElementaryMathStudyWebsite.Infrastructure.UOW;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using ElementaryMathStudyWebsite.Services.Service.Authentication;
+using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
+
+
 
 namespace ElementaryMathStudyWebsite
 {
@@ -46,6 +53,13 @@ namespace ElementaryMathStudyWebsite
             services.AddScoped<ISubjectService, SubjectService>();
             services.AddScoped<IChapterService, ChapterService>();
             services.AddScoped<ITopicService, TopicService>();
+
+            // Add application services
+            services.AddScoped<IAppAuthService, AuthService>();
+
+            // Add authentication services
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<ITokenService, TokenService>();
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
@@ -30,7 +29,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             return null;
         }
 
-        public string GenerateJwtToken(User user)
+        public async Task<string> GenerateJwtTokenAsync(User user)
         {
             return _tokenService.GenerateJwtToken(user);
         }

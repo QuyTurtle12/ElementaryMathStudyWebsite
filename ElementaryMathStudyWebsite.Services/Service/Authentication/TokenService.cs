@@ -99,23 +99,30 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 
         public Guid GetUserIdFromTokenHeader(string? token)
         {
+            // Check if the token is null or empty
+            if (string.IsNullOrEmpty(token))
+            {
+                return Guid.Empty; // Handle null or empty token gracefully
+            }
+
             // Decode the JWT token and extract claims
             var principal = DecodeJwtToken(token);
-            var claims = principal.Claims.Select(c => new { c.Type, c.Value }).ToList();
 
-            foreach (var claim in claims)
+            if (principal == null)
             {
-                if (claim.Type == "userId")
-                {
-                    if (Guid.TryParse(claim.Value, out Guid parsedUserID))
-                    {
-                        return parsedUserID;
-                    }
-                    break;
-                }
+                return Guid.Empty; // Handle null principal gracefully
+            }
+
+            // Extract claims from the principal
+            var userIdClaim = principal.Claims.FirstOrDefault(c => c.Type == "userId");
+
+            if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out Guid parsedUserID))
+            {
+                return parsedUserID;
             }
 
             return Guid.Empty;
         }
+
     }
 }

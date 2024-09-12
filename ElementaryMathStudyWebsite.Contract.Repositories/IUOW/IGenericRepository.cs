@@ -1,4 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Base;
+using System.Linq.Expressions;
 
 namespace ElementaryMathStudyWebsite.Contract.Repositories.IUOW
 {
@@ -24,5 +25,8 @@ namespace ElementaryMathStudyWebsite.Contract.Repositories.IUOW
         Task UpdateAsync(T obj);
         Task DeleteAsync(object id);
         Task SaveAsync();
+
+        //new method for condition finding
+        Task<T?> FindByConditionAsync(Expression<Func<T, bool>> expression);
     }
 }

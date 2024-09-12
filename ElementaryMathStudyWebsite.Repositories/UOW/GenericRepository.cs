@@ -1,9 +1,10 @@
-﻿using ElementaryMathStudyWebsite.Contract.Repositories.IUOW;
-using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Repositories.Context;
+﻿using ElementaryMathStudyWebsite.Core.Base;
 using Microsoft.EntityFrameworkCore;
+using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using System.Linq.Expressions;
 
-namespace ElementaryMathStudyWebsite.Repositories.UOW
+namespace ElementaryMathStudyWebsite.Infrastructure.UOW
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
@@ -89,6 +90,12 @@ namespace ElementaryMathStudyWebsite.Repositories.UOW
         public Task UpdateAsync(T obj)
         {
             return Task.FromResult(_dbSet.Update(obj));
+        }
+
+        // New method: FindByConditionAsync
+        public async Task<T?> FindByConditionAsync(Expression<Func<T, bool>> expression)
+        {
+            return await _dbSet.FirstOrDefaultAsync(expression);
         }
     }
 }
