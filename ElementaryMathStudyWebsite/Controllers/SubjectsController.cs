@@ -1,6 +1,4 @@
 using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
-using ElementaryMathStudyWebsite.Contract.Services.Interface;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Mvc;
