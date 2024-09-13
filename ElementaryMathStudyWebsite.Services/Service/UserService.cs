@@ -3,7 +3,6 @@ using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using System.Linq.Expressions;
@@ -53,7 +52,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return user;
         }
 
-        public async Task<BasePaginatedList<UserResponseDto>> GetAllUsersAsync(int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<User>> GetAllUsersAsync(int pageNumber, int pageSize)
         {
             // Validate pageNumber and pageSize
             if (pageNumber <= 0) pageNumber = 1;
@@ -65,7 +64,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-                user => user.Role // Include the Role navigation property
+        user => user.Role // Include the Role navigation property
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
@@ -74,12 +73,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Retrieve paginated users from the repository
             var paginatedUsers = await _userRepository.GetPaggingDto(query, pageNumber, pageSize);
 
-            // Map the paginated users to the response DTO
-            var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
-
-            // Return the paginated result with mapped DTOs
-            return new BasePaginatedList<UserResponseDto>(userDtos.ToList(), paginatedUsers.TotalItems, paginatedUsers.CurrentPage, paginatedUsers.PageSize);
+            // Return the paginated result with users
+            return new BasePaginatedList<User>(paginatedUsers.Items, paginatedUsers.TotalItems, paginatedUsers.CurrentPage, paginatedUsers.PageSize);
         }
+
 
 
 
@@ -137,26 +134,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return user;
         }
 
-        private void AuditFields(User user, bool isCreating = false)
-        {
-            // Retrieve the JWT token from the Authorization header
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
-
-            // If creating a new user, set the CreatedBy field
-            if (isCreating)
-            {
-                user.CreatedBy = currentUserId.ToString(); // Set the creator's ID
-            }
-
-            // Always set LastUpdatedBy and LastUpdatedTime fields
-            user.LastUpdatedBy = currentUserId.ToString(); // Set the current user's ID
-            user.LastUpdatedTime = DateTime.UtcNow;
-        }
-
-
-
-
 
         // Implement other domain methods here
 
@@ -173,6 +150,28 @@ namespace ElementaryMathStudyWebsite.Services.Service
             );
 
             return user;
+        }
+        
+        public async Task<bool> DisableUserAsync(string userId)
+        {
+            // Fetch the user by ID
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found");
+            }
+
+            // Set the user's status to false to disable the user
+            user.Status = false;
+
+            // Set audit fields
+            AuditFields(user);
+
+            // Update the user in the repository
+            _userRepository.Update(user);
+            await _userRepository.SaveAsync();
+
+            return true; // Return true if the user was successfully disabled
         }
 
         // Get user name from database
@@ -214,6 +213,23 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 
             return false;
             
+        }
+
+        private void AuditFields(User user, bool isCreating = false)
+        {
+            // Retrieve the JWT token from the Authorization header
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            // If creating a new user, set the CreatedBy field
+            if (isCreating)
+            {
+                user.CreatedBy = currentUserId.ToString(); // Set the creator's ID
+            }
+
+            // Always set LastUpdatedBy and LastUpdatedTime fields
+            user.LastUpdatedBy = currentUserId.ToString(); // Set the current user's ID
+            user.LastUpdatedTime = DateTime.UtcNow;
         }
     }
 }

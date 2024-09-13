@@ -1,6 +1,4 @@
-﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-
-namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto
+﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto
 {
     using System.ComponentModel.DataAnnotations;
 
