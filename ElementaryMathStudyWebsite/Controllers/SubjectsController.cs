@@ -1,5 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Services.Interface;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -106,16 +106,25 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return BadRequest(ModelState);
             }
 
-            var createdSubjectDTO = new SubjectDTO
+            try
             {
-                SubjectName = subjectDTO.SubjectName,
-                Price = subjectDTO.Price,
-                Status = true
-            };
-            var subject = await _appSubjectServices.CreateSubjectAsync(createdSubjectDTO);
+                var createdSubject = await _appSubjectServices.CreateSubjectAsync(new SubjectDTO
+                {
+                    SubjectName = subjectDTO.SubjectName,
+                    Price = subjectDTO.Price,
+                    Status = true // Set status as active when created
+                });
 
-
-            return CreatedAtAction(nameof(GetSubjectByIdForAdmin), new { id = subject.Id }, createdSubjectDTO);
+                return CreatedAtAction(nameof(GetSubjectByIdForAdmin), new { id = createdSubject.Id }, createdSubject);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message); // Return the error message if a duplicate name is found
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message); // Return the error message if a validation error is found
+            }
         }
 
         // PUT: api/Subjects/{id}
@@ -134,11 +143,19 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var subject = await _appSubjectServices.UpdateSubjectAsync(id, subjectDTO);
-                return Ok(new {subject.Id, subject.SubjectName, subject.Price, subject.Status});
+                return Ok(subject);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message); // Return the error message if a duplicate name is found
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message); // Return the error message if a validation error is found
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(new { message = ex.Message });
+                return NotFound(ex.Message); // Return 404 if the subject is not found
             }
         }
 
@@ -158,7 +175,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var subject = await _appSubjectServices.ChangeSubjectStatusAsync(id);
-                return Ok(new {subject.Id, subject.SubjectName, subject.Price, subject.Status});
+                return Ok(subject);
             }
             catch (KeyNotFoundException ex)
             {

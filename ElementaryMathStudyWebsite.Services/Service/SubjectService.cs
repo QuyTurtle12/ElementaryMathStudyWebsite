@@ -1,6 +1,7 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.Services.Interface;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
@@ -34,22 +35,47 @@ public class SubjectService : ISubjectService, IAppSubjectServices
     }
 
     // Create a new subject
-    public async Task<Subject> CreateSubjectAsync(SubjectDTO subjectDTO)
+    public async Task<SubjectAdminViewDTO> CreateSubjectAsync(SubjectDTO subjectDTO)
     {
         ValidateSubject(subjectDTO);
+
+        // Check if another subject with the same name already exists
+        var existingSubject = await _subjectRepository.Entities
+            .Where(s => s.SubjectName == subjectDTO.SubjectName)
+            .FirstOrDefaultAsync();
+
+        if (existingSubject != null)
+        {
+            throw new InvalidOperationException($"A subject with the name '{subjectDTO.SubjectName}' already exists.");
+        }
 
         var subject = new Subject
         {
             SubjectName = subjectDTO.SubjectName,
             Price = subjectDTO.Price,
             Status = subjectDTO.Status,
+            CreatedTime = DateTime.UtcNow,
+            LastUpdatedTime = DateTime.UtcNow // Set initial LastUpdatedTime as well
         };
 
         _subjectRepository.Insert(subject);
         await _subjectRepository.SaveAsync();
 
-        return subject;
+        return new SubjectAdminViewDTO
+        {
+            Id = subject.Id,
+            SubjectName = subject.SubjectName,
+            Price = subject.Price,
+            Status = subject.Status,
+            CreatedBy = subject.CreatedBy,
+            CreatedTime = subject.CreatedTime,
+            LastUpdatedBy = subject.LastUpdatedBy,
+            LastUpdatedTime = subject.LastUpdatedTime,
+            DeletedBy = subject.DeletedBy,
+            DeletedTime = subject.DeletedTime
+        };
     }
+
 
     // Get all subjects, returning as DTOs
     public async Task<BasePaginatedList<object>> GetAllSubjectsAsync(int pageNumber, int pageSize, bool isAdmin)
@@ -195,8 +221,8 @@ public class SubjectService : ISubjectService, IAppSubjectServices
         return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count(), pageNumber, pageSize);
     }
 
-    // Update subject
-    public async Task<Subject> UpdateSubjectAsync(string id, SubjectDTO subjectDTO)
+    // Update subject and set LastUpdatedTime to current time
+    public async Task<SubjectAdminViewDTO> UpdateSubjectAsync(string id, SubjectDTO subjectDTO)
     {
         var subject = await _subjectRepository.GetByIdAsync(id);
         if (subject == null)
@@ -204,19 +230,43 @@ public class SubjectService : ISubjectService, IAppSubjectServices
             throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
         }
 
+        // Check if another subject with the same name already exists
+        var existingSubject = await _subjectRepository.Entities
+            .Where(s => s.SubjectName == subjectDTO.SubjectName) // Exclude the current subject by its ID
+            .FirstOrDefaultAsync();
+
+        if (existingSubject != null)
+        {
+            throw new InvalidOperationException($"A subject with the name '{subjectDTO.SubjectName}' already exists.");
+        }
+
         ValidateSubject(subjectDTO);
 
         subject.SubjectName = subjectDTO.SubjectName;
         subject.Price = subjectDTO.Price;
         subject.Status = subjectDTO.Status;
+        subject.LastUpdatedTime = DateTime.UtcNow;
 
         _subjectRepository.Update(subject);
         await _subjectRepository.SaveAsync();
-        return subject;
+
+        return new SubjectAdminViewDTO
+        {
+            Id = subject.Id,
+            SubjectName = subject.SubjectName,
+            Price = subject.Price,
+            Status = subject.Status,
+            CreatedBy = subject.CreatedBy,
+            CreatedTime = subject.CreatedTime,
+            LastUpdatedBy = subject.LastUpdatedBy,
+            LastUpdatedTime = subject.LastUpdatedTime,
+            DeletedBy = subject.DeletedBy,
+            DeletedTime = subject.DeletedTime
+        };
     }
 
-    // Change subject status by ID
-    public async Task<Subject> ChangeSubjectStatusAsync(string id)
+    // Change subject status and set LastUpdatedTime to current time
+    public async Task<SubjectAdminViewDTO> ChangeSubjectStatusAsync(string id)
     {
         var subject = await _subjectRepository.GetByIdAsync(id);
         if (subject == null)
@@ -225,10 +275,24 @@ public class SubjectService : ISubjectService, IAppSubjectServices
         }
 
         subject.Status = !subject.Status;
+        subject.LastUpdatedTime = DateTime.UtcNow;
 
         _subjectRepository.Update(subject);
         await _subjectRepository.SaveAsync();
-        return subject;
+
+        return new SubjectAdminViewDTO
+        {
+            Id = subject.Id,
+            SubjectName = subject.SubjectName,
+            Price = subject.Price,
+            Status = subject.Status,
+            CreatedBy = subject.CreatedBy,
+            CreatedTime = subject.CreatedTime,
+            LastUpdatedBy = subject.LastUpdatedBy,
+            LastUpdatedTime = subject.LastUpdatedTime,
+            DeletedBy = subject.DeletedBy,
+            DeletedTime = subject.DeletedTime
+        };
     }
 
     public async Task<string> GetSubjectNameAsync(string subjectId)
