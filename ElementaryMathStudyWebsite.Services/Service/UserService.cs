@@ -52,7 +52,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return user;
         }
 
-        public async Task<BasePaginatedList<UserResponseDto>> GetAllUsersAsync(int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<User>> GetAllUsersAsync(int pageNumber, int pageSize)
         {
             // Validate pageNumber and pageSize
             if (pageNumber <= 0) pageNumber = 1;
@@ -64,7 +64,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-                user => user.Role // Include the Role navigation property
+        user => user.Role // Include the Role navigation property
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
@@ -73,12 +73,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Retrieve paginated users from the repository
             var paginatedUsers = await _userRepository.GetPaggingDto(query, pageNumber, pageSize);
 
-            // Map the paginated users to the response DTO
-            var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
-
-            // Return the paginated result with mapped DTOs
-            return new BasePaginatedList<UserResponseDto>(userDtos.ToList(), paginatedUsers.TotalItems, paginatedUsers.CurrentPage, paginatedUsers.PageSize);
+            // Return the paginated result with users
+            return new BasePaginatedList<User>(paginatedUsers.Items, paginatedUsers.TotalItems, paginatedUsers.CurrentPage, paginatedUsers.PageSize);
         }
+
 
 
 

@@ -10,7 +10,7 @@ namespace ElementaryMathStudyWebsite.Core.Services.IDomainService
     {
         //Task<User> CreateUserAsync(CreateUserDto dto);
         // Other user-related methods can be added here
-        Task<BasePaginatedList<UserResponseDto>> GetAllUsersAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<User>> GetAllUsersAsync(int pageNumber, int pageSize);
         Task<string?> GetUserNameAsync(string userId);
 
         Task<User?> GetUserByIdAsync(string userId);

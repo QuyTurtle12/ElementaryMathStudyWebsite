@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Core.Base;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -62,13 +63,26 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var paginatedUsers = await _userServices.GetAllUsersAsync(pageNumber, pageSize);
-                return Ok(paginatedUsers);
+
+                // Map users to UserResponseDto
+                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+
+                // Create a new paginated list of UserResponseDto
+                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                    userDtos.ToList(),
+                    paginatedUsers.TotalItems,
+                    paginatedUsers.CurrentPage,
+                    paginatedUsers.PageSize
+                );
+
+                return Ok(paginatedUserDtos);
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
             }
         }
+
 
         [HttpGet]
         [Route("get/{userId}")]
@@ -100,6 +114,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         [HttpPut]
         [Route("update/{userId}")]
+        [Authorize(Policy = "Manager")]
         public async Task<IActionResult> UpdateUser(string userId, [FromBody] UpdateUserDto updateUserDto)
         {
             if (string.IsNullOrWhiteSpace(userId))
