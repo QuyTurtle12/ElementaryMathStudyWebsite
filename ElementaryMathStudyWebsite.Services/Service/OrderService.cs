@@ -4,6 +4,7 @@ using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Contract.Services.Interface;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
