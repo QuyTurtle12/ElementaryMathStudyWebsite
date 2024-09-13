@@ -28,18 +28,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> GetAllActiveSubjects(int pageNumber = 1, int pageSize = 10)
         {
-            if (pageSize != -1 && (pageNumber < 1 || pageNumber > pageSize))
-            {
-                return BadRequest("pageNumber must be between 1 and " + pageSize);
-            }
-
-            var activeSubjects = pageSize > 0
-                                 ? (await _subjectService.GetAllSubjectsAsync())
-                                    .Where(s => (bool)s.GetType().GetProperty("Status").GetValue(s)) // Filter by active status
-                                    .Skip((pageNumber - 1) * pageSize)
-                                    .Take(pageSize)
-                                 : (await _subjectService.GetAllSubjectsAsync())
-                                    .Where(s => (bool)s.GetType().GetProperty("Status").GetValue(s));
+            var activeSubjects = await _subjectService.GetAllSubjectsAsync(pageNumber, pageSize, false);
 
             return Ok(activeSubjects);
         }
@@ -54,26 +43,16 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var subject = await _subjectService.GetSubjectByIDAsync(id);
-
-                // Ensure the subject is active
-                if (subject.Status == false)
-                {
-                    return NotFound(new { message = $"Subject with ID '{id}' is inactive." });
-                }
-
-                var subjectDTO = new SubjectDTO
-                {
-                    SubjectName = subject.SubjectName,
-                    Price = subject.Price,
-                    Status = subject.Status
-                };
-
-                return Ok(subjectDTO);
+                var subject = await _subjectService.GetSubjectByIDAsync(id, false); //not Admin
+                return Ok(subject);
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Internal server error: {ex.Message}" });
             }
         }
 
@@ -85,15 +64,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> GetAllSubjectsForAdmin(int pageNumber = 1, int pageSize = 10)
         {
-            if (pageSize != -1 && (pageNumber < 1 || pageNumber > pageSize))
-            {
-                return BadRequest("pageNumber must be between 1 and " + pageSize);
-            }
-
-            var subjects = pageSize > 0 ? (await _subjectService.GetAllSubjectsAsync())
-                                        .Skip((pageNumber - 1) * pageSize)
-                                        .Take(pageSize)
-                                        : await _subjectService.GetAllSubjectsAsync();
+            var subjects = await _subjectService.GetAllSubjectsAsync(pageNumber, pageSize, true); //true mean it was admin
 
             return Ok(subjects);
         }
@@ -108,22 +79,19 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var subject = await _subjectService.GetSubjectByIDAsync(id);
-
-                var subjectDTO = new SubjectDTO
-                {
-                    SubjectName = subject.SubjectName,
-                    Price = subject.Price,
-                    Status = subject.Status
-                };
-
-                return Ok(subjectDTO);
+                var subject = await _subjectService.GetSubjectByIDAsync(id, true); //is Admin
+                return Ok(subject);
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Internal server error: {ex.Message}" });
+            }
         }
+
 
         // POST: api/Subjects
         [HttpPost]
@@ -217,16 +185,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return BadRequest("Search term must be at least 2 characters long.");
             }
 
-            if (pageSize != -1 && (pageNumber < 1 || pageNumber > pageSize))
-            {
-                return BadRequest("pageNumber must be between 1 and " + pageSize);
-            }
-
             try
             {
-                var subjects = (await _appSubjectServices.SearchSubjectAsync(searchTerm))
-                                                    .Skip((pageNumber - 1) * pageSize)
-                                                    .Take(pageSize);
+                var subjects = await _appSubjectServices.SearchSubjectAsync(searchTerm, pageNumber, pageSize);
                 return Ok(subjects);
             }
             catch (KeyNotFoundException ex)

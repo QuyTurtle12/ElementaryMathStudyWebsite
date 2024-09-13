@@ -1,5 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Core.Base;
 
 namespace ElementaryMathStudyWebsite.Contract.Services.Interface
 {
@@ -8,9 +9,9 @@ namespace ElementaryMathStudyWebsite.Contract.Services.Interface
         Task<bool> IsValidSubjectAsync(string subjectId);
         Task<string> GetSubjectNameAsync(string subjectId);
         // Get all subjects
-        Task<IEnumerable<object>> GetAllSubjectsAsync();
+        Task<BasePaginatedList<object>> GetAllSubjectsAsync(int pageNumber, int pageSize, bool isAdmin);
 
         // Get a subject by ID
-        Task<Subject> GetSubjectByIDAsync(string id);
+        Task<object> GetSubjectByIDAsync(string id, bool isAdmin);
     }
 }
