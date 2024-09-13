@@ -70,6 +70,36 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         /// <summary>
+        /// Retrieves a list of all users with their associated roles.
+        /// </summary>
+        /// <returns>Returns a list of users with their roles.</returns>
+        /// <response code="200">List of users retrieved successfully.</response>
+        /// <response code="500">Internal server error.</response>
+        [HttpGet]
+        [Route("all-list")]
+        [SwaggerOperation(
+            Summary = "Authorization: N/A",
+            Description = "Get a list with all users"
+            )]
+        public async Task<IActionResult> GetAllUsersWithRoles()
+        {
+            try
+            {
+                var users = await _userServices.GetAllUsersWithRolesAsync();
+
+                // Map the users to UserResponseDto
+                var userResponseDtos = _mapper.Map<IEnumerable<UserResponseDto>>(users);
+
+                return Ok(userResponseDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
+        /// <summary>
         /// Retrieves all users with pagination.
         /// </summary>
         /// <param name="pageNumber">The page number to retrieve (default is 1).</param>
@@ -78,7 +108,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <response code="200">List of users retrieved successfully.</response>
         /// <response code="500">Internal server error.</response>
         [HttpGet]
-        [Route("all")]
+        [Route("all-pagination")]
         [SwaggerOperation(
             Summary = "Authorization: N/A",
             Description = "Get page with all users "
@@ -107,6 +137,39 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
             }
         }
+
+        [HttpGet]
+        [Route("search")]
+        [SwaggerOperation(
+    Summary = "Authorization: N/A",
+    Description = "Search users based on name, status, phone, and email with pagination."
+)]
+        public async Task<IActionResult> SearchUsers([FromQuery] string? name, [FromQuery] bool? status, [FromQuery] string? phone, [FromQuery] string? email, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var paginatedUsers = await _userServices.SearchUsersAsync(name, status, phone, email, pageNumber, pageSize);
+
+                // Map users to UserResponseDto
+                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+
+                // Create a new paginated list of UserResponseDto
+                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                    userDtos.ToList(),
+                    paginatedUsers.TotalItems,
+                    paginatedUsers.CurrentPage,
+                    paginatedUsers.PageSize
+                );
+
+                return Ok(paginatedUserDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
 
         /// <summary>
         /// Retrieves a user by their ID.
