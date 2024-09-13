@@ -6,6 +6,7 @@ using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -24,7 +25,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/orders/manager
         // Get orders for Manager & Admin
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("manager")]
         [SwaggerOperation(
@@ -46,7 +47,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/orders/manager/{id}
         // Get orders for Manager & Admin
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("manager/{id}")]
         [SwaggerOperation(

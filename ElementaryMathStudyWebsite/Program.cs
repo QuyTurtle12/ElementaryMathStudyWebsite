@@ -1,3 +1,5 @@
+using Microsoft.OpenApi.Models;
+
 namespace ElementaryMathStudyWebsite
 {
     public class Program
@@ -21,6 +23,30 @@ namespace ElementaryMathStudyWebsite
             builder.Services.AddSwaggerGen(c =>
             {
                 c.EnableAnnotations(); // Enable annotations for Swagger
+                // Add Bearer token support to Swagger
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] {}
+                    }
+                });
             });
             builder.Services.AddConfig(builder.Configuration);
             builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>

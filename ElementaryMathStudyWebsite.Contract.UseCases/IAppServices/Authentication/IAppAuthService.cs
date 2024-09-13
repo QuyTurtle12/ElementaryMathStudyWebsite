@@ -2,7 +2,7 @@
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication
 {
-    public interface IAuthenticationService
+    public interface IAppAuthService
     {
         Task<string> LoginAsync(LoginDto loginDto);
     }

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using System.Linq.Expressions;
 
 namespace ElementaryMathStudyWebsite.Infrastructure.UOW
 {
@@ -61,6 +62,21 @@ namespace ElementaryMathStudyWebsite.Infrastructure.UOW
             return new BasePaginatedList<T>(items, count, index, pageSize);
         }
 
+        public async Task<BasePaginatedList<T>> GetPaggingDto(IQueryable<T> query, int pageNumber, int pageSize)
+        {
+            // Calculate total count
+            int count = await query.CountAsync();
+
+            // Apply pagination
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new BasePaginatedList<T>(items, count, pageNumber, pageSize);
+        }
+
+
         public void Insert(T obj)
         {
             _dbSet.Add(obj);
@@ -95,5 +111,40 @@ namespace ElementaryMathStudyWebsite.Infrastructure.UOW
         {
             return Task.FromResult(_dbSet.Update(obj));
         }
+
+        // New method: FindByConditionAsync
+        public async Task<T?> FindByConditionAsync(Expression<Func<T, bool>> expression)
+        {
+            return await _dbSet.FirstOrDefaultAsync(expression);
+        }
+        public async Task<T?> FindByConditionWithIncludesAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = _dbSet;
+
+            // Apply eager loading for all specified navigation properties
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+
+            // Apply the specified condition
+            return await query.FirstOrDefaultAsync(expression);
+        }
+
+        // New method: GetEntitiesWithCondition
+        public IQueryable<T> GetEntitiesWithCondition(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = _dbSet;
+
+            // Apply eager loading for all specified navigation properties
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+
+            // Apply the specified condition
+            return query.Where(expression);
+        }
+
     }
 }
