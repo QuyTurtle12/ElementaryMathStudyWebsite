@@ -139,7 +139,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                 // General Validation for each Subject-Student pair
                 foreach (var subjectStudent in orderCreateDto.SubjectStudents)
                 {
-                    string? error = await orderAppService.IsGenerallyValidated(subjectStudent.SubjectId, subjectStudent.StudentId, orderCreateDto.CustomerId, orderCreateDto.TotalPrice);
+                    string? error = await orderAppService.IsGenerallyValidated(subjectStudent.SubjectId, subjectStudent.StudentId, orderCreateDto.CustomerId);
                     if (!string.IsNullOrWhiteSpace(error)) return BadRequest(error);
                 }
 
@@ -163,14 +163,14 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/orders/detail
         // Get order detail list of order for parent
-        //[Authorize(Policy = "Parent")]
+        [Authorize(Policy = "Parent")]
         [HttpGet]
         [Route("detail")]
         [SwaggerOperation(
             Summary = "Authorization: Parent",
             Description = "View order detail list for Parent. Insert -1 to get all items"
             )]
-        public async Task<ActionResult<BasePaginatedList<OrderDetailViewDto>>> GetOrderDetailsDto([Required] string orderId, int pageNumber = -1, int pageSize = -1)
+        public async Task<ActionResult<BasePaginatedList<OrderDetailViewDto>>> GetOrderDetailsDto([Required] string orderId, int pageNumber = 1, int pageSize = 10)
         {
             try
             {
@@ -181,6 +181,35 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "Invalid input: " + ex.Message);
+            }
+        }
+
+
+        // GET: api/orders/search
+        // Search order dto list by filter
+        [Authorize(Policy = "Admin-Manager")]
+        [HttpGet]
+        [Route("search")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Search order list by a filter. Filter list: customer id, customer email, customer phone, order date, total price. Example format: " +
+            "customer id: 00000000-0000-0000-0000-000000000000, " +
+            "customer phone: 0XXXXXXXXXX using 10 digits or 11 digits," +
+            "order date: dd/MM/yyyy, " +
+            "total amount: 1000000"
+            )]
+        public async Task<ActionResult<BasePaginatedList<OrderDetailViewDto>>> SearchOrders(int pageNumber = 1, int pageSize = 5, string? firstInputValue = null, string? secondInputValue = null, string filter = "customer phone")
+        {
+            try
+            {
+                // Cast domain service to application service
+                var appService = _orderService as IAppOrderServices;
+
+                return Ok(await appService.searchOrderDtosAsync(pageNumber, pageSize, firstInputValue, secondInputValue, filter));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
             }
         }
     }

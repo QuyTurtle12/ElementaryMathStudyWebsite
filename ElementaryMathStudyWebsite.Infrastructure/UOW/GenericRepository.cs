@@ -51,29 +51,28 @@ namespace ElementaryMathStudyWebsite.Infrastructure.UOW
 
         public async Task<BasePaginatedList<T>> GetPagging(IQueryable<T> query, int index, int pageSize)
         {
-            //query = query.AsNoTracking();
-            //int count = await query.CountAsync();
-            //IReadOnlyCollection<T> items = await query.Skip((pageSize - 1) * pageSize).Take(pageSize).ToListAsync();
-            //return new BasePaginatedList<T>(items, count, index, pageSize);
-
             query = query.AsNoTracking();
             int count = await query.CountAsync();
             IReadOnlyCollection<T> items = await query.Skip((index - 1) * pageSize).Take(pageSize).ToListAsync();
             return new BasePaginatedList<T>(items, count, index, pageSize);
         }
 
-        public async Task<BasePaginatedList<T>> GetPaggingDto(IQueryable<T> query, int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<T>> GetPaggingDto(IEnumerable<T> items, int pageNumber, int pageSize)
         {
-            // Calculate total count
-            int count = await query.CountAsync();
+            // Convert the collection to a list (to ensure we can count and paginate it in-memory)
+            var itemList = items.ToList();
+
+            // Calculate total count of the items
+            int count = itemList.Count;
 
             // Apply pagination
-            var items = await query
+            var pagedItems = itemList
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync();
+                .ToList();
 
-            return new BasePaginatedList<T>(items, count, pageNumber, pageSize);
+            // Return a new paginated list (no async operation here since it's in-memory)
+            return new BasePaginatedList<T>(pagedItems, count, pageNumber, pageSize);
         }
 
 
