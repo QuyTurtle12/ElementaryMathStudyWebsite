@@ -41,6 +41,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         }
 
+        // Get Order Detail list by order Id 
         public async Task<BasePaginatedList<OrderDetailViewDto?>> GetOrderDetailDtoListByOrderIdAsync(int pageNumber, int pageSize, string orderId)
         {
             // Get all order details from database
@@ -55,10 +56,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 // Map orders to OrderViewDto
                 foreach (var detail in allDetails)
                 {
+                    // Cast domain service to application service
+                    var userAppService = _userService as IAppUserServices;
+                    var subjectAppService = _subjectService as IAppSubjectServices;
+
                     if (detail.OrderId == orderId)
                     {
-                        string? studentName = await _userService.GetUserNameAsync(detail.StudentId);
-                        string? subjectName = await _subjectService.GetSubjectNameAsync(detail.SubjectId);
+                        string? studentName = await userAppService.GetUserNameAsync(detail.StudentId);
+                        string? subjectName = await subjectAppService.GetSubjectNameAsync(detail.SubjectId);
                         OrderDetailViewDto dto = new OrderDetailViewDto(subjectName, studentName);
                         detailDtos.Add(dto);
                     }
@@ -71,10 +76,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
             BasePaginatedList<OrderDetail>? paginatedOrders = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
             foreach (var detail in paginatedOrders.Items)
             {
+                // Cast domain service to application service
+                var userAppService = _userService as IAppUserServices;
+                var subjectAppService = _subjectService as IAppSubjectServices;
+
                 if (detail.OrderId == orderId)
                 {
-                    string? studentName = await _userService.GetUserNameAsync(detail.StudentId);
-                    string? subjectName = await _subjectService.GetSubjectNameAsync(detail.SubjectId);
+                    string? studentName = await userAppService.GetUserNameAsync(detail.StudentId);
+                    string? subjectName = await subjectAppService.GetSubjectNameAsync(detail.SubjectId);
                     detailDtos.Add(new OrderDetailViewDto(subjectName, studentName));
                 }
             }

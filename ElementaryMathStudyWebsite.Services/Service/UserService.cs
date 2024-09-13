@@ -9,6 +9,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IGenericRepository<User> _userRepository;
         private readonly IUnitOfWork _unitOfWork;
 
+        // Constructor
         public UserService(IGenericRepository<User> userRepository, IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;

@@ -78,6 +78,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return order;
         }
 
+        // Get order with selected property
         public async Task<OrderViewDto?> GetOrderDtoByOrderIdAsync(string orderId)
         {
             // Cast domain service to application service
