@@ -16,8 +16,13 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto
 
         public string? Email { get; set; }  // Optional: User's email address
 
-        public string? RoleId { get; set; }  // Role identifier assigned to the user
+        public RoleDto? Role { get; set; }
 
         public string Username { get; set; } = string.Empty;  // User's username
+    }
+    public class RoleDto
+    {
+        public string? RoleId { get; set; }
+        public string? RoleName { get; set; }
     }
 }

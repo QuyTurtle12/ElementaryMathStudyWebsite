@@ -4,6 +4,7 @@ using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 {
@@ -20,7 +21,10 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 
         public async Task<User?> ValidateUserCredentialsAsync(string username, string password)
         {
-            User? user = await _userRepository.Entities.FirstOrDefaultAsync(u => u.Username == username);
+            User? user = await _userRepository.FindByConditionWithIncludesAsync(
+                u => u.Username == username,
+                u => u.Role // Include the 'Role' navigation property
+            );
 
             if (user != null && BCrypt.Net.BCrypt.Verify(password, user.Password))
             {
@@ -41,4 +45,5 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             return user?.Status ?? false;
         }
     }
+
 }

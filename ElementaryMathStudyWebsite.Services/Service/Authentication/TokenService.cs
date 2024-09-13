@@ -1,5 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -25,21 +26,34 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
         /// <returns>A JWT token as a string.</returns>
         public string GenerateJwtToken(User user)
         {
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user), "User object cannot be null.");
+            }
+
             // Retrieve the JWT secret from configuration
-            var secret = _configuration["JwtSettings:Secret"] ?? throw new ArgumentNullException("JwtSettings:Secret");
+            var secret = _configuration["JwtSettings:Secret"];
+            if (string.IsNullOrEmpty(secret))
+            {
+                throw new ArgumentNullException("JwtSettings:Secret", "JWT Secret not found in configuration.");
+            }
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // Create claims based on user information
+            // Create claims based on user information, with null checks
             var claims = new List<Claim>
             {
-                new Claim("username", user.Username),
-                new Claim("userId", user.Id.ToString())
-
+                new Claim("username", user.Username ?? string.Empty),
+                new Claim("userId", user.Id ?? string.Empty),
+                new Claim("roleName", user.Role?.RoleName ?? string.Empty) // Safely handle null Role
             };
 
-            // Retrieve the token expiry period from configuration
-            var expiryInDays = int.Parse(_configuration["JwtSettings:ExpiryInDays"] ?? "1");
+            // Retrieve the token expiry period from configuration, handle parsing errors
+            if (!int.TryParse(_configuration["JwtSettings:ExpiryInDays"], out var expiryInDays))
+            {
+                expiryInDays = 1; // Default to 1 day if parsing fails or value is not set
+            }
 
             // Create and return the JWT token
             var token = new JwtSecurityToken(
@@ -50,6 +64,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
 
         /// <summary>
         /// Decodes and validates a JWT token, returning the claims principal.

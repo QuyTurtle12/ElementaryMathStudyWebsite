@@ -117,5 +117,34 @@ namespace ElementaryMathStudyWebsite.Infrastructure.UOW
         {
             return await _dbSet.FirstOrDefaultAsync(expression);
         }
+        public async Task<T?> FindByConditionWithIncludesAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = _dbSet;
+
+            // Apply eager loading for all specified navigation properties
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+
+            // Apply the specified condition
+            return await query.FirstOrDefaultAsync(expression);
+        }
+
+        // New method: GetEntitiesWithCondition
+        public IQueryable<T> GetEntitiesWithCondition(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = _dbSet;
+
+            // Apply eager loading for all specified navigation properties
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+
+            // Apply the specified condition
+            return query.Where(expression);
+        }
+
     }
 }
