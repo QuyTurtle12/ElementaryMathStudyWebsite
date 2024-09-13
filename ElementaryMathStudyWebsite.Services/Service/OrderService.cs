@@ -80,11 +80,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<OrderViewDto?> GetOrderDtoByOrderIdAsync(string orderId)
         {
+            // Cast domain service to application service
+            var appService = _userService as IAppUserServices;
+
             Order? order = await _orderRepository.GetByIdAsync(orderId);
 
             if (order == null) return null;
 
-            string customerName = await _userService.GetUserNameAsync(order.CustomerId);
+            string customerName = await appService.GetUserNameAsync(order.CustomerId);
 
             OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
 
@@ -99,6 +102,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<Order> query = _orderRepository.Entities;
             IList<OrderViewDto> orderDtos = new List<OrderViewDto>();
 
+            // Cast domain service to application service
+            var appService = _userService as IAppUserServices;
+
             // If pageNumber or pageSize are 0 or negative, show all orders without pagination
             if (pageNumber <= 0 || pageSize <= 0)
             {
@@ -106,7 +112,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 // Map orders to OrderViewDto
                 foreach (var order in allOrders)
                 {
-                    string? customerName = await _userService.GetUserNameAsync(order.CustomerId);
+                    string? customerName = await appService.GetUserNameAsync(order.CustomerId);
                     OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
                     orderDtos.Add(dto);
                 }
@@ -118,7 +124,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             BasePaginatedList<Order>? paginatedOrders = await _orderRepository.GetPagging(query, pageNumber, pageSize);
             foreach (var order in paginatedOrders.Items)
             {
-                string? customerName = await _userService.GetUserNameAsync(order.CustomerId);
+                string? customerName = await appService.GetUserNameAsync(order.CustomerId);
                 orderDtos.Add(new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime));
             }
 
@@ -147,10 +153,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // General Validation
         public async Task<string?> IsGenerallyValidated(string subjectId, string studentId, string parentId, double totalPrice)
         {
-            // Check if subject is existed
-            if (!await _subjectService.IsValidSubjectAsync(subjectId)) return $"The subject Id {subjectId} is not exist";
+            // Cast domain service to application service
+            var userAppService = _userService as IAppUserServices;
 
-            if (!await _userService.IsCustomerChildren(parentId, studentId)) return "They are not parents and children";
+            // Cast domain service to application service
+            var subjectAppService = _subjectService as IAppSubjectServices;
+
+            // Check if subject is existed
+            if (!await subjectAppService.IsValidSubjectAsync(subjectId)) return $"The subject Id {subjectId} is not exist";
+
+            if (!await userAppService.IsCustomerChildren(parentId, studentId)) return "They are not parents and children";
 
             if (totalPrice <= 0) return "Invalid price number";
 

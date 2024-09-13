@@ -20,6 +20,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             throw new NotImplementedException();
         }
 
+        // Get user name from database
         public async Task<string?> GetUserNameAsync(string userId)
         {
             try
@@ -40,6 +41,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         }
 
+        // Check if the relationship between two users is parents and child
         public async Task<bool> IsCustomerChildren(string parentId, string studentId)
         {
             User? student = await _userRepository.GetByIdAsync(studentId);

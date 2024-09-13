@@ -4,10 +4,7 @@ namespace ElementaryMathStudyWebsite.Core.Services.IDomainService
 {
     public interface IUserService
     {
-        Task<string?> GetUserNameAsync(string userId);
-
+        // Get user by Id
         Task<User?> GetUserByIdAsync(string userId);
-
-        Task<bool> IsCustomerChildren(string parentId, string studentId);
     }
 }
