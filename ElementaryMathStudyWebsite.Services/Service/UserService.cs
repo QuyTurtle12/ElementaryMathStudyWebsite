@@ -284,7 +284,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
 
-        private void AuditFields(BaseEntity entity, bool isCreating = false)
+        public void AuditFields(BaseEntity entity, bool isCreating = false)
         {
             // Retrieve the JWT token from the Authorization header
             var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
