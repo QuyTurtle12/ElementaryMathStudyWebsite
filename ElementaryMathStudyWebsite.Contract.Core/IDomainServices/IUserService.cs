@@ -1,6 +1,4 @@
-﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
-using ElementaryMathStudyWebsite.Core.Base;
+﻿using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 

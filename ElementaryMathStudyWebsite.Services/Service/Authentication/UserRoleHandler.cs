@@ -1,7 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using Microsoft.AspNetCore.Authorization;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 {

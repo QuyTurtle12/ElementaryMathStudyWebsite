@@ -1,8 +1,4 @@
-﻿
-
-using System.ComponentModel.DataAnnotations;
-
-namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto
+﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto
 {
     public class UserResponseDto
     {

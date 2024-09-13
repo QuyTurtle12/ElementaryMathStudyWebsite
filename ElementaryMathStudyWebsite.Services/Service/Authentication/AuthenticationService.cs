@@ -1,10 +1,8 @@
 ﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
-using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 {
