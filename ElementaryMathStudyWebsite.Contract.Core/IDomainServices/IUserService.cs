@@ -16,6 +16,7 @@ namespace ElementaryMathStudyWebsite.Core.Services.IDomainService
         Task<User?> GetUserByIdAsync(string userId);
 
         Task<bool> IsCustomerChildren(string parentId, string studentId);
+        Task<bool> DisableUserAsync(string userId);
 
         //Task<User> UpdateUserAsync(string userId, UpdateUserDto dto);
     }
