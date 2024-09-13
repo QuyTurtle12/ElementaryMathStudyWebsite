@@ -14,8 +14,6 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public string? QuizId { get; set; } // Quiz may not exist yet and can be created later
 
-        public double? Criteria { get; set; } // Mark that need to be achieved to passed
-
         // Navigation properties
         public virtual User? CreatedByUser { get; set; }
         public virtual User? LastUpdatedByUser { get; set; }
@@ -26,14 +24,13 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public Chapter() { }
 
-        public Chapter(int? number, string chapterName, string? quizId, double? criteria, string subjectId)
+        public Chapter(int? number, string chapterName, string? quizId, string subjectId)
         {
             Number = number;
             ChapterName = chapterName;
             Status = true; // Always true when initialized
             SubjectId = subjectId;
             QuizId = quizId;
-            Criteria = criteria;
         }
     }
 }

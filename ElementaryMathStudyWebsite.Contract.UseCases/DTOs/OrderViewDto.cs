@@ -7,5 +7,14 @@
         public double? TotalPrice { get; set; }
 
         public DateTimeOffset? OrderDate { get; set; }
+
+        public OrderViewDto() { }
+
+        public OrderViewDto(string customerName, double? totalPrice, DateTimeOffset? orderDate)
+        {
+            CustomerName = customerName;
+            TotalPrice = totalPrice;
+            OrderDate = orderDate;
+        }
     }
 }

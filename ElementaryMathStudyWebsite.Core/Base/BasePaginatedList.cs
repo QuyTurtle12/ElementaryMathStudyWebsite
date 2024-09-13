@@ -2,6 +2,7 @@
 {
     public class BasePaginatedList<T>
     {
+
         public IReadOnlyCollection<T> Items { get; private set; }
 
         // Property to store the total number of items
