@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
+namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos
 {
-    public class SubjectDTO
+    public class SubjectDTO : ISubjectBaseDTO
     {
         public string SubjectName { get; set; } = string.Empty; // avoid null reference issues
 
