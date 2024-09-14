@@ -6,6 +6,8 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using Microsoft.AspNetCore.Http;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -18,9 +20,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IUserService _userService;
         private readonly IOrderDetailService _orderDetailService;
         private readonly ISubjectService _subjectService;
+        private readonly ITokenService _tokenService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         // Constructor
-        public OrderService(IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork, IUserService userService, IOrderDetailService orderDetailService, ISubjectService subjectService = null, IGenericRepository<OrderViewDto> orderViewRepository = null, IGenericRepository<User> userRepository = null)
+        public OrderService(IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork, IUserService userService, IOrderDetailService orderDetailService, ISubjectService subjectService = null, IGenericRepository<OrderViewDto> orderViewRepository = null, IGenericRepository<User> userRepository = null, ITokenService tokenService = null, IHttpContextAccessor httpContextAccessor = null)
         {
             _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
@@ -29,6 +33,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _subjectService = subjectService ?? throw new ArgumentNullException(nameof(subjectService));
             _orderViewRepository = orderViewRepository ?? throw new ArgumentNullException(nameof(orderViewRepository));
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         }
 
         // Add new order to database
@@ -42,13 +48,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 // Validate if subject is valid, if total price equal -1 means subject is invalid
                 if (totalPrice == -1) { return false; }
 
+                // Get logged in User Id from authorization header 
+                var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString();
+
                 Order order = new Order
                 {
-                    CustomerId = dto.CustomerId,
+                    CustomerId = currentUserId,
                     TotalPrice = totalPrice,
-                    CreatedBy = dto.CustomerId,
-                    LastUpdatedBy = dto.CustomerId
+                    CreatedBy = currentUserId,
+                    LastUpdatedBy = currentUserId
                 };
+
+                // Cast domain service to application service
+                var userAppService = _userService as IAppUserServices;
 
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveAsync();
@@ -186,10 +199,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
 
         // General Validation
-        public async Task<string?> IsGenerallyValidated(string subjectId, string studentId, string parentId)
+        public async Task<string?> IsGenerallyValidated(string subjectId, string studentId)
         {
             // Cast domain service to application service
             var userAppService = _userService as IAppUserServices;
+
+            // Get logged in User Id from authorization header 
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString();
 
             // Cast domain service to application service
             var subjectAppService = _subjectService as IAppSubjectServices;
@@ -197,7 +214,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Check if subject is existed
             if (!await subjectAppService.IsValidSubjectAsync(subjectId)) return $"The subject Id {subjectId} is not exist";
 
-            if (!await userAppService.IsCustomerChildren(parentId, studentId)) return "They are not parents and children";
+            if (!await userAppService.IsCustomerChildren(currentUserId, studentId)) return "They are not parents and children";
 
             return null;
         }

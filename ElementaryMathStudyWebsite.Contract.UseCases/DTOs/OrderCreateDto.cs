@@ -2,7 +2,6 @@
 {
     public class OrderCreateDto
     {
-        public string CustomerId { get; set; } = string.Empty;
         public List<SubjectStudentDto> SubjectStudents { get; set; } = new List<SubjectStudentDto>();
 
         public OrderCreateDto() { }
