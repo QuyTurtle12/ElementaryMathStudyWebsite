@@ -297,7 +297,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Always set LastUpdatedBy and LastUpdatedTime fields
-            entity.LastUpdatedBy = currentUserId.ToString(); // Set the current user's ID
+            entity.LastUpdatedBy = currentUserId.ToString().ToUpper(); // Set the current user's ID
             entity.LastUpdatedTime = DateTime.UtcNow;
         }
 
