@@ -48,7 +48,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
 
-        public async Task<ChapterCreateDto> CreateChapterAsync(ChapterDto chapterDTO)
+        public async Task<ChapterAdminViewDto> CreateChapterAsync(ChapterDto chapterDTO)
         {
             ValidateChapter(chapterDTO);
 
@@ -98,7 +98,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _chapterRepository.Insert(chapter);
             await _chapterRepository.SaveAsync();
 
-            return new ChapterCreateDto
+            return new ChapterAdminViewDto
             {
                 Id = chapter.Id,
                 Number = chapter.Number,
@@ -115,7 +115,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
-        public async Task<ChapterCreateDto> UpdateChapterAsync(string id, ChapterDto chapterDTO)
+        public async Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterDto chapterDTO)
         {
             var chapter = await _chapterRepository.GetByIdAsync(id);
             if (chapter == null)
@@ -167,7 +167,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _chapterRepository.Update(chapter);
             await _chapterRepository.SaveAsync();
 
-            return new ChapterCreateDto
+            return new ChapterAdminViewDto
             {
                 Id = chapter.Id,
                 Number = chapter.Number,
@@ -183,6 +183,64 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 DeletedTime = chapter.DeletedTime
             };
         }
+
+        //public async Task<ChapterAdminViewDto> DeleteChapterAsync(string chapterId)
+        //{
+        //    try
+        //    {
+        //        var chapter = await _chapterRepository.GetByIdAsync(chapterId);
+        //        if (chapter == null)
+        //        {
+        //            throw new KeyNotFoundException($"Chapter with ID '{chapterId}' not found.");
+        //        }
+
+        //        _chapterRepository.Delete(chapter);
+        //        await _unitOfWork.SaveAsync();
+
+        //        // Chuyển đổi đối tượng chapter sang ChapterCreateDto
+        //        var chapterDto = new ChapterAdminViewDto
+        //        {
+        //            Id = chapter.Id,
+        //            Number = chapter.Number,
+        //            ChapterName = chapter.ChapterName,
+        //            Status = chapter.Status,
+        //            SubjectId = chapter.SubjectId,
+        //            QuizId = chapter.QuizId,
+        //            CreatedBy = chapter.CreatedBy,
+        //            CreatedTime = chapter.CreatedTime,
+        //            LastUpdatedBy = chapter.LastUpdatedBy,
+        //            LastUpdatedTime = chapter.LastUpdatedTime,
+        //            DeletedBy = chapter.DeletedBy,
+        //            DeletedTime = chapter.DeletedTime
+        //            // Thêm các thuộc tính khác nếu cần
+        //        };
+
+        //        return chapterDto; // Trả về DTO của chương đã bị xóa
+        //    }
+        //    catch (KeyNotFoundException ex)
+        //    {
+        //        // Log the exception (optional)
+        //        // _logger.LogError(ex, "Chapter not found");
+        //        throw; // Ném lại ngoại lệ để controller xử lý
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // Log the exception (optional)
+        //        // _logger.LogError(ex, "Error occurred while deleting chapter");
+        //        return null;
+        //    }
+        //}
+
+
+        public async Task<bool> DeleteChapter(string chapterId)
+        {
+            var option = await _chapterRepository.GetByIdAsync(chapterId) ?? throw new KeyNotFoundException("Invalid option ID");
+
+            await _chapterRepository.DeleteAsync(chapterId);
+            await _unitOfWork.SaveAsync();
+            return true;
+        }
+
 
 
         // Get one order with all properties
@@ -256,7 +314,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<bool> IsValidChapterAsync(string Id)
         {
-            // Return true if order is not null
+            // Return true if chapter is not null
             return (await _chapterRepository.GetByIdAsync(Id) is not null);
         }
 

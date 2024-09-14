@@ -195,6 +195,68 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        //[HttpDelete("{id}")]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Admin, Content Manager",
+        //    Description = "Delete a chapter by Id"
+        //)]
+        //public async Task<IActionResult> DeleteChapter(string id)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    }
+        //    try
+        //    {
+        //        var deletedChapter = await _appChapterServices.DeleteChapterAsync(id);
+
+        //        if (deletedChapter == null)
+        //        {
+        //            return NotFound($"Chapter with ID '{id}' not found.");
+        //        }
+
+        //        return Ok(deletedChapter); // Trả về DTO của chương đã bị xóa
+        //    }
+        //    catch (KeyNotFoundException ex)
+        //    {
+        //        return NotFound(ex.Message); // Trả về lỗi 404 nếu không tìm thấy chương
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // Log the exception (optional)
+        //        // _logger.LogError(ex, "Error occurred while deleting chapter");
+        //        return StatusCode(500, "Error: " + ex.Message);
+        //    }
+        //}
+
+        [HttpDelete]
+        [Route("{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "Delete an option (of a question)"
+        )]
+        public async Task<IActionResult> DeleteOption([Required] string id)
+        {
+            try
+            {
+                var chapterAppService = _appChapterServices as IAppChapterServices;
+                if (await chapterAppService.DeleteChapter(id))
+                {
+                    return Ok("Delete successfully");
+                }
+                return BadRequest("Delete unsuccessfully");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound("Error: " + ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
+
         [HttpGet("search")]
         [SwaggerOperation(
             Summary = "Authorization: Anyone",

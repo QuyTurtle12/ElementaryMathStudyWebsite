@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
 {
-    public class ChapterCreateDto
+    public class ChapterAdminViewDto
     {
         public string Id { get; set; }
         public int? Number { get; set; }
@@ -24,9 +24,9 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
         public string? DeletedBy { get; set; }
         public DateTimeOffset? DeletedTime { get; set; }
 
-        public ChapterCreateDto() { }
+        public ChapterAdminViewDto() { }
 
-        public ChapterCreateDto(int number, string chapterName, bool status, string subjectId, string quizId)
+        public ChapterAdminViewDto(int number, string chapterName, bool status, string subjectId, string quizId)
         {
             Number = number;
             ChapterName = chapterName;
