@@ -2,5 +2,6 @@
 {
     public interface IQuizService
     {
+        Task<string?> GetQuizNameAsync(string id);
     }
 }
