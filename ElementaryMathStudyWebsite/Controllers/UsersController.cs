@@ -35,9 +35,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <response code="500">Internal server error.</response>
         [HttpPost]
         [Route("create")]
-        [Authorize(Policy = "Manager")]
+        [Authorize(Policy = "Admin-Manager")]
         [SwaggerOperation(
-            Summary = "Authorization: Manager",
+            Summary = "Authorization: Admin-Manager",
             Description = "Creating new user"
             )]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserDto createUserDto)
@@ -141,9 +141,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         [HttpGet]
         [Route("search")]
         [SwaggerOperation(
-    Summary = "Authorization: N/A",
-    Description = "Search users based on name, status, phone, and email with pagination."
-)]
+            Summary = "Authorization: N/A",
+            Description = "Search users based on name, status, phone, and email with pagination."
+        )]
         public async Task<IActionResult> SearchUsers([FromQuery] string? name, [FromQuery] bool? status, [FromQuery] string? phone, [FromQuery] string? email, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             try
@@ -223,9 +223,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <response code="500">Internal server error.</response>
         [HttpPut]
         [Route("update/{userId}")]
-        [Authorize(Policy = "Manager")]
+        [Authorize(Policy = "Admin-Manager")]
         [SwaggerOperation(
-            Summary = "Authorization: Manager",
+            Summary = "Authorization: Admin-Manager",
             Description = "Updating a user"
             )]
         public async Task<IActionResult> UpdateUser(string userId, [FromBody] UpdateUserDto updateUserDto)
@@ -273,9 +273,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <response code="500">Internal server error.</response>
         [HttpPatch]
         [Route("disable/{userId}")]
-        [Authorize(Policy = "Manager")]
+        [Authorize(Policy = "Admin-Manager")]
         [SwaggerOperation(
-            Summary = "Authorization: Manager",
+            Summary = "Authorization: Admin-Manager",
             Description = "Disabling a user"
             )]
         public async Task<IActionResult> DisableUser(string userId)
