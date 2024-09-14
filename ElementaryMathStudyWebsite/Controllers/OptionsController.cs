@@ -1,5 +1,13 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+using ElementaryMathStudyWebsite.Services.Service;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -7,5 +15,141 @@ namespace ElementaryMathStudyWebsite.Controllers
     [ApiController]
     public class OptionsController : ControllerBase
     {
+        private readonly IOptionService _optionService;
+
+        public OptionsController(IOptionService optionService)
+        {
+            _optionService = optionService;
+        }
+
+        // POST: api/options/{id}
+        //[Authorize(Policy = "Admin-Manager")]
+        [HttpPost]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "Add an option (of a question)"
+            )]
+        public async Task<IActionResult> AddOption([Required] OptionCreateDto dto)
+        {
+            try
+            {
+                var optionAppService = _optionService as IAppOptionServices;
+                return Ok(await optionAppService.AddOption(dto));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
+        // DELETE: api/options/{id}
+        //[Authorize(Policy = "Admin-Manager")]
+        [HttpDelete]
+        [Route("{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "Delete an option (of a question)"
+            )]
+        public async Task<IActionResult> DeleteOption([Required] string id)
+        {
+            try
+            {
+                var optionAppService = _optionService as IAppOptionServices;
+                if (await optionAppService.DeleteOption(id))
+                {
+                    return Ok("Delete successfully");
+
+                }
+                return BadRequest("Delete unsuccessfully");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
+
+        // GET: api/options/raw/{id}
+        //[Authorize(Policy = "Admin-Manager")]
+        [HttpGet]
+        [Route("raw/{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "View an option (of a question)"
+            )]
+        public async Task<IActionResult> GetOptionById([Required] string id)
+        {
+            try
+            {
+                return Ok(await _optionService.GetOptionById(id));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
+        // GET: api/options
+        [HttpGet]
+        [Route("question")]
+        [SwaggerOperation(
+            Summary = "Authorization: Anyone",
+            Description = "View all options of 1 question"
+            )]
+        public async Task<IActionResult> GetOptionDtosByQuestion([Required] string questionId,int pageNumber = -1, int pageSize = -1)
+        {
+            try
+            {
+                var optionAppService = _optionService as IAppOptionServices;
+                return Ok(await optionAppService.GetOptionDtosByQuestion(pageNumber, pageSize, questionId));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
+
+        // GET: api/options/raw
+        //[Authorize(Policy = "Admin-Manager")]
+        [HttpGet]
+        [Route("raw")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "View all options + properties (of a question)"
+            )]
+        public async Task<IActionResult> GetOptionById(int pageNumber = -1, int pageSize = -1)
+        {
+            try
+            {
+                return Ok(await _optionService.GetOptions(pageNumber, pageSize));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
+        // PUT: api/options/{id}
+        //[Authorize(Policy = "Admin-Manager")]
+        [HttpPut]
+        [Route("{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "Edit an option (of a question)"
+            )]
+        public async Task<IActionResult> UpdateOption([Required]string id, [Required] OptionUpdateDto dto)
+        {
+            try
+            {
+                var optionAppService = _optionService as IAppOptionServices;
+                return Ok(await optionAppService.UpdateOption(id, dto));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
     }
 }
