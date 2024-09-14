@@ -178,13 +178,24 @@ public class SubjectService : ISubjectService, IAppSubjectServices
     }
 
     // Search subjects by name
-    public async Task<BasePaginatedList<object>> SearchSubjectAsync(string searchTerm, int pageNumber, int pageSize)
+    public async Task<BasePaginatedList<object>> SearchSubjectAsync(string searchTerm, double lowestPrice,
+                double highestPrice, int pageNumber, int pageSize)
     {
         var query = _subjectRepository.Entities.Where(s => s.Status == true);
 
         if (!string.IsNullOrEmpty(searchTerm))
         {
             query = query.Where(s => EF.Functions.Like(s.SubjectName, $"%{searchTerm}%"));
+        }
+
+        // Search by price range
+        if (lowestPrice >= 0)
+        {
+            query = query.Where(p => p.Price >= lowestPrice);
+        }
+        if (highestPrice >= 0)
+        {
+            query = query.Where(p => p.Price <= highestPrice);
         }
 
         if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
@@ -211,6 +222,79 @@ public class SubjectService : ISubjectService, IAppSubjectServices
             SubjectName = s.SubjectName,
             Price = s.Price,
             Status = s.Status
+        }).ToList();
+
+        if (!subjectDtosPaginated.Any())
+        {
+            throw new KeyNotFoundException($"No subjects found with name containing '{searchTerm}'.");
+        }
+
+        return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count(), pageNumber, pageSize);
+    }
+
+    public async Task<BasePaginatedList<object>> SearchSubjectAdminAsync(string searchTerm, double lowestPrice,
+                double highestPrice, bool? status, int pageNumber, int pageSize)
+    {
+        var query = _subjectRepository.Entities.AsQueryable();
+
+        if (status.HasValue)
+        {
+            query = query.Where(s => s.Status == status.Value);
+        }
+
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            query = query.Where(s => EF.Functions.Like(s.SubjectName, $"%{searchTerm}%"));
+        }
+
+        // Search by price range
+        if (lowestPrice >= 0)
+        {
+            query = query.Where(p => p.Price >= lowestPrice);
+        }
+        if (highestPrice >= 0)
+        {
+            query = query.Where(p => p.Price <= highestPrice);
+        }
+
+        if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
+        {
+            var allSubjects = await query.ToListAsync();
+            var subjectDtos = allSubjects.Select(subject => new SubjectAdminViewDTO
+            {
+                Id = subject.Id,
+                SubjectName = subject.SubjectName,
+                Price = subject.Price,
+                Status = subject.Status,
+                CreatedBy = subject.CreatedBy,
+                CreatedTime = subject.CreatedTime,
+                LastUpdatedBy = subject.LastUpdatedBy,
+                LastUpdatedTime = subject.LastUpdatedTime,
+                DeletedBy = subject.DeletedBy,
+                DeletedTime = subject.DeletedTime
+            }).ToList();
+
+            if (!subjectDtos.Any())
+            {
+                throw new KeyNotFoundException($"No subjects found with name containing '{searchTerm}'.");
+            }
+
+            return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
+        }
+
+        var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
+        var subjectDtosPaginated = paginatedSubjects.Items.Select(subject => new SubjectAdminViewDTO
+        {
+            Id = subject.Id,
+            SubjectName = subject.SubjectName,
+            Price = subject.Price,
+            Status = subject.Status,
+            CreatedBy = subject.CreatedBy,
+            CreatedTime = subject.CreatedTime,
+            LastUpdatedBy = subject.LastUpdatedBy,
+            LastUpdatedTime = subject.LastUpdatedTime,
+            DeletedBy = subject.DeletedBy,
+            DeletedTime = subject.DeletedTime
         }).ToList();
 
         if (!subjectDtosPaginated.Any())
