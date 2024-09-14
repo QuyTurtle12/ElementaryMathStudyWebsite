@@ -57,7 +57,7 @@ namespace ElementaryMathStudyWebsite.Infrastructure.UOW
             return new BasePaginatedList<T>(items, count, index, pageSize);
         }
 
-        public async Task<BasePaginatedList<T>> GetPaggingDto(IEnumerable<T> items, int pageNumber, int pageSize)
+        public Task<BasePaginatedList<T>> GetPaggingDto(IEnumerable<T> items, int pageNumber, int pageSize)
         {
             // Convert the collection to a list (to ensure we can count and paginate it in-memory)
             var itemList = items.ToList();
@@ -71,9 +71,10 @@ namespace ElementaryMathStudyWebsite.Infrastructure.UOW
                 .Take(pageSize)
                 .ToList();
 
-            // Return a new paginated list (no async operation here since it's in-memory)
-            return new BasePaginatedList<T>(pagedItems, count, pageNumber, pageSize);
+            // Return the paginated list wrapped in a Task
+            return Task.FromResult(new BasePaginatedList<T>(pagedItems, count, pageNumber, pageSize));
         }
+
 
 
         public void Insert(T obj)

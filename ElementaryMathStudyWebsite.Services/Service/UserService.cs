@@ -8,6 +8,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Http;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -28,6 +29,27 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
         }
+
+        public async Task<List<User>> GetAllUsersWithRolesAsync()
+        {
+            // Define the condition for retrieving users (fetch all users)
+            Expression<Func<User, bool>> condition = user => true;
+
+            // Define includes to eagerly load the Role navigation property
+            Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
+            {
+                user => user.Role // Include the Role navigation property
+            };
+
+            // Get all users with their roles
+            IQueryable<User> query = _userRepository.GetEntitiesWithCondition(condition, includes);
+
+            // Execute the query asynchronously and return the list
+            return await query.ToListAsync();
+        }
+
+
+
 
         public async Task<User> CreateUserAsync(CreateUserDto dto)
         {
@@ -64,7 +86,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-        user => user.Role // Include the Role navigation property
+                user => user.Role // Include the Role navigation property
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
@@ -179,7 +201,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             try
             {
-                User user = await _userRepository.GetByIdAsync(userId);
+                User? user = await _userRepository.GetByIdAsync(userId);
 
                 if (user == null)
                 {
@@ -215,21 +237,69 @@ namespace ElementaryMathStudyWebsite.Services.Service
             
         }
 
-        private void AuditFields(User user, bool isCreating = false)
+        public async Task<BasePaginatedList<User>> SearchUsersAsync(string? name, bool? status, string? phone, string? email, int pageNumber, int pageSize)
+        {
+            // Define the base query (start with all users)
+            IQueryable<User> query = _userRepository.GetAll().AsQueryable();
+
+            // Apply filters if the corresponding parameters are provided
+            if (!string.IsNullOrEmpty(name))
+            {
+                query = query.Where(u => u.FullName.Contains(name));
+            }
+
+            if (status.HasValue)
+            {
+                query = query.Where(u => u.Status == status.Value);
+            }
+
+            if (!string.IsNullOrEmpty(phone))
+            {
+                query = query.Where(u => u.PhoneNumber != null && u.PhoneNumber.Contains(phone));
+            }
+
+            if (!string.IsNullOrEmpty(email))
+            {
+                query = query.Where(u => u.Email != null && u.Email.Contains(email));
+            }
+
+            // Execute the query asynchronously and return the result
+
+            // Calculate total count before pagination
+            var totalItems = await query.CountAsync();
+
+            // Apply pagination
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Create a paginated list
+            return new BasePaginatedList<User>(
+                items,
+                totalItems,
+                pageNumber,
+                pageSize
+            );
+        }
+
+
+        public void AuditFields(BaseEntity entity, bool isCreating = false)
         {
             // Retrieve the JWT token from the Authorization header
             var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
             var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
 
-            // If creating a new user, set the CreatedBy field
+            // If creating a new entity, set the CreatedBy field
             if (isCreating)
             {
-                user.CreatedBy = currentUserId.ToString(); // Set the creator's ID
+                entity.CreatedBy = currentUserId.ToString(); // Set the creator's ID
             }
 
             // Always set LastUpdatedBy and LastUpdatedTime fields
-            user.LastUpdatedBy = currentUserId.ToString(); // Set the current user's ID
-            user.LastUpdatedTime = DateTime.UtcNow;
+            entity.LastUpdatedBy = currentUserId.ToString(); // Set the current user's ID
+            entity.LastUpdatedTime = DateTime.UtcNow;
         }
+
     }
 }
