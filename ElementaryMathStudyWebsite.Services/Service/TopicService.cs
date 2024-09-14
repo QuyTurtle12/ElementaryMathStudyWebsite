@@ -94,7 +94,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return topic;
         }
 
-        // Tìm kiếm Topic bằng Topic's Name ( Lấy các thông tin cần thiết )
+        // Tìm kiếm Topic bằng Topic Id ( Lấy các thông tin cần thiết )
         public async Task<TopicViewDto?> GetTopicByIdAsync(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
@@ -109,6 +109,51 @@ namespace ElementaryMathStudyWebsite.Services.Service
             string quizName = await _quizService.GetQuizNameAsync(topic.QuizId);
 
             return new TopicViewDto(topic.Number, topic.TopicName, quizName, chapterName);
+        }
+
+        public async Task<BasePaginatedList<object>> SearchTopicByNameAsync(string searchTerm, int pageNumber, int pageSize)
+        {
+            var query = _topicRepository.Entities.Where(t => t.Status == true);
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(t => EF.Functions.Like(t.TopicName, $"%{searchTerm}%"));
+            }
+
+            if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
+            {
+                var allTopics = await query.ToListAsync();
+                var topicDtos = allTopics.Select(t => new TopicDto
+                {
+                    TopicName = t.TopicName,
+                    Status = t.Status,
+                    QuizId = t.QuizId,
+                    ChapterId = t.ChapterId
+                }).ToList();
+
+                if (!topicDtos.Any())
+                {
+                    throw new KeyNotFoundException($"No topics found with name containing '{searchTerm}'.");
+                }
+
+                return new BasePaginatedList<object>(topicDtos, topicDtos.Count, 1, topicDtos.Count);
+            }
+
+            var paginatedTopics = await _topicRepository.GetPagging(query, pageNumber, pageSize);
+            var topicDtosPaginated = paginatedTopics.Items.Select(t => new TopicDto
+            {
+                TopicName = t.TopicName,
+                Status = t.Status,
+                QuizId = t.QuizId,
+                ChapterId = t.ChapterId
+            }).ToList();
+
+            if (!topicDtosPaginated.Any())
+            {
+                throw new KeyNotFoundException($"No topics found with name containing '{searchTerm}'.");
+            }
+
+            return new BasePaginatedList<object>(topicDtosPaginated, topicDtosPaginated.Count, pageNumber, pageSize);
         }
 
         // Tạo 1 Topic mới

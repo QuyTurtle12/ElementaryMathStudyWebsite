@@ -99,6 +99,25 @@ namespace ElementaryMathStudyWebsite.Controllers
         //    }
         //}
 
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchTopicByName([FromQuery] string searchTerm, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var result = await _topicService.SearchTopicByNameAsync(searchTerm, pageNumber, pageSize);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // Xử lý lỗi khác nếu cần
+                return StatusCode(500, "Internal server error. " + ex.Message);
+            }
+        }
+
         [HttpPost]
         public async Task<ActionResult<string>> AddTopic(TopicCreateDto topicCreateDto)
         {
