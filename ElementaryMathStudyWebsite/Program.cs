@@ -1,3 +1,5 @@
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+
 namespace ElementaryMathStudyWebsite
 {
     public class Program
@@ -22,6 +24,7 @@ namespace ElementaryMathStudyWebsite
             {
                 c.EnableAnnotations(); // Enable annotations for Swagger
             });
+
             builder.Services.AddConfig(builder.Configuration);
             var app = builder.Build();
 

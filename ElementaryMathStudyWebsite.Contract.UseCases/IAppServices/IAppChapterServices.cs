@@ -5,10 +5,11 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
     public interface IAppChapterServices
     {
-        Task<BasePaginatedList<ChapterViewDto?>> searchChapterDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter);
+        Task<BasePaginatedList<object>> SearchChapterAsync(string searchTerm, int pageNumber, int pageSize);
 
-        Task<bool> AddChapterAsync(ChapterCreateDto dto);
+        Task<ChapterCreateDto> CreateChapterAsync(ChapterDto chapterDTO);
 
+        Task<ChapterCreateDto> UpdateChapterAsync(string id, ChapterDto subjectDTO);
         Task<BasePaginatedList<ChapterViewDto?>> GetChapterDtosAsync(int pageNumber, int pageSize);
 
         Task<ChapterViewDto?> GetChapterDtoByChapterIdAsync(string Id);

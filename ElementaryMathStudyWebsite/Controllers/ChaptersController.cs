@@ -3,6 +3,8 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+using ElementaryMathStudyWebsite.Services.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -15,10 +17,12 @@ namespace ElementaryMathStudyWebsite.Controllers
     public class ChaptersController : ControllerBase
     {
         private readonly IChapterService _chapterService;
+        private readonly IAppChapterServices _appChapterServices;
 
-        public ChaptersController(IChapterService chapterService)
+        public ChaptersController(IChapterService chapterService, IAppChapterServices appChapterServices)
         {
             _chapterService = chapterService ?? throw new ArgumentNullException(nameof(chapterService));
+            _appChapterServices = appChapterServices ?? throw new ArgumentNullException(nameof(appChapterServices));
         }
 
         // GET: api/chapters/manager
@@ -29,7 +33,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         [SwaggerOperation(
             Summary = "Authorization: Manager & Admin",
             Description = "View chapter list for Manager and Admin Role. Insert -1 to get all items"
-            )]
+        )]
         public async Task<ActionResult<BasePaginatedList<Chapter>>> GetChapters(int pageNumber = -1, int pageSize = -1)
         {
             try
@@ -42,6 +46,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return StatusCode(500, "Invalid input: " + ex.Message);
             }
         }
+
 
 
         // GET: api/chapters/manager/{id}
@@ -124,32 +129,104 @@ namespace ElementaryMathStudyWebsite.Controllers
         // POST: api/chapters/
         // Add chapters
         [HttpPost]
-                [SwaggerOperation(
-            Summary = "Authorization: Admin & Parent",
-            Description = "Create chapter."
+        [SwaggerOperation(
+            Summary = "Authorization: Admin, Content Manager",
+            Description = "Create new chapter"
         )]
-        public async Task<ActionResult<string>> AddChapter(ChapterCreateDto chapterCreateDto)
+        public async Task<IActionResult> CreateChapter([FromBody] ChapterAddDto chapterDTO)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+
             try
             {
-                // Cast domain service to application service
-                var chapterAppService = _chapterService as IAppChapterServices;
-
-                // Add new chapter
-                bool isAddedNewChapter = await chapterAppService.AddChapterAsync(chapterCreateDto);
-
-                if (!isAddedNewChapter)
+                var createdChapter = await _appChapterServices.CreateChapterAsync(new ChapterDto
                 {
-                    return BadRequest("Failed to create chapter, please check input value");
-                }
+                    Number = chapterDTO.Number,
+                    ChapterName = chapterDTO.ChapterName,
+                    Status = true, // Set status as active when created
+                    SubjectId = chapterDTO.SubjectId,
+                    QuizId = chapterDTO.QuizId,
+                });
 
-                return Ok("Created Chapter Successfully!");
+                return CreatedAtAction(nameof(GetChapter), new { id = createdChapter.Id }, createdChapter);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message); // Return the error message if a duplicate name is found
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message); // Return the error message if a validation error is found
+            }
+        }
+
+        [HttpPut("{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin, Content Manager",
+            Description = "Update chapter"
+        )]
+        public async Task<IActionResult> UpdateChapter(string id, [FromBody] ChapterDto chapterDTO)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var chapter = await _appChapterServices.UpdateChapterAsync(id, chapterDTO);
+                return Ok(chapter);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message); // Return the error message if a duplicate name is found
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message); // Return the error message if a validation error is found
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message); // Return 404 if the chapter is not found
+            }
+        }
+
+        [HttpGet("search")]
+        [SwaggerOperation(
+            Summary = "Authorization: Anyone",
+            Description = "Search chapter by name, pageSize = -1 to have it show all."
+        )]
+        public async Task<IActionResult> SearchChapter([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)
+        {
+            // Validate the search term
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return BadRequest("Search term cannot be empty.");
+            }
+
+            if (searchTerm.Length < 2)
+            {
+                return BadRequest("Search term must be at least 2 characters long.");
+            }
+
+            try
+            {
+                var chapters = await _appChapterServices.SearchChapterAsync(searchTerm, pageNumber, pageSize);
+                return Ok(chapters);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // Handle case when no subjects are found
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
-                // Log the exception (optional)
-                // _logger.LogError(ex, "Error occurred while creating chapter");
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle unexpected errors
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 

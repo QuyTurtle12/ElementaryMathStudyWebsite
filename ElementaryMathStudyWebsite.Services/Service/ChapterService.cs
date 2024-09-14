@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -13,51 +14,174 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IGenericRepository<Chapter> _detailReposiotry;
         private readonly IGenericRepository<Chapter> _chapterRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IGenericRepository<Quiz> _quizRepository;
+        private readonly IGenericRepository<Subject> _subjectRepository;
 
         // Constructor
-        public ChapterService(IGenericRepository<Chapter> detailReposiotry, IGenericRepository<Chapter> chapterRepository, IUnitOfWork unitOfWork)
+        public ChapterService(IGenericRepository<Chapter> detailReposiotry, IGenericRepository<Chapter> chapterRepository, IUnitOfWork unitOfWork, IGenericRepository<Quiz> quizRepository, IGenericRepository<Subject> subjectRepository)
         {
             _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
             _chapterRepository = chapterRepository ?? throw new ArgumentNullException(nameof(chapterRepository));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            _quizRepository = quizRepository ?? throw new ArgumentNullException(nameof(quizRepository));
+            _subjectRepository = subjectRepository ?? throw new ArgumentNullException(nameof(subjectRepository));
         }
 
-        public async Task<bool> AddChapterAsync(ChapterCreateDto dto)
+        private void ValidateChapter(ChapterDto chapterDTO)
         {
-            try
+            if (chapterDTO.Number == null)
             {
-                // Kiểm tra các giá trị đầu vào
-                if (string.IsNullOrEmpty(dto.ChapterName) || string.IsNullOrEmpty(dto.SubjectId))
+                throw new ArgumentException("Number is required and cannot be empty.");
+            }
+            if (string.IsNullOrWhiteSpace(chapterDTO.ChapterName))
+            {
+                throw new ArgumentException("Chapter name is required and cannot be empty.");
+            }
+            if (!chapterDTO.Status)
+            {
+                throw new ArgumentException("Status is required and cannot be false.");
+            }
+            if (string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
+            {
+                throw new ArgumentException("Subject Id is required and cannot be empty.");
+            }
+        }
+
+
+        public async Task<ChapterCreateDto> CreateChapterAsync(ChapterDto chapterDTO)
+        {
+            ValidateChapter(chapterDTO);
+
+            // Check if another chapter with the same name already exists
+            var existingChapter = await _chapterRepository.Entities
+                .Where(c => c.ChapterName == chapterDTO.ChapterName)
+                .FirstOrDefaultAsync();
+
+            if (existingChapter != null)
+            {
+                throw new InvalidOperationException($"A chapter with the name '{chapterDTO.ChapterName}' already exists.");
+            }
+
+            if (!string.IsNullOrEmpty(chapterDTO.SubjectId))
+            {
+                var subjectExists = await _subjectRepository.Entities
+                    .AnyAsync(s => s.Id == chapterDTO.SubjectId);
+
+                if (!subjectExists)
                 {
-                    return false;
+                    throw new ArgumentException($"Subject with Id '{chapterDTO.SubjectId}' does not exist.");
                 }
-
-                Chapter chapter = new Chapter
-                {
-                    Number = dto.Number,
-                    ChapterName = dto.ChapterName,
-                    Status = dto.Status,
-                    SubjectId = dto.SubjectId,
-                    QuizId = dto.QuizId,
-                    CreatedBy = dto.CreatedBy,
-                    LastUpdatedBy = dto.LastUpdatedBy,
-                    DeletedBy = dto.DeletedBy,
-                    CreatedTime = dto.CreatedTime ?? DateTimeOffset.Now, // Sử dụng giá trị hiện tại nếu null
-                    LastUpdatedTime = dto.LastUpdatedTime ?? DateTimeOffset.Now, // Sử dụng giá trị hiện tại nếu null
-                    DeletedTime = dto.DeletedTime // Có thể null
-                };
-
-                await _chapterRepository.InsertAsync(chapter);
-                await _unitOfWork.SaveAsync();
-
-                return true; // Show that create chapter process is completed
             }
-            catch (Exception ex)
+
+            if (!string.IsNullOrEmpty(chapterDTO.QuizId))
             {
-                // Log the exception (optional)
-                // _logger.LogError(ex, "Error occurred while adding chapter");
-                return false;
+                var quizExists = await _quizRepository.Entities
+                    .AnyAsync(q => q.Id == chapterDTO.QuizId);
+
+                if (!quizExists)
+                {
+                    throw new ArgumentException($"Quiz with Id '{chapterDTO.QuizId}' does not exist.");
+                }
             }
+
+            var chapter = new Chapter
+            {
+                Number = chapterDTO.Number,
+                ChapterName = chapterDTO.ChapterName,
+                Status = chapterDTO.Status,
+                SubjectId = chapterDTO.SubjectId,
+                QuizId = chapterDTO.QuizId,
+                CreatedTime = DateTime.UtcNow,
+                LastUpdatedTime = DateTime.UtcNow // Set initial LastUpdatedTime as well
+            };
+
+            _chapterRepository.Insert(chapter);
+            await _chapterRepository.SaveAsync();
+
+            return new ChapterCreateDto
+            {
+                Id = chapter.Id,
+                Number = chapter.Number,
+                ChapterName= chapter.ChapterName,
+                Status = chapter.Status,
+                SubjectId= chapter.SubjectId,
+                QuizId= chapter.QuizId,
+                CreatedBy = chapter.CreatedBy,
+                CreatedTime = chapter.CreatedTime,
+                LastUpdatedBy = chapter.LastUpdatedBy,
+                LastUpdatedTime = chapter.LastUpdatedTime,
+                DeletedBy = chapter.DeletedBy,
+                DeletedTime = chapter.DeletedTime
+            };
+        }
+
+        public async Task<ChapterCreateDto> UpdateChapterAsync(string id, ChapterDto chapterDTO)
+        {
+            var chapter = await _chapterRepository.GetByIdAsync(id);
+            if (chapter == null)
+            {
+                throw new KeyNotFoundException($"Chapter with ID '{id}' not found.");
+            }
+
+            // Check if another subject with the same name already exists
+            var existingSubject = await _chapterRepository.Entities
+                .Where(c => c.ChapterName == chapterDTO.ChapterName) // Exclude the current subject by its ID
+                .FirstOrDefaultAsync();
+
+            if (existingSubject != null)
+            {
+                throw new InvalidOperationException($"A chapter with the name '{chapterDTO.ChapterName}' already exists.");
+            }
+
+            if (!string.IsNullOrEmpty(chapterDTO.SubjectId))
+            {
+                var subjectExists = await _subjectRepository.Entities
+                    .AnyAsync(s => s.Id == chapterDTO.SubjectId);
+
+                if (!subjectExists)
+                {
+                    throw new ArgumentException($"Subject with Id '{chapterDTO.SubjectId}' does not exist.");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(chapterDTO.QuizId))
+            {
+                var quizExists = await _quizRepository.Entities
+                    .AnyAsync(q => q.Id == chapterDTO.QuizId);
+
+                if (!quizExists)
+                {
+                    throw new ArgumentException($"Quiz with Id '{chapterDTO.QuizId}' does not exist.");
+                }
+            }
+
+            ValidateChapter(chapterDTO);
+
+            chapter.Number = chapterDTO.Number;
+            chapter.ChapterName = chapterDTO.ChapterName;
+            chapter.Status = chapterDTO.Status;
+            chapter.SubjectId = chapterDTO.SubjectId;
+            chapter.QuizId = chapterDTO.QuizId;
+            chapter.LastUpdatedTime = DateTime.UtcNow;
+
+            _chapterRepository.Update(chapter);
+            await _chapterRepository.SaveAsync();
+
+            return new ChapterCreateDto
+            {
+                Id = chapter.Id,
+                Number = chapter.Number,
+                ChapterName = chapter.ChapterName,
+                Status = chapter.Status,
+                SubjectId = chapter.SubjectId,
+                QuizId = chapter.QuizId,
+                CreatedBy = chapter.CreatedBy,
+                CreatedTime = chapter.CreatedTime,
+                LastUpdatedBy = chapter.LastUpdatedBy,
+                LastUpdatedTime = chapter.LastUpdatedTime,
+                DeletedBy = chapter.DeletedBy,
+                DeletedTime = chapter.DeletedTime
+            };
         }
 
 
@@ -130,33 +254,57 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return paginatedChapters;
         }
 
-
-
-
-
-        // General Validation
-        //public async Task<string?> IsGenerallyValidated(string subjectId, string studentId, string parentId, double totalPrice)
-        //{
-        //    // Check if subject is existed
-        //    if (!await _subjectService.IsValidSubjectAsync(subjectId)) return $"The subject Id {subjectId} is not exist";
-
-        //    if (!await _userService.IsCustomerChildren(parentId, studentId)) return "They are not parents and children";
-
-        //    if (totalPrice <= 0) return "Invalid price number";
-
-        //    return null;
-        //}
-
-        // Check if order is exist
         public async Task<bool> IsValidChapterAsync(string Id)
         {
             // Return true if order is not null
             return (await _chapterRepository.GetByIdAsync(Id) is not null);
         }
 
-        public Task<BasePaginatedList<ChapterViewDto>> searchChapterDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter)
+        public async Task<BasePaginatedList<object>> SearchChapterAsync(string searchTerm, int pageNumber, int pageSize)
         {
-            throw new NotImplementedException();
+            var query = _chapterRepository.Entities.Where(c => c.Status == true);
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(c => EF.Functions.Like(c.ChapterName, $"%{searchTerm}%"));
+            }
+
+            if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
+            {
+                var allChapter = await query.ToListAsync();
+                var chapterDtos = allChapter.Select(c => new ChapterDto
+                {
+                    Number = c.Number,
+                    ChapterName = c.ChapterName,
+                    Status = c.Status,
+                    SubjectId = c.SubjectId,
+                    QuizId = c.QuizId,
+                }).ToList();
+
+                if (!chapterDtos.Any())
+                {
+                    throw new KeyNotFoundException($"No chapter found with name containing '{searchTerm}'.");
+                }
+
+                return new BasePaginatedList<object>(chapterDtos, chapterDtos.Count, 1, chapterDtos.Count);
+            }
+
+            var paginatedChapters = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
+            var chapterDtosPaginated = paginatedChapters.Items.Select(c => new ChapterDto
+            {
+                Number = c.Number,
+                ChapterName = c.ChapterName,
+                Status = c.Status,
+                SubjectId = c.SubjectId,
+                QuizId = c.QuizId,
+            }).ToList();
+
+            if (!chapterDtosPaginated.Any())
+            {
+                throw new KeyNotFoundException($"No chapter found with name containing '{searchTerm}'.");
+            }
+
+            return new BasePaginatedList<object>(chapterDtosPaginated, chapterDtosPaginated.Count(), pageNumber, pageSize);
         }
 
     }
