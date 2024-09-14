@@ -3,15 +3,13 @@
     public class OrderCreateDto
     {
         public string CustomerId { get; set; } = string.Empty;
-        public double TotalPrice { get; set; }
         public List<SubjectStudentDto> SubjectStudents { get; set; } = new List<SubjectStudentDto>();
 
         public OrderCreateDto() { }
 
-        public OrderCreateDto(string customerId, double totalPrice, List<SubjectStudentDto> subjectStudents)
+        public OrderCreateDto(string customerId, List<SubjectStudentDto> subjectStudents)
         {
             CustomerId = customerId;
-            TotalPrice = totalPrice;
             SubjectStudents = subjectStudents;
         }
     }
