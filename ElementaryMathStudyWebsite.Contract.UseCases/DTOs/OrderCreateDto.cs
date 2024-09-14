@@ -6,9 +6,8 @@
 
         public OrderCreateDto() { }
 
-        public OrderCreateDto(string customerId, List<SubjectStudentDto> subjectStudents)
+        public OrderCreateDto(List<SubjectStudentDto> subjectStudents)
         {
-            CustomerId = customerId;
             SubjectStudents = subjectStudents;
         }
     }

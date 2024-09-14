@@ -50,7 +50,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 // Get logged in User Id from authorization header 
                 var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString();
+                var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
 
                 Order order = new Order
                 {
@@ -59,9 +59,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     CreatedBy = currentUserId,
                     LastUpdatedBy = currentUserId
                 };
-
-                // Cast domain service to application service
-                var userAppService = _userService as IAppUserServices;
 
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveAsync();
@@ -206,7 +203,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Get logged in User Id from authorization header 
             var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString();
+            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
 
             // Cast domain service to application service
             var subjectAppService = _subjectService as IAppSubjectServices;
