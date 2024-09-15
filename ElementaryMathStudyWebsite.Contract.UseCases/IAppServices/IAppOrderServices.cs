@@ -21,6 +21,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<bool> IsValidOrderAsync(string orderId);
 
         // General Validation
-        Task<string?> IsGenerallyValidated(string subjectId, string studentId, string parentId);
+        Task<string?> IsGenerallyValidated(string subjectId, string studentId);
     }
 }
