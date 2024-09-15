@@ -27,7 +27,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/chapters/manager
         // Get chapters for Manager & Admin
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("manager")]
         [SwaggerOperation(
@@ -51,7 +51,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/chapters/manager/{id}
         // Get chapters for Manager & Admin
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("manager/{id}")]
         [SwaggerOperation(
@@ -128,6 +128,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // POST: api/chapters/
         // Add chapters
+        [Authorize(Policy = "Admin-Manager")]
         [HttpPost]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -164,6 +165,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        [Authorize(Policy = "Admin-Manager")]
         [HttpPut("{id}")]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -195,52 +197,19 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        //[HttpDelete("{id}")]
-        //[SwaggerOperation(
-        //    Summary = "Authorization: Admin, Content Manager",
-        //    Description = "Delete a chapter by Id"
-        //)]
-        //public async Task<IActionResult> DeleteChapter(string id)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
-        //    }
-        //    try
-        //    {
-        //        var deletedChapter = await _appChapterServices.DeleteChapterAsync(id);
-
-        //        if (deletedChapter == null)
-        //        {
-        //            return NotFound($"Chapter with ID '{id}' not found.");
-        //        }
-
-        //        return Ok(deletedChapter); // Trả về DTO của chương đã bị xóa
-        //    }
-        //    catch (KeyNotFoundException ex)
-        //    {
-        //        return NotFound(ex.Message); // Trả về lỗi 404 nếu không tìm thấy chương
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Log the exception (optional)
-        //        // _logger.LogError(ex, "Error occurred while deleting chapter");
-        //        return StatusCode(500, "Error: " + ex.Message);
-        //    }
-        //}
-
+        [Authorize(Policy = "Admin-Manager")]
         [HttpDelete]
         [Route("{id}")]
         [SwaggerOperation(
             Summary = "Authorization: Admin & Content Manager",
-            Description = "Delete an option (of a question)"
+            Description = "Delete a chapter"
         )]
-        public async Task<IActionResult> DeleteOption([Required] string id)
+        public async Task<IActionResult> DeleteChapter([Required] string id)
         {
             try
             {
                 var chapterAppService = _appChapterServices as IAppChapterServices;
-                if (await chapterAppService.DeleteChapter(id))
+                if (await chapterAppService.DeleteChapterAsync(id))
                 {
                     return Ok("Delete successfully");
                 }
@@ -259,7 +228,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         [HttpGet("search")]
         [SwaggerOperation(
-            Summary = "Authorization: Anyone",
+            Summary = "Authorization: N/A",
             Description = "Search chapter by name, pageSize = -1 to have it show all."
         )]
         public async Task<IActionResult> SearchChapter([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)

@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 
 namespace ElementaryMathStudyWebsite.Services.Service
@@ -16,15 +17,17 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IUnitOfWork _unitOfWork;
         private readonly IGenericRepository<Quiz> _quizRepository;
         private readonly IGenericRepository<Subject> _subjectRepository;
+        private readonly ILogger<ChapterService> _logger;
 
         // Constructor
-        public ChapterService(IGenericRepository<Chapter> detailReposiotry, IGenericRepository<Chapter> chapterRepository, IUnitOfWork unitOfWork, IGenericRepository<Quiz> quizRepository, IGenericRepository<Subject> subjectRepository)
+        public ChapterService(IGenericRepository<Chapter> detailReposiotry, IGenericRepository<Chapter> chapterRepository, IUnitOfWork unitOfWork, IGenericRepository<Quiz> quizRepository, IGenericRepository<Subject> subjectRepository, ILogger<ChapterService> logger)
         {
             _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
             _chapterRepository = chapterRepository ?? throw new ArgumentNullException(nameof(chapterRepository));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _quizRepository = quizRepository ?? throw new ArgumentNullException(nameof(quizRepository));
             _subjectRepository = subjectRepository ?? throw new ArgumentNullException(nameof(subjectRepository));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         private void ValidateChapter(ChapterDto chapterDTO)
@@ -184,63 +187,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
-        //public async Task<ChapterAdminViewDto> DeleteChapterAsync(string chapterId)
-        //{
-        //    try
-        //    {
-        //        var chapter = await _chapterRepository.GetByIdAsync(chapterId);
-        //        if (chapter == null)
-        //        {
-        //            throw new KeyNotFoundException($"Chapter with ID '{chapterId}' not found.");
-        //        }
 
-        //        _chapterRepository.Delete(chapter);
-        //        await _unitOfWork.SaveAsync();
-
-        //        // Chuyển đổi đối tượng chapter sang ChapterCreateDto
-        //        var chapterDto = new ChapterAdminViewDto
-        //        {
-        //            Id = chapter.Id,
-        //            Number = chapter.Number,
-        //            ChapterName = chapter.ChapterName,
-        //            Status = chapter.Status,
-        //            SubjectId = chapter.SubjectId,
-        //            QuizId = chapter.QuizId,
-        //            CreatedBy = chapter.CreatedBy,
-        //            CreatedTime = chapter.CreatedTime,
-        //            LastUpdatedBy = chapter.LastUpdatedBy,
-        //            LastUpdatedTime = chapter.LastUpdatedTime,
-        //            DeletedBy = chapter.DeletedBy,
-        //            DeletedTime = chapter.DeletedTime
-        //            // Thêm các thuộc tính khác nếu cần
-        //        };
-
-        //        return chapterDto; // Trả về DTO của chương đã bị xóa
-        //    }
-        //    catch (KeyNotFoundException ex)
-        //    {
-        //        // Log the exception (optional)
-        //        // _logger.LogError(ex, "Chapter not found");
-        //        throw; // Ném lại ngoại lệ để controller xử lý
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Log the exception (optional)
-        //        // _logger.LogError(ex, "Error occurred while deleting chapter");
-        //        return null;
-        //    }
-        //}
-
-
-        public async Task<bool> DeleteChapter(string chapterId)
+        public async Task<bool> DeleteChapterAsync(string chapterId)
         {
-            var option = await _chapterRepository.GetByIdAsync(chapterId) ?? throw new KeyNotFoundException("Invalid option ID");
+            var chapter = await _chapterRepository.GetByIdAsync(chapterId) ?? throw new KeyNotFoundException("Invalid chapter ID");
 
             await _chapterRepository.DeleteAsync(chapterId);
             await _unitOfWork.SaveAsync();
             return true;
         }
-
 
 
         // Get one order with all properties

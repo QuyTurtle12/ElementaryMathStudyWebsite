@@ -14,5 +14,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
         public required string SubjectId { get; set; }
 
         public string? QuizId { get; set; } // Quiz may not exist yet and can be created later
+
+        //public string? CreatedBy { get; set; }
+        //public string? LastUpdatedBy { get; set; }
     }
 }
