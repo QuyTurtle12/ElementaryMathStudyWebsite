@@ -1,10 +1,8 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -19,36 +17,106 @@ namespace ElementaryMathStudyWebsite.Controllers
             _quizService = QuizService ?? throw new ArgumentNullException(nameof(QuizService));
         }
 
+
         [HttpGet("quizzes")]
-        public async Task<ActionResult<IList<Quiz>>> GetQuizzes()
+        public async Task<ActionResult<IList<QuizViewDto?>>> GetQuizzes()
         {
             try
             {
-                // Lấy danh sách các Quiz từ dịch vụ
-                IList<Quiz> quizzes = await _quizService.GetQuizzesAsync();
+                IList<QuizViewDto> quizzes = await _quizService.GetQuizzesAsync();
                 return Ok(quizzes);
             }
             catch (Exception ex)
             {
-                // Trả về lỗi nếu có vấn đề xảy ra
-                return StatusCode(500, "Đã xảy ra lỗi: " + ex.Message);
+                return StatusCode(500, "Error: " + ex.Message);
             }
         }
 
-        [HttpGet("quizzes/dtos")]
-        public async Task<ActionResult<IList<QuizViewDto>>> GetQuizViewDtos()
+        [HttpGet]
+        [Route("quiz/{id}")]
+        public async Task<ActionResult<QuizDetailsDto>> GetQuiz([Required] string id)
         {
             try
             {
-                // Lấy danh sách các QuizViewDto từ dịch vụ
-                IList<QuizViewDto> quizViewDtos = await _quizService.GetQuizViewDtosAsync();
-                return Ok(quizViewDtos);
+                QuizDetailsDto? quizDetails = await _quizService.GetQuizByQuizIdAsync(id);
+                if (quizDetails == null)
+                {
+                    return BadRequest("Invalid Quiz Id");
+                }
+                return Ok(quizDetails);
             }
             catch (Exception ex)
             {
-                // Trả về lỗi nếu có vấn đề xảy ra
-                return StatusCode(500, "Đã xảy ra lỗi: " + ex.Message);
+                return StatusCode(500, "Error: " + ex.Message);
             }
         }
+
+        [HttpGet]
+        [Route("quiz/search")]
+        public async Task<ActionResult<IList<QuizViewDto>>> SearchQuizzes([FromQuery] string? quizName = null, [FromQuery] double? criteria = null)
+        {
+            try
+            {
+                var quizzes = await _quizService.SearchQuizzesAsync(quizName, criteria);
+
+                if (quizzes == null || quizzes.Count == 0)
+                {
+                    return NotFound("No quizzes found matching the search criteria.");
+                }
+
+                return Ok(quizzes);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("quiz")]
+        public async Task<ActionResult<QuizViewDto>> AddQuiz([FromBody] QuizCreateDto quizCreateDto)
+        {
+            try
+            {
+                QuizViewDto quizViewDto = await _quizService.AddQuizAsync(quizCreateDto);
+                return Ok(quizViewDto);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
+        [HttpDelete]
+        [Route("quiz/{id}")]
+        public async Task<IActionResult> DeleteQuiz([Required] string id)
+        {
+            try
+            {
+                bool result = await _quizService.DeleteQuizAsync(id);
+                if (result)
+                {
+                    return NoContent();
+                }
+                return NotFound("Quiz does not exist.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
     }
 }

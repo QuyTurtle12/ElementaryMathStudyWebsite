@@ -11,6 +11,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
     public class QuizService : IQuizService, IAppQuizServices
     {
         private readonly IGenericRepository<Quiz> _quizRepository;
+        private readonly IGenericRepository<Chapter> _chapterRepository;
+        private readonly IGenericRepository<Topic> _topicRepository;
 
         // constructor
         public QuizService (IGenericRepository<Quiz> QuizRepository)
@@ -23,43 +25,126 @@ namespace ElementaryMathStudyWebsite.Services.Service
             throw new NotImplementedException();
         }
 
-        public async Task<IList<Quiz>> GetQuizzesAsync()
+        public async Task<IList<QuizViewDto?>> GetQuizzesAsync()
         {
-            // Lấy tất cả các Quiz từ repository
             IQueryable<Quiz> query = _quizRepository.Entities;
-
-            // Chuyển đổi thành danh sách để làm việc với dữ liệu
-            var quizzesList = await query.ToListAsync();
-
-            // Trả về danh sách các Quiz
-            return quizzesList;
+            IList<QuizViewDto> listQuiz = new List<QuizViewDto>();
+            
+            var allQuiz = query.ToList();
+            foreach (var quiz  in allQuiz)
+            {
+                QuizViewDto dto = new QuizViewDto(quiz.QuizName, quiz.Criteria, quiz.Status);
+                listQuiz.Add(dto);
+            }
+            return listQuiz;
         }
 
-        public async Task<IList<QuizViewDto>> GetQuizViewDtosAsync()
+        public async Task<QuizDetailsDto?> GetQuizByQuizIdAsync(string quizId)
         {
-            // Lấy tất cả các Quiz từ repository
+            Quiz? quiz = await _quizRepository.Entities
+                .Include(q => q.Questions)
+                .Include(q => q.Chapter)  
+                .Include(q => q.Topic)   
+                .FirstOrDefaultAsync(q => q.Id == quizId);
+
+            if (quiz == null) return null;
+
+            var quizDetailsDto = new QuizDetailsDto
+            {
+                QuizName = quiz.QuizName,
+                Criteria = quiz.Criteria,
+                Chapter = quiz.Chapter != null ? new ChapterDto
+                {
+                    ChapterName = quiz.Chapter.ChapterName
+                } : null,
+                Topic = quiz.Topic != null ? new TopicDto
+                {
+                    TopicName = quiz.Topic.TopicName
+                } : null,
+                Questions = quiz.Questions?.Select(q => new QuestionDto
+                {
+                    QuestionContext = q.QuestionContext
+                }).ToList() ?? new List<QuestionDto>()
+            };
+
+            return quizDetailsDto;
+        }
+
+        public async Task<IList<QuizViewDto>> SearchQuizzesAsync(string? quizName, double? criteria)
+        {
             IQueryable<Quiz> query = _quizRepository.Entities;
 
-            // Chuyển đổi thành danh sách để làm việc với dữ liệu
-            var quizzesList = await query.ToListAsync();
+            if (!string.IsNullOrEmpty(quizName))
+            {
+                query = query.Where(q => q.QuizName.Contains(quizName));
+            }
 
-            // Chuyển đổi từ Quiz sang QuizViewDto
-            var quizViewDtos = quizzesList.Select(q => new QuizViewDto
+            if (criteria.HasValue)
+            {
+                query = query.Where(q => q.Criteria == criteria.Value);
+            }
+
+            var quizzes = await query.Select(q => new QuizViewDto
             {
                 QuizName = q.QuizName,
-                Criteria = q.Criteria,
-                Status = q.Status,
-                CreatedByUserId = q.CreatedByUserId,
-                LastUpdatedByUserId = q.LastUpdatedByUserId,
-                DeletedByUserId = q.DeletedByUserId,
-                ChapterId = q.ChapterId,
-                TopicId = q.TopicId,
-                QuestionIds = q.QuestionIds,
-                ProgressIds = q.ProgressIds
-            }).ToList();
+                Criteria = q.Criteria
+            }).ToListAsync();
 
-            // Trả về danh sách các QuizViewDto
-            return quizViewDtos;
+            return quizzes;
+        }
+
+        public async Task<QuizViewDto> AddQuizAsync(QuizCreateDto dto)
+        {
+            var chapter = await _chapterRepository.GetByIdAsync(dto.ChapterId);
+            var topic = await _topicRepository.GetByIdAsync(dto.TopicId);
+
+            if (chapter == null)
+            {
+                throw new ArgumentException("ChapterId does not exist.");
+            }
+
+            if (topic == null)
+            {
+                throw new ArgumentException("TopicId does not exist.");
+            }
+
+            Quiz newQuiz = new Quiz
+            {
+                QuizName = dto.QuizName,
+                Criteria = dto.Criteria,
+                Chapter = chapter,
+                Topic = topic
+            };
+
+            await _quizRepository.InsertAsync(newQuiz);
+            await _quizRepository.SaveAsync();
+
+            return new QuizViewDto
+            {
+                QuizName = newQuiz.QuizName,
+                Criteria = newQuiz.Criteria,
+                ChapterName = chapter.ChapterName,
+                TopicName = topic.TopicName 
+            };
+        }
+
+        public async Task<bool> DeleteQuizAsync(string quizId)
+        {
+            if (!Guid.TryParse(quizId, out var quizGuid))
+            {
+                throw new ArgumentException("QuizId không hợp lệ.");
+            }
+
+            var quiz = await _quizRepository.GetByIdAsync(quizGuid);
+            if (quiz == null)
+            {
+                throw new KeyNotFoundException("Quiz không tồn tại.");
+            }
+
+            _quizRepository.DeleteAsync(quiz);
+            await _quizRepository.SaveAsync();
+
+            return true;
         }
     }
 }

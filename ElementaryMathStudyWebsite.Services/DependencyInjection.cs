@@ -2,6 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Infrastructure.UOW;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Services.Service;
 
 namespace ElementaryMathStudyWebsite.Services
 {
@@ -15,6 +17,9 @@ namespace ElementaryMathStudyWebsite.Services
         {
             // Register generic repository with a scoped lifetime
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+
+            services.AddScoped<IAppQuizServices, QuizService>();
 
             // Register UnitOfWork
             services.AddScoped<IUnitOfWork, UnitOfWork>();

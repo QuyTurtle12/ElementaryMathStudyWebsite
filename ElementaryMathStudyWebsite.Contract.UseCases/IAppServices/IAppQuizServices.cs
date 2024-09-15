@@ -9,7 +9,11 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
        // Task<bool> AddQuizAsync(QuizCreateDto dto);
        // Task<QuizViewDto?> GetQuizByIdAsync(string quizId);
         Task<BasePaginatedList<QuizViewDto?>> GetQuizzDtoAsync(int pageNumber, int pageSize); // get all Quiz with pagination
-        Task<IList<Quiz?>> GetQuizzesAsync(); // get all Quiz with pagination
+        Task<IList<QuizViewDto?>> GetQuizzesAsync(); // get all Quiz exist
+        Task<IList<QuizViewDto>> SearchQuizzesAsync(string? quizName, double? criteria);
+        Task<QuizDetailsDto?> GetQuizByQuizIdAsync(string quizId);
+        Task<QuizViewDto> AddQuizAsync(QuizCreateDto dto);
+        Task<bool> DeleteQuizAsync(string quizId);
 
        // Task<BasePaginatedList<Quiz?>> GetQuizzesAsync(int pageNumber, int pageSize);
        // Task<bool> IsValidQuizAsync(string quizId);

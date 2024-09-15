@@ -2,22 +2,22 @@
 {
     public class QuizViewDto
     {
-        public string QuizName { get; set; } = string.Empty;
-        public double? Criteria { get; set; }
-        public String Status { get; set; }
-        public int? CreatedByUserId { get; set; }
-        public int? LastUpdatedByUserId { get; set; }
-        public int? DeletedByUserId { get; set; }
-        public int? ChapterId { get; set; }
-        public int? TopicId { get; set; }
-        public ICollection<int>? QuestionIds { get; set; } // ID của các câu hỏi liên quan
-        public ICollection<int>? ProgressIds { get; set; } // ID của các tiến trình liên quan
-
-        public QuizViewDto(String quizName, int chapterId, int topicId) {
+        public QuizViewDto(string quizName, double? criteria, bool? status)
+        {
             QuizName = quizName;
-            ChapterId = chapterId;
-            TopicId = topicId;
+            Criteria = criteria;
+            Status = status;
         }
 
+        public QuizViewDto()
+        {
+        }
+
+        public string QuizId { get; set; }
+        public string QuizName { get; set; } = string.Empty;
+        public double? Criteria { get; set; }
+        public bool? Status { get; set; }
+        public string? ChapterName { get; set; }
+        public string? TopicName { get; set; }
     }
 }
