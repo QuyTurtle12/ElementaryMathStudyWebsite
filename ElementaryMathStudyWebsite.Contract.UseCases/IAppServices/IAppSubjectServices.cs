@@ -21,5 +21,12 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         // Change subject status by ID
         Task<SubjectAdminViewDTO> ChangeSubjectStatusAsync(string id);
+
+        // Check if subject is existed
+        Task<bool> IsValidSubjectAsync(string subjectId);
+
+        // Get subject name
+        Task<string> GetSubjectNameAsync(string subjectId);
+
     }
 }

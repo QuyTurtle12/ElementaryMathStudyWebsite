@@ -1,9 +1,8 @@
-﻿using ElementaryMathStudyWebsite.Contract.Services.Interface;
+using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using System.Drawing.Printing;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
