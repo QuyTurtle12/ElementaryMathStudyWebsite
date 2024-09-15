@@ -23,7 +23,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // POST: api/options/{id}
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpPost]
         [SwaggerOperation(
             Summary = "Authorization: Admin & Content Manager",
@@ -43,7 +43,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // DELETE: api/options/{id}
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpDelete]
         [Route("{id}")]
         [SwaggerOperation(
@@ -70,7 +70,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
 
         // GET: api/options/raw/{id}
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet]
         [Route("raw/{id}")]
         [SwaggerOperation(
@@ -93,7 +93,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         [HttpGet]
         [Route("question")]
         [SwaggerOperation(
-            Summary = "Authorization: Anyone",
+            Summary = "Authorization: N/A",
             Description = "View all options of 1 question"
             )]
         public async Task<IActionResult> GetOptionDtosByQuestion([Required] string questionId,int pageNumber = -1, int pageSize = -1)
@@ -111,14 +111,14 @@ namespace ElementaryMathStudyWebsite.Controllers
 
 
         // GET: api/options/raw
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet]
         [Route("raw")]
         [SwaggerOperation(
             Summary = "Authorization: Admin & Content Manager",
             Description = "View all options + properties (of a question)"
             )]
-        public async Task<IActionResult> GetOptionById(int pageNumber = -1, int pageSize = -1)
+        public async Task<IActionResult> GetOptions(int pageNumber = -1, int pageSize = -1)
         {
             try
             {
@@ -131,7 +131,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // PUT: api/options/{id}
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut]
         [Route("{id}")]
         [SwaggerOperation(
