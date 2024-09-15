@@ -7,6 +7,7 @@ using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -139,7 +140,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                 // General Validation for each Subject-Student pair
                 foreach (var subjectStudent in orderCreateDto.SubjectStudents)
                 {
-                    string? error = await orderAppService.IsGenerallyValidated(subjectStudent.SubjectId, subjectStudent.StudentId, orderCreateDto.CustomerId);
+                    string? error = await orderAppService.IsGenerallyValidated(subjectStudent.SubjectId, subjectStudent.StudentId);
                     if (!string.IsNullOrWhiteSpace(error)) return BadRequest(error);
                 }
 

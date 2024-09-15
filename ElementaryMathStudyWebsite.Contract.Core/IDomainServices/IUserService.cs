@@ -13,5 +13,7 @@ namespace ElementaryMathStudyWebsite.Core.Services.IDomainService
         Task<User?> GetUserByIdAsync(string userId);
         Task<bool> DisableUserAsync(string userId);
 
+        Task<List<User>> GetAllUsersWithRolesAsync();
+        Task<BasePaginatedList<User>> SearchUsersAsync(string? name, bool? status, string? phone, string? email, int pageNumber, int pageSize);
     }
 }
