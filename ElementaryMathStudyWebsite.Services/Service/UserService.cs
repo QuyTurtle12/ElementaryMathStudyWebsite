@@ -196,7 +196,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             user.Status = false;
 
             // Set audit fields
-            AuditFields(user);
+            AuditFields(user, false, true);
 
             // Update the user in the repository
             _userRepository.Update(user);
@@ -302,7 +302,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
 
-        public void AuditFields(BaseEntity entity, bool isCreating = false)
+        public void AuditFields(BaseEntity entity, bool isCreating = false, bool isDisable = false)
         {
             // Retrieve the JWT token from the Authorization header
             var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
@@ -312,6 +312,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (isCreating)
             {
                 entity.CreatedBy = currentUserId.ToString().ToUpper(); // Set the creator's ID
+            }
+
+            if (isDisable)
+            {
+                entity.DeletedBy = currentUserId.ToString().ToUpper(); // Set the creator's ID
+                entity.DeletedTime = CoreHelper.SystemTimeNow;
             }
 
             // Always set LastUpdatedBy and LastUpdatedTime fields
