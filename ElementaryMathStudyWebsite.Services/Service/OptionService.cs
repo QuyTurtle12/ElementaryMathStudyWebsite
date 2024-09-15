@@ -12,12 +12,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IGenericRepository<Option> _optionReposiotry;
         private readonly IGenericRepository<Question> _questionRepository;
+        private readonly IUserService _userService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public OptionService(IGenericRepository<Option> optionReposiotry, IGenericRepository<Question> questionRepository, IUnitOfWork unitOfWork)
+        public OptionService(IGenericRepository<Option> optionReposiotry, IGenericRepository<Question> questionRepository, IUserService userService,IUnitOfWork unitOfWork)
         {
             _optionReposiotry = optionReposiotry;
             _questionRepository = questionRepository;
+            _userService = userService;
             _unitOfWork = unitOfWork;
         }
 
@@ -35,11 +37,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 LastUpdatedTime = DateTimeOffset.Now
             };
 
+            var appUserService = _userService as IAppUserServices;
+            appUserService.AuditFields(option, true);
+
             await _optionReposiotry.InsertAsync(option);
             await _unitOfWork.SaveAsync();
 
             return new OptionViewDto
             {
+                OptionId = option.Id,
                 Answer = option.Answer,
                 IsCorrect = option.IsCorrect
             };
@@ -80,6 +86,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     OptionViewDto dto = new()
                     {
+                        OptionId = option.Id,
                         Answer = option.Answer,
                         IsCorrect = option.IsCorrect
                     };
@@ -95,6 +102,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 OptionViewDto dto = new()
                 {
+                    OptionId = option.Id,
                     Answer = option.Answer,
                     IsCorrect = option.IsCorrect
                 };
@@ -125,19 +133,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return (await _optionReposiotry.GetByIdAsync(optionId) is not null);
         }
 
+        // Update an option
         public async Task<OptionViewDto> UpdateOption(string optionId, OptionUpdateDto optionUpdateDto)
         {
             var option = await _optionReposiotry.GetByIdAsync(optionId) ?? throw new KeyNotFoundException("Invalid option ID");
 
-            option.LastUpdatedTime = (optionUpdateDto.Answer != option.Answer || optionUpdateDto.IsCorrect != option.IsCorrect) ? DateTimeOffset.Now : option.LastUpdatedTime;
-
             option.Answer = optionUpdateDto.Answer;
             option.IsCorrect = optionUpdateDto.IsCorrect;
+
+            var appUserService = _userService as IAppUserServices;
+            appUserService.AuditFields(option, false);
 
             await _unitOfWork.SaveAsync();
 
             return new OptionViewDto
             {
+                OptionId = option.Id,
                 Answer = option.Answer,
                 IsCorrect = option.IsCorrect,
             };
