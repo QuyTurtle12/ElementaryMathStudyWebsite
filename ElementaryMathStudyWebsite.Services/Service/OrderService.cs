@@ -56,9 +56,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     CustomerId = currentUserId,
                     TotalPrice = totalPrice,
-                    CreatedBy = currentUserId,
-                    LastUpdatedBy = currentUserId
                 };
+
+                // Cast domain service to application service
+                var userAppService = _userService as IAppUserServices;
+
+                // Audit field in new order
+                userAppService.AuditFields(order, true);
 
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveAsync();

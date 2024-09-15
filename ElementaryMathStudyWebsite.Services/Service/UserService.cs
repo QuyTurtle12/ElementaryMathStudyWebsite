@@ -9,6 +9,7 @@ using System.Linq.Expressions;
 using Microsoft.AspNetCore.Http;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using Microsoft.EntityFrameworkCore;
+using ElementaryMathStudyWebsite.Core.Utils;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -310,12 +311,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // If creating a new entity, set the CreatedBy field
             if (isCreating)
             {
-                entity.CreatedBy = currentUserId.ToString(); // Set the creator's ID
+                entity.CreatedBy = currentUserId.ToString().ToUpper(); // Set the creator's ID
             }
 
             // Always set LastUpdatedBy and LastUpdatedTime fields
             entity.LastUpdatedBy = currentUserId.ToString().ToUpper(); // Set the current user's ID
-            entity.LastUpdatedTime = DateTime.UtcNow;
+
+            // If is not created then update LastUpdatedTime
+            if (isCreating is false)
+            {
+                entity.LastUpdatedTime = CoreHelper.SystemTimeNow;
+            }
+            
         }
 
     }
