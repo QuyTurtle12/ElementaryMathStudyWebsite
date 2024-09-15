@@ -2,10 +2,11 @@
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Services.Service;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
+using Swashbuckle.AspNetCore.Annotations;
 
 
 namespace ElementaryMathStudyWebsite.Controllers
@@ -21,7 +22,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<BasePaginatedList<Topic>>> GetTopics(int pageNumber = -1, int pageSize = -1)
+        public async Task<ActionResult<BasePaginatedList<Topic>>> GetTopics(int pageNumber = 1, int pageSize = 10)
         {
             try
             {
@@ -117,8 +118,13 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return StatusCode(500, "Internal server error. " + ex.Message);
             }
         }
-
         [HttpPost]
+        [Route("create")]
+        [Authorize(Policy = "Admin-Manager")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Create Topic"
+            )]
         public async Task<ActionResult<string>> AddTopic(TopicCreateDto topicCreateDto)
         {
             try
@@ -136,8 +142,13 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return StatusCode(500, "Error: " + ex.Message);
             }
         }
-
-        [HttpPut("{id}")]
+        [HttpPut]
+        [Route("update/{id}")]
+        [Authorize(Policy = "Admin-Manager")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Update Topic"
+            )]
         public async Task<ActionResult<string>> UpdateTopic(string id, [FromBody] TopicDto topicDto)
         {
             try
