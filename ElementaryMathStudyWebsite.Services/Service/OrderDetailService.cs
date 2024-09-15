@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -91,5 +92,26 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return new BasePaginatedList<OrderDetailViewDto>((IReadOnlyCollection<OrderDetailViewDto>)detailDtos, detailDtos.Count, pageNumber, pageSize);
         }
 
+        // Validate if the subject has been assigned before 
+        public async Task<bool> IsValidStudentSubjectBeforeCreateOrder(OrderCreateDto orderCreateDto)
+        {
+            // Validation process
+            foreach (var newSubject in orderCreateDto.SubjectStudents)
+            {
+                // Get student assigned subject
+                IQueryable<OrderDetail> query = _detailReposiotry.Entities.Where(d => d.StudentId.Equals(newSubject.StudentId));
+                var studentCurrentLearningSubject = await query.ToListAsync();
+
+                foreach (var studentSubject in studentCurrentLearningSubject)
+                {
+                    if (studentSubject.SubjectId.Equals(newSubject.SubjectId))
+                    {
+                        return false; // Subject has been assigned
+                    }
+                }
+            }
+
+            return true; // Subject has not been assigned yet
+        }
     }
 }

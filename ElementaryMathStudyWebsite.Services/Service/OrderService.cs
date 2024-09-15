@@ -19,12 +19,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserService _userService;
         private readonly IOrderDetailService _orderDetailService;
+        private readonly IProgressService _progressService;
+        private readonly IQuizService _quizService;
         private readonly ISubjectService _subjectService;
         private readonly ITokenService _tokenService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         // Constructor
-        public OrderService(IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork, IUserService userService, IOrderDetailService orderDetailService, ISubjectService subjectService = null, IGenericRepository<OrderViewDto> orderViewRepository = null, IGenericRepository<User> userRepository = null, ITokenService tokenService = null, IHttpContextAccessor httpContextAccessor = null)
+        public OrderService(IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork, IUserService userService, IOrderDetailService orderDetailService, ISubjectService subjectService = null, IGenericRepository<OrderViewDto> orderViewRepository = null, IGenericRepository<User> userRepository = null, ITokenService tokenService = null, IHttpContextAccessor httpContextAccessor = null, IProgressService progressService = null, IQuizService quizService = null)
         {
             _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
@@ -35,6 +37,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
             _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+            _progressService = progressService ?? throw new ArgumentNullException(nameof(progressService));
+            _quizService = quizService ?? throw new ArgumentNullException(nameof(quizService));
         }
 
         // Add new order to database
@@ -60,14 +64,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 // Cast domain service to application service
                 var userAppService = _userService as IAppUserServices;
+                var orderDetailAppService = _orderDetailService as IAppOrderDetailServices;
+                var progressAppService = _progressService as IAppProgressServices;
+                var quizAppService = _quizService as IAppQuizServices;
 
                 // Audit field in new order
                 userAppService.AuditFields(order, true);
+
+
+                // Check if student is currently studying a specific subjcet
+                if (!await orderDetailAppService.IsValidStudentSubjectBeforeCreateOrder(dto))
+                {
+                    return false; // This subject has been assigned to this student
+                }
 
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveAsync();
 
                 bool result = true;
+
                 // Add order details for each subject-student pair
                 foreach (var subjectStudent in dto.SubjectStudents)
                 {
@@ -78,13 +93,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         StudentId = subjectStudent.StudentId
                     };
 
-                    // Cast domain service to application service
-                    var orderDetailAppService = _orderDetailService as IAppOrderDetailServices;
-
+                    // Add order detail in database
                     bool IsAddedNewOrderDetail = await orderDetailAppService.AddOrderDetailAsync(orderDetail);
                     result = IsAddedNewOrderDetail;
-
-                    if (result is false) { break; }
                 }
 
                 return result; // Show that create order process is completed
