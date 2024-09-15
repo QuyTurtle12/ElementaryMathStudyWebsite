@@ -110,7 +110,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new ArgumentNullException(nameof(dto));
             }
 
-            var user = await _userRepository.GetByIdAsync(userId);
+            // Define the condition to find the user by ID
+            Expression<Func<User, bool>> condition = u => u.Id == userId;
+
+            var user = await _userRepository.FindByConditionWithIncludesAsync(
+                condition,
+                u => u.Role // Include the Role if needed
+                // Add other includes here if needed
+            );
+
             if (user == null)
             {
                 throw new KeyNotFoundException("User not found");
@@ -239,8 +247,17 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<BasePaginatedList<User>> SearchUsersAsync(string? name, bool? status, string? phone, string? email, int pageNumber, int pageSize)
         {
-            // Define the base query (start with all users)
-            IQueryable<User> query = _userRepository.GetAll().AsQueryable();
+            // Define the condition for retrieving users
+            Expression<Func<User, bool>> condition = user => true; // Retrieve all users (no specific condition)
+
+            // Define includes to eagerly load the Role navigation property
+            Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
+            {
+                user => user.Role // Include the Role navigation property
+            };
+
+            // Use GetEntitiesWithCondition with includes to get the queryable set of users
+            IQueryable<User> query = _userRepository.GetEntitiesWithCondition(condition, includes);
 
             // Apply filters if the corresponding parameters are provided
             if (!string.IsNullOrEmpty(name))
@@ -297,7 +314,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Always set LastUpdatedBy and LastUpdatedTime fields
-            entity.LastUpdatedBy = currentUserId.ToString(); // Set the current user's ID
+            entity.LastUpdatedBy = currentUserId.ToString().ToUpper(); // Set the current user's ID
             entity.LastUpdatedTime = DateTime.UtcNow;
         }
 
