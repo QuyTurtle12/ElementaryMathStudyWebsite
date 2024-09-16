@@ -56,12 +56,20 @@ namespace ElementaryMathStudyWebsite
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IOrderDetailService, OrderDetailService>();
             services.AddScoped<IProgressService, ProgressService>();
+
             services.AddScoped<IQuizService, QuizService>();
+
+            services.AddScoped<IAppQuizServices, QuizService>();
+            services.AddScoped<IAppQuestionServices, QuestionService>();
+
             services.AddScoped<IQuestionService, QuestionService>();
             services.AddScoped<ISubjectService, SubjectService>();
             services.AddScoped<IAppSubjectServices, SubjectService>();
             services.AddScoped<IChapterService, ChapterService>();
+            services.AddScoped<IAppChapterServices, ChapterService>();
             services.AddScoped<ITopicService, TopicService>();
+            services.AddScoped<IPaymentService, PaymentService>();
+            services.AddSingleton<IVnPayService, VnPayService>();
 
             // Add application services
             services.AddScoped<IAppAuthService, AuthService>();

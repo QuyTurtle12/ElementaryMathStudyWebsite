@@ -1,6 +1,7 @@
 using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -56,6 +57,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/Subjects/Admin
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("admin")]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -69,6 +71,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/Subjects/Admin/{id}
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("admin/{id}")]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -93,6 +96,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
 
         // POST: api/Subjects
+        [Authorize(Policy = "Admin-Content")]
         [HttpPost]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -127,6 +131,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // PUT: api/Subjects/{id}
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut("{id}")]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -159,6 +164,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // PUT: api/Subjects/ChangeStatus/{id}
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut("/ChangeStatus/{id}")]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -182,13 +188,14 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // Search subjects by name
+        // Search subjects by name, price
         [HttpGet("search")]
         [SwaggerOperation(
             Summary = "Authorization: Anyone",
-            Description = "Search subject by name, pageSize = -1 to have it show all."
+            Description = "Search subject with filters and paginations, set price = -1 to not search for it"
         )]
-        public async Task<IActionResult> SearchSubject([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> SearchSubject([FromQuery] string searchTerm, double lowestPrice = -1,
+                double highestPrice = -1, int pageNumber = 1, int pageSize = 10)
         {
             // Validate the search term
             if (string.IsNullOrWhiteSpace(searchTerm))
@@ -203,7 +210,45 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             try
             {
-                var subjects = await _appSubjectServices.SearchSubjectAsync(searchTerm, pageNumber, pageSize);
+                var subjects = await _appSubjectServices.SearchSubjectAsync(searchTerm, lowestPrice, highestPrice, pageNumber, pageSize);
+                return Ok(subjects);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // Handle case when no subjects are found
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // Handle unexpected errors
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        // Search subjects for admin
+        [Authorize(Policy = "Admin-Content")]
+        [HttpGet("admin/search")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin, Content Manager",
+            Description = "Search subject with filters and paginations, set price = -1, or leave status null to not search for it"
+        )]
+        public async Task<IActionResult> SearchSubjectAdmin([FromQuery] string searchTerm, double lowestPrice = -1,
+                double highestPrice = -1, bool? status = null, int pageNumber = 1, int pageSize = 10)
+        {
+            // Validate the search term
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return BadRequest("Search term cannot be empty.");
+            }
+
+            if (searchTerm.Length < 2)
+            {
+                return BadRequest("Search term must be at least 2 characters long.");
+            }
+
+            try
+            {
+                var subjects = await _appSubjectServices.SearchSubjectAdminAsync(searchTerm, lowestPrice, highestPrice, status, pageNumber, pageSize);
                 return Ok(subjects);
             }
             catch (KeyNotFoundException ex)

@@ -2,7 +2,7 @@
 {
     public class OrderCreateDto
     {
-        public List<SubjectStudentDto> SubjectStudents { get; set; } = new List<SubjectStudentDto>();
+        public IEnumerable<SubjectStudentDto> SubjectStudents { get; set; }
 
         public OrderCreateDto() { }
 

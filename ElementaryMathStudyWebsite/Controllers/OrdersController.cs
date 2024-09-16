@@ -7,7 +7,6 @@ using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -23,6 +22,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
             _orderDetailService = orderDetailService ?? throw new ArgumentNullException(nameof(orderDetailService));
         }
+
+
+       
 
         // GET: api/orders/manager
         // Get orders for Manager & Admin
@@ -78,7 +80,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         [Route("{id}")]
         [SwaggerOperation(
             Summary = "Authorization: N/A",
-            Description = "View order for General User"
+            Description = "View order with selected information"
             )]
         public async Task<ActionResult<OrderViewDto>> GetOrderForGeneralUser([Required] string id)
         {
@@ -103,11 +105,12 @@ namespace ElementaryMathStudyWebsite.Controllers
         // GET: api/orders
         // Get orders for general user
         [HttpGet]
+        [Authorize(Policy = "Parent")]
         [SwaggerOperation(
-            Summary = "Authorization: N/A",
-            Description = "View order list for General User. Insert -1 to get all items"
+            Summary = "Authorization: Parent",
+            Description = "View order list for Parent User. Insert -1 to get all items"
             )]
-        public async Task<ActionResult<BasePaginatedList<OrderViewDto>>> GetOrdersForGeneralUser(int pageNumber = -1, int pageSize = -1)
+        public async Task<ActionResult<BasePaginatedList<OrderViewDto>>> GetOrdersForParent(int pageNumber = -1, int pageSize = -1)
         {
             try
             {
@@ -123,43 +126,36 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // POST: api/orders/
-        // Add orders
-        [HttpPost]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin & Parent",
-            Description = "Create order."
-            )]
-        public async Task<ActionResult<string>> AddOrder(OrderCreateDto orderCreateDto)
-        {
-            try
-            {
-                // Cast domain service to application service
-                var orderAppService = _orderService as IAppOrderServices;
+        //// POST: api/orders/
+        //// Add orders
+        //[HttpPost]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Admin & Parent",
+        //    Description = "Create order."
+        //    )]
+        //public async Task<ActionResult<string>> AddOrder(OrderCreateDto orderCreateDto)
+        //{
+        //    try
+        //    {
+        //        // Cast domain service to application service
+        //        var orderAppService = _orderService as IAppOrderServices;
 
-                // General Validation for each Subject-Student pair
-                foreach (var subjectStudent in orderCreateDto.SubjectStudents)
-                {
-                    string? error = await orderAppService.IsGenerallyValidated(subjectStudent.SubjectId, subjectStudent.StudentId);
-                    if (!string.IsNullOrWhiteSpace(error)) return BadRequest(error);
-                }
+        //        // Add new order
+        //        bool IsAddedNewOrder = await orderAppService.AddOrderAsync(orderCreateDto);
 
-                // Add new order
-                bool IsAddedNewOrder = await orderAppService.AddOrderAsync(orderCreateDto);
-
-                if (IsAddedNewOrder is false)
-                {
-                    return BadRequest("Failed to create order, please check input value");
-                }
+        //        if (IsAddedNewOrder is false)
+        //        {
+        //            return BadRequest("Failed to create order, please check input value");
+        //        }
 
 
-                return Ok("Created Order Successfully!");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error: " + ex.Message);
-            }
-        }
+        //        return Ok("Created Order Successfully!");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, "Error: " + ex.Message);
+        //    }
+        //}
 
 
         // GET: api/orders/detail
