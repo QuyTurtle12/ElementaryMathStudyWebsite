@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Infrastructure.UOW;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 
 
@@ -45,7 +46,12 @@ namespace ElementaryMathStudyWebsite
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IOrderDetailService, OrderDetailService>();
             services.AddScoped<IProgressService, ProgressService>();
+
             services.AddScoped<IQuizService, QuizService>();
+
+            services.AddScoped<IAppQuizServices, QuizService>();
+            services.AddScoped<IAppQuestionServices, QuestionService>();
+
             services.AddScoped<IQuestionService, QuestionService>();
             services.AddScoped<ISubjectService, SubjectService>();
             services.AddScoped<IChapterService, ChapterService>();

@@ -13,7 +13,7 @@
         {
         }
 
-        public string QuizId { get; set; }
+        //public string QuizId { get; set; }
         public string QuizName { get; set; } = string.Empty;
         public double? Criteria { get; set; }
         public bool? Status { get; set; }

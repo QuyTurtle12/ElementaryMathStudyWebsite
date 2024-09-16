@@ -20,10 +20,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _quizRepository = QuizRepository;
         }
 
+        // bỏ
         public Task<BasePaginatedList<QuizViewDto?>> GetQuizzDtoAsync(int pageNumber, int pageSize)
         {
             throw new NotImplementedException();
         }
+
 
         public async Task<IList<QuizViewDto?>> GetQuizzesAsync()
         {

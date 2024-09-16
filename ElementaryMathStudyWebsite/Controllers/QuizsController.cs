@@ -59,7 +59,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 var quizzes = await _quizService.SearchQuizzesAsync(quizName, criteria);
 
-                if (quizzes == null || quizzes.Count == 0)
+                if (quizzes == null)
                 {
                     return NotFound("No quizzes found matching the search criteria.");
                 }
