@@ -42,15 +42,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Add new order to database
-        public async Task<bool> AddOrderAsync(OrderCreateDto dto)
+        public async Task<string> AddOrderAsync(OrderCreateDto dto)
         {
             try
             {
+                // General Validation for each Subject-Student pair
+                foreach (var subjectStudent in dto.SubjectStudents)
+                {
+                    string? error = await IsGenerallyValidated(subjectStudent.SubjectId, subjectStudent.StudentId);
+                   if (string.IsNullOrWhiteSpace(error)) throw new ArgumentNullException(error);
+                }
+
                 // Calculate total price
                 double totalPrice = await CalculateTotalPrice(dto);
 
                 // Validate if subject is valid, if total price equal -1 means subject is invalid
-                if (totalPrice == -1) { return false; }
+                if (totalPrice == -1) { throw new Exception("Invalid subject"); }
 
                 // Get logged in User Id from authorization header 
                 var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
@@ -75,13 +82,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 // Check if student is currently studying a specific subjcet
                 if (!await orderDetailAppService.IsValidStudentSubjectBeforeCreateOrder(dto))
                 {
-                    return false; // This subject has been assigned to this student
+                    throw new ArgumentException("This subject has been assigned to this student"); // This subject has been assigned to this student
                 }
 
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveAsync();
 
-                bool result = true;
+                bool result = true; // Check create order detail result
 
                 // Add order details for each subject-student pair
                 foreach (var subjectStudent in dto.SubjectStudents)
@@ -98,11 +105,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     result = IsAddedNewOrderDetail;
                 }
 
-                return result; // Show that create order process is completed
+                if (result is false)
+                {
+                    throw new Exception("Failed to create order detail");
+                }
+
+                return order.Id; // Show that create order process is completed
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return false;
+                throw new Exception(ex.Message);
             }
 
         }
@@ -155,8 +167,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get order list with selected properties
         public async Task<BasePaginatedList<OrderViewDto?>> GetOrderDtosAsync(int pageNumber, int pageSize)
         {
-            // Get all orders from the database
-            IQueryable<Order> query = _orderRepository.Entities;
+            // Get logged in User Id from authorization header 
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
+
+            // Get all logged user's orders from the database
+            IQueryable<Order> query = _orderRepository.Entities
+                .Where(o => o.CustomerId.Equals(currentUserId));
             IList<OrderViewDto> orderDtos = new List<OrderViewDto>();
 
             // Cast domain service to application service

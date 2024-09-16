@@ -2,6 +2,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Infrastructure.UOW;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Services.Service;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Services
 {
@@ -15,6 +18,9 @@ namespace ElementaryMathStudyWebsite.Services
         {
             // Register generic repository with a scoped lifetime
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+            //services.AddScoped<IAppQuestionServices, Question>();
+            //services.AddScoped<IAppQuizServices, QuizService>();
 
             // Register UnitOfWork
             services.AddScoped<IUnitOfWork, UnitOfWork>();

@@ -9,7 +9,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<BasePaginatedList<OrderViewDto?>> searchOrderDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter);
 
         // Add Order to database
-        Task<bool> AddOrderAsync(OrderCreateDto dto);
+        Task<string> AddOrderAsync(OrderCreateDto dto);
 
         // Get Order list for general user
         Task<BasePaginatedList<OrderViewDto?>> GetOrderDtosAsync(int pageNumber, int pageSize);
