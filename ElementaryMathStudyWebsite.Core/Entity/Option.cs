@@ -1,4 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Base;
+using System.Text.Json.Serialization;
 
 namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 {
@@ -11,10 +12,15 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public bool IsCorrect { get; set; }
 
         // Navigation properties
+        [JsonIgnore]
         public virtual User? CreatedByUser { get; set; }
+        [JsonIgnore]
         public virtual User? LastUpdatedByUser { get; set; }
+        [JsonIgnore]
         public virtual User? DeletedByUser { get; set; }
+        [JsonIgnore]
         public virtual ICollection<UserAnswer>? Answers { get; set; } // Navigation property, one option can be in many user's answer
+        [JsonIgnore]
         public virtual Question? Question { get; set; } // Navigation property, one option belong to one question
 
 
