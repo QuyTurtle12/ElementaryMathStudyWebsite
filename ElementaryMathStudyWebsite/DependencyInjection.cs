@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
 
 
 namespace ElementaryMathStudyWebsite
@@ -52,7 +51,7 @@ namespace ElementaryMathStudyWebsite
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IOptionService, OptionService>();
-            services.AddScoped<IUserAnswerService, UserAnswer>();
+            services.AddScoped<IUserAnswerService, UserAnswerService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IOrderDetailService, OrderDetailService>();
             services.AddScoped<IProgressService, ProgressService>();

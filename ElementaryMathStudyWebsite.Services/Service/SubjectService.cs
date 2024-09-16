@@ -1,36 +1,25 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
-using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
+﻿using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class SubjectService : ISubjectService, IAppSubjectServices
+    public class SubjectService(IGenericRepository<Subject> subjectRepository, IHttpContextAccessor httpContextAccessor, ITokenService tokenService) : ISubjectService, IAppSubjectServices
     {
-        private readonly IGenericRepository<Subject> _detailReposiotry;
-        private readonly IGenericRepository<Subject> _subjectRepository;
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ITokenService _tokenService;
-
-        public SubjectService(IGenericRepository<Subject> detailReposiotry, IGenericRepository<Subject> subjectRepository, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ITokenService tokenService)
-        {
-            _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
-            _subjectRepository = subjectRepository ?? throw new ArgumentNullException(nameof(subjectRepository));
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _httpContextAccessor = httpContextAccessor;
-            _tokenService = tokenService;
-        }
+        private readonly IGenericRepository<Subject> _subjectRepository = subjectRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+        private readonly ITokenService _tokenService = tokenService;
 
         // Helper method for validation
-        private void ValidateSubject(SubjectDTO subjectDTO)
+        private static void ValidateSubject(SubjectDTO subjectDTO)
         {
             if (string.IsNullOrWhiteSpace(subjectDTO.SubjectName))
             {
@@ -123,10 +112,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         Status = subject.Status
                     })).ToList();
 
-                return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count(), 1, subjectDtos.Count());
+                return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
 
-            var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
+            var paginatedSubjects = await _subjectRepository.GetPagging(query, pageNumber, pageSize);
             var subjectDtosPaginated = paginatedSubjects.Items.Select(subject => (ISubjectBaseDTO)(isAdmin
                 ? new SubjectAdminViewDTO
                 {
@@ -149,18 +138,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 })).ToList();
 
 
-            return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count(), pageNumber, pageSize);
+            return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count, pageNumber, pageSize);
         }
 
         // Get a specific subject by ID
         public async Task<object> GetSubjectByIDAsync(string id, bool isAdmin)
         {
-            var subject = await _subjectRepository.GetByIdAsync(id);
-            if (subject == null)
-            {
-                throw new KeyNotFoundException($"Cannot find product with ID '{id}'.");
-            }
-
+            var subject = await _subjectRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"Cannot find product with ID '{id}'.");
             if (!isAdmin && !subject.Status)
             {
                 throw new KeyNotFoundException($"Cannot find product with ID '{id}'.");
@@ -194,7 +178,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             var query = _subjectRepository.Entities.Where(s => s.Status == true);
 
-            if (!string.IsNullOrEmpty(searchTerm))
+            if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 query = query.Where(s => EF.Functions.Like(s.SubjectName, $"%{searchTerm}%"));
             }
@@ -219,7 +203,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     Status = s.Status
                 }).ToList();
 
-                if (!subjectDtos.Any())
+                if (subjectDtos.Count == 0)
                 {
                     throw new KeyNotFoundException($"No subjects found with name containing '{searchTerm}'.");
                 }
@@ -227,7 +211,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
 
-            var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
+            var paginatedSubjects = await _subjectRepository.GetPagging(query, pageNumber, pageSize);
             var subjectDtosPaginated = paginatedSubjects.Items.Select(s => new SubjectDTO
             {
                 SubjectName = s.SubjectName,
@@ -235,12 +219,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 Status = s.Status
             }).ToList();
 
-            if (!subjectDtosPaginated.Any())
+            if (subjectDtosPaginated.Count == 0)
             {
                 throw new KeyNotFoundException($"No subjects found with name containing '{searchTerm}'.");
             }
 
-            return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count(), pageNumber, pageSize);
+            return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count, pageNumber, pageSize);
         }
 
         public async Task<BasePaginatedList<object>> SearchSubjectAdminAsync(string searchTerm, double lowestPrice,
@@ -253,7 +237,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 query = query.Where(s => s.Status == status.Value);
             }
 
-            if (!string.IsNullOrEmpty(searchTerm))
+            if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 query = query.Where(s => EF.Functions.Like(s.SubjectName, $"%{searchTerm}%"));
             }
@@ -285,7 +269,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     DeletedTime = subject.DeletedTime
                 }).ToList();
 
-                if (!subjectDtos.Any())
+                if (subjectDtos.Count == 0)
                 {
                     throw new KeyNotFoundException($"No subjects found with name containing '{searchTerm}'.");
                 }
@@ -293,7 +277,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
 
-            var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
+            var paginatedSubjects = await _subjectRepository.GetPagging(query, pageNumber, pageSize);
             var subjectDtosPaginated = paginatedSubjects.Items.Select(subject => new SubjectAdminViewDTO
             {
                 Id = subject.Id,
@@ -308,22 +292,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 DeletedTime = subject.DeletedTime
             }).ToList();
 
-            if (!subjectDtosPaginated.Any())
+            if (subjectDtosPaginated.Count == 0)
             {
                 throw new KeyNotFoundException($"No subjects found with name containing '{searchTerm}'.");
             }
 
-            return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count(), pageNumber, pageSize);
+            return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count, pageNumber, pageSize);
         }
 
         // Update subject and set LastUpdatedTime to current time
         public async Task<SubjectAdminViewDTO> UpdateSubjectAsync(string id, SubjectDTO subjectDTO)
         {
-            var subject = await _subjectRepository.GetByIdAsync(id);
-            if (subject == null)
-            {
-                throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
-            }
+            var subject = await _subjectRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
 
             // Check if another subject with the same name already exists
             var existingSubject = await _subjectRepository.Entities
@@ -365,12 +345,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Change subject status and set LastUpdatedTime to current time
         public async Task<SubjectAdminViewDTO> ChangeSubjectStatusAsync(string id)
         {
-            var subject = await _subjectRepository.GetByIdAsync(id);
-            if (subject == null)
-            {
-                throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
-            }
-
+            var subject = await _subjectRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
             subject.Status = !subject.Status;
             //subject.LastUpdatedTime = DateTime.UtcNow;
 
@@ -408,11 +383,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get a specific subject by ID (For Order)
         public async Task<Subject> GetSubjectByIDAsync(string id)
         {
-            var subject = await _subjectRepository.GetByIdAsync(id);
-            if (subject == null)
-            {
-                throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
-            }
+            var subject = await _subjectRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
             return subject;
         }
 

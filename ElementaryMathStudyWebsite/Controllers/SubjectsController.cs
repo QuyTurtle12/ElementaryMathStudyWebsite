@@ -1,4 +1,4 @@
-using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
+using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
@@ -9,16 +9,10 @@ namespace ElementaryMathStudyWebsite.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SubjectsController : ControllerBase
+    public class SubjectsController(ISubjectService subjectService, IAppSubjectServices appSubjectServices) : ControllerBase
     {
-        private readonly ISubjectService _subjectService;
-        private readonly IAppSubjectServices _appSubjectServices;
-
-        public SubjectsController(ISubjectService subjectService, IAppSubjectServices appSubjectServices)
-        {
-            _subjectService = subjectService;
-            _appSubjectServices = appSubjectServices;
-        }
+        private readonly ISubjectService _subjectService = subjectService;
+        private readonly IAppSubjectServices _appSubjectServices = appSubjectServices;
 
         // GET: api/Subjects
         [HttpGet]
