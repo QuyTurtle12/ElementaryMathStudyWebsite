@@ -1,4 +1,4 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Services.IDomainService;
@@ -15,10 +15,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _quizRepository = quizRepository;
         }
 
-        public async Task<string> GetQuizName(string quizId)
+        public async Task<string> GetQuizNameAsync(string quizId)
         {
             Quiz quiz = await _quizRepository.GetByIdAsync(quizId);
-            return quiz.QuizName;
+            return quiz?.QuizName ?? string.Empty;
         }
     }
 }

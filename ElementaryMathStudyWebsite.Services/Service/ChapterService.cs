@@ -319,5 +319,24 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return new BasePaginatedList<object>(chapterDtosPaginated, chapterDtosPaginated.Count(), pageNumber, pageSize);
         }
 
+        public async Task<string?> GetChapterNameAsync(string id)
+        {
+            try
+            {
+                Chapter chapter = await _chapterRepository.GetByIdAsync(id);
+
+                if (chapter == null)
+                {
+                    return string.Empty;
+                }
+
+                return chapter.ChapterName;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+
+        }
     }
 }

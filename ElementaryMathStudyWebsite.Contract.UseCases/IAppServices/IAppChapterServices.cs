@@ -16,5 +16,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         Task<ChapterViewDto?> GetChapterDtoByChapterIdAsync(string Id);
 
+        Task<string?> GetChapterNameAsync(string id);
     }
 }

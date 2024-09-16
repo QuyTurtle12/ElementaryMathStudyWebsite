@@ -3,6 +3,6 @@
     public interface IAppQuizServices
     {
         // Get quiz name by quiz id
-        Task<string> GetQuizName(string quizId);
+        Task<string> GetQuizNameAsync(string quizId);
     }
 }

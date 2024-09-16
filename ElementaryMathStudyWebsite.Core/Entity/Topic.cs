@@ -1,4 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Base;
+using System.Text.Json.Serialization;
 
 namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 {
@@ -15,10 +16,15 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public required string ChapterId { get; set; }
 
         // Navigation properties
+        [JsonIgnore]
         public virtual User? CreatedByUser { get; set; }
+        [JsonIgnore]
         public virtual User? LastUpdatedByUser { get; set; }
+        [JsonIgnore]
         public virtual User? DeletedByUser { get; set; }
+        [JsonIgnore]
         public virtual Chapter? Chapter { get; set; } // Navigation property, one topic belong to one chapter
+        [JsonIgnore]
         public virtual Quiz? Quiz { get; set; } // Navigation property, one topic can only has one quiz
 
         public Topic() { }
