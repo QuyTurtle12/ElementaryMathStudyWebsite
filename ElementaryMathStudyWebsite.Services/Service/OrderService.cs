@@ -167,8 +167,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get order list with selected properties
         public async Task<BasePaginatedList<OrderViewDto?>> GetOrderDtosAsync(int pageNumber, int pageSize)
         {
-            // Get all orders from the database
-            IQueryable<Order> query = _orderRepository.Entities;
+            // Get logged in User Id from authorization header 
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
+
+            // Get all logged user's orders from the database
+            IQueryable<Order> query = _orderRepository.Entities
+                .Where(o => o.CustomerId.Equals(currentUserId));
             IList<OrderViewDto> orderDtos = new List<OrderViewDto>();
 
             // Cast domain service to application service

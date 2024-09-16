@@ -77,7 +77,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         [Route("{id}")]
         [SwaggerOperation(
             Summary = "Authorization: N/A",
-            Description = "View order for General User"
+            Description = "View order with selected information"
             )]
         public async Task<ActionResult<OrderViewDto>> GetOrderForGeneralUser([Required] string id)
         {
@@ -102,11 +102,12 @@ namespace ElementaryMathStudyWebsite.Controllers
         // GET: api/orders
         // Get orders for general user
         [HttpGet]
+        [Authorize(Policy = "Parent")]
         [SwaggerOperation(
-            Summary = "Authorization: N/A",
-            Description = "View order list for General User. Insert -1 to get all items"
+            Summary = "Authorization: Parent",
+            Description = "View order list for Parent User. Insert -1 to get all items"
             )]
-        public async Task<ActionResult<BasePaginatedList<OrderViewDto>>> GetOrdersForGeneralUser(int pageNumber = -1, int pageSize = -1)
+        public async Task<ActionResult<BasePaginatedList<OrderViewDto>>> GetOrdersForParent(int pageNumber = -1, int pageSize = -1)
         {
             try
             {
