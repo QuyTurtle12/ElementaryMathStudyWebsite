@@ -35,7 +35,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var allQuiz = query.ToList();
             foreach (var quiz in allQuiz)
             {
-                QuizViewDto dto = new QuizViewDto(quiz.QuizName, quiz.Criteria, quiz.Status);
+                QuizViewDto dto = new QuizViewDto { QuizName = quiz.QuizName, Criteria = quiz.Criteria, Status = quiz.Status };
                 listQuiz.Add(dto);
             }
             return listQuiz;

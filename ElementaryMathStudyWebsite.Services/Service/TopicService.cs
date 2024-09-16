@@ -105,14 +105,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (topic == null) throw new KeyNotFoundException($"Not Found.");
 
-            // Cast domain service to application service
-            var chapterAppService = _chapterService as IAppChapterServices;
-            var quizAppService = _quizService as IAppQuizServices;
+            string chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId);
+            string quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
 
-            string chapterName = await chapterAppService.GetChapterNameAsync(topic.ChapterId);
-            string quizName = await quizAppService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-
-            return new TopicViewDto(topic.Number, topic.TopicName, quizName, chapterName);
+            return new TopicViewDto { Number = topic.Number, TopicName = topic.TopicName, QuizName = quizName, ChapterName = chapterName };
         }
 
         public async Task<BasePaginatedList<object>> SearchTopicByNameAsync(string searchTerm, int pageNumber, int pageSize)

@@ -77,7 +77,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     string studentName = await userAppService.GetUserNameAsync(prog.StudentId);
                     string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
-                    ProgressViewDto dto = new ProgressViewDto(studentName, subjectName, subjectPercentage);
+                    ProgressViewDto dto = new ProgressViewDto { StudentName = studentName, SubjectName = subjectName, SubjectPercentage = subjectPercentage };
                     studentProgressDtos.Add(dto);
                 }
                 return new BasePaginatedList<ProgressViewDto>((IReadOnlyCollection<ProgressViewDto>)studentProgressDtos, studentProgressDtos.Count, 1, studentProgressDtos.Count);
@@ -91,7 +91,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 double subjectPercentage = await CalculateSubjectPercentageAsync(studentId, prog.SubjectId);
                 string studentName = await userAppService.GetUserNameAsync(prog.StudentId);
                 string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
-                ProgressViewDto dto = new ProgressViewDto(studentName, subjectName, subjectPercentage);
+                ProgressViewDto dto = new ProgressViewDto { StudentName = studentName, SubjectName = subjectName, SubjectPercentage = subjectPercentage };
                 studentProgressDtos.Add(dto);
             }
 
@@ -127,7 +127,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     string studentName = await userAppService.GetUserNameAsync(prog.StudentId);
                     string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
-                    ProgressViewDto dto = new ProgressViewDto(studentName, subjectName, subjectPercentage);
+                    ProgressViewDto dto = new ProgressViewDto { StudentName = studentName, SubjectName = subjectName, SubjectPercentage = subjectPercentage };
                     studentProgressDtos.Add(dto);
                 }
             }

@@ -2,16 +2,6 @@
 {
     public class QuizViewDto
     {
-        public QuizViewDto(string quizName, double? criteria, bool? status)
-        {
-            QuizName = quizName;
-            Criteria = criteria;
-            Status = status;
-        }
-
-        public QuizViewDto()
-        {
-        }
 
         //public string QuizId { get; set; }
         public string QuizName { get; set; } = string.Empty;

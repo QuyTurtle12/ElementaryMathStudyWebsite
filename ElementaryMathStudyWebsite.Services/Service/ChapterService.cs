@@ -210,7 +210,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (chapter == null) return null;
 
-            ChapterViewDto dto = new ChapterViewDto(chapter.Number, chapter.ChapterName);
+            ChapterViewDto dto = new ChapterViewDto { Number = chapter.Number, ChapterName = chapter.ChapterName };
 
             return dto;
         }
@@ -227,7 +227,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 // Map chapters to ChapterViewDto
                 foreach (var chapter in allChapters)
                 {
-                    ChapterViewDto dto = new ChapterViewDto(chapter.Number, chapter.ChapterName);
+                    ChapterViewDto dto = new ChapterViewDto { Number = chapter.Number, ChapterName = chapter.ChapterName };
                     chapterDtos.Add(dto);
                 }
                 return new BasePaginatedList<ChapterViewDto>(chapterDtos, chapterDtos.Count, 1, chapterDtos.Count);
@@ -238,7 +238,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (var chapter in paginatedChapters.Items)
             {
                 //chapterDtos.Add(new ChapterViewDto(chapter.Number, chapter.ChapterName));
-                ChapterViewDto dto = new ChapterViewDto(chapter.Number, chapter.ChapterName);
+                ChapterViewDto dto = new ChapterViewDto { Number = chapter.Number, ChapterName = chapter.ChapterName };
                 chapterDtos.Add(dto);
             }
 

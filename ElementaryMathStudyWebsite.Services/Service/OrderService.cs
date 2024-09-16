@@ -158,7 +158,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             string customerName = await appService.GetUserNameAsync(order.CustomerId);
 
-            OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+            OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
 
             return dto;
         }
@@ -186,7 +186,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 foreach (var order in allOrders)
                 {
                     string? customerName = await appService.GetUserNameAsync(order.CustomerId);
-                    OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                    OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                     orderDtos.Add(dto);
                 }
                 return new BasePaginatedList<OrderViewDto>((IReadOnlyCollection<OrderViewDto>)orderDtos, orderDtos.Count, 1, orderDtos.Count);
@@ -199,7 +199,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (var order in paginatedOrders.Items)
             {
                 string? customerName = await appService.GetUserNameAsync(order.CustomerId);
-                OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                 orderDtos.Add(dto);
             }
 
@@ -341,7 +341,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 if (order.CustomerId == inputvalue)
                 {
                     string customerName = await userAppService.GetUserNameAsync(order.CustomerId) ?? string.Empty;
-                    OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                    OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                     result.Add(dto);
                 }
             }
@@ -370,7 +370,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         if (order.CustomerId == user.Id)
                         {
                             string customerName = await userAppService.GetUserNameAsync(order.CustomerId) ?? string.Empty;
-                            OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                            OrderViewDto dto = new OrderViewDto{ CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                             result.Add(dto);
                         }
                     }
@@ -402,7 +402,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         if (order.CustomerId == user.Id)
                         {
                             string customerName = await userAppService.GetUserNameAsync(order.CustomerId) ?? string.Empty;
-                            OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                            OrderViewDto dto = new OrderViewDto{ CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                             result.Add(dto);
                         }
                     }
@@ -466,7 +466,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (var order in filteredOrders)
             {
                 string? customerName = await appService.GetUserNameAsync(order.CustomerId);
-                var dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                 orderDtos.Add(dto);
             }
 
@@ -502,7 +502,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (var order in filteredOrders)
             {
                 string? customerName = await appService.GetUserNameAsync(order.CustomerId);
-                var dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                 orderDtos.Add(dto);
             }
 

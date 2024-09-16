@@ -162,8 +162,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var appService = _orderDetailService as IAppOrderDetailServices;
-                BasePaginatedList<OrderDetailViewDto> detail = await appService.GetOrderDetailDtoListByOrderIdAsync(pageNumber, pageSize, orderId);
+                BasePaginatedList<OrderDetailViewDto> detail = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(pageNumber, pageSize, orderId);
                 return Ok(detail);
             }
             catch (Exception ex)

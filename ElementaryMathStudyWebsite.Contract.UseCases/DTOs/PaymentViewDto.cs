@@ -1,6 +1,4 @@
-﻿using ElementaryMathStudyWebsite.Core.Entity;
-
-namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
+﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
 {
     public class PaymentViewDto
     {
