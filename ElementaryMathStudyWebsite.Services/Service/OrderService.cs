@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using Microsoft.AspNetCore.Http;
+using System.Reflection.Metadata.Ecma335;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -46,11 +47,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             try
             {
+
                 // General Validation for each Subject-Student pair
                 foreach (var subjectStudent in dto.SubjectStudents)
                 {
                     string? error = await IsGenerallyValidated(subjectStudent.SubjectId, subjectStudent.StudentId);
-                   if (string.IsNullOrWhiteSpace(error)) throw new ArgumentNullException(error);
+                   if (!string.IsNullOrWhiteSpace(error)) throw new ArgumentNullException(error);
+                }
+
+                // Check if student is currently studying a specific subjcet
+                var orderDetailAppService = _orderDetailService as IAppOrderDetailServices;
+                if (!await orderDetailAppService.IsValidStudentSubjectBeforeCreateOrder(dto))
+                {
+                    throw new ArgumentException("This subject has been assigned to this student"); // This subject has been assigned to this student
                 }
 
                 // Calculate total price
@@ -71,7 +80,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 // Cast domain service to application service
                 var userAppService = _userService as IAppUserServices;
-                var orderDetailAppService = _orderDetailService as IAppOrderDetailServices;
                 var progressAppService = _progressService as IAppProgressServices;
                 var quizAppService = _quizService as IAppQuizServices;
 
@@ -79,11 +87,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 userAppService.AuditFields(order, true);
 
 
-                // Check if student is currently studying a specific subjcet
-                if (!await orderDetailAppService.IsValidStudentSubjectBeforeCreateOrder(dto))
-                {
-                    throw new ArgumentException("This subject has been assigned to this student"); // This subject has been assigned to this student
-                }
 
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveAsync();
@@ -242,6 +245,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Check if subject is existed
             if (!await subjectAppService.IsValidSubjectAsync(subjectId)) return $"The subject Id {subjectId} is not exist";
+
+            // Check if the studentId is a valid student id
+            var student = await _unitOfWork.GetRepository<User>().GetByIdAsync(studentId);
+            if (student is null) return $"The student Id {studentId} is not exist";
+            var role = await _unitOfWork.GetRepository<Role>().GetByIdAsync(student.RoleId);
+            if (role.RoleName != "Student") return $"The Id {studentId} is not a student Id";
 
             if (!await userAppService.IsCustomerChildren(currentUserId, studentId)) return "They are not parents and children";
 
