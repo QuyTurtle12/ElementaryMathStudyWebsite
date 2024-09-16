@@ -42,31 +42,31 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // DELETE: api/options/{id}
-        [Authorize(Policy = "Admin-Content")]
-        [HttpDelete]
-        [Route("{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin & Content Manager",
-            Description = "Delete an option (of a question)"
-            )]
-        public async Task<IActionResult> DeleteOption([Required] string id)
-        {
-            try
-            {
-                var optionAppService = _optionService as IAppOptionServices;
-                if (await optionAppService.DeleteOption(id))
-                {
-                    return Ok("Delete successfully");
+        //// DELETE: api/options/{id}
+        //[Authorize(Policy = "Admin-Content")]
+        //[HttpDelete]
+        //[Route("{id}")]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Admin & Content Manager",
+        //    Description = "Delete an option (of a question)"
+        //    )]
+        //public async Task<IActionResult> DeleteOption([Required] string id)
+        //{
+        //    try
+        //    {
+        //        var optionAppService = _optionService as IAppOptionServices;
+        //        if (await optionAppService.DeleteOption(id))
+        //        {
+        //            return Ok("Delete successfully");
 
-                }
-                return BadRequest("Delete unsuccessfully");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error: " + ex.Message);
-            }
-        }
+        //        }
+        //        return BadRequest("Delete unsuccessfully");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, "Error: " + ex.Message);
+        //    }
+        //}
 
 
         // GET: api/options/raw/{id}

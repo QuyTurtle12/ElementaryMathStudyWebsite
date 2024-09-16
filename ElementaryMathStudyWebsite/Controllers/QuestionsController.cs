@@ -68,23 +68,23 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // DELETE api/question/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteQuestion(int id)
-        {
-            try
-            {
-                var success = await _questionService.DeleteQuestionAsync(id);
-                if (success)
-                {
-                    return NoContent();
-                }
-                return NotFound();
-            }
-            catch (Exception)
-            {
-                return BadRequest();
-            }
-        }
+        //// DELETE api/question/5
+        //[HttpDelete("{id}")]
+        //public async Task<IActionResult> DeleteQuestion(int id)
+        //{
+        //    try
+        //    {
+        //        var success = await _questionService.DeleteQuestionAsync(id);
+        //        if (success)
+        //        {
+        //            return NoContent();
+        //        }
+        //        return NotFound();
+        //    }
+        //    catch (Exception)
+        //    {
+        //        return BadRequest();
+        //    }
+        //}
     }
 }
