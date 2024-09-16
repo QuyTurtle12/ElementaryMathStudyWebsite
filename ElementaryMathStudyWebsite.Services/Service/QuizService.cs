@@ -1,14 +1,14 @@
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class QuizService : IQuizService, IAppQuizServices
+    public class QuizService : IAppQuizServices
     {
         private readonly IGenericRepository<Quiz> _quizRepository;
         private readonly IGenericRepository<Chapter> _chapterRepository;
@@ -35,7 +35,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var allQuiz = query.ToList();
             foreach (var quiz in allQuiz)
             {
-                QuizViewDto dto = new QuizViewDto(quiz.QuizName, quiz.Criteria, quiz.Status);
+                QuizViewDto dto = new QuizViewDto { QuizName = quiz.QuizName, Criteria = quiz.Criteria, Status = quiz.Status };
                 listQuiz.Add(dto);
             }
             return listQuiz;

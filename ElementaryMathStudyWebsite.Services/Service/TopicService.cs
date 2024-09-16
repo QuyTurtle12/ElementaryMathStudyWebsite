@@ -1,5 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
@@ -8,19 +8,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class TopicService : ITopicService, IAppTopicServices
+    public class TopicService : IAppTopicServices
     {
         private readonly IGenericRepository<Topic> _topicRepository;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IQuizService _quizService;
-        private readonly IChapterService _chapterService;
+        private readonly IAppQuizServices _quizService;
+        private readonly IAppChapterServices _chapterService;
 
-        public TopicService(IGenericRepository<Topic> topicRepository, IUnitOfWork unitOfWork, IQuizService quizService, IChapterService chapterService)
+        public TopicService(IGenericRepository<Topic> topicRepository, IUnitOfWork unitOfWork, IAppQuizServices quizService, IAppChapterServices chapterService)
         {
-            _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _quizService = quizService ?? throw new ArgumentNullException(nameof(quizService));
-            _chapterService = chapterService ?? throw new ArgumentNullException(nameof(chapterService));
+            _topicRepository = topicRepository;
+            _unitOfWork = unitOfWork;
+            _quizService = quizService;
+            _chapterService = chapterService;
         }
 
         // Lấy danh sách Topic có phân trang
@@ -105,14 +105,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (topic == null) throw new KeyNotFoundException($"Not Found.");
 
-            // Cast domain service to application service
-            var chapterAppService = _chapterService as IAppChapterServices;
-            var quizAppService = _quizService as IAppQuizServices;
+            string chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId);
+            string quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
 
-            string chapterName = await chapterAppService.GetChapterNameAsync(topic.ChapterId);
-            string quizName = await quizAppService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-
-            return new TopicViewDto(topic.Number, topic.TopicName, quizName, chapterName);
+            return new TopicViewDto { Number = topic.Number, TopicName = topic.TopicName, QuizName = quizName, ChapterName = chapterName };
         }
 
         public async Task<BasePaginatedList<object>> SearchTopicByNameAsync(string searchTerm, int pageNumber, int pageSize)

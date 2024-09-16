@@ -1,8 +1,8 @@
-﻿using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+﻿using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class UserAnswer : IUserAnswerService
+    public class UserAnswer : IAppUserAnswerServices
     {
     }
 }

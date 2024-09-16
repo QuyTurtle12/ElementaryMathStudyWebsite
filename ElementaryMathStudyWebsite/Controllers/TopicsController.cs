@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
@@ -15,8 +15,8 @@ namespace ElementaryMathStudyWebsite.Controllers
     [ApiController]
     public class TopicsController : ControllerBase
     {
-        private readonly ITopicService _topicService;
-        public TopicsController(ITopicService topicService)
+        private readonly IAppTopicServices _topicService;
+        public TopicsController(IAppTopicServices topicService)
         {
             _topicService = topicService ?? throw new ArgumentNullException(nameof(topicService));
         }
@@ -41,10 +41,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                // Cast domain service to application service
-                var topicAppService = _topicService as IAppTopicServices;
-
-                Topic topic = await topicAppService.GetTopicAllByIdAsync(id);
+                Topic topic = await _topicService.GetTopicAllByIdAsync(id);
                 if (topic == null)
                 {
                     return BadRequest("Invalid Id");
@@ -63,10 +60,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                // Cast domain service to application service
-                var topicAppService = _topicService as IAppTopicServices;
-
-                TopicViewDto topic = await topicAppService.GetTopicByIdAsync(id);
+                TopicViewDto topic = await _topicService.GetTopicByIdAsync(id);
                 if (topic == null)
                 {
                     return NotFound("Topic not found.");
@@ -112,10 +106,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                // Cast domain service to application service
-                var topicAppService = _topicService as IAppTopicServices;
-
-                var result = await topicAppService.SearchTopicByNameAsync(searchTerm, pageNumber, pageSize);
+                var result = await _topicService.SearchTopicByNameAsync(searchTerm, pageNumber, pageSize);
                 return Ok(result);
             }
             catch (KeyNotFoundException ex)

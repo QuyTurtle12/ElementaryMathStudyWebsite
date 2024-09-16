@@ -3,10 +3,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
-using ElementaryMathStudyWebsite.Services.Service;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
@@ -17,19 +14,18 @@ namespace ElementaryMathStudyWebsite.Controllers
     [ApiController]
     public class ProgressesController : ControllerBase
     {
-        private readonly IProgressService _progressService;
-        private readonly IUserService _userService;
+        private readonly IAppProgressServices _progressService;
+        private readonly IAppUserServices _userService;
         private readonly ITokenService _tokenService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-
         // Constructor
-        public ProgressesController(IProgressService progressService, IUserService userService, ITokenService tokenService, IHttpContextAccessor httpContextAccessor)
+        public ProgressesController(IAppProgressServices progressService, IAppUserServices userService, ITokenService tokenService, IHttpContextAccessor httpContextAccessor)
         {
-            _progressService = progressService ?? throw new ArgumentNullException(nameof(progressService)); ;
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService)); ;
-            _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService)); ;
-            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor)); ;
+            _progressService = progressService;
+            _userService = userService;
+            _tokenService = tokenService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         // GET: api/progress/studentId
@@ -45,17 +41,13 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                // Cast domain service to application service
-                var progressAppService = _progressService as IAppProgressServices;
-                var userAppService = _userService as IAppUserServices;
-
                 // Get logged in User Id from authorization header 
                 var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
                 var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
 
-                if (!await userAppService.IsCustomerChildren(currentUserId, studentId)) return BadRequest("They are not parent and child");
+                if (!await _userService.IsCustomerChildren(currentUserId, studentId)) return BadRequest("They are not parent and child");
 
-                BasePaginatedList<ProgressViewDto> subjectProgresses = await progressAppService.GetStudentProgressesDtoAsync(studentId, pageNumber, pageSize);
+                BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetStudentProgressesDtoAsync(studentId, pageNumber, pageSize);
                 return Ok(subjectProgresses);
             }
             catch (Exception ex)
@@ -76,15 +68,11 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                // Cast domain service to application service
-                var progressAppService = _progressService as IAppProgressServices;
-                var userAppService = _userService as IAppUserServices;
-
                 // Get logged in User Id from authorization header 
                 var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
                 var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
 
-                BasePaginatedList<ProgressViewDto> subjectProgresses = await progressAppService.GetAllStudentProgressesDtoAsync(currentUserId, pageNumber, pageSize);
+                BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetAllStudentProgressesDtoAsync(currentUserId, pageNumber, pageSize);
                 return Ok(subjectProgresses);
             }
             catch (Exception ex)

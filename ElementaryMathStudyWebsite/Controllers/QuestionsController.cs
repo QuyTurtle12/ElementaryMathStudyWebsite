@@ -1,7 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElementaryMathStudyWebsite.Controllers
@@ -68,23 +66,23 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // DELETE api/question/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteQuestion(int id)
-        {
-            try
-            {
-                var success = await _questionService.DeleteQuestionAsync(id);
-                if (success)
-                {
-                    return NoContent();
-                }
-                return NotFound();
-            }
-            catch (Exception)
-            {
-                return BadRequest();
-            }
-        }
+        //// DELETE api/question/5
+        //[HttpDelete("{id}")]
+        //public async Task<IActionResult> DeleteQuestion(int id)
+        //{
+        //    try
+        //    {
+        //        var success = await _questionService.DeleteQuestionAsync(id);
+        //        if (success)
+        //        {
+        //            return NoContent();
+        //        }
+        //        return NotFound();
+        //    }
+        //    catch (Exception)
+        //    {
+        //        return BadRequest();
+        //    }
+        //}
     }
 }

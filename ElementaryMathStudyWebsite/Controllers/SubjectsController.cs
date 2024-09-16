@@ -1,4 +1,3 @@
-using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
@@ -11,10 +10,10 @@ namespace ElementaryMathStudyWebsite.Controllers
     [ApiController]
     public class SubjectsController : ControllerBase
     {
-        private readonly ISubjectService _subjectService;
+        private readonly IAppSubjectServices _subjectService;
         private readonly IAppSubjectServices _appSubjectServices;
 
-        public SubjectsController(ISubjectService subjectService, IAppSubjectServices appSubjectServices)
+        public SubjectsController(IAppSubjectServices subjectService, IAppSubjectServices appSubjectServices)
         {
             _subjectService = subjectService;
             _appSubjectServices = appSubjectServices;
