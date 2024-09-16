@@ -14,5 +14,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         // Check if the relationship between two users is parents and child
         Task<bool> IsCustomerChildren(string parentId, string studentId);
         void AuditFields(BaseEntity entity, bool isCreating = false, bool isDisable = false);
+        string GetActionUserId();
     }
 }

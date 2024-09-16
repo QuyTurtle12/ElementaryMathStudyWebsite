@@ -62,6 +62,8 @@ namespace ElementaryMathStudyWebsite
             services.AddScoped<IAppSubjectServices, SubjectService>();
             services.AddScoped<IChapterService, ChapterService>();
             services.AddScoped<ITopicService, TopicService>();
+            services.AddScoped<IPaymentService, PaymentService>();
+            services.AddSingleton<IVnPayService, VnPayService>();
 
             // Add application services
             services.AddScoped<IAppAuthService, AuthService>();
