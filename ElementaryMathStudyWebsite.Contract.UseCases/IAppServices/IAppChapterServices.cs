@@ -1,5 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
@@ -17,5 +18,9 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<ChapterViewDto?> GetChapterDtoByChapterIdAsync(string Id);
 
         Task<string?> GetChapterNameAsync(string id);
+
+        Task<BasePaginatedList<Chapter?>> GetChaptersAsync(int pageNumber, int pageSize);
+
+        Task<Chapter?> GetChapterByChapterIdAsync(string id);
     }
 }

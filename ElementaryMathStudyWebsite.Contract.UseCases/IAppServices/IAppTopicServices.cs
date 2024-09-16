@@ -12,5 +12,11 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<bool> UpdateTopicAsync(string id, TopicDto topicDto); // Cập nhật chủ đề
         Task<BasePaginatedList<TopicViewDto>> GetTopicsByChapterIdAsync(string chapterId, int pageNumber, int pageSize); // Lấy danh sách chủ đề theo ChapterId
         Task<BasePaginatedList<object>> SearchTopicByNameAsync(string searchTerm, int pageNumber, int pageSize);
+
+        Task<BasePaginatedList<Topic?>> GetAllExistTopicsAsync(int pageNumber, int pageSize); // Lấy danh sách Topic
+
+        //Task<IEnumerable<object>> GetTopicsAsync(int pageNumber, int pageSize);
+        //Task<IEnumerable<TopicViewDTO>> SearchTopicsAsync(string searchTerm, int pageNumber, int pageSize);
+        //Task<bool> TopicExistsAsync(string id);
     }
 }

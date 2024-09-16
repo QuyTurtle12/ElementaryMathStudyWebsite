@@ -3,12 +3,12 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class ProgressService : IProgressService, IAppProgressServices
+    public class ProgressService : IAppProgressServices
     {
         private readonly IGenericRepository<Progress> _progressRepository;
         private readonly IGenericRepository<OrderDetail> _detailRepository;
@@ -17,23 +17,23 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IGenericRepository<User> _userRepository;
         private readonly IGenericRepository<ProgressViewDto> _progressViewDtoRepository;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IUserService _userService;
-        private readonly IQuizService _quizService;
+        private readonly IAppUserServices _userService;
+        private readonly IAppQuizServices _quizService;
         private readonly IAppSubjectServices _subjectService;
 
         // Constructor
-        public ProgressService(IGenericRepository<Progress> progressRepository, IUnitOfWork unitOfWork, IUserService userService, IQuizService quizService, IAppSubjectServices subjectService, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<Chapter> chapterRepository, IGenericRepository<Topic> topicRepository, IGenericRepository<User> userRepository, IGenericRepository<ProgressViewDto> progressViewDtoRepository)
+        public ProgressService(IGenericRepository<Progress> progressRepository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<Chapter> chapterRepository, IGenericRepository<Topic> topicRepository, IGenericRepository<User> userRepository, IGenericRepository<ProgressViewDto> progressViewDtoRepository, IUnitOfWork unitOfWork, IAppUserServices userService, IAppQuizServices quizService, IAppSubjectServices subjectService)
         {
-            _progressRepository = progressRepository ?? throw new ArgumentNullException(nameof(progressRepository));
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-            _quizService = quizService ?? throw new ArgumentNullException(nameof(quizService));
-            _subjectService = subjectService ?? throw new ArgumentNullException(nameof(subjectService));
-            _detailRepository = detailRepository ?? throw new ArgumentNullException(nameof(detailRepository));
-            _chapterRepository = chapterRepository ?? throw new ArgumentNullException(nameof(chapterRepository));
-            _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
-            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-            _progressViewDtoRepository = progressViewDtoRepository ?? throw new ArgumentNullException(nameof(progressViewDtoRepository));
+            _progressRepository = progressRepository;
+            _detailRepository = detailRepository;
+            _chapterRepository = chapterRepository;
+            _topicRepository = topicRepository;
+            _userRepository = userRepository;
+            _progressViewDtoRepository = progressViewDtoRepository;
+            _unitOfWork = unitOfWork;
+            _userService = userService;
+            _quizService = quizService;
+            _subjectService = subjectService;
         }
 
         // Add new progress that student has just assigned to study a subject

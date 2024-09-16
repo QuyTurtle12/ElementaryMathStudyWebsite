@@ -1,4 +1,6 @@
-﻿namespace ElementaryMathStudyWebsite.Core.Base
+﻿using ElementaryMathStudyWebsite.Core.Store;
+
+namespace ElementaryMathStudyWebsite.Core.Base
 {
     public class BaseException : Exception
     {

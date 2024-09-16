@@ -1,10 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
-using ElementaryMathStudyWebsite.Services.Service;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
@@ -15,9 +11,9 @@ namespace ElementaryMathStudyWebsite.Controllers
     [ApiController]
     public class OptionsController : ControllerBase
     {
-        private readonly IOptionService _optionService;
+        private readonly IAppOptionServices _optionService;
 
-        public OptionsController(IOptionService optionService)
+        public OptionsController(IAppOptionServices optionService)
         {
             _optionService = optionService;
         }

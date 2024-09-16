@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
@@ -14,15 +14,13 @@ namespace ElementaryMathStudyWebsite.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly IUserService _userServices;
-        private readonly IAppUserServices _appUserServices;
+        private readonly IAppUserServices _userServices;
         private readonly IMapper _mapper;
 
-        public UsersController(IUserService userService, IMapper mapper, IAppUserServices appUserServices)
+        public UsersController(IAppUserServices userServices, IMapper mapper)
         {
-            _userServices = userService ?? throw new ArgumentNullException(nameof(userService));
-            _appUserServices = appUserServices ?? throw new ArgumentNullException(nameof(appUserServices));
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _userServices = userServices;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -54,7 +52,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             try
             {
-                var user = await _appUserServices.CreateUserAsync(createUserDto);
+                var user = await _userServices.CreateUserAsync(createUserDto);
                 var userResponseDto = _mapper.Map<UserResponseDto>(user); 
 
                 return CreatedAtAction(nameof(CreateUser), new { id = userResponseDto.Id }, userResponseDto);
@@ -247,7 +245,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             try
             {
-                var user = await _appUserServices.UpdateUserAsync(userId, updateUserDto);
+                var user = await _userServices.UpdateUserAsync(userId, updateUserDto);
                 var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
                 return Ok(userResponseDto);

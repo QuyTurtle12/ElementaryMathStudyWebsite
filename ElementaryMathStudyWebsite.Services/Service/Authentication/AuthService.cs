@@ -1,6 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
-using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Services.Service.Authentication

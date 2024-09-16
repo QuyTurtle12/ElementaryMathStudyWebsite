@@ -1,6 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
-namespace ElementaryMathStudyWebsite.Contract.Core.IDomainServices
+namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication
 {
     public interface IAuthenticationService
     {

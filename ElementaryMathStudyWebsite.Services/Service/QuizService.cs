@@ -1,14 +1,14 @@
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class QuizService : IQuizService, IAppQuizServices
+    public class QuizService : IAppQuizServices
     {
         private readonly IGenericRepository<Quiz> _quizRepository;
         private readonly IGenericRepository<Chapter> _chapterRepository;

@@ -2,11 +2,11 @@
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class QuestionService : IQuestionService, IAppQuestionServices
+    public class QuestionService : IAppQuestionServices
     {
         public readonly IGenericRepository<Question> _questionRepository;
 

@@ -1,5 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
@@ -8,19 +8,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class TopicService : ITopicService, IAppTopicServices
+    public class TopicService : IAppTopicServices
     {
         private readonly IGenericRepository<Topic> _topicRepository;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IQuizService _quizService;
-        private readonly IChapterService _chapterService;
+        private readonly IAppQuizServices _quizService;
+        private readonly IAppChapterServices _chapterService;
 
-        public TopicService(IGenericRepository<Topic> topicRepository, IUnitOfWork unitOfWork, IQuizService quizService, IChapterService chapterService)
+        public TopicService(IGenericRepository<Topic> topicRepository, IUnitOfWork unitOfWork, IAppQuizServices quizService, IAppChapterServices chapterService)
         {
-            _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _quizService = quizService ?? throw new ArgumentNullException(nameof(quizService));
-            _chapterService = chapterService ?? throw new ArgumentNullException(nameof(chapterService));
+            _topicRepository = topicRepository;
+            _unitOfWork = unitOfWork;
+            _quizService = quizService;
+            _chapterService = chapterService;
         }
 
         // Lấy danh sách Topic có phân trang

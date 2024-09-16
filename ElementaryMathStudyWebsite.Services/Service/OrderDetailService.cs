@@ -1,28 +1,27 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
-using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class OrderDetailService : IOrderDetailService, IAppOrderDetailServices
+    public class OrderDetailService : IAppOrderDetailServices
     {
         private readonly IGenericRepository<OrderDetail> _detailReposiotry;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IUserService _userService;
-        private readonly ISubjectService _subjectService;
+        private readonly IAppUserServices _userService;
+        private readonly IAppSubjectServices _subjectService;
 
         // Constructor
-        public OrderDetailService(IGenericRepository<OrderDetail> detailReposiotry, IUnitOfWork unitOfWork, IUserService userService, ISubjectService subjectService)
+        public OrderDetailService(IGenericRepository<OrderDetail> detailReposiotry, IUnitOfWork unitOfWork, IAppUserServices userService, IAppSubjectServices subjectService)
         {
-            _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-            _subjectService = subjectService ?? throw new ArgumentNullException(nameof(subjectService));
+            _detailReposiotry = detailReposiotry;
+            _unitOfWork = unitOfWork;
+            _userService = userService;
+            _subjectService = subjectService;
         }
 
         // Add Order Detail to database
@@ -57,14 +56,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 // Map orders to OrderViewDto
                 foreach (var detail in allDetails)
                 {
-                    // Cast domain service to application service
-                    var userAppService = _userService as IAppUserServices;
-                    var subjectAppService = _subjectService as IAppSubjectServices;
 
                     if (detail.OrderId == orderId)
                     {
-                        string? studentName = await userAppService.GetUserNameAsync(detail.StudentId);
-                        string? subjectName = await subjectAppService.GetSubjectNameAsync(detail.SubjectId);
+                        string? studentName = await _userService.GetUserNameAsync(detail.StudentId);
+                        string? subjectName = await _subjectService.GetSubjectNameAsync(detail.SubjectId);
                         OrderDetailViewDto dto = new OrderDetailViewDto(subjectName, studentName);
                         detailDtos.Add(dto);
                     }
@@ -77,14 +73,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             BasePaginatedList<OrderDetail>? paginatedOrders = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
             foreach (var detail in paginatedOrders.Items)
             {
-                // Cast domain service to application service
-                var userAppService = _userService as IAppUserServices;
-                var subjectAppService = _subjectService as IAppSubjectServices;
+
 
                 if (detail.OrderId == orderId)
                 {
-                    string? studentName = await userAppService.GetUserNameAsync(detail.StudentId);
-                    string? subjectName = await subjectAppService.GetSubjectNameAsync(detail.SubjectId);
+                    string? studentName = await _userService.GetUserNameAsync(detail.StudentId);
+                    string? subjectName = await _subjectService.GetSubjectNameAsync(detail.SubjectId);
                     detailDtos.Add(new OrderDetailViewDto(subjectName, studentName));
                 }
             }
