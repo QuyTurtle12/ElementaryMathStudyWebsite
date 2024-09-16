@@ -10,7 +10,11 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<SubjectAdminViewDTO> CreateSubjectAsync(SubjectDTO subjectDTO);
 
         // Search subjects by name
-        Task<BasePaginatedList<object>> SearchSubjectAsync(string searchTerm, int pageNumber, int pageSize);
+        Task<BasePaginatedList<object>> SearchSubjectAsync(string searchTerm, double lowestPrice,
+                double highestPrice, int pageNumber, int pageSize);
+
+        Task<BasePaginatedList<object>> SearchSubjectAdminAsync(string searchTerm, double lowestPrice,
+                double highestPrice, bool? status, int pageNumber, int pageSize);
 
         // Update a subject by ID
         Task<SubjectAdminViewDTO> UpdateSubjectAsync(string id, SubjectDTO subjectDTO);
