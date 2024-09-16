@@ -7,7 +7,6 @@ using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -123,43 +122,36 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // POST: api/orders/
-        // Add orders
-        [HttpPost]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin & Parent",
-            Description = "Create order."
-            )]
-        public async Task<ActionResult<string>> AddOrder(OrderCreateDto orderCreateDto)
-        {
-            try
-            {
-                // Cast domain service to application service
-                var orderAppService = _orderService as IAppOrderServices;
+        //// POST: api/orders/
+        //// Add orders
+        //[HttpPost]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Admin & Parent",
+        //    Description = "Create order."
+        //    )]
+        //public async Task<ActionResult<string>> AddOrder(OrderCreateDto orderCreateDto)
+        //{
+        //    try
+        //    {
+        //        // Cast domain service to application service
+        //        var orderAppService = _orderService as IAppOrderServices;
 
-                // General Validation for each Subject-Student pair
-                foreach (var subjectStudent in orderCreateDto.SubjectStudents)
-                {
-                    string? error = await orderAppService.IsGenerallyValidated(subjectStudent.SubjectId, subjectStudent.StudentId);
-                    if (!string.IsNullOrWhiteSpace(error)) return BadRequest(error);
-                }
+        //        // Add new order
+        //        bool IsAddedNewOrder = await orderAppService.AddOrderAsync(orderCreateDto);
 
-                // Add new order
-                bool IsAddedNewOrder = await orderAppService.AddOrderAsync(orderCreateDto);
-
-                if (IsAddedNewOrder is false)
-                {
-                    return BadRequest("Failed to create order, please check input value");
-                }
+        //        if (IsAddedNewOrder is false)
+        //        {
+        //            return BadRequest("Failed to create order, please check input value");
+        //        }
 
 
-                return Ok("Created Order Successfully!");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error: " + ex.Message);
-            }
-        }
+        //        return Ok("Created Order Successfully!");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, "Error: " + ex.Message);
+        //    }
+        //}
 
 
         // GET: api/orders/detail
