@@ -1,12 +1,9 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
-using ElementaryMathStudyWebsite.Contract.Core.IUOW;
-using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
+﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
@@ -15,12 +12,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IGenericRepository<Payment> _paymentRepository;
         private readonly IGenericRepository<Order> _orderRepository;
-        private readonly IOrderService _orderService;
-        private readonly ISubjectService _subjectService;
-        private readonly IUserService _userService;
+        private readonly IAppOrderServices _orderService;
+        private readonly IAppSubjectServices _subjectService;
+        private readonly IAppUserServices _userService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public PaymentService(IGenericRepository<Payment> paymentRepository, IGenericRepository<Order> orderRepository, IOrderService orderService, ISubjectService subjectService, IUserService userService,IUnitOfWork unitOfWork)
+        public PaymentService(IGenericRepository<Payment> paymentRepository, IGenericRepository<Order> orderRepository, IAppOrderServices orderService, IAppSubjectServices subjectService, IAppUserServices userService,IUnitOfWork unitOfWork)
         {
             _paymentRepository = paymentRepository;
             _orderRepository = orderRepository;

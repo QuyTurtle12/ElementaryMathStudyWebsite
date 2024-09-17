@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Services;
 using ElementaryMathStudyWebsite.Services.Service;
-
+using ElementaryMathStudyWebsite.Services.Service;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Services.Service.Authentication;
@@ -11,7 +12,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
 
 
 namespace ElementaryMathStudyWebsite
@@ -48,15 +48,13 @@ namespace ElementaryMathStudyWebsite
         public static void AddServices(this IServiceCollection services)
         {
             // Add services here
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IRoleService, RoleService>();
-            services.AddScoped<IOptionService, OptionService>();
-            services.AddScoped<IUserAnswerService, UserAnswerService>();
-            services.AddScoped<IOrderService, OrderService>();
-            services.AddScoped<IOrderDetailService, OrderDetailService>();
-            services.AddScoped<IProgressService, ProgressService>();
-
-            services.AddScoped<IQuizService, QuizService>();
+            services.AddScoped<IAppUserServices, UserService>();
+            services.AddScoped<IAppRoleServices, RoleService>();
+            services.AddScoped<IAppOptionServices, OptionService>();
+            services.AddScoped<IAppUserAnswerServices, UserAnswerService>();
+            services.AddScoped<IAppOrderServices, OrderService>();
+            services.AddScoped<IAppOrderDetailServices, OrderDetailService>();
+            services.AddScoped<IAppProgressServices, ProgressService>();
 
             services.AddScoped<IAppQuizServices, QuizService>();
             services.AddScoped<IAppQuestionServices, QuestionService>();

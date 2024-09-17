@@ -1,24 +1,21 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
-using ElementaryMathStudyWebsite.Contract.Core.IUOW;
-using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
+﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class OrderDetailService : IOrderDetailService, IAppOrderDetailServices
+    public class OrderDetailService : IAppOrderDetailServices
     {
         private readonly IGenericRepository<OrderDetail> _detailReposiotry;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IUserService _userService;
-        private readonly ISubjectService _subjectService;
+        private readonly IAppUserServices _userService;
+        private readonly IAppSubjectServices _subjectService;
 
         // Constructor
-        public OrderDetailService(IGenericRepository<OrderDetail> detailReposiotry, IUnitOfWork unitOfWork, IUserService userService, ISubjectService subjectService)
+        public OrderDetailService(IGenericRepository<OrderDetail> detailReposiotry, IUnitOfWork unitOfWork, IAppUserServices userService, IAppSubjectServices subjectService)
         {
             _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));

@@ -4,14 +4,14 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class UserAnswerService : IUserAnswerService
+    public class UserAnswerService : IAppUserAnswerServices
     {
         private readonly IGenericRepository<UserAnswer> _userAnswerRepository; // Assuming a generic repository is used
 
@@ -73,6 +73,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task UpdateUserAnswerAsync(UserAnswer userAnswer)
         {
             await _userAnswerRepository.UpdateAsync(userAnswer);
+        }
+
+        Task<object> IAppUserAnswerServices.GetUserAnswerByIdAsync(string id)
+        {
+            throw new NotImplementedException();
         }
 
         //public async Task DeleteUserAnswerAsync(string id)

@@ -1,33 +1,31 @@
 ﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using Microsoft.AspNetCore.Http;
 using System.Reflection.Metadata.Ecma335;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class OrderService : IOrderService, IAppOrderServices
+    public class OrderService : IAppOrderServices
     {
         private readonly IGenericRepository<Order> _orderRepository;
         private readonly IGenericRepository<OrderViewDto> _orderViewRepository;
         private readonly IGenericRepository<User> _userRepository;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IUserService _userService;
-        private readonly IOrderDetailService _orderDetailService;
-        private readonly IProgressService _progressService;
-        private readonly IQuizService _quizService;
-        private readonly ISubjectService _subjectService;
+        private readonly IAppUserServices _userService;
+        private readonly IAppOrderDetailServices _orderDetailService;
+        private readonly IAppProgressServices _progressService;
+        private readonly IAppQuizServices _quizService;
+        private readonly IAppSubjectServices _subjectService;
         private readonly ITokenService _tokenService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         // Constructor
-        public OrderService(IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork, IUserService userService, IOrderDetailService orderDetailService, ISubjectService subjectService = null, IGenericRepository<OrderViewDto> orderViewRepository = null, IGenericRepository<User> userRepository = null, ITokenService tokenService = null, IHttpContextAccessor httpContextAccessor = null, IProgressService progressService = null, IQuizService quizService = null)
+        public OrderService(IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork, IAppUserServices userService, IAppOrderDetailServices orderDetailService, IAppSubjectServices subjectService = null, IGenericRepository<OrderViewDto> orderViewRepository = null, IGenericRepository<User> userRepository = null, ITokenService tokenService = null, IHttpContextAccessor httpContextAccessor = null, IAppProgressServices progressService = null, IAppQuizServices quizService = null)
         {
             _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));

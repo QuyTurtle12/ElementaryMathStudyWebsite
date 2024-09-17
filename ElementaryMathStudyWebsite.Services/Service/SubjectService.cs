@@ -1,6 +1,4 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
-using ElementaryMathStudyWebsite.Contract.Core.IUOW;
-using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
+﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
@@ -13,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class SubjectService(IGenericRepository<Subject> subjectRepository, IHttpContextAccessor httpContextAccessor, ITokenService tokenService) : ISubjectService, IAppSubjectServices
+    public class SubjectService : IAppSubjectServices
     {
         private readonly IGenericRepository<Subject> _detailReposiotry;
         private readonly IGenericRepository<Subject> _subjectRepository;
@@ -21,7 +19,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ITokenService _tokenService;
 
-        public SubjectService(IGenericRepository<Subject> detailReposiotry, IGenericRepository<Subject> subjectRepository, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ITokenService tokenService)
+        public SubjectService(IGenericRepository<Subject> detailReposiotry,
+                              IGenericRepository<Subject> subjectRepository,
+                              IUnitOfWork unitOfWork,
+                              IHttpContextAccessor httpContextAccessor,
+                              ITokenService tokenService)
         {
             _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
             _subjectRepository = subjectRepository ?? throw new ArgumentNullException(nameof(subjectRepository));
@@ -341,12 +343,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             subject.SubjectName = subjectDTO.SubjectName;
             subject.Price = subjectDTO.Price;
             subject.Status = subjectDTO.Status;
-            //subject.LastUpdatedTime = DateTime.UtcNow;
 
-            AuditFields(subject);
+            AuditFields(subject, isCreating: false);
 
             _subjectRepository.Update(subject);
-            await _subjectRepository.SaveAsync();
+            await _unitOfWork.SaveAsync();
 
             return new SubjectAdminViewDTO
             {
