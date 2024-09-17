@@ -11,7 +11,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
     public interface IAppPaymentServices
     {
         // Used to create a payment bill based on corresponding order, the user conduct the action must be the one created the order
-        Task<PaymentViewDto> Checkout(OptionCreateDto optionCreateDto);
+        Task<PaymentViewDto> Checkout(OrderCreateDto optionCreateDto);
 
         // Used to view all payment bills that user have purchased, ordering by payment date
         Task<BasePaginatedList<PaymentViewDto>> GetPaymentHistory(int pageNumber, int pageSize);
