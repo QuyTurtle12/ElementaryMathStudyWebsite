@@ -1,8 +1,7 @@
 ﻿using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using System.Text.Json.Serialization;
 
-namespace ElementaryMathStudyWebsite.Core.Entity
+namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 {
     public class Subject : BaseEntity
     {

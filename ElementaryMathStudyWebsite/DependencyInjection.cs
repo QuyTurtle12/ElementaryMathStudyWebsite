@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
 
 
 namespace ElementaryMathStudyWebsite
@@ -47,6 +48,16 @@ namespace ElementaryMathStudyWebsite
         public static void AddServices(this IServiceCollection services)
         {
             // Add services here
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IOptionService, OptionService>();
+            services.AddScoped<IUserAnswerService, UserAnswer>();
+            services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IOrderDetailService, OrderDetailService>();
+            services.AddScoped<IProgressService, ProgressService>();
+
+            services.AddScoped<IQuizService, QuizService>();
+
             services.AddScoped<IAppQuizServices, QuizService>();
             services.AddScoped<IAppQuestionServices, QuestionService>();
             services.AddScoped<IAppSubjectServices, SubjectService>();
