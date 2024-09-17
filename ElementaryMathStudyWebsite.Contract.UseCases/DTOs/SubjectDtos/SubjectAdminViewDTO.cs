@@ -18,5 +18,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos
         public DateTimeOffset? LastUpdatedTime { get; set; }
         public string? DeletedBy { get; set; }
         public DateTimeOffset? DeletedTime { get; set; }
+        double ISubjectBaseDTO.Price { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
     }
 }

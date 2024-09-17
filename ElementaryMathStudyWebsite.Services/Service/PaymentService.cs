@@ -35,6 +35,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             throw new NotImplementedException();
         }
 
+        public Task<PaymentViewDto> Checkout(OrderCreateDto optionCreateDto)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<Payment> GetPaymentById(string paymentId)
         {
             var payment = await _paymentRepository.GetByIdAsync(paymentId) ?? throw new KeyNotFoundException("Invalid payment ID");
