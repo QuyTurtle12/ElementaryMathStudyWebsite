@@ -8,7 +8,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public string QuizName { get; set; } = string.Empty;
         public double? Criteria { get; set; } // Mark that need to be achieved to passed
         [JsonIgnore]
-        public bool? Status { get; set; }
+        public bool? Status { get; set; } = true;
 
         // Navigation properties
         [JsonIgnore]
@@ -26,12 +26,5 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         [JsonIgnore]
         public virtual ICollection<Progress>? Progresses { get; set; } // Navigation property, one quiz can be in many progresses
 
-        public Quiz() { }
-
-        public Quiz(string quizName, double criteria)
-        {
-            QuizName = quizName;
-            Criteria = criteria;
-        }
     }
 }

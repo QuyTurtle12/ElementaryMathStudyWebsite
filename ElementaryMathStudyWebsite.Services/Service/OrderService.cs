@@ -118,7 +118,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             try
             {
-                double? totalPrice = 0;
+                double totalPrice = 0;
                 foreach (var subject in dto.SubjectStudents)
                 {
                     Subject boughtSubject = await _subjectService.GetSubjectByIDAsync(subject.SubjectId);

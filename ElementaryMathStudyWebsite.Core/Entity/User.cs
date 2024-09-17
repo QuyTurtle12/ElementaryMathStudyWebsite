@@ -19,7 +19,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public required string Password { get; set; }
 
-        public bool Status { get; set; }
+        public bool Status { get; set; } = true;
 
         // Navigation Properties
         public virtual User? CreatedByUser { get; set; }
@@ -32,18 +32,5 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public virtual ICollection<Progress>? Progresses { get; set; } // Navigation property, one user has many subject progresses
         public virtual ICollection<Payment>? Payments { get; set; } // Navigation property, one user has many payments
 
-        public User() { }
-
-        public User(string fullName, string? phoneNumber, string? gender, string? email, string? roleId, string username, string password)
-        {
-            FullName = fullName;
-            PhoneNumber = phoneNumber;
-            Gender = gender;
-            Email = email;
-            RoleId = roleId;
-            Username = username;
-            Password = password;
-            Status = true; // always true when initialized
-        }
     }
 }

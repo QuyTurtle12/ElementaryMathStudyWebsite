@@ -9,7 +9,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public string? Answer { get; set; } // Answer context
 
-        public bool IsCorrect { get; set; }
+        public bool IsCorrect { get; set; } = false;
 
         // Navigation properties
         [JsonIgnore]
@@ -24,13 +24,5 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public virtual Question? Question { get; set; } // Navigation property, one option belong to one question
 
 
-        public Option() { }
-
-        public Option(string questionId, string? answer, bool isCorrect)
-        {
-            QuestionId = questionId;
-            Answer = answer;
-            IsCorrect = isCorrect;
-        }
     }
 }
