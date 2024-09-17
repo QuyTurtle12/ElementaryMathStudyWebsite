@@ -6,6 +6,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using Microsoft.AspNetCore.Http;
+using ElementaryMathStudyWebsite.Core.Utils;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -39,13 +40,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 foreach (var subjectStudent in dto.SubjectStudents)
                 {
                     string? error = await IsGenerallyValidated(subjectStudent.SubjectId, subjectStudent.StudentId);
-                   if (!string.IsNullOrWhiteSpace(error)) throw new ArgumentNullException(error);
+                    if (!string.IsNullOrWhiteSpace(error)) throw new ArgumentNullException(error);
                 }
 
                 // Check if student is currently studying a specific subjcet
                 if (!await _orderDetailService.IsValidStudentSubjectBeforeCreateOrder(dto))
                 {
-                    throw new ArgumentException("This subject has been assigned to this student"); // This subject has been assigned to this student
+                    throw new ArgumentException("This subject has been assigned to this student or assigned twice"); // This subject has been assigned to this student
                 }
 
                 // Calculate total price
@@ -197,21 +198,49 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
 
         // Get orders with all properties
-        public async Task<BasePaginatedList<Order>?> GetOrdersAsync(int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<OrderAdminViewDto>?> GetOrderAdminDtosAsync(int pageNumber, int pageSize)
         {
             // Get all orders from database
             IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities
                 .Where(o => string.IsNullOrWhiteSpace(o.DeletedBy));
 
+            var allOrders = await query.ToListAsync();
+
+            // list of order for admin view
+            IList<OrderAdminViewDto> adminOrders = new List<OrderAdminViewDto>();
+
+            foreach (var order in allOrders)
+            {
+                // Get audit field info
+                User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(order?.CreatedBy ?? string.Empty);
+                User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(order?.LastUpdatedBy ?? string.Empty);
+
+                // Convert id to name
+                string customerName = await _userService.GetUserNameAsync(order?.CustomerId ?? string.Empty);
+
+                OrderAdminViewDto dto = new OrderAdminViewDto
+                {
+                    CustomerName = customerName,
+                    OrderDate = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
+                    TotalPrice = order?.TotalPrice ?? 0,
+                    CreatorName = creator?.FullName ?? string.Empty,
+                    CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                    LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                    LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                    CreatedTime = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
+                    LastUpdatedTime = order?.LastUpdatedTime ?? CoreHelper.SystemTimeNow,
+                };
+                adminOrders.Add(dto);
+            }
+
             // If pageNumber or pageSize are 0 or negative, show all orders without pagination
             if (pageNumber <= 0 || pageSize <= 0)
             {
-                var allOrders = await query.ToListAsync();
-                return new BasePaginatedList<Order>(allOrders, allOrders.Count, 1, allOrders.Count);
+                return new BasePaginatedList<OrderAdminViewDto>((IReadOnlyCollection<OrderAdminViewDto>)adminOrders, allOrders.Count, 1, allOrders.Count);
             }
 
             // Show all orders with pagination
-            return await _unitOfWork.GetRepository<Order>().GetPagging(query, pageNumber, pageSize);
+            return await _unitOfWork.GetRepository<OrderAdminViewDto>().GetPaggingDto(adminOrders, pageNumber, pageSize);
         }
 
 
@@ -286,9 +315,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 switch (filter)
                 {
-                    case "customer id": // Search orders by customer id
-                        result = await CustomerIdFilterAsync(inputValue, orders, pageNumber, pageSize);
-                        break;
+                    //case "customer id": // Search orders by customer id
+                    //    result = await CustomerIdFilterAsync(inputValue, orders, pageNumber, pageSize);
+                    //    break;
                     case "customer email": // Search orders by customer email
                         result = await CustomerEmailFilterAsync(inputValue, orders, pageNumber, pageSize);
                         break;
@@ -307,7 +336,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         result = await GetTotalPriceInRangeAsync(Double.Parse(firstInputValue), Double.Parse(secondInputValue), orders, pageNumber, pageSize);
                         break;
                     default:
-                        throw new ArgumentException($"Invalid {nameof(filter)}: {filter}. Allowed filters are 'customer id', 'customer email', 'customer phone', 'order date', 'total price'.");
+                        throw new ArgumentException($"Invalid {nameof(filter)}: {filter}. Allowed filters are 'customer email', 'customer phone', 'order date', 'total price'.");
                 }
 
                 // Retrieve the paginated items from the PaginatedList.
@@ -331,24 +360,24 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Get order dto list by customer id
-        public async Task<BasePaginatedList<OrderViewDto>> CustomerIdFilterAsync(string? inputvalue, IEnumerable<Order> orders, int pageNumber, int pageSize)
-        {
-            IList<OrderViewDto> result = new List<OrderViewDto>();
+        //public async Task<BasePaginatedList<OrderViewDto>> CustomerIdFilterAsync(string? inputvalue, IEnumerable<Order> orders, int pageNumber, int pageSize)
+        //{
+        //    IList<OrderViewDto> result = new List<OrderViewDto>();
 
-            // Transfer entity data to dto value that human understand
-            foreach (var order in orders)
-            {
-                if (order.CustomerId == inputvalue)
-                {
-                    string customerName = await _userService.GetUserNameAsync(order.CustomerId) ?? string.Empty;
-                    OrderViewDto dto = new() { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
-                    result.Add(dto);
-                }
-            }
+        //    // Transfer entity data to dto value that human understand
+        //    foreach (var order in orders)
+        //    {
+        //        if (order.CustomerId == inputvalue)
+        //        {
+        //            string customerName = await _userService.GetUserNameAsync(order.CustomerId) ?? string.Empty;
+        //            OrderViewDto dto = new() { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
+        //            result.Add(dto);
+        //        }
+        //    }
 
-            // Use generic repository's GetPagging method to apply pagination
-            return await _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
-        }
+        //    // Use generic repository's GetPagging method to apply pagination
+        //    return await _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
+        //}
 
         // Get order dto list by customer email
         public async Task<BasePaginatedList<OrderViewDto>> CustomerEmailFilterAsync(string? inputvalue, IEnumerable<Order> orders, int pageNumber, int pageSize)

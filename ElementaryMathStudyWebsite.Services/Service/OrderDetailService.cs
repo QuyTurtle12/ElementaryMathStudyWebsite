@@ -88,6 +88,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Validate if the subject has been assigned before 
         public async Task<bool> IsValidStudentSubjectBeforeCreateOrder(OrderCreateDto orderCreateDto)
         {
+            // Check for duplicates in the SubjectStudents list
+            var uniqueSubjectStudents = orderCreateDto.SubjectStudents
+                .GroupBy(s => new { s.SubjectId, s.StudentId })
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+
+            if (uniqueSubjectStudents.Any())
+            {
+                // Return false or throw an exception if duplicates are found
+                return false;
+            }
+
             // Validation process
             foreach (var newSubject in orderCreateDto.SubjectStudents)
             {

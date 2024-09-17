@@ -3,6 +3,8 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Store;
+using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -37,7 +39,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Parent",
             Description = "View a child progress list. Insert -1 to get all items"
             )]
-        public async Task<ActionResult<BasePaginatedList<Progress>>> GetStudentProgressByStudentId([Required] string studentId , int pageNumber = -1, int pageSize = -1)
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<ProgressViewDto>>>> GetStudentProgressByStudentId([Required] string studentId , int pageNumber = -1, int pageSize = -1)
         {
             try
             {
@@ -45,14 +47,40 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
                 var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
 
-                if (!await _userService.IsCustomerChildren(currentUserId, studentId)) return BadRequest("They are not parent and child");
+                // Check if current logged user and the inputted student Id are parent-child relationship
+                if (!await _userService.IsCustomerChildren(currentUserId, studentId))
+                {
+                    return BadRequest(new BaseResponse<BasePaginatedList<ProgressViewDto>>(
+                    StatusCodeHelper.BadRequest,
+                    StatusCodeHelper.BadRequest.Name(),
+                    "They are not parent and child"
+                    ));
+                }
 
                 BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetStudentProgressesDtoAsync(studentId, pageNumber, pageSize);
-                return Ok(subjectProgresses);
+
+                var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
+
+                return response;
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -64,7 +92,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Parent",
             Description = "View children progress list. Insert -1 to get all items"
             )]
-        public async Task<ActionResult<BasePaginatedList<Progress>>> GetStudentProgress(int pageNumber = -1, int pageSize = -1)
+        public async Task<ActionResult<BasePaginatedList<ProgressViewDto>>> GetStudentProgress(int pageNumber = -1, int pageSize = -1)
         {
             try
             {
@@ -73,11 +101,29 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
 
                 BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetAllStudentProgressesDtoAsync(currentUserId, pageNumber, pageSize);
+
+                var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
+
                 return Ok(subjectProgresses);
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 

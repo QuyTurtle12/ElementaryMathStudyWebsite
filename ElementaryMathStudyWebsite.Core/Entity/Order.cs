@@ -6,9 +6,9 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 {
     public class Order : BaseEntity
     {
-        public required string CustomerId { get; set; }
+        public string CustomerId { get; set; } = string.Empty;
 
-        public required double TotalPrice { get; set; }
+        public double TotalPrice { get; set; } = 0;
 
         // Navigation properties
         [JsonIgnore]

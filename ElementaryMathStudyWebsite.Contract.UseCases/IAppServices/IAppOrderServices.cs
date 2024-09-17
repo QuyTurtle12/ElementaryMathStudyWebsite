@@ -24,7 +24,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         // General Validation
         Task<string?> IsGenerallyValidated(string subjectId, string studentId);
 
-        Task<BasePaginatedList<Order>?> GetOrdersAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<OrderAdminViewDto>?> GetOrderAdminDtosAsync(int pageNumber, int pageSize);
 
         Task<Order?> GetOrderByOrderIdAsync(string orderId);
     }
