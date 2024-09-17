@@ -1,24 +1,19 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class UserAnswerService : IUserAnswerService
+    public class UserAnswerService(IGenericRepository<UserAnswer> userAnswerRepository) : IAppUserAnswerServices
     {
-        private readonly IGenericRepository<UserAnswer> _userAnswerRepository; // Assuming a generic repository is used
-
-        public UserAnswerService(IGenericRepository<UserAnswer> userAnswerRepository)
-        {
-            _userAnswerRepository = userAnswerRepository ?? throw new ArgumentNullException(nameof(userAnswerRepository));
-        }
+        private readonly IGenericRepository<UserAnswer> _userAnswerRepository = userAnswerRepository ?? throw new ArgumentNullException(nameof(userAnswerRepository)); // Assuming a generic repository is used
 
         public async Task<BasePaginatedList<object>> GetAllUserAnswersAsync(int pageNumber, int pageSize)
         {
@@ -34,7 +29,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     OptionId = userAnswer.OptionId
                 }).ToList();
 
-                return new BasePaginatedList<object>(userAnswerDtos, userAnswerDtos.Count(), 1, userAnswerDtos.Count());
+                return new BasePaginatedList<object>(userAnswerDtos, userAnswerDtos.Count, 1, userAnswerDtos.Count);
             }
 
             var paginatedUserAnswers = await _userAnswerRepository.GetPagging(query, pageNumber, pageSize);
@@ -46,17 +41,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }).ToList();
 
 
-            return new BasePaginatedList<object>(userAnswerDtosPaginated, userAnswerDtosPaginated.Count(), pageNumber, pageSize);
+            return new BasePaginatedList<object>(userAnswerDtosPaginated, userAnswerDtosPaginated.Count, pageNumber, pageSize);
         }
 
         public async Task<UserAnswerDTO> GetUserAnswerByIdAsync(string id)
         {
             var userAnswer = await _userAnswerRepository.GetByIdAsync(id);
-            if (userAnswer == null)
-            {
-                throw new KeyNotFoundException($"Cannot find user answer with ID '{id}'.");
-            }
-            return new UserAnswerDTO
+            return userAnswer == null
+                ? throw new KeyNotFoundException($"Cannot find user answer with ID '{id}'.")
+                : new UserAnswerDTO
             {
                 QuestionId = userAnswer.QuestionId,
                 UserId = userAnswer.UserId,

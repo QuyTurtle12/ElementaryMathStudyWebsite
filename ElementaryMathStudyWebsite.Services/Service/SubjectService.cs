@@ -1,5 +1,4 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
-using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
@@ -12,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class SubjectService(IGenericRepository<Subject> subjectRepository, IHttpContextAccessor httpContextAccessor, ITokenService tokenService) : ISubjectService, IAppSubjectServices
+    public class SubjectService(IGenericRepository<Subject> subjectRepository, IHttpContextAccessor httpContextAccessor, ITokenService tokenService) : IAppSubjectServices
     {
         private readonly IGenericRepository<Subject> _subjectRepository = subjectRepository;
         private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;

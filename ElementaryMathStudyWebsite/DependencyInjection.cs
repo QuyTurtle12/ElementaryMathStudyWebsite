@@ -47,16 +47,6 @@ namespace ElementaryMathStudyWebsite
         public static void AddServices(this IServiceCollection services)
         {
             // Add services here
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IRoleService, RoleService>();
-            services.AddScoped<IOptionService, OptionService>();
-            services.AddScoped<IUserAnswerService, UserAnswerService>();
-            services.AddScoped<IOrderService, OrderService>();
-            services.AddScoped<IOrderDetailService, OrderDetailService>();
-            services.AddScoped<IProgressService, ProgressService>();
-
-            services.AddScoped<IQuizService, QuizService>();
-
             services.AddScoped<IAppQuizServices, QuizService>();
             services.AddScoped<IAppQuestionServices, QuestionService>();
             services.AddScoped<IAppSubjectServices, SubjectService>();
