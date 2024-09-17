@@ -15,5 +15,14 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<bool> IsCustomerChildren(string parentId, string studentId);
         void AuditFields(BaseEntity entity, bool isCreating = false, bool isDisable = false);
         string GetActionUserId();
+
+        // Other user-related methods can be added here
+        Task<BasePaginatedList<User>> GetAllUsersAsync(int pageNumber, int pageSize);
+
+        Task<User?> GetUserByIdAsync(string userId);
+        Task<bool> DisableUserAsync(string userId);
+
+        Task<List<User>> GetAllUsersWithRolesAsync();
+        Task<BasePaginatedList<User>> SearchUsersAsync(string? name, bool? status, string? phone, string? email, int pageNumber, int pageSize);
     }
 }

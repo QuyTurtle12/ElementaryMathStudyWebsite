@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ElementaryMathStudyWebsite.Core.Base;
 using System.ComponentModel.DataAnnotations;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
@@ -14,17 +14,14 @@ namespace ElementaryMathStudyWebsite.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
-        private readonly IOrderService _orderService;
-        private readonly IOrderDetailService _orderDetailService;
+        private readonly IAppOrderServices _orderService;
+        private readonly IAppOrderDetailServices _orderDetailService;
 
-        public OrdersController(IOrderService orderService, IOrderDetailService orderDetailService)
+        public OrdersController(IAppOrderServices orderService, IAppOrderDetailServices orderDetailService)
         {
-            _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
-            _orderDetailService = orderDetailService ?? throw new ArgumentNullException(nameof(orderDetailService));
+            _orderService = orderService;
+            _orderDetailService = orderDetailService;
         }
-
-
-       
 
         // GET: api/orders/manager
         // Get orders for Manager & Admin
@@ -74,33 +71,30 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // GET: api/orders/{id}
+        // GET: api/orders/order
         // Get orders for general user
-        [HttpGet]
-        [Route("{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: N/A",
-            Description = "View order with selected information"
-            )]
-        public async Task<ActionResult<OrderViewDto>> GetOrderForGeneralUser([Required] string id)
-        {
-            try
-            {
-                // Cast domain service to application service
-                var appService = _orderService as IAppOrderServices;
-
-                OrderViewDto order = await appService.GetOrderDtoByOrderIdAsync(id);
-                if (order == null)
-                {
-                    return BadRequest("Invalid Order Id");
-                }
-                return Ok(order);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error: " + ex.Message);
-            }
-        }
+        //[HttpGet]
+        //[Route("order")]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: N/A",
+        //    Description = "View order with selected information"
+        //    )]
+        //public async Task<ActionResult<OrderViewDto>> GetOrderForGeneralUser([Required] string id)
+        //{
+        //    try
+        //    {
+        //        OrderViewDto order = await _orderService.GetOrderDtoByOrderIdAsync(id);
+        //        if (order == null)
+        //        {
+        //            return BadRequest("Invalid Order Id");
+        //        }
+        //        return Ok(order);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, "Error: " + ex.Message);
+        //    }
+        //}
 
         // GET: api/orders
         // Get orders for general user
@@ -114,10 +108,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                // Cast domain service to application service
-                var appService = _orderService as IAppOrderServices;
-
-                BasePaginatedList<OrderViewDto> orders = await appService.GetOrderDtosAsync(pageNumber, pageSize);
+                BasePaginatedList<OrderViewDto> orders = await _orderService.GetOrderDtosAsync(pageNumber, pageSize);
                 return Ok(orders);
             }
             catch (Exception ex)
@@ -171,8 +162,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var appService = _orderDetailService as IAppOrderDetailServices;
-                BasePaginatedList<OrderDetailViewDto> detail = await appService.GetOrderDetailDtoListByOrderIdAsync(pageNumber, pageSize, orderId);
+                BasePaginatedList<OrderDetailViewDto> detail = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(pageNumber, pageSize, orderId);
                 return Ok(detail);
             }
             catch (Exception ex)
@@ -199,10 +189,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                // Cast domain service to application service
-                var appService = _orderService as IAppOrderServices;
-
-                return Ok(await appService.searchOrderDtosAsync(pageNumber, pageSize, firstInputValue, secondInputValue, filter));
+                return Ok(await _orderService.searchOrderDtosAsync(pageNumber, pageSize, firstInputValue, secondInputValue, filter));
             }
             catch (Exception ex)
             {

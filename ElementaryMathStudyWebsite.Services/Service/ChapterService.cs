@@ -4,13 +4,13 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class ChapterService : IChapterService, IAppChapterServices
+    public class ChapterService : IAppChapterServices
     {
         private readonly IGenericRepository<Chapter> _detailReposiotry;
         private readonly IGenericRepository<Chapter> _chapterRepository;
@@ -22,12 +22,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Constructor
         public ChapterService(IGenericRepository<Chapter> detailReposiotry, IGenericRepository<Chapter> chapterRepository, IUnitOfWork unitOfWork, IGenericRepository<Quiz> quizRepository, IGenericRepository<Subject> subjectRepository, ILogger<ChapterService> logger)
         {
-            _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
-            _chapterRepository = chapterRepository ?? throw new ArgumentNullException(nameof(chapterRepository));
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _quizRepository = quizRepository ?? throw new ArgumentNullException(nameof(quizRepository));
-            _subjectRepository = subjectRepository ?? throw new ArgumentNullException(nameof(subjectRepository));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _detailReposiotry = detailReposiotry;
+            _chapterRepository = chapterRepository;
+            _unitOfWork = unitOfWork;
+            _quizRepository = quizRepository;
+            _subjectRepository = subjectRepository;
+            _logger = logger;
         }
 
         private void ValidateChapter(ChapterDto chapterDTO)
@@ -211,7 +211,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (chapter == null) return null;
 
-            ChapterViewDto dto = new ChapterViewDto(chapter.Number, chapter.ChapterName);
+            ChapterViewDto dto = new ChapterViewDto { Number = chapter.Number, ChapterName = chapter.ChapterName };
 
             return dto;
         }
@@ -228,7 +228,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 // Map chapters to ChapterViewDto
                 foreach (var chapter in allChapters)
                 {
-                    ChapterViewDto dto = new ChapterViewDto(chapter.Number, chapter.ChapterName);
+                    ChapterViewDto dto = new ChapterViewDto { Number = chapter.Number, ChapterName = chapter.ChapterName };
                     chapterDtos.Add(dto);
                 }
                 return new BasePaginatedList<ChapterViewDto>(chapterDtos, chapterDtos.Count, 1, chapterDtos.Count);
@@ -239,7 +239,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (var chapter in paginatedChapters.Items)
             {
                 //chapterDtos.Add(new ChapterViewDto(chapter.Number, chapter.ChapterName));
-                ChapterViewDto dto = new ChapterViewDto(chapter.Number, chapter.ChapterName);
+                ChapterViewDto dto = new ChapterViewDto { Number = chapter.Number, ChapterName = chapter.ChapterName };
                 chapterDtos.Add(dto);
             }
 

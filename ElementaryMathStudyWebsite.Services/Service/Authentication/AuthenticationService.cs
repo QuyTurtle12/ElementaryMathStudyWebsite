@@ -1,7 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 
 namespace ElementaryMathStudyWebsite.Services.Service.Authentication

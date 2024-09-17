@@ -12,11 +12,5 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public virtual User? DeletedByUser { get; set; }
         public virtual ICollection<User>? Users { get; set; } // Navigation property, one role has many users
 
-        public Role() { }
-
-        public Role(string roleName)
-        {
-            RoleName = roleName;
-        }
     }
 }

@@ -10,7 +10,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public string ChapterName { get; set; } = string.Empty; // avoid null reference issues
 
-        public bool Status { get; set; }
+        public bool Status { get; set; } = true;
 
         public required string SubjectId { get; set; }
 
@@ -30,15 +30,5 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         [JsonIgnore]
         public virtual Quiz? Quiz { get; set; } // Navigation property, one chapter can only has one quiz
 
-        public Chapter() { }
-
-        public Chapter(int? number, string chapterName, string? quizId, string subjectId)
-        {
-            Number = number;
-            ChapterName = chapterName;
-            Status = true; // Always true when initialized
-            SubjectId = subjectId;
-            QuizId = quizId;
-        }
     }
 }

@@ -1,8 +1,6 @@
-﻿using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
-using ElementaryMathStudyWebsite.Services.Service;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
@@ -19,6 +17,27 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             _paymentService = paymentService;
         }
+
+        // POST: api/payments
+        [Authorize(Policy = "Parent")]
+        [HttpPost]
+        [SwaggerOperation(
+            Summary = "Authorization: Parent",
+            Description = "Purchase and assign kids' account to the subject"
+            )]
+        public async Task<IActionResult> Checkout([Required] OrderCreateDto orderCreateDto)
+        {
+            try
+            {
+                var appPaymentService = _paymentService as IAppPaymentServices;
+                return Ok(await appPaymentService.Checkout(orderCreateDto));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
 
         // GET: api/payments/raw/{id}
         [Authorize(Policy = "Admin-Manager")]

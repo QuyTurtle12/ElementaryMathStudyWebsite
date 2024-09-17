@@ -8,9 +8,9 @@ namespace ElementaryMathStudyWebsite.Core.Entity
     {
         public string SubjectName { get; set; } = string.Empty; // avoid null reference issues
 
-        public double? Price { get; set; }
+        public double Price { get; set; } = 0;
 
-        public bool Status { get; set; }
+        public bool Status { get; set; } = true;
 
         // Navigation properties
         [JsonIgnore]
@@ -26,13 +26,5 @@ namespace ElementaryMathStudyWebsite.Core.Entity
         [JsonIgnore]
         public virtual ICollection<Progress>? Progresses { get; set; } // Navigation property, one subject has many progresses
 
-        public Subject() { }
-
-        public Subject(string subjectName, double? price)
-        {
-            SubjectName = subjectName;
-            Price = price;
-            Status = true; // Always true when initialized
-        }
     }
 }

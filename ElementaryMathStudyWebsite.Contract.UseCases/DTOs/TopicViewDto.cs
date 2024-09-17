@@ -8,16 +8,5 @@
         public string QuizName { get; set; } = string.Empty;
         public string ChapterName { get; set; } = string.Empty;
 
-        // Default constructor
-        public TopicViewDto() { }
-
-        // Constructor with parameters
-        public TopicViewDto(int? number, string topicName, string quizName, string chapterName)
-        {
-            Number = number;
-            TopicName = topicName;
-            QuizName = quizName;
-            ChapterName = chapterName;
-        }
     }
 }

@@ -9,7 +9,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public string TopicName { get; set; } = string.Empty; // avoid null reference issues
 
-        public bool Status { get; set; }
+        public bool Status { get; set; } = true;
 
         public string? QuizId { get; set; }
 
@@ -27,15 +27,5 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         [JsonIgnore]
         public virtual Quiz? Quiz { get; set; } // Navigation property, one topic can only has one quiz
 
-        public Topic() { }
-
-        public Topic(int? number, string topicName, string chapterId, string? quizId)
-        {
-            Number = number;
-            TopicName = topicName;
-            Status = true; // Always true when initialized
-            ChapterId = chapterId;
-            QuizId = quizId;
-        }
     }
 }

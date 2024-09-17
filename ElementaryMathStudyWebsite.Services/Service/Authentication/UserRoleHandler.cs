@@ -1,13 +1,14 @@
-﻿using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+﻿
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 {
     public class UserRoleHandler : AuthorizationHandler<UserRoleRequirement>
     {
-        private readonly IUserService _userService;
+        private readonly IAppUserServices _userService;
 
-        public UserRoleHandler(IUserService userService)
+        public UserRoleHandler(IAppUserServices userService)
         {
             _userService = userService;
         }

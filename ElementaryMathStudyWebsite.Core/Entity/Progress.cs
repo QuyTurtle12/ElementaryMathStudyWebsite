@@ -13,13 +13,5 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
                                                 // This attribute use for checking progress in topic
         public virtual Subject? Subject { get; set; } // Navigation property, one progress has one subject
 
-        public Progress() { }
-
-        public Progress(string studentId, string? quizId, string? subjectId)
-        {
-            StudentId = studentId;
-            QuizId = quizId;
-            SubjectId = subjectId;
-        }
     }
 }

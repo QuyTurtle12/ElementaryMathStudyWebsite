@@ -24,12 +24,5 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         [JsonIgnore]
         public virtual Payment? Payment { get; set; } // Navigation property, one order associated with one payment
 
-        public Order() { }
-
-        public Order(string customerId, double totalPrice)
-        {
-            CustomerId = customerId;
-            TotalPrice = totalPrice;
-        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
@@ -22,5 +23,9 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         // General Validation
         Task<string?> IsGenerallyValidated(string subjectId, string studentId);
+
+        Task<BasePaginatedList<Order?>> GetOrdersAsync(int pageNumber, int pageSize);
+
+        Task<Order?> GetOrderByOrderIdAsync(string orderId);
     }
 }
