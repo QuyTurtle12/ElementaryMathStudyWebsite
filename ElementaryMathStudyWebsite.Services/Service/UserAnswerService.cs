@@ -8,17 +8,22 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using Microsoft.Extensions.Options;
+using ElementaryMathStudyWebsite.Infrastructure.UOW;
+using ElementaryMathStudyWebsite.Core.Entity;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class UserAnswerService : IAppUserAnswerServices
+    public class UserAnswerService(
+        IGenericRepository<UserAnswer> userAnswerRepository,
+        IGenericRepository<Question> questionRepository,
+        IGenericRepository<User> userRepository,
+        IGenericRepository<Option> optionRepository) : IAppUserAnswerServices
     {
-        private readonly IGenericRepository<UserAnswer> _userAnswerRepository; // Assuming a generic repository is used
-
-        public UserAnswerService(IGenericRepository<UserAnswer> userAnswerRepository)
-        {
-            _userAnswerRepository = userAnswerRepository ?? throw new ArgumentNullException(nameof(userAnswerRepository));
-        }
+        private readonly IGenericRepository<UserAnswer> _userAnswerRepository = userAnswerRepository ?? throw new ArgumentNullException(nameof(userAnswerRepository));
+        private readonly IGenericRepository<Question> _questionRepository = questionRepository ?? throw new ArgumentNullException(nameof(questionRepository));
+        private readonly IGenericRepository<User> _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        private readonly IGenericRepository<Option> _optionRepository = optionRepository ?? throw new ArgumentNullException(nameof(optionRepository));
 
         public async Task<BasePaginatedList<object>> GetAllUserAnswersAsync(int pageNumber, int pageSize)
         {
@@ -34,7 +39,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     OptionId = userAnswer.OptionId
                 }).ToList();
 
-                return new BasePaginatedList<object>(userAnswerDtos, userAnswerDtos.Count(), 1, userAnswerDtos.Count());
+                return new BasePaginatedList<object>(userAnswerDtos, userAnswerDtos.Count, 1, userAnswerDtos.Count);
             }
 
             var paginatedUserAnswers = await _userAnswerRepository.GetPagging(query, pageNumber, pageSize);
@@ -46,16 +51,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }).ToList();
 
 
-            return new BasePaginatedList<object>(userAnswerDtosPaginated, userAnswerDtosPaginated.Count(), pageNumber, pageSize);
+            return new BasePaginatedList<object>(userAnswerDtosPaginated, userAnswerDtosPaginated.Count, pageNumber, pageSize);
         }
 
         public async Task<UserAnswerDTO> GetUserAnswerByIdAsync(string id)
         {
-            var userAnswer = await _userAnswerRepository.GetByIdAsync(id);
-            if (userAnswer == null)
-            {
-                throw new KeyNotFoundException($"Cannot find user answer with ID '{id}'.");
-            }
+            var userAnswer = await _userAnswerRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"Cannot find user answer with ID '{id}'.");
             return new UserAnswerDTO
             {
                 QuestionId = userAnswer.QuestionId,
@@ -64,20 +65,67 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
-        public async Task<UserAnswer> CreateUserAnswerAsync(UserAnswer userAnswer)
+        public async Task<UserAnswerDTO> CreateUserAnswerAsync(UserAnswerDTO userAnswerDTO)
         {
+            // Check if QuestionId exists
+            if (!await _questionRepository.Entities.AnyAsync(q => q.Id == userAnswerDTO.QuestionId))
+            {
+                throw new KeyNotFoundException($"Question with ID '{userAnswerDTO.QuestionId}' not found.");
+            }
+
+            // Check if UserId exists
+            if (!await _userRepository.Entities.AnyAsync(u => u.Id == userAnswerDTO.UserId))
+            {
+                throw new KeyNotFoundException($"User with ID '{userAnswerDTO.UserId}' not found.");
+            }
+
+            // Check if OptionId exists
+            if (!await _optionRepository.Entities.AnyAsync(o => o.Id == userAnswerDTO.OptionId))
+            {
+                throw new KeyNotFoundException($"Option with ID '{userAnswerDTO.OptionId}' not found.");
+            }
+
+            var userAnswer = new UserAnswer
+            {
+                QuestionId = userAnswerDTO.QuestionId,
+                UserId = userAnswerDTO.UserId,
+                OptionId = userAnswerDTO.OptionId,
+            };
+
             await _userAnswerRepository.InsertAsync(userAnswer);
-            return userAnswer;
+            await _userAnswerRepository.SaveAsync();
+            return userAnswerDTO;
         }
 
-        public async Task UpdateUserAnswerAsync(UserAnswer userAnswer)
+        public async Task<UserAnswerDTO> UpdateUserAnswerAsync(string id, UserAnswerDTO userAnswerDTO)
         {
+            var userAnswer = await _userAnswerRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"User Answer with ID '{id}' not found.");
+
+            // Check if QuestionId exists
+            if (!await _questionRepository.Entities.AnyAsync(q => q.Id == userAnswerDTO.QuestionId))
+            {
+                throw new KeyNotFoundException($"Question with ID '{userAnswerDTO.QuestionId}' not found.");
+            }
+
+            // Check if UserId exists
+            if (!await _userRepository.Entities.AnyAsync(u => u.Id == userAnswerDTO.UserId))
+            {
+                throw new KeyNotFoundException($"User with ID '{userAnswerDTO.UserId}' not found.");
+            }
+
+            // Check if OptionId exists
+            if (!await _optionRepository.Entities.AnyAsync(o => o.Id == userAnswerDTO.OptionId))
+            {
+                throw new KeyNotFoundException($"Option with ID '{userAnswerDTO.OptionId}' not found.");
+            }
+
+            userAnswer.QuestionId = userAnswerDTO.QuestionId;
+            userAnswer.UserId = userAnswerDTO.UserId;
+            userAnswer.OptionId = userAnswerDTO.OptionId;
+
             await _userAnswerRepository.UpdateAsync(userAnswer);
-        }
-
-        Task<object> IAppUserAnswerServices.GetUserAnswerByIdAsync(string id)
-        {
-            throw new NotImplementedException();
+            await _userAnswerRepository.SaveAsync();
+            return userAnswerDTO;
         }
 
         //public async Task DeleteUserAnswerAsync(string id)

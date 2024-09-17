@@ -1,13 +1,14 @@
-﻿using ElementaryMathStudyWebsite.Core.Base;
+﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
+using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
     public interface IAppUserAnswerServices
     {
-        Task<UserAnswer> CreateUserAnswerAsync(UserAnswer userAnswer);
-        Task UpdateUserAnswerAsync(UserAnswer userAnswer);
+        Task<UserAnswerDTO> CreateUserAnswerAsync(UserAnswerDTO userAnswerDTO);
+        Task<UserAnswerDTO> UpdateUserAnswerAsync(string id, UserAnswerDTO userAnswerDTO);
         Task<BasePaginatedList<object>> GetAllUserAnswersAsync(int pageNumber, int pageSize);
-        Task<Object> GetUserAnswerByIdAsync(string id);
+        Task<UserAnswerDTO> GetUserAnswerByIdAsync(string id);
     }
 }

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using Microsoft.AspNetCore.Http;
 using System.Reflection.Metadata.Ecma335;
+using ElementaryMathStudyWebsite.Core.Entity;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {

@@ -1,4 +1,6 @@
-﻿namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
+﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+
+namespace ElementaryMathStudyWebsite.Core.Entity
 {
     public class UserAnswer
     {

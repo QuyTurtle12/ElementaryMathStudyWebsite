@@ -8,10 +8,10 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos
 {
     public class UserAnswerDTO
     {
-        public required string QuestionId;
+        public required string QuestionId { get; set; }
 
-        public required string UserId;
+        public required string UserId { get; set; }
 
-        public required string OptionId;
+        public required string OptionId { get; set; }
     }
 }
