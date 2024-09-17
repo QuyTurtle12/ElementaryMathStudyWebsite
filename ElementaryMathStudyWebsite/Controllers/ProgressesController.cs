@@ -7,6 +7,7 @@ using ElementaryMathStudyWebsite.Core.Store;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NuGet.ContentModel;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 
@@ -92,7 +93,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Parent",
             Description = "View children progress list. Insert -1 to get all items"
             )]
-        public async Task<ActionResult<BasePaginatedList<ProgressViewDto>>> GetStudentProgress(int pageNumber = -1, int pageSize = -1)
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<ProgressViewDto>>>> GetStudentProgress(int pageNumber = -1, int pageSize = -1)
         {
             try
             {
@@ -104,7 +105,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                 var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
 
-                return Ok(subjectProgresses);
+                return response;
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -127,5 +128,57 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        // POST: api/progress
+        // Get 1 child learning progress of specific parent
+        [Authorize(Policy = "Student")]
+        [HttpPost]
+        [SwaggerOperation(
+            Summary = "Authorization: Parent",
+            Description = "View children progress list. Insert -1 to get all items"
+            )]
+        public async Task<ActionResult<BaseResponse<Progress>>> AddProgress(ProgressCreateDto progress)
+        {
+            try
+            {
+                // Get logged in User Id from authorization header 
+                var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
+
+                Progress newStudentProgress = new Progress { StudentId = currentUserId, QuizId = progress.QuizId, SubjectId = progress.SubjectId };
+
+                // Check 
+                bool IsAddedProgress = await _progressService.AddSubjectProgress(newStudentProgress);
+
+                if (IsAddedProgress)
+                {
+                    // Return only a success message
+                    var passedQuizResponse = BaseResponse<Progress>.OkResponse("Congratulations, you passed the quiz.Keep it up!");
+                    return passedQuizResponse;
+                }
+
+                // Return only a failure message
+                var failedQuizResponse = BaseResponse<Progress>.OkResponse("You worked hard, but hard is not enough, try again next time");
+                return failedQuizResponse;
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
     }
 }

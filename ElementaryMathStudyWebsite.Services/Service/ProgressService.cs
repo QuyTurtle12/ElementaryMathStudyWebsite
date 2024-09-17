@@ -12,15 +12,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userService;
-        private readonly IAppQuizServices _quizService;
         private readonly IAppSubjectServices _subjectService;
 
         // Constructor
-        public ProgressService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppQuizServices quizService, IAppSubjectServices subjectService)
+        public ProgressService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppSubjectServices subjectService)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
-            _quizService = quizService;
             _subjectService = subjectService;
         }
 
@@ -29,10 +27,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             try
             {
-                await _unitOfWork.GetRepository<Progress>().InsertAsync(studentProgress);
-                await _unitOfWork.SaveAsync();
+                if(await IsPassedTheQuiz(studentProgress.QuizId, studentProgress.StudentId))
+                {
+                    await _unitOfWork.GetRepository<Progress>().InsertAsync(studentProgress);
+                    await _unitOfWork.SaveAsync();
+                    return true;
+                }
 
-                return true;
+                return false;
             }
             catch (Exception)
             {
@@ -196,6 +198,68 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return false;
 
+        }
+
+        // Update student learning progress
+        public async Task<double> GetStudentGrade(string quizId, string studentId)
+        {
+            // Get a list of question base on quiz id
+            IQueryable<Question> questionQuery = _unitOfWork.GetRepository<Question>().Entities
+                .Where(q => q.QuizId.Equals(quizId) && string.IsNullOrWhiteSpace(q.DeletedBy));
+
+            var questionList = await questionQuery.ToListAsync();
+
+            // Count the student's correct answer
+            int correctAnswer = 0;
+            int totalQuestion = questionList.Count;
+
+            foreach (var question in questionList)
+            {
+                // Get the student's answer based on student Id and question Id
+                IQueryable<UserAnswer>? studentAnswers = _unitOfWork.GetRepository<UserAnswer>().Entities
+                    .Where(ua => ua.UserId.Equals(studentId) && ua.QuestionId.Equals(question.Id));
+
+                // Get the list of correct answer of the question
+                IQueryable<Option>? correctOption = _unitOfWork.GetRepository<Option>().Entities
+                    .Where(o => o.QuestionId.Equals(question.Id) && o.IsCorrect == true && string.IsNullOrWhiteSpace(o.DeletedBy));
+
+                // Check student's answer
+                foreach (var userAnswer in studentAnswers)
+                {
+                    if (userAnswer != null)
+                    {
+                        // Use for multiple choices and single choice
+                        foreach (var option in correctOption)
+                        {
+                            // Check if the user choice is correct
+                            if (userAnswer.OptionId.Equals(option?.Id))
+                            {
+                                correctAnswer++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Calculate student grade
+            // Max grade is 10
+            return (correctAnswer / totalQuestion) * 10;
+        }
+
+        // Check if the student passed the quiz
+        public async Task<bool> IsPassedTheQuiz(string quizId, string studentId)
+        {
+            double studentGrade = await GetStudentGrade(quizId, studentId);
+
+            Quiz? quiz = await _unitOfWork.GetRepository<Quiz>().Entities.FirstOrDefaultAsync(q => q.Id.Equals(quizId));
+
+            // Check if quiz not null and student grade >= quiz criteria 
+            if (quiz != null && studentGrade >= quiz.Criteria)
+            {
+                return true; // Passed
+            }
+
+            return false; // Not Passed
         }
     }
 }

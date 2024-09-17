@@ -2,7 +2,7 @@
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class UserAnswer : IAppUserAnswerServices
+    public class UserAnswerService : IAppUserAnswerServices
     {
     }
 }
