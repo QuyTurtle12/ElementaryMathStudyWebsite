@@ -299,5 +299,52 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        /// <summary>
+        /// Retrieves all children of a given parent with pagination.
+        /// </summary>
+        /// <param name="parentId">The ID of the parent user.</param>
+        /// <param name="pageNumber">The page number to retrieve (default is 1).</param>
+        /// <param name="pageSize">The number of users per page (default is 10).</param>
+        /// <returns>Returns a paginated list of users who are children of the specified parent.</returns>
+        /// <response code="200">List of children retrieved successfully.</response>
+        /// <response code="400">Invalid parent ID provided.</response>
+        /// <response code="500">Internal server error.</response>
+        [HttpGet]
+        [Route("children/{parentId}")]
+        [SwaggerOperation(
+            Summary = "Authorization: N/A",
+            Description = "Get children of a parent user with pagination."
+        )]
+        public async Task<IActionResult> GetChildrenOfParent(string parentId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            if (string.IsNullOrWhiteSpace(parentId))
+            {
+                return BadRequest("Parent ID is required.");
+            }
+
+            try
+            {
+                var paginatedUsers = await _userServices.GetChildrenOfParentAsync(parentId, pageNumber, pageSize);
+
+                // Map users to UserResponseDto
+                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+
+                // Create a new paginated list of UserResponseDto
+                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                    userDtos.ToList(),
+                    paginatedUsers.TotalItems,
+                    paginatedUsers.CurrentPage,
+                    paginatedUsers.PageSize
+                );
+
+                return Ok(paginatedUserDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
     }
 }
