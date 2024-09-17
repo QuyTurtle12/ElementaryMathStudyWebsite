@@ -7,6 +7,10 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
 using ElementaryMathStudyWebsite.Core.Base;
 using Swashbuckle.AspNetCore.Annotations;
+using ElementaryMathStudyWebsite.Services.Service;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using ElementaryMathStudyWebsite.Services.Service.Authentication;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -16,11 +20,34 @@ namespace ElementaryMathStudyWebsite.Controllers
     {
         private readonly IAppUserServices _userServices;
         private readonly IMapper _mapper;
+        private readonly ITokenService _tokenService;
 
-        public UsersController(IAppUserServices userServices, IMapper mapper)
+        public UsersController(IAppUserServices userServices, IMapper mapper, ITokenService tokenService)
         {
             _userServices = userServices;
             _mapper = mapper;
+            _tokenService = tokenService;
+        }
+
+        [HttpGet("profile")]
+        public async Task<ActionResult<UserProfile>> GetProfile()
+        {
+            // Get the token from the Authorization header
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+
+            // Extract user ID from the token
+            var userId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized();
+            }
+
+            // Fetch user profile using the user ID
+            var user = await _userServices.GetUserByIdAsync(userId.ToString());
+            var userProfile = _mapper.Map<UserProfile>(user);
+
+            return Ok(userProfile);
         }
 
         /// <summary>

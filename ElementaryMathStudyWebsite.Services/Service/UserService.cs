@@ -46,9 +46,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return await query.ToListAsync();
         }
 
-
-
-
         public async Task<User> CreateUserAsync(CreateUserDto dto)
         {
             if (dto == null)
@@ -96,10 +93,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Return the paginated result with users
             return new BasePaginatedList<User>(paginatedUsers.Items, paginatedUsers.TotalItems, paginatedUsers.CurrentPage, paginatedUsers.PageSize);
         }
-
-
-
-
 
         public async Task<User> UpdateUserAsync(string userId, UpdateUserDto dto)
         {
@@ -162,9 +155,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return user;
         }
-
-
-        // Implement other domain methods here
 
         public async Task<User?> GetUserByIdAsync(string userId)
         {
@@ -246,7 +236,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return false;
         }
 
-
         public async Task<BasePaginatedList<User>> SearchUsersAsync(string? name, bool? status, string? phone, string? email, int pageNumber, int pageSize)
         {
             // Define the condition for retrieving users
@@ -302,7 +291,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             );
         }
 
-
         public void AuditFields(BaseEntity entity, bool isCreating = false, bool isDisable = false)
         {
             // Retrieve the JWT token from the Authorization header
@@ -356,7 +344,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Return the paginated result with users
             return new BasePaginatedList<User>(paginatedUsers.Items, paginatedUsers.TotalItems, paginatedUsers.CurrentPage, paginatedUsers.PageSize);
         }
-
 
         public string GetActionUserId()
         {
