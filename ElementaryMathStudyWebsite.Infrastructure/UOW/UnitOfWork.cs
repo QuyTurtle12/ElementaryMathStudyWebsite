@@ -54,5 +54,6 @@ namespace ElementaryMathStudyWebsite.Infrastructure.UOW
         {
             return new GenericRepository<T>(_dbContext);
         }
+
     }
 }
