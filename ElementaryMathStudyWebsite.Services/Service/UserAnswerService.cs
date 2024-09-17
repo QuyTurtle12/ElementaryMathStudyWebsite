@@ -11,6 +11,10 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.Extensions.Options;
 using ElementaryMathStudyWebsite.Infrastructure.UOW;
 using ElementaryMathStudyWebsite.Core.Entity;
+using ElementaryMathStudyWebsite.Core.Utils;
+using Microsoft.AspNetCore.Http;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using ElementaryMathStudyWebsite.Services.Service.Authentication;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -18,12 +22,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
         IGenericRepository<UserAnswer> userAnswerRepository,
         IGenericRepository<Question> questionRepository,
         IGenericRepository<User> userRepository,
-        IGenericRepository<Option> optionRepository) : IAppUserAnswerServices
+        IGenericRepository<Option> optionRepository,
+        IHttpContextAccessor httpContextAccessor,
+        ITokenService tokenService) : IAppUserAnswerServices
     {
         private readonly IGenericRepository<UserAnswer> _userAnswerRepository = userAnswerRepository ?? throw new ArgumentNullException(nameof(userAnswerRepository));
         private readonly IGenericRepository<Question> _questionRepository = questionRepository ?? throw new ArgumentNullException(nameof(questionRepository));
         private readonly IGenericRepository<User> _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         private readonly IGenericRepository<Option> _optionRepository = optionRepository ?? throw new ArgumentNullException(nameof(optionRepository));
+        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+        private readonly ITokenService _tokenService = tokenService;
 
         public async Task<BasePaginatedList<object>> GetAllUserAnswersAsync(int pageNumber, int pageSize)
         {
@@ -126,6 +134,42 @@ namespace ElementaryMathStudyWebsite.Services.Service
             await _userAnswerRepository.UpdateAsync(userAnswer);
             await _userAnswerRepository.SaveAsync();
             return userAnswerDTO;
+        }
+
+        public async Task<List<UserAnswerDTO>> GetUserAnswersByQuizAsync(string quizId)
+        {
+            var userId = GetCurrentUserID(); // Assume this returns the current user ID
+
+            // Query user answers by user ID and quiz ID, ensuring Question is included
+            IQueryable<UserAnswer> query = _userAnswerRepository.Entities
+                .Include(ua => ua.Question) // Ensure questions are eagerly loaded
+                .Where(ua => ua.UserId == userId && ua.Question != null && ua.Question.QuizId == quizId);
+
+            var userAnswers = await query.ToListAsync();
+
+            if (userAnswers == null || !userAnswers.Any())
+            {
+                throw new KeyNotFoundException($"No answers found for User ID '{userId}' in Quiz ID '{quizId}'.");
+            }
+
+            // Map the results to UserAnswerDTOs
+            var userAnswerDtos = userAnswers.Select(userAnswer => new UserAnswerDTO
+            {
+                QuestionId = userAnswer.QuestionId,
+                UserId = userAnswer.UserId,
+                OptionId = userAnswer.OptionId
+            }).ToList();
+
+            return userAnswerDtos;
+        }
+
+        public string GetCurrentUserID()
+        {
+            // Retrieve the JWT token from the Authorization header
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            return currentUserId.ToString().ToUpper();
         }
 
         //public async Task DeleteUserAnswerAsync(string id)

@@ -100,6 +100,31 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        [Authorize(Policy = "Student")]
+        [SwaggerOperation(
+            Summary = "Authorization: Student",
+            Description = "Get all user answer by quiz and user id"
+        )]
+        [HttpGet]
+        [Route("/quiz/{quizId}")]
+        public async Task<IActionResult> GetUserAnswersByQuiz(string quizId)
+        {
+            try
+            {
+                var userAnswers = await _userAnswerService.GetUserAnswersByQuizAsync(quizId);
+                return Ok(userAnswers); // Return the list of UserAnswerDTO
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "An error occurred while fetching user answers for the quiz." });
+            }
+        }
+
+
         // DELETE: api/UserAnswers/{id}
         //[HttpDelete("{id}")]
         //public async Task<IActionResult> DeleteUserAnswer(string id)
