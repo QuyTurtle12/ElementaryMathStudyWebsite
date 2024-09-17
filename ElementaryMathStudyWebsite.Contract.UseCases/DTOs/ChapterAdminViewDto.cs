@@ -18,15 +18,5 @@
         public string? DeletedBy { get; set; }
         public DateTimeOffset? DeletedTime { get; set; }
 
-        public ChapterAdminViewDto() { }
-
-        public ChapterAdminViewDto(int number, string chapterName, bool status, string subjectId, string quizId)
-        {
-            Number = number;
-            ChapterName = chapterName;
-            Status = status;
-            SubjectId = subjectId;
-            QuizId = quizId;
-        }
     }
 }

@@ -2,16 +2,9 @@
 {
     public class OrderDetailViewDto
     {
-        public string SubjectName { get; set; }
+        public string SubjectName { get; set; } = string.Empty;
 
-        public string StudentName { get; set; }
+        public string StudentName { get; set; } = string.Empty;
 
-        public OrderDetailViewDto() { }
-
-        public OrderDetailViewDto(string subjectName, string studentName)
-        {
-            SubjectName = subjectName;
-            StudentName = studentName;
-        }
     }
 }

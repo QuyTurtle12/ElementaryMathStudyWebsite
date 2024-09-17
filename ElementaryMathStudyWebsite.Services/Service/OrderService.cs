@@ -1,45 +1,44 @@
 ﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using Microsoft.AspNetCore.Http;
 using System.Reflection.Metadata.Ecma335;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class OrderService : IOrderService, IAppOrderServices
+    public class OrderService : IAppOrderServices
     {
         private readonly IGenericRepository<Order> _orderRepository;
         private readonly IGenericRepository<OrderViewDto> _orderViewRepository;
         private readonly IGenericRepository<User> _userRepository;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IUserService _userService;
-        private readonly IOrderDetailService _orderDetailService;
-        private readonly IProgressService _progressService;
-        private readonly IQuizService _quizService;
-        private readonly ISubjectService _subjectService;
+        private readonly IAppUserServices _userService;
+        private readonly IAppOrderDetailServices _orderDetailService;
+        private readonly IAppProgressServices _progressService;
+        private readonly IAppQuizServices _quizService;
+        private readonly IAppSubjectServices _subjectService;
         private readonly ITokenService _tokenService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         // Constructor
-        public OrderService(IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork, IUserService userService, IOrderDetailService orderDetailService, ISubjectService subjectService = null, IGenericRepository<OrderViewDto> orderViewRepository = null, IGenericRepository<User> userRepository = null, ITokenService tokenService = null, IHttpContextAccessor httpContextAccessor = null, IProgressService progressService = null, IQuizService quizService = null)
+        public OrderService(IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork, IAppUserServices userService, IAppOrderDetailServices orderDetailService, IAppSubjectServices subjectService, IGenericRepository<OrderViewDto> orderViewRepository, IGenericRepository<User> userRepository, ITokenService tokenService, IHttpContextAccessor httpContextAccessor, IAppProgressServices progressService, IAppQuizServices quizService)
         {
-            _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-            _orderDetailService = orderDetailService ?? throw new ArgumentNullException(nameof(orderDetailService));
-            _subjectService = subjectService ?? throw new ArgumentNullException(nameof(subjectService));
-            _orderViewRepository = orderViewRepository ?? throw new ArgumentNullException(nameof(orderViewRepository));
-            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-            _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
-            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-            _progressService = progressService ?? throw new ArgumentNullException(nameof(progressService));
-            _quizService = quizService ?? throw new ArgumentNullException(nameof(quizService));
+            _orderRepository = orderRepository;
+            _unitOfWork = unitOfWork;
+            _userService = userService;
+            _orderDetailService = orderDetailService;
+            _subjectService = subjectService;
+            _orderViewRepository = orderViewRepository;
+            _userRepository = userRepository;
+            _tokenService = tokenService;
+            _httpContextAccessor = httpContextAccessor;
+            _progressService = progressService;
+            _quizService = quizService;
         }
 
         // Add new order to database
@@ -56,8 +55,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
 
                 // Check if student is currently studying a specific subjcet
-                var orderDetailAppService = _orderDetailService as IAppOrderDetailServices;
-                if (!await orderDetailAppService.IsValidStudentSubjectBeforeCreateOrder(dto))
+                if (!await _orderDetailService.IsValidStudentSubjectBeforeCreateOrder(dto))
                 {
                     throw new ArgumentException("This subject has been assigned to this student"); // This subject has been assigned to this student
                 }
@@ -78,15 +76,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     TotalPrice = totalPrice,
                 };
 
-                // Cast domain service to application service
-                var userAppService = _userService as IAppUserServices;
-                var progressAppService = _progressService as IAppProgressServices;
-                var quizAppService = _quizService as IAppQuizServices;
-
                 // Audit field in new order
-                userAppService.AuditFields(order, true);
-
-
+                _userService.AuditFields(order, true);
 
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveAsync();
@@ -104,7 +95,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     };
 
                     // Add order detail in database
-                    bool IsAddedNewOrderDetail = await orderDetailAppService.AddOrderDetailAsync(orderDetail);
+                    bool IsAddedNewOrderDetail = await _orderDetailService.AddOrderDetailAsync(orderDetail);
                     result = IsAddedNewOrderDetail;
                 }
 
@@ -127,7 +118,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             try
             {
-                double? totalPrice = 0;
+                double totalPrice = 0;
                 foreach (var subject in dto.SubjectStudents)
                 {
                     Subject boughtSubject = await _subjectService.GetSubjectByIDAsync(subject.SubjectId);
@@ -162,7 +153,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             string customerName = await appService.GetUserNameAsync(order.CustomerId);
 
-            OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+            OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
 
             return dto;
         }
@@ -190,7 +181,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 foreach (var order in allOrders)
                 {
                     string? customerName = await appService.GetUserNameAsync(order.CustomerId);
-                    OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                    OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                     orderDtos.Add(dto);
                 }
                 return new BasePaginatedList<OrderViewDto>((IReadOnlyCollection<OrderViewDto>)orderDtos, orderDtos.Count, 1, orderDtos.Count);
@@ -203,7 +194,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (var order in paginatedOrders.Items)
             {
                 string? customerName = await appService.GetUserNameAsync(order.CustomerId);
-                OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                 orderDtos.Add(dto);
             }
 
@@ -351,7 +342,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 if (order.CustomerId == inputvalue)
                 {
                     string customerName = await userAppService.GetUserNameAsync(order.CustomerId) ?? string.Empty;
-                    OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                    OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                     result.Add(dto);
                 }
             }
@@ -380,7 +371,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         if (order.CustomerId == user.Id)
                         {
                             string customerName = await userAppService.GetUserNameAsync(order.CustomerId) ?? string.Empty;
-                            OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                            OrderViewDto dto = new OrderViewDto{ CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                             result.Add(dto);
                         }
                     }
@@ -412,7 +403,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         if (order.CustomerId == user.Id)
                         {
                             string customerName = await userAppService.GetUserNameAsync(order.CustomerId) ?? string.Empty;
-                            OrderViewDto dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                            OrderViewDto dto = new OrderViewDto{ CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                             result.Add(dto);
                         }
                     }
@@ -476,7 +467,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (var order in filteredOrders)
             {
                 string? customerName = await appService.GetUserNameAsync(order.CustomerId);
-                var dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                 orderDtos.Add(dto);
             }
 
@@ -512,7 +503,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (var order in filteredOrders)
             {
                 string? customerName = await appService.GetUserNameAsync(order.CustomerId);
-                var dto = new OrderViewDto(customerName, order.TotalPrice, order.CreatedTime);
+                OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                 orderDtos.Add(dto);
             }
 

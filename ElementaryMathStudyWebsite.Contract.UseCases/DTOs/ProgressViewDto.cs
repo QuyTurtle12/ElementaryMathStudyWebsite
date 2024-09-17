@@ -8,13 +8,5 @@
 
         public double SubjectPercentage { get; set; }
 
-        public ProgressViewDto() { }
-
-        public ProgressViewDto(string studentName, string subjectName, double subjectPercentage)
-        {
-            StudentName = studentName;
-            SubjectName = subjectName;
-            SubjectPercentage = subjectPercentage;
-        }
     }
 }

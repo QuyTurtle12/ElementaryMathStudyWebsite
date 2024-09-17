@@ -28,5 +28,14 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         // Get subject name
         Task<string> GetSubjectNameAsync(string subjectId);
 
+        // Get all subjects
+        Task<BasePaginatedList<object>> GetAllSubjectsAsync(int pageNumber, int pageSize, bool isAdmin);
+
+        // Get a subject by ID
+        Task<object> GetSubjectByIDAsync(string id, bool isAdmin);
+
+        // Get a subject by ID uu
+        Task<Subject> GetSubjectByIDAsync(string id);
+
     }
 }

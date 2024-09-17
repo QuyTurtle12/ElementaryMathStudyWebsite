@@ -3,19 +3,19 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class OptionService : IOptionService, IAppOptionServices
+    public class OptionService : IAppOptionServices
     {
         private readonly IGenericRepository<Option> _optionReposiotry;
         private readonly IGenericRepository<Question> _questionRepository;
-        private readonly IUserService _userService;
+        private readonly IAppUserServices _userService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public OptionService(IGenericRepository<Option> optionReposiotry, IGenericRepository<Question> questionRepository, IUserService userService,IUnitOfWork unitOfWork)
+        public OptionService(IGenericRepository<Option> optionReposiotry, IGenericRepository<Question> questionRepository, IAppUserServices userService,IUnitOfWork unitOfWork)
         {
             _optionReposiotry = optionReposiotry;
             _questionRepository = questionRepository;

@@ -1,18 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Services;
 using ElementaryMathStudyWebsite.Services.Service;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using ElementaryMathStudyWebsite.Infrastructure.Context;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Services.Service.Authentication;
-using ElementaryMathStudyWebsite.Contract.Core.IDomainServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Contract.Services.IDomainInterface;
 
 
 namespace ElementaryMathStudyWebsite
@@ -49,31 +47,23 @@ namespace ElementaryMathStudyWebsite
         public static void AddServices(this IServiceCollection services)
         {
             // Add services here
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IRoleService, RoleService>();
-            services.AddScoped<IOptionService, OptionService>();
-            services.AddScoped<IUserAnswerService, UserAnswer>();
-            services.AddScoped<IOrderService, OrderService>();
-            services.AddScoped<IOrderDetailService, OrderDetailService>();
-            services.AddScoped<IProgressService, ProgressService>();
-
-            services.AddScoped<IQuizService, QuizService>();
-
+            services.AddScoped<IAppUserServices, UserService>();
+            services.AddScoped<IAppRoleServices, RoleService>();
+            services.AddScoped<IAppOptionServices, OptionService>();
+            services.AddScoped<IAppUserAnswerServices, UserAnswer>();
+            services.AddScoped<IAppOrderServices, OrderService>();
+            services.AddScoped<IAppOrderDetailServices, OrderDetailService>();
+            services.AddScoped<IAppProgressServices, ProgressService>();
             services.AddScoped<IAppQuizServices, QuizService>();
             services.AddScoped<IAppQuestionServices, QuestionService>();
-
-            services.AddScoped<IQuestionService, QuestionService>();
-            services.AddScoped<ISubjectService, SubjectService>();
             services.AddScoped<IAppSubjectServices, SubjectService>();
-            services.AddScoped<IChapterService, ChapterService>();
             services.AddScoped<IAppChapterServices, ChapterService>();
-            services.AddScoped<ITopicService, TopicService>();
+            services.AddScoped<IAppTopicServices, TopicService>();
             services.AddScoped<IPaymentService, PaymentService>();
             services.AddSingleton<IVnPayService, VnPayService>();
 
             // Add application services
             services.AddScoped<IAppAuthService, AuthService>();
-            services.AddScoped<IAppUserServices, UserService>();
 
             // Add authentication services
             services.AddScoped<IAuthenticationService, AuthenticationService>();

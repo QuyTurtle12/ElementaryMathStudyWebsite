@@ -2,11 +2,9 @@
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using System.ComponentModel.DataAnnotations;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 
@@ -16,13 +14,11 @@ namespace ElementaryMathStudyWebsite.Controllers
     [ApiController]
     public class ChaptersController : ControllerBase
     {
-        private readonly IChapterService _chapterService;
-        private readonly IAppChapterServices _appChapterServices;
+        private readonly IAppChapterServices _chapterService;
 
-        public ChaptersController(IChapterService chapterService, IAppChapterServices appChapterServices)
+        public ChaptersController(IAppChapterServices chapterService)
         {
             _chapterService = chapterService ?? throw new ArgumentNullException(nameof(chapterService));
-            _appChapterServices = appChapterServices ?? throw new ArgumentNullException(nameof(appChapterServices));
         }
 
         // GET: api/chapters/manager
@@ -87,10 +83,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                // Cast domain service to application service
-                var appService = _chapterService as IAppChapterServices;
 
-                ChapterViewDto chapter = await appService.GetChapterDtoByChapterIdAsync(id);
+                ChapterViewDto chapter = await _chapterService.GetChapterDtoByChapterIdAsync(id);
                 if (chapter == null)
                 {
                     return BadRequest("Invalid Chapter Id");
@@ -114,10 +108,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                // Cast domain service to application service
-                var appService = _chapterService as IAppChapterServices;
 
-                BasePaginatedList<ChapterViewDto> chapters = await appService.GetChapterDtosAsync(pageNumber, pageSize);
+                BasePaginatedList<ChapterViewDto> chapters = await _chapterService.GetChapterDtosAsync(pageNumber, pageSize);
                 return Ok(chapters);
             }
             catch (Exception ex)
@@ -144,7 +136,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             try
             {
-                var createdChapter = await _appChapterServices.CreateChapterAsync(new ChapterDto
+                var createdChapter = await _chapterService.CreateChapterAsync(new ChapterDto
                 {
                     Number = chapterDTO.Number,
                     ChapterName = chapterDTO.ChapterName,
@@ -180,7 +172,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             try
             {
-                var chapter = await _appChapterServices.UpdateChapterAsync(id, chapterDTO);
+                var chapter = await _chapterService.UpdateChapterAsync(id, chapterDTO);
                 return Ok(chapter);
             }
             catch (InvalidOperationException ex)
@@ -246,7 +238,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             try
             {
-                var chapters = await _appChapterServices.SearchChapterAsync(searchTerm, pageNumber, pageSize);
+                var chapters = await _chapterService.SearchChapterAsync(searchTerm, pageNumber, pageSize);
                 return Ok(chapters);
             }
             catch (KeyNotFoundException ex)

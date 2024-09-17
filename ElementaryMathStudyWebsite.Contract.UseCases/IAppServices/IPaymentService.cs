@@ -1,8 +1,7 @@
-﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Base;
+﻿using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Entity;
 
-namespace ElementaryMathStudyWebsite.Core.Services.IDomainService
+namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
     public interface IPaymentService
     {
