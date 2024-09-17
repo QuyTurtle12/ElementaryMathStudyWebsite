@@ -10,26 +10,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
 {
     public class ProgressService : IAppProgressServices
     {
-        private readonly IGenericRepository<Progress> _progressRepository;
-        private readonly IGenericRepository<OrderDetail> _detailRepository;
-        private readonly IGenericRepository<Chapter> _chapterRepository;
-        private readonly IGenericRepository<Topic> _topicRepository;
-        private readonly IGenericRepository<User> _userRepository;
-        private readonly IGenericRepository<ProgressViewDto> _progressViewDtoRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userService;
         private readonly IAppQuizServices _quizService;
         private readonly IAppSubjectServices _subjectService;
 
         // Constructor
-        public ProgressService(IGenericRepository<Progress> progressRepository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<Chapter> chapterRepository, IGenericRepository<Topic> topicRepository, IGenericRepository<User> userRepository, IGenericRepository<ProgressViewDto> progressViewDtoRepository, IUnitOfWork unitOfWork, IAppUserServices userService, IAppQuizServices quizService, IAppSubjectServices subjectService)
+        public ProgressService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppQuizServices quizService, IAppSubjectServices subjectService)
         {
-            _progressRepository = progressRepository;
-            _detailRepository = detailRepository;
-            _chapterRepository = chapterRepository;
-            _topicRepository = topicRepository;
-            _userRepository = userRepository;
-            _progressViewDtoRepository = progressViewDtoRepository;
             _unitOfWork = unitOfWork;
             _userService = userService;
             _quizService = quizService;
@@ -41,7 +29,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             try
             {
-                await _progressRepository.InsertAsync(studentProgress);
+                await _unitOfWork.GetRepository<Progress>().InsertAsync(studentProgress);
                 await _unitOfWork.SaveAsync();
 
                 return true;
@@ -57,7 +45,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             // Get all progresses in database
             // Filter student progresses directly with LINQ
-            IQueryable<OrderDetail> assignedSubjects = _detailRepository.Entities
+            IQueryable<OrderDetail> assignedSubjects = _unitOfWork.GetRepository<OrderDetail>().Entities
                 .Where(d => d.StudentId.Equals(studentId));
 
             IList<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
@@ -84,7 +72,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Show paginated progress
-            BasePaginatedList<OrderDetail>? paginatedProgress = await _detailRepository.GetPagging(assignedSubjects, pageNumber, pageSize);
+            BasePaginatedList<OrderDetail>? paginatedProgress = await _unitOfWork.GetRepository<OrderDetail>().GetPagging(assignedSubjects, pageNumber, pageSize);
 
             foreach (var prog in paginatedProgress.Items)
             {
@@ -102,32 +90,32 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<ProgressViewDto>> GetAllStudentProgressesDtoAsync(string parentId, int pageNumber, int pageSize)
         {
             // Get the list of children of the mentioned parent
-            IQueryable<User> students = _userRepository.Entities
-                .Where(u => u.CreatedBy.Equals(parentId));
+            IQueryable<User> students = _unitOfWork.GetRepository<User>().Entities
+                .Where(u => parentId == null // Check if parent id is null
+                            ? u.CreatedBy == null // Get all users that have CreatedBy is null
+                            : u.CreatedBy != null && u.CreatedBy.Equals(parentId)); // Get all users that have CreatedBy is not null
+                                                                                    // and CreatedBy is equal parent id
 
             var studentList = await students.ToListAsync();
 
             IList<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
-
-            // Cast domain service to application service
-            var userAppService = _userService as IAppUserServices;
 
             // Get list of progress of children
             foreach (var student in studentList)
             {
                 // Get all progresses in the database
                 // Filter student progresses directly with LINQ
-                IQueryable<OrderDetail> assignedSubjects = _detailRepository.Entities
+                IQueryable<OrderDetail> assignedSubjects = _unitOfWork.GetRepository<OrderDetail>().Entities
                     .Where(d => d.StudentId.Equals(student.Id));
 
                 var studentProgresses = await assignedSubjects.ToListAsync();
                 foreach (var prog in studentProgresses)
                 {
                     double subjectPercentage = await CalculateSubjectPercentageAsync(student.Id, prog.SubjectId);
-                    string studentName = await userAppService.GetUserNameAsync(prog.StudentId);
+                    string studentName = await _userService.GetUserNameAsync(prog.StudentId);
                     string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
-                    ProgressViewDto dto = new ProgressViewDto { StudentName = studentName, SubjectName = subjectName, SubjectPercentage = subjectPercentage };
+                    ProgressViewDto dto = new() { StudentName = studentName, SubjectName = subjectName, SubjectPercentage = subjectPercentage };
                     studentProgressDtos.Add(dto);
                 }
             }
@@ -139,7 +127,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Show paginated progress for all students
-            BasePaginatedList<ProgressViewDto> paginatedDtos = await _progressViewDtoRepository.GetPaggingDto(studentProgressDtos, pageNumber, pageSize);
+            BasePaginatedList<ProgressViewDto> paginatedDtos = await _unitOfWork.GetRepository<ProgressViewDto>().GetPaggingDto(studentProgressDtos, pageNumber, pageSize);
 
             return paginatedDtos;
         }
@@ -149,7 +137,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private async Task<double> CalculateSubjectPercentageAsync(string studentId, string subjectId)
         {
             // Get all progresses in database for the student and subject
-            IQueryable<Progress> progressQuery = _progressRepository.Entities
+            IQueryable<Progress> progressQuery = _unitOfWork.GetRepository<Progress>().Entities
                 .Where(p => p.StudentId.Equals(studentId) && p.SubjectId.Equals(subjectId));
 
             // Get all completed quizzes that student has done
@@ -157,12 +145,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             int completedQuizzes = completedQuizProgress.Count;
 
             // Count chapters for the subject
-            int totalChapters = await _chapterRepository.Entities
+            int totalChapters = await _unitOfWork.GetRepository<Chapter>().Entities
                 .Where(c => c.SubjectId.Equals(subjectId))
                 .CountAsync();
 
             // Get list of chapters for the specific subject
-            var chapters = await _chapterRepository.Entities
+            var chapters = await _unitOfWork.GetRepository<Chapter>().Entities
                 .Where(c => c.SubjectId.Equals(subjectId))
                 .ToListAsync();
 
@@ -171,7 +159,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Count topics for each chapter
             foreach (var chapter in chapters)
             {
-                int topicCount = await _topicRepository.Entities
+                int topicCount = await _unitOfWork.GetRepository<Topic>().Entities
                     .Where(t => t.ChapterId.Equals(chapter.Id))
                     .CountAsync();
 
@@ -192,7 +180,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             // Get all progresses in database
             // Filter student progresses directly with LINQ
-            IQueryable<Progress> query = _progressRepository.Entities
+            IQueryable<Progress> query = _unitOfWork.GetRepository<Progress>().Entities
                 .Where(p => p.StudentId.Equals(studentId));
 
             var studentProgresses = query.ToList();

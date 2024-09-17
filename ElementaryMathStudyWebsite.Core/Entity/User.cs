@@ -13,7 +13,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public string? Email { get; set; }
 
-        public string? RoleId { get; set; }
+        public string RoleId { get; set; } = string.Empty;
 
         public required string Username { get; set; }
 

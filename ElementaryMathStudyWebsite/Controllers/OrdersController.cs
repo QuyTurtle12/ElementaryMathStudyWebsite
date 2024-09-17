@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ElementaryMathStudyWebsite.Core.Base;
 using System.ComponentModel.DataAnnotations;
-
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
@@ -36,7 +35,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                BasePaginatedList<Order> orders = await _orderService.GetOrdersAsync(pageNumber, pageSize);
+                BasePaginatedList<Order>? orders = await _orderService.GetOrdersAsync(pageNumber, pageSize);
                 return Ok(orders);
             }
             catch (Exception ex)
@@ -58,7 +57,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                Order order = await _orderService.GetOrderByOrderIdAsync(id);
+                Order? order = await _orderService.GetOrderByOrderIdAsync(id);
                 if (order == null)
                 {
                     return BadRequest("Invalid Order Id");
@@ -108,7 +107,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                BasePaginatedList<OrderViewDto> orders = await _orderService.GetOrderDtosAsync(pageNumber, pageSize);
+                BasePaginatedList<OrderViewDto>? orders = await _orderService.GetOrderDtosAsync(pageNumber, pageSize);
                 return Ok(orders);
             }
             catch (Exception ex)
@@ -162,7 +161,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                BasePaginatedList<OrderDetailViewDto> detail = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(pageNumber, pageSize, orderId);
+                BasePaginatedList<OrderDetailViewDto>? detail = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(pageNumber, pageSize, orderId);
                 return Ok(detail);
             }
             catch (Exception ex)

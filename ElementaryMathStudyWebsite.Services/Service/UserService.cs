@@ -205,7 +205,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Get user name from database
-        public async Task<string?> GetUserNameAsync(string userId)
+        public async Task<string> GetUserNameAsync(string userId)
         {
             try
             {
@@ -234,7 +234,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return false;
             }
 
-            string? creatorId = student.CreatedBy;
+            string creatorId = student?.CreatedBy ?? string.Empty;
 
             if (creatorId.Equals(parentId))
             {

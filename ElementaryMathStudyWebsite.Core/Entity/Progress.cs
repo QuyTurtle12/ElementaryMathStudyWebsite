@@ -2,9 +2,9 @@
 {
     public class Progress
     {
-        public required string StudentId { get; set; }
-        public string? QuizId { get; set; }
-        public string? SubjectId { get; set; }
+        public required string StudentId { get; set; } = string.Empty;
+        public string QuizId { get; set; } = string.Empty;
+        public string SubjectId { get; set; } = string.Empty;
 
         public virtual User? User { get; set; } // Navigation property, one progress belong to one subjects
         public virtual Quiz? Quiz { get; set; } // Navigation property, one progress has one completed quiz
