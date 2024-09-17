@@ -28,10 +28,50 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<PaymentViewDto> Checkout(OptionCreateDto optionCreateDto)
+        public async Task<PaymentViewDto> Checkout(OrderCreateDto orderCreateDto)
         {
 
-            throw new NotImplementedException();
+            string orderId = await _orderService.AddOrderAsync(orderCreateDto) ?? throw new Exception("Payment failed, please try again later");
+
+            var order = await _orderRepository.GetByIdAsync(orderId);
+
+            Payment payment = new()
+            {
+                Id = Guid.NewGuid().ToString().ToUpper(),
+                CustomerId = order.CustomerId,
+                OrderId = orderId,
+                PaymentDate = order.CreatedTime,
+                PaymentMethod = "VnPay",
+                Amount = order.TotalPrice,
+                Status = "Success"
+            };
+
+            await _paymentRepository.InsertAsync(payment);
+            await _unitOfWork.SaveAsync();
+
+            PaymentViewDto paymentViewDto = new()
+            {
+                PaymentId = payment.Id,
+                CustomerName = order.User.FullName,
+                Amount = payment.Amount,
+                PaymentDate = payment.PaymentDate,
+                PaymentMethod = payment.PaymentMethod,
+                Status = payment.Status
+            };
+
+            foreach (var subjectStudent in orderCreateDto.SubjectStudents)
+            {
+                var subjectName = (await _unitOfWork.GetRepository<Subject>().GetByIdAsync(subjectStudent.SubjectId)).SubjectName;
+                var studentName = (await _unitOfWork.GetRepository<User>().GetByIdAsync(subjectStudent.StudentId)).FullName;
+                PaymentSubjectStudent paymentSubjectStudent = new()
+                {
+                    SubjectName = subjectName,
+                    StudentName = studentName
+                };
+                paymentViewDto.SubjectStudents.Add(paymentSubjectStudent);
+            }
+
+            return paymentViewDto;
         }
 
         public async Task<Payment> GetPaymentById(string paymentId)
@@ -63,6 +103,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Show with pagination
             BasePaginatedList<Payment>? paginatedPayments = await _paymentRepository.GetPagging(query, pageNumber, pageSize);
 
+
             foreach (var payment in paginatedPayments.Items)
             {
                 paymentViewDtos.Add(PaymentViewMapper(payment));
@@ -89,16 +130,35 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         private PaymentViewDto PaymentViewMapper(Payment payment)
         {
-            return new PaymentViewDto
+            var customerName = _unitOfWork.GetRepository<User>().GetById(payment.CustomerId).FullName;
+
+            PaymentViewDto paymentViewDto = new()
             {
                 PaymentId = payment.Id,
-                CustomerName = payment.User.FullName,
+                CustomerName = customerName,
                 PaymentDate = payment.PaymentDate,
                 Amount = payment.Amount,
                 PaymentMethod = payment.PaymentMethod,
                 Status = payment.Status
+
             };
 
+            var orderDetail = _unitOfWork.GetRepository<OrderDetail>().GetEntitiesWithCondition(od => od.OrderId == payment.OrderId);
+
+            foreach (var subjectStudent in orderDetail)
+            {
+                var subjectName = _unitOfWork.GetRepository<Subject>().GetById(subjectStudent.SubjectId).SubjectName;
+                var studentName = _unitOfWork.GetRepository<User>().GetById(subjectStudent.StudentId).FullName;
+
+                PaymentSubjectStudent paymentSubjectStudent = new()
+                {
+                    SubjectName = subjectName,
+                    StudentName = studentName,
+                };
+                paymentViewDto.SubjectStudents.Add(paymentSubjectStudent);
+            }
+
+            return paymentViewDto;
         }
     }
 }

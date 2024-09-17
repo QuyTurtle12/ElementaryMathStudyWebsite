@@ -71,30 +71,30 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // GET: api/orders/{id}
+        // GET: api/orders/order
         // Get orders for general user
-        [HttpGet]
-        [Route("{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: N/A",
-            Description = "View order with selected information"
-            )]
-        public async Task<ActionResult<OrderViewDto>> GetOrderForGeneralUser([Required] string id)
-        {
-            try
-            {
-                OrderViewDto order = await _orderService.GetOrderDtoByOrderIdAsync(id);
-                if (order == null)
-                {
-                    return BadRequest("Invalid Order Id");
-                }
-                return Ok(order);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error: " + ex.Message);
-            }
-        }
+        //[HttpGet]
+        //[Route("order")]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: N/A",
+        //    Description = "View order with selected information"
+        //    )]
+        //public async Task<ActionResult<OrderViewDto>> GetOrderForGeneralUser([Required] string id)
+        //{
+        //    try
+        //    {
+        //        OrderViewDto order = await _orderService.GetOrderDtoByOrderIdAsync(id);
+        //        if (order == null)
+        //        {
+        //            return BadRequest("Invalid Order Id");
+        //        }
+        //        return Ok(order);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, "Error: " + ex.Message);
+        //    }
+        //}
 
         // GET: api/orders
         // Get orders for general user
