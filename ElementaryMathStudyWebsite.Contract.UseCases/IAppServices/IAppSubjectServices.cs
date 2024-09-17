@@ -1,6 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices

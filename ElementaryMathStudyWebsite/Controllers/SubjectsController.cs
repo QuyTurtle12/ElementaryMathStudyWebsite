@@ -9,16 +9,10 @@ namespace ElementaryMathStudyWebsite.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SubjectsController : ControllerBase
+    public class SubjectsController(ISubjectService subjectService, IAppSubjectServices appSubjectServices) : ControllerBase
     {
-        private readonly ISubjectService _subjectService;
-        private readonly IAppSubjectServices _appSubjectServices;
-
-        public SubjectsController(ISubjectService subjectService, IAppSubjectServices appSubjectServices)
-        {
-            _subjectService = subjectService;
-            _appSubjectServices = appSubjectServices;
-        }
+        private readonly ISubjectService _subjectService = subjectService;
+        private readonly IAppSubjectServices _appSubjectServices = appSubjectServices;
 
         // GET: api/Subjects
         [HttpGet]
@@ -28,7 +22,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> GetAllActiveSubjects(int pageNumber = 1, int pageSize = 10)
         {
-            var activeSubjects = await _appSubjectServices.GetAllSubjectsAsync(pageNumber, pageSize, false);
+            var activeSubjects = await _subjectService.GetAllSubjectsAsync(pageNumber, pageSize, false);
 
             return Ok(activeSubjects);
         }
@@ -43,7 +37,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var subject = await _appSubjectServices.GetSubjectByIDAsync(id, false); //not Admin
+                var subject = await _subjectService.GetSubjectByIDAsync(id, false); //not Admin
                 return Ok(subject);
             }
             catch (KeyNotFoundException ex)
@@ -65,7 +59,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> GetAllSubjectsForAdmin(int pageNumber = 1, int pageSize = 10)
         {
-            var subjects = await _appSubjectServices.GetAllSubjectsAsync(pageNumber, pageSize, true); //true mean it was admin
+            var subjects = await _subjectService.GetAllSubjectsAsync(pageNumber, pageSize, true); //true mean it was admin
 
             return Ok(subjects);
         }
@@ -81,7 +75,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var subject = await _appSubjectServices.GetSubjectByIDAsync(id, true); //is Admin
+                var subject = await _subjectService.GetSubjectByIDAsync(id, true); //is Admin
                 return Ok(subject);
             }
             catch (KeyNotFoundException ex)
