@@ -1,33 +1,35 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-
+using ElementaryMathStudyWebsite.Core.Utils;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class ChapterService : IAppChapterServices
+    public class ChapterService(IGenericRepository<Chapter> detailReposiotry,
+                          IGenericRepository<Chapter> chapterRepository,
+                          IGenericRepository<Subject> subjectRepository,
+                          IGenericRepository<Quiz> quizRepository,
+                          IUnitOfWork unitOfWork,
+                          IHttpContextAccessor httpContextAccessor,
+                          ITokenService tokenService) : IAppChapterServices
     {
-        private readonly IGenericRepository<Chapter> _detailReposiotry;
-        private readonly IGenericRepository<Chapter> _chapterRepository;
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IGenericRepository<Quiz> _quizRepository;
-        private readonly IGenericRepository<Subject> _subjectRepository;
-        private readonly ILogger<ChapterService> _logger;
-
-        // Constructor
-        public ChapterService(IGenericRepository<Chapter> detailReposiotry, IGenericRepository<Chapter> chapterRepository, IUnitOfWork unitOfWork, IGenericRepository<Quiz> quizRepository, IGenericRepository<Subject> subjectRepository, ILogger<ChapterService> logger)
-        {
-            _detailReposiotry = detailReposiotry;
-            _chapterRepository = chapterRepository;
-            _unitOfWork = unitOfWork;
-            _quizRepository = quizRepository;
-            _subjectRepository = subjectRepository;
-            _logger = logger;
-        }
+        private readonly IGenericRepository<Chapter> _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
+        private readonly IGenericRepository<Chapter> _chapterRepository = chapterRepository ?? throw new ArgumentNullException(nameof(chapterRepository));
+        private readonly IGenericRepository<Subject> _subjectRepository = subjectRepository ?? throw new ArgumentNullException(nameof(subjectRepository));
+        private readonly IGenericRepository<Quiz> _quizRepository = quizRepository ?? throw new ArgumentNullException(nameof(quizRepository));
+        private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+        private readonly ITokenService _tokenService = tokenService;
+        //private readonly IAppUserServices _userService;
 
         private void ValidateChapter(ChapterDto chapterDTO)
         {
@@ -64,7 +66,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new InvalidOperationException($"A chapter with the name '{chapterDTO.ChapterName}' already exists.");
             }
 
-            if (!string.IsNullOrEmpty(chapterDTO.SubjectId))
+            if (!string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
             {
                 var subjectExists = await _subjectRepository.Entities
                     .AnyAsync(s => s.Id == chapterDTO.SubjectId);
@@ -75,7 +77,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
             }
 
-            if (!string.IsNullOrEmpty(chapterDTO.QuizId))
+            if (!string.IsNullOrWhiteSpace(chapterDTO.QuizId))
             {
                 var quizExists = await _quizRepository.Entities
                     .AnyAsync(q => q.Id == chapterDTO.QuizId);
@@ -93,9 +95,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 Status = chapterDTO.Status,
                 SubjectId = chapterDTO.SubjectId,
                 QuizId = chapterDTO.QuizId,
-                CreatedTime = DateTime.UtcNow,
-                LastUpdatedTime = DateTime.UtcNow // Set initial LastUpdatedTime as well
+                //CreatedTime = DateTime.UtcNow,
+                //LastUpdatedTime = DateTime.UtcNow // Set initial LastUpdatedTime as well
             };
+
+            AuditFields(chapter, isCreating: true);
 
             _chapterRepository.Insert(chapter);
             await _chapterRepository.SaveAsync();
@@ -119,11 +123,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterDto chapterDTO)
         {
-            var chapter = await _chapterRepository.GetByIdAsync(id);
-            if (chapter == null)
-            {
-                throw new KeyNotFoundException($"Chapter with ID '{id}' not found.");
-            }
+            var chapter = await _chapterRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
 
             // Check if another subject with the same name already exists
             var existingSubject = await _chapterRepository.Entities
@@ -135,7 +135,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new InvalidOperationException($"A chapter with the name '{chapterDTO.ChapterName}' already exists.");
             }
 
-            if (!string.IsNullOrEmpty(chapterDTO.SubjectId))
+            if (!string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
             {
                 var subjectExists = await _subjectRepository.Entities
                     .AnyAsync(s => s.Id == chapterDTO.SubjectId);
@@ -146,7 +146,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
             }
 
-            if (!string.IsNullOrEmpty(chapterDTO.QuizId))
+            if (!string.IsNullOrWhiteSpace(chapterDTO.QuizId))
             {
                 var quizExists = await _quizRepository.Entities
                     .AnyAsync(q => q.Id == chapterDTO.QuizId);
@@ -164,7 +164,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             chapter.Status = chapterDTO.Status;
             chapter.SubjectId = chapterDTO.SubjectId;
             chapter.QuizId = chapterDTO.QuizId;
-            chapter.LastUpdatedTime = DateTime.UtcNow;
+            //chapter.LastUpdatedTime = DateTime.UtcNow;
+
+            AuditFields(chapter, isCreating: false);
 
             _chapterRepository.Update(chapter);
             await _chapterRepository.SaveAsync();
@@ -186,19 +188,36 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
+        public bool IsValidChapter(string chapterId)
+        {
+            Chapter? chapter = _unitOfWork.GetRepository<Chapter>().GetById(chapterId);
+
+            return (chapter is not null && chapter.DeletedBy is null);
+        }
 
         public async Task<bool> DeleteChapterAsync(string chapterId)
         {
-            var chapter = await _chapterRepository.GetByIdAsync(chapterId) ?? throw new KeyNotFoundException("Invalid chapter ID");
+            //var chapter = await _chapterRepository.GetByIdAsync(chapterId) ?? throw new KeyNotFoundException("Invalid chapter ID");
 
-            await _chapterRepository.DeleteAsync(chapterId);
+            //await _chapterRepository.DeleteAsync(chapterId);
+            //await _unitOfWork.SaveAsync();
+            //return true;
+            Chapter? chapter = new();
+
+            if (IsValidChapter(chapterId))
+                chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId);
+            else throw new KeyNotFoundException("Invalid chapter ID");
+
+            AuditFields(chapter, isCreating: false);
+
             await _unitOfWork.SaveAsync();
+
             return true;
         }
 
 
         // Get one order with all properties
-        public async Task<Chapter> GetChapterByChapterIdAsync(string Id)
+        public async Task<Chapter?> GetChapterByChapterIdAsync(string Id)
         {
             Chapter? chapter = await _chapterRepository.GetByIdAsync(Id);
             return chapter;
@@ -230,7 +249,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     ChapterViewDto dto = new ChapterViewDto { Number = chapter.Number, ChapterName = chapter.ChapterName };
                     chapterDtos.Add(dto);
                 }
-                return new BasePaginatedList<ChapterViewDto>(chapterDtos, chapterDtos.Count, 1, chapterDtos.Count);
+                return new BasePaginatedList<ChapterViewDto?>(chapterDtos, chapterDtos.Count, 1, chapterDtos.Count);
             }
 
             // Show all chapters with pagination
@@ -242,12 +261,37 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 chapterDtos.Add(dto);
             }
 
-            return new BasePaginatedList<ChapterViewDto>(chapterDtos, paginatedChapters.TotalItems, pageNumber, pageSize);
+            return new BasePaginatedList<ChapterViewDto?>(chapterDtos, paginatedChapters.TotalItems, pageNumber, pageSize);
         }
 
+        // Change subject status and set LastUpdatedTime to current time
+        public async Task<ChapterAdminViewDto> ChangeChapterStatusAsync(string id)
+        {
+            var chapter = await _chapterRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"Chapter with ID '{id}' not found.");
+            chapter.Status = !chapter.Status;
+            //subject.LastUpdatedTime = DateTime.UtcNow;
 
+            AuditFields(chapter);
 
+            _chapterRepository.Update(chapter);
+            await _chapterRepository.SaveAsync();
 
+            return new ChapterAdminViewDto
+            {
+                Id = chapter.Id,
+                Number = chapter.Number,
+                ChapterName = chapter.ChapterName,
+                Status = chapter.Status,
+                SubjectId = chapter.SubjectId,
+                QuizId = chapter.QuizId,
+                CreatedBy = chapter.CreatedBy,
+                CreatedTime = chapter.CreatedTime,
+                LastUpdatedBy = chapter.LastUpdatedBy,
+                LastUpdatedTime = chapter.LastUpdatedTime,
+                DeletedBy = chapter.DeletedBy,
+                DeletedTime = chapter.DeletedTime
+            };
+        }
 
         public async Task<BasePaginatedList<Chapter?>> GetChaptersAsync(int pageNumber, int pageSize)
         {
@@ -258,7 +302,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (pageNumber <= 0 || pageSize <= 0)
             {
                 var allChapters = await query.ToListAsync();
-                return new BasePaginatedList<Chapter>(allChapters, allChapters.Count, 1, allChapters.Count);
+                return new BasePaginatedList<Chapter?>(allChapters, allChapters.Count, 1, allChapters.Count);
             }
 
             // Show all chapters with pagination
@@ -276,7 +320,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             var query = _chapterRepository.Entities.Where(c => c.Status == true);
 
-            if (!string.IsNullOrEmpty(searchTerm))
+            if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 query = query.Where(c => EF.Functions.Like(c.ChapterName, $"%{searchTerm}%"));
             }
@@ -323,7 +367,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             try
             {
-                Chapter chapter = await _chapterRepository.GetByIdAsync(id);
+                Chapter? chapter = await _chapterRepository.GetByIdAsync(id);
 
                 if (chapter == null)
                 {
@@ -335,6 +379,29 @@ namespace ElementaryMathStudyWebsite.Services.Service
             catch (Exception ex)
             {
                 throw new Exception(ex.Message, ex);
+            }
+
+        }
+
+        public void AuditFields(BaseEntity entity, bool isCreating = false)
+        {
+            // Retrieve the JWT token from the Authorization header
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            // If creating a new entity, set the CreatedBy field
+            if (isCreating)
+            {
+                entity.CreatedBy = currentUserId.ToString().ToUpper(); // Set the creator's ID
+            }
+
+            // Always set LastUpdatedBy and LastUpdatedTime fields
+            entity.LastUpdatedBy = currentUserId.ToString().ToUpper(); // Set the current user's ID
+
+            // If is not created then update LastUpdatedTime
+            if (isCreating is false)
+            {
+                entity.LastUpdatedTime = CoreHelper.SystemTimeNow;
             }
 
         }

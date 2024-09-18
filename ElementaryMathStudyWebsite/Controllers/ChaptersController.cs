@@ -12,29 +12,29 @@ namespace ElementaryMathStudyWebsite.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ChaptersController : ControllerBase
+    public class ChaptersController(IAppChapterServices appChapterServices) : ControllerBase
     {
-        private readonly IAppChapterServices _chapterService;
-
-        public ChaptersController(IAppChapterServices chapterService)
-        {
-            _chapterService = chapterService ?? throw new ArgumentNullException(nameof(chapterService));
-        }
+        //private readonly IAppChapterServices _chapterService;
+        private readonly IAppChapterServices _chapterService = appChapterServices;
+        //public ChaptersController(IAppChapterServices chapterService)
+        //{
+        //    _chapterService = chapterService ?? throw new ArgumentNullException(nameof(chapterService));
+        //}
 
         // GET: api/chapters/manager
         // Get chapters for Manager & Admin
-        [Authorize(Policy = "Admin-Manager")]
+        //[Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("manager")]
         [SwaggerOperation(
             Summary = "Authorization: Manager & Admin",
             Description = "View chapter list for Manager and Admin Role. Insert -1 to get all items"
         )]
-        public async Task<ActionResult<BasePaginatedList<Chapter>>> GetChapters(int pageNumber = -1, int pageSize = -1)
+        public async Task<ActionResult<BasePaginatedList<Chapter?>>> GetChapters(int pageNumber = -1, int pageSize = -1)
         {
             try
             {
-                BasePaginatedList<Chapter> chapters = await _chapterService.GetChaptersAsync(pageNumber, pageSize);
+                BasePaginatedList<Chapter?> chapters = await _chapterService.GetChaptersAsync(pageNumber, pageSize);
                 return Ok(chapters);
             }
             catch (Exception ex)
@@ -47,18 +47,18 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/chapters/manager/{id}
         // Get chapters for Manager & Admin
-        [Authorize(Policy = "Admin-Manager")]
+        //[Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("manager/{id}")]
         [SwaggerOperation(
             Summary = "Authorization: Manager & Admin",
             Description = "View chapter for Manager and Admin Role."
             )]
-        public async Task<ActionResult<Chapter>> GetChapter([Required] string id)
+        public async Task<IActionResult> GetChapter(string id)
         {
             try
             {
-                Chapter chapter = await _chapterService.GetChapterByChapterIdAsync(id);
+                var chapter = await _chapterService.GetChapterByChapterIdAsync(id);
                 if (chapter == null)
                 {
                     return BadRequest("Invalid Chapter Id");
@@ -71,6 +71,31 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        //[Authorize(Policy = "Admin-Content")]
+        [HttpPut("/StatusChange/{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin, Content Manager",
+            Description = "Change chapter status from true to false and otherwise."
+        )]
+        public async Task<IActionResult> ChangeChapterStatus(string id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var chapter = await _chapterService.ChangeChapterStatusAsync(id);
+                return Ok(chapter);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+
         // GET: api/chapters/{id}
         // Get chapters for general user
         [HttpGet]
@@ -79,12 +104,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: N/A",
             Description = "View chapter for General User"
             )]
-        public async Task<ActionResult<ChapterViewDto>> GetChapterForGeneralUser([Required] string id)
+        public async Task<ActionResult<ChapterViewDto?>> GetChapterForGeneralUser([Required] string id)
         {
             try
             {
 
-                ChapterViewDto chapter = await _chapterService.GetChapterDtoByChapterIdAsync(id);
+                ChapterViewDto? chapter = await _chapterService.GetChapterDtoByChapterIdAsync(id);
                 if (chapter == null)
                 {
                     return BadRequest("Invalid Chapter Id");
@@ -109,7 +134,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
 
-                BasePaginatedList<ChapterViewDto> chapters = await _chapterService.GetChapterDtosAsync(pageNumber, pageSize);
+                BasePaginatedList<ChapterViewDto?> chapters = await _chapterService.GetChapterDtosAsync(pageNumber, pageSize);
                 return Ok(chapters);
             }
             catch (Exception ex)
@@ -120,7 +145,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // POST: api/chapters/
         // Add chapters
-        [Authorize(Policy = "Admin-Manager")]
+        //[Authorize(Policy = "Admin-Manager")]
         [HttpPost]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -157,7 +182,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        [Authorize(Policy = "Admin-Manager")]
+        //[Authorize(Policy = "Admin-Manager")]
         [HttpPut("{id}")]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -190,32 +215,61 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         //[Authorize(Policy = "Admin-Manager")]
-        //[HttpDelete]
-        //[Route("{id}")]
-        //[SwaggerOperation(
-        //    Summary = "Authorization: Admin & Content Manager",
-        //    Description = "Delete a chapter"
-        //)]
-        //public async Task<IActionResult> DeleteChapter([Required] string id)
-        //{
-        //    try
-        //    {
-        //        var chapterAppService = _appChapterServices as IAppChapterServices;
-        //        if (await chapterAppService.DeleteChapterAsync(id))
-        //        {
-        //            return Ok("Delete successfully");
-        //        }
-        //        return BadRequest("Delete unsuccessfully");
-        //    }
-        //    catch (KeyNotFoundException ex)
-        //    {
-        //        return NotFound("Error: " + ex.Message);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, "Error: " + ex.Message);
-        //    }
-        //}
+        [HttpDelete]
+        [Route("{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "Delete a chapter"
+        )]
+        public async Task<IActionResult> DeleteChapter([Required] string id)
+        {
+            //try
+            //{
+            //    var chapterAppService = _chapterService as IAppChapterServices;
+            //    if (await chapterAppService.DeleteChapterAsync(id))
+            //    {
+            //        return Ok("Delete successfully");
+            //    }
+            //    return BadRequest("Delete unsuccessfully");
+            //}
+            //catch (KeyNotFoundException ex)
+            //{
+            //    return NotFound("Error: " + ex.Message);
+            //}
+            //catch (Exception ex)
+            //{
+            //    return StatusCode(500, "Error: " + ex.Message);
+            //}
+            try
+            {
+                var chapterAppService = _chapterService as IAppChapterServices;
+                if (await chapterAppService.DeleteChapterAsync(id))
+                {
+                    return Ok("Delete successfully");
+
+                }
+                return BadRequest("Delete unsuccessfully");
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
 
 
         [HttpGet("search")]
