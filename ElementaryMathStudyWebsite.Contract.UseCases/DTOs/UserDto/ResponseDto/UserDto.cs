@@ -35,6 +35,20 @@
         public string Username { get; set; } = string.Empty;  // User's username
     }
 
+    public class UpdateProfileDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string Gender { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public RoleDto? Role { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Token { get; set; } = string.Empty;
+
+        //public string? Password { get; set; } // Optional, only if you want to update the password
+    }
+
     public class RoleDto
     {
         public string? RoleId { get; set; }

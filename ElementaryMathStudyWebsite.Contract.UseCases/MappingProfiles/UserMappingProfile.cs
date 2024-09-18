@@ -14,6 +14,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles
             CreateMap<User, UserResponseDto>();
             CreateMap<CreateUserDto, User>();
             CreateMap<User, UserProfile>();
+            CreateMap<User, UpdateProfileDto>();
             CreateMap<User, UserResponseDto>()
             .ForPath(dest => dest.Role.RoleId, opt => opt.MapFrom(src => src.Role.Id))
             .ForPath(dest => dest.Role.RoleName, opt => opt.MapFrom(src => src.Role.RoleName));

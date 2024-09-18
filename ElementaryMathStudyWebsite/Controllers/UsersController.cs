@@ -50,6 +50,44 @@ namespace ElementaryMathStudyWebsite.Controllers
             return Ok(userProfile);
         }
 
+        [HttpPut]
+        [Route("profile/update")]
+        [SwaggerOperation(
+            Summary = "Authorization: logged in user",
+            Description = "Updating a user profile"
+            )]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserDto updateUserDto)
+        {
+            // Get the token from the Authorization header
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+
+            // Extract user ID from the token
+            var userId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                var user = await _userServices.UpdateUserAsync(userId.ToString(), updateUserDto);
+                var UpdateProfileDto = _mapper.Map<UpdateProfileDto>(user);
+                UpdateProfileDto.Token = _tokenService.GenerateJwtToken(user);
+                
+
+                return Ok(UpdateProfileDto);
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
+            }
+        }
+
         /// <summary>
         /// Creates a new user.
         /// </summary>
