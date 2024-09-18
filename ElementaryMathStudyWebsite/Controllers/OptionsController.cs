@@ -1,5 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Base;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -32,12 +33,27 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var optionAppService = _optionService as IAppOptionServices;
                 return Ok(await optionAppService.AddOption(dto));
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
-        //eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NUZGN0RGRS02QUIyLTQxMTQtOUM5RC03RDkyMDEyOTNBMDQiLCJleHAiOjE3MjY2NDk3OTN9.47LHD01U68DN_9yJn4pmGdjq_NC6vYRoyhcCurTi1O0
+
 
         // DELETE: api/options/{id}
         [Authorize(Policy = "Admin-Content")]
@@ -59,9 +75,24 @@ namespace ElementaryMathStudyWebsite.Controllers
                 }
                 return BadRequest("Delete unsuccessfully");
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -80,9 +111,24 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return Ok(await _optionService.GetOptionById(id));
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -100,9 +146,24 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var optionAppService = _optionService as IAppOptionServices;
                 return Ok(await optionAppService.GetOptionDtosByQuestion(pageNumber, pageSize, questionId));
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -121,9 +182,24 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return Ok(await _optionService.GetOptions(pageNumber, pageSize));
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -142,9 +218,24 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var optionAppService = _optionService as IAppOptionServices;
                 return Ok(await optionAppService.UpdateOption(id, dto));
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
