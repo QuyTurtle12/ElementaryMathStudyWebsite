@@ -7,7 +7,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
     {
         public required string QuestionId { get; set; }
 
-        public string? Answer { get; set; } // Answer context
+        public string Answer { get; set; } = string.Empty; // Answer context
 
         public bool IsCorrect { get; set; } = false;
 

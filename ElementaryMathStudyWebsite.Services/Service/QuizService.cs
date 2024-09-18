@@ -151,7 +151,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<string> GetQuizNameAsync(string quizId)
         {
-            Quiz quiz = await _quizRepository.GetByIdAsync(quizId);
+            Quiz? quiz = await _quizRepository.GetByIdAsync(quizId);
             return quiz?.QuizName ?? string.Empty;
         }
     }

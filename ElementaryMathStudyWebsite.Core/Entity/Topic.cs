@@ -9,6 +9,8 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public string TopicName { get; set; } = string.Empty; // avoid null reference issues
 
+        public string? TopicContext {  get; set; }
+
         public bool Status { get; set; } = true;
 
         public string? QuizId { get; set; }
