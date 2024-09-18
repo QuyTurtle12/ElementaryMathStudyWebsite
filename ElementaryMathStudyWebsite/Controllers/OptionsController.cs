@@ -37,32 +37,33 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return StatusCode(500, "Error: " + ex.Message);
             }
         }
+        //eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NUZGN0RGRS02QUIyLTQxMTQtOUM5RC03RDkyMDEyOTNBMDQiLCJleHAiOjE3MjY2NDk3OTN9.47LHD01U68DN_9yJn4pmGdjq_NC6vYRoyhcCurTi1O0
 
-        //// DELETE: api/options/{id}
-        //[Authorize(Policy = "Admin-Content")]
-        //[HttpDelete]
-        //[Route("{id}")]
-        //[SwaggerOperation(
-        //    Summary = "Authorization: Admin & Content Manager",
-        //    Description = "Delete an option (of a question)"
-        //    )]
-        //public async Task<IActionResult> DeleteOption([Required] string id)
-        //{
-        //    try
-        //    {
-        //        var optionAppService = _optionService as IAppOptionServices;
-        //        if (await optionAppService.DeleteOption(id))
-        //        {
-        //            return Ok("Delete successfully");
+        // DELETE: api/options/{id}
+        [Authorize(Policy = "Admin-Content")]
+        [HttpDelete]
+        [Route("{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "Delete an option (of a question)"
+            )]
+        public async Task<IActionResult> DeleteOption([Required] string id)
+        {
+            try
+            {
+                var optionAppService = _optionService as IAppOptionServices;
+                if (await optionAppService.DeleteOption(id))
+                {
+                    return Ok("Delete successfully");
 
-        //        }
-        //        return BadRequest("Delete unsuccessfully");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, "Error: " + ex.Message);
-        //    }
-        //}
+                }
+                return BadRequest("Delete unsuccessfully");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
 
 
         // GET: api/options/raw/{id}
