@@ -228,7 +228,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             Description = "Search order list by a filter. Filter list: customer email, customer phone, order date, total price. Example format: " +
             "customer phone: 0XXXXXXXXXX using 10 digits or 11 digits," +
             "order date: dd/MM/yyyy, " +
-            "total amount: 1000000"
+            "total price: 1000000"
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<OrderViewDto>>>> SearchOrders(int pageNumber = 1, int pageSize = 5, string? firstInputValue = null, string? secondInputValue = null, string filter = "customer phone")
         {
@@ -240,7 +240,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.CoreException coreEx)
             {
-                // Handle specific CoreException
+                // Handle general CoreException
                 return StatusCode(coreEx.StatusCode, new
                 {
                     code = coreEx.Code,
@@ -250,11 +250,20 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
-                // Handle specific BadRequestException
+                // Handle general BadRequestException
                 return BadRequest(new
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (ArgumentException argEx)
+            {
+                // Handle general ArgumentException
+                return BadRequest(new
+                {
+                    errorCode = "invalid_argument",
+                    errorMessage = argEx.Message
                 });
             }
         }

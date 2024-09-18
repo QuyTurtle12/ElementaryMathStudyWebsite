@@ -7,7 +7,6 @@ using ElementaryMathStudyWebsite.Core.Store;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NuGet.ContentModel;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 
@@ -129,11 +128,11 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // POST: api/progress
-        // Get 1 child learning progress of specific parent
+        // Add student progress
         [Authorize(Policy = "Student")]
         [HttpPost]
         [SwaggerOperation(
-            Summary = "Authorization: Parent",
+            Summary = "Authorization: Student",
             Description = "View children progress list. Insert -1 to get all items"
             )]
         public async Task<ActionResult<BaseResponse<Progress>>> AddProgress(ProgressCreateDto progress)
@@ -144,10 +143,20 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
                 var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
 
-                Progress newStudentProgress = new Progress { StudentId = currentUserId, QuizId = progress.QuizId, SubjectId = progress.SubjectId };
+                // Validate before get to the main task
+                string error = await _progressService.IsGenerallyValidatedAsync(progress.QuizId, currentUserId);
+                if (!string.IsNullOrWhiteSpace(error))
+                {
+                    throw new BaseException.BadRequestException("bad_request", error);
+                }
+
+                // Identify subject id using quiz id 
+                string subjectId = await _progressService.GetSubjectIdFromQuizIdAsync(progress.QuizId); 
+
+                Progress newStudentProgress = new Progress { StudentId = currentUserId, QuizId = progress.QuizId, SubjectId = subjectId };
 
                 // Check 
-                bool IsAddedProgress = await _progressService.AddSubjectProgress(newStudentProgress);
+                bool IsAddedProgress = await _progressService.AddSubjectProgressAsync(newStudentProgress);
 
                 if (IsAddedProgress)
                 {
@@ -159,6 +168,50 @@ namespace ElementaryMathStudyWebsite.Controllers
                 // Return only a failure message
                 var failedQuizResponse = BaseResponse<Progress>.OkResponse("You worked hard, but hard is not enough, try again next time");
                 return failedQuizResponse;
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
+        // GET: api/progress/assigned-subject
+        // Get list of assigned subject of specific student
+        [Authorize(Policy = "Student")]
+        [HttpGet]
+        [Route("assigned-subject")]
+        [SwaggerOperation(
+            Summary = "Authorization: Student",
+            Description = "View list of assigned subject. Insert -1 to get all items"
+            )]
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<AssignedSubjectDto>?>>> GetStudentAssignedSubjects(int pageNumber = -1, int pageSize = -1)
+        {
+            try
+            {
+                BasePaginatedList<AssignedSubjectDto>? assignedSubjectList = await _progressService.GetAssignedSubjectListAsync(pageNumber, pageSize);
+
+                if (assignedSubjectList?.Items.Count == 0 || assignedSubjectList == null)
+                {
+                    throw new BaseException.BadRequestException("bad_request", "You don't have any assigned subject");
+                }
+
+                var haveAssignedSubjectResponse = BaseResponse<BasePaginatedList<AssignedSubjectDto>?>.OkResponse(assignedSubjectList);
+                return haveAssignedSubjectResponse;
             }
             catch (BaseException.CoreException coreEx)
             {

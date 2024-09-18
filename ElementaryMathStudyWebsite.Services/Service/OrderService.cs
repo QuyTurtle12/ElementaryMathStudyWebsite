@@ -33,27 +33,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Add new order to database
         public async Task<string> AddOrderAsync(OrderCreateDto dto)
         {
-            try
-            {
-
                 // General Validation for each Subject-Student pair
                 foreach (var subjectStudent in dto.SubjectStudents)
                 {
-                    string? error = await IsGenerallyValidated(subjectStudent.SubjectId, subjectStudent.StudentId);
-                    if (!string.IsNullOrWhiteSpace(error)) throw new ArgumentNullException(error);
-                }
-
-                // Check if student is currently studying a specific subjcet
-                if (!await _orderDetailService.IsValidStudentSubjectBeforeCreateOrder(dto))
-                {
-                    throw new ArgumentException("This subject has been assigned to this student or assigned twice"); // This subject has been assigned to this student
+                    string? error = await IsGenerallyValidatedAsync(subjectStudent.SubjectId, subjectStudent.StudentId, dto);
+                    if (!string.IsNullOrWhiteSpace(error)) throw new BaseException.BadRequestException(
+                        "invalid_argument", // Error code
+                        error // Error message
+                        );
                 }
 
                 // Calculate total price
                 double totalPrice = await CalculateTotalPrice(dto);
-
-                // Validate if subject is valid, if total price equal -1 means subject is invalid
-                if (totalPrice == -1) { throw new Exception("Invalid subject"); }
 
                 // Get logged in User Id from authorization header 
                 var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
@@ -90,15 +81,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 if (result is false)
                 {
-                    throw new Exception("Failed to create order detail");
+                    throw new BaseException.CoreException("server_error", "Failed to create order detail");
                 }
 
                 return order.Id; // Show that create order process is completed
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
 
         }
 
@@ -165,35 +151,27 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Get all logged user's orders from the database
             IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities
                 .Where(o => o.CustomerId.Equals(currentUserId) && string.IsNullOrWhiteSpace(o.DeletedBy));
+
             IList<OrderViewDto> orderDtos = new List<OrderViewDto>();
-
-            // If pageNumber or pageSize are 0 or negative, show all orders without pagination
-            if (pageNumber <= 0 || pageSize <= 0)
-            {
-                var allOrders = await query.ToListAsync(); // Asynchronously fetch all orders
-                                                           // Map orders to OrderViewDto
-                foreach (var order in allOrders)
-                {
-                    string? customerName = await _userService.GetUserNameAsync(order.CustomerId);
-                    OrderViewDto dto = new() { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
-                    orderDtos.Add(dto);
-                }
-                return new BasePaginatedList<OrderViewDto>((IReadOnlyCollection<OrderViewDto>)orderDtos, orderDtos.Count, 1, orderDtos.Count);
-            }
-
-            // Show paginated orders
-            BasePaginatedList<Order>? paginatedOrders = await _unitOfWork.GetRepository<Order>().GetPagging(query, pageNumber, pageSize);
-
-            // Map paginated orders to OrderViewDto
-            foreach (var order in paginatedOrders.Items)
+            var allOrders = await query.ToListAsync(); // Asynchronously fetch all orders
+                                                       // Map orders to OrderViewDto
+            
+            foreach (var order in allOrders)
             {
                 string? customerName = await _userService.GetUserNameAsync(order.CustomerId);
                 OrderViewDto dto = new() { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
                 orderDtos.Add(dto);
             }
 
+
+            // If pageNumber or pageSize are 0 or negative, show all orders in 1 page
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                return new BasePaginatedList<OrderViewDto>((IReadOnlyCollection<OrderViewDto>)orderDtos, orderDtos.Count, 1, orderDtos.Count);
+            }
+
             // Return the paginated DTOs without reapplying pagination
-            return new BasePaginatedList<OrderViewDto>((IReadOnlyCollection<OrderViewDto>)orderDtos, paginatedOrders.TotalItems, pageNumber, pageSize);
+            return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(orderDtos, pageNumber, pageSize);
         }
 
 
@@ -240,12 +218,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Show all orders with pagination
-            return await _unitOfWork.GetRepository<OrderAdminViewDto>().GetPaggingDto(adminOrders, pageNumber, pageSize);
+            return _unitOfWork.GetRepository<OrderAdminViewDto>().GetPaggingDto(adminOrders, pageNumber, pageSize);
         }
 
 
         // General Validation
-        public async Task<string?> IsGenerallyValidated(string subjectId, string studentId)
+        public async Task<string?> IsGenerallyValidatedAsync(string subjectId, string studentId, OrderCreateDto dto)
         {
 
             // Get logged in User Id from authorization header 
@@ -258,15 +236,21 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Check if the studentId is a valid student id
             var student = await _unitOfWork.GetRepository<User>().GetByIdAsync(studentId);
 
+            // Check if student exist
             if (student is null) return $"The student Id {studentId} is not exist";
 
             var role = await _unitOfWork.GetRepository<Role>().GetByIdAsync(student.RoleId);
 
+            // Check if the role is exist 
             if (role == null) return $"The role for student Id {studentId} does not exist";
 
+            // check if the role of inputted user is Student
             if (role.RoleName != "Student") return $"The Id {studentId} is not a student Id";
 
             if (!await _userService.IsCustomerChildren(currentUserId, studentId)) return "They are not parents and children";
+
+            // Check if student is currently studying a specific subjcet
+            if (!await _orderDetailService.IsValidStudentSubjectBeforeCreateOrder(dto)) return "This subject has been assigned to this student or assigned twice";
 
             return null;
         }
@@ -289,8 +273,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<OrderViewDto>?> searchOrderDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter)
         {
 
-            try
-            {
                 // Get all orders from database
                 IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities;
 
@@ -331,32 +313,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                         // Validation
                         if (string.IsNullOrWhiteSpace(firstInputValue)) firstInputValue = "0";
-                        if (string.IsNullOrWhiteSpace(secondInputValue)) throw new ArgumentException("Invalid maximum total amount. Please provide a valid non-negative number.");
+                        if (string.IsNullOrWhiteSpace(secondInputValue))
+                        {
+                            throw new BaseException.BadRequestException(
+                            "invalid_max_amount", // Error Code
+                            "Invalid maximum total amount. Please provide a valid non-negative number."  // Error Message
+                            );
+                        }
 
                         result = await GetTotalPriceInRangeAsync(Double.Parse(firstInputValue), Double.Parse(secondInputValue), orders, pageNumber, pageSize);
                         break;
                     default:
-                        throw new ArgumentException($"Invalid {nameof(filter)}: {filter}. Allowed filters are 'customer email', 'customer phone', 'order date', 'total price'.");
+                        throw new BaseException.BadRequestException("invalid_argument", $"Invalid {nameof(filter)}: {filter}. Allowed filters are 'customer email', 'customer phone', 'order date', 'total price'.");
                 }
 
                 // Retrieve the paginated items from the PaginatedList.
                 return result;
-            }
-            catch (FormatException ex)
-            {
-                // Specific handling for format issues
-                throw new Exception("Invalid format: " + ex.Message);
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                // Specific handling for pagination issues
-                throw new Exception("Invalid pagination parameters: " + ex.Message);
-            }
-            catch (Exception ex)
-            {
-                // General exception handling
-                throw new Exception("An error occurred: " + ex.Message);
-            }
         }
 
         // Get order dto list by customer id
@@ -405,7 +377,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Use generic repository's GetPagging method to apply pagination
-            return await _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
+            return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
         }
 
         // Get order dto list by customer phone
@@ -434,11 +406,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Use generic repository's GetPagging method to apply pagination
-            return await _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
+            return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
         }
 
         // Get order list by order date
-        public async Task<BasePaginatedList<OrderViewDto>> DateFilterAsync(string? startDate, string? endDate, IEnumerable<Order> orders, int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<OrderViewDto>> DateFilterAsync(string? startDate, string? endDate, IEnumerable<Order> orders, int pageNumber, int pageSize) 
         {
             // Define the date format
             string dateFormat = "dd/MM/yyyy";
@@ -457,7 +429,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 else
                 {
                     // Handle invalid date format
-                    throw new ArgumentException("Invalid start date format. Please use " + dateFormat);
+                    throw new BaseException.BadRequestException("invalid_date_format", "Invalid start date format. Please use " + dateFormat);
                 }
             }
 
@@ -471,7 +443,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 else
                 {
                     // Handle invalid date format
-                    throw new ArgumentException("Invalid end date format. Please use " + dateFormat);
+                    throw new BaseException.BadRequestException("invalid_date_format", "Invalid end date format. Please use " + dateFormat);
                 }
             }
 
@@ -494,7 +466,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Paginate the result
-            return await _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(orderDtos, pageNumber, pageSize);
+            return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(orderDtos, pageNumber, pageSize);
         }
 
 
@@ -505,12 +477,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (minTotalAmount < 0 || maxTotalAmount < 0)
             {
-                throw new ArgumentException("Invalid total amount: Total amounts cannot be negative.");
+                throw new BaseException.BadRequestException("invalid_argument", "Invalid total amount: Total amounts cannot be negative.");
             }
 
             if (minTotalAmount > maxTotalAmount)
             {
-                throw new ArgumentException("Invalid total amount: Minimum total amount cannot be greater than the maximum total amount.");
+                throw new BaseException.BadRequestException("invalid_argument", "Invalid total amount: Minimum total amount cannot be greater than the maximum total amount.");
             }
 
             // Filter orders by total amount range
@@ -527,7 +499,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Paginate the result
-            return await _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(orderDtos, pageNumber, pageSize);
+            return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(orderDtos, pageNumber, pageSize);
         }
 
         // Check if total amount is in given range

@@ -13,16 +13,27 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<BasePaginatedList<ProgressViewDto>> GetAllStudentProgressesDtoAsync(string parentId, int pageNumber, int pageSize);
 
         // Add new progress that student has just assigned to study a subject
-        Task<bool> AddSubjectProgress(Progress studentProgress);
+        Task<bool> AddSubjectProgressAsync(Progress studentProgress);
 
         // Check if student is currently studying a specific subject
-        bool IsCurrentlyStudyingThisSubject(string studentId, string subjectId);
+        Task<bool> IsCurrentlyStudyingThisSubjectAsync(string studentId, string subjectId);
 
         // Get the student grade
-        Task<double> GetStudentGrade(string quizId, string studentId);
+        Task<double> GetStudentGradeAsync(string quizId, string studentId);
 
         // Check if the student passed the quiz
-        Task<bool> IsPassedTheQuiz(string quizId, string studentId);
+        Task<bool> IsPassedTheQuizAsync(string quizId, string studentId);
 
+        // Identify which subject does the quiz belong to
+        Task<string> GetSubjectIdFromQuizIdAsync(string quizId);
+
+        // General validation
+        Task<string> IsGenerallyValidatedAsync(string quizId, string studentId);  
+
+        // Check if student has been assigned to a specific subject
+        Task<bool> HasStudentBeenAssignedToTheSubjectAsync(string studentId, string subjectId);
+
+        // Get a list of assigned subject of specific student
+        Task<BasePaginatedList<AssignedSubjectDto>?> GetAssignedSubjectListAsync(int pageNumber, int pageSize);
     }
 }

@@ -93,7 +93,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<User> query = _userRepository.GetEntitiesWithCondition(condition, includes);
 
             // Retrieve paginated users from the repository
-            var paginatedUsers = await _userRepository.GetPaggingDto(query, pageNumber, pageSize);
+            var paginatedUsers = await _userRepository.GetPagging(query, pageNumber, pageSize);
 
             // Return the paginated result with users
             return new BasePaginatedList<User>(paginatedUsers.Items, paginatedUsers.TotalItems, paginatedUsers.CurrentPage, paginatedUsers.PageSize);

@@ -1,9 +1,10 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
@@ -13,21 +14,27 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userService;
         private readonly IAppSubjectServices _subjectService;
+        private readonly IAppQuizServices _quizService;
+        private readonly ITokenService _tokenService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         // Constructor
-        public ProgressService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppSubjectServices subjectService)
+        public ProgressService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppSubjectServices subjectService, IAppQuizServices quizService, ITokenService tokenService, IHttpContextAccessor httpContextAccessor)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
             _subjectService = subjectService;
+            _quizService = quizService;
+            _tokenService = tokenService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         // Add new progress that student has just assigned to study a subject
-        public async Task<bool> AddSubjectProgress(Progress studentProgress)
+        public async Task<bool> AddSubjectProgressAsync(Progress studentProgress)
         {
             try
             {
-                if(await IsPassedTheQuiz(studentProgress.QuizId, studentProgress.StudentId))
+                if(await IsPassedTheQuizAsync(studentProgress.QuizId, studentProgress.StudentId))
                 {
                     await _unitOfWork.GetRepository<Progress>().InsertAsync(studentProgress);
                     await _unitOfWork.SaveAsync();
@@ -129,7 +136,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Show paginated progress for all students
-            BasePaginatedList<ProgressViewDto> paginatedDtos = await _unitOfWork.GetRepository<ProgressViewDto>().GetPaggingDto(studentProgressDtos, pageNumber, pageSize);
+            BasePaginatedList<ProgressViewDto> paginatedDtos = _unitOfWork.GetRepository<ProgressViewDto>().GetPaggingDto(studentProgressDtos, pageNumber, pageSize);
 
             return paginatedDtos;
         }
@@ -178,14 +185,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Check if student is currently studying a specific subjcet
-        public bool IsCurrentlyStudyingThisSubject(string studentId, string subjectId)
+        public async Task<bool> IsCurrentlyStudyingThisSubjectAsync(string studentId, string subjectId)
         {
             // Get all progresses in database
             // Filter student progresses directly with LINQ
             IQueryable<Progress> query = _unitOfWork.GetRepository<Progress>().Entities
                 .Where(p => p.StudentId.Equals(studentId));
 
-            var studentProgresses = query.ToList();
+            var studentProgresses = await query.ToListAsync();
 
             // Validation process
             foreach (var progress in studentProgresses)
@@ -201,7 +208,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Update student learning progress
-        public async Task<double> GetStudentGrade(string quizId, string studentId)
+        public async Task<double> GetStudentGradeAsync(string quizId, string studentId)
         {
             // Get a list of question base on quiz id
             IQueryable<Question> questionQuery = _unitOfWork.GetRepository<Question>().Entities
@@ -247,11 +254,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Check if the student passed the quiz
-        public async Task<bool> IsPassedTheQuiz(string quizId, string studentId)
+        public async Task<bool> IsPassedTheQuizAsync(string quizId, string studentId)
         {
-            double studentGrade = await GetStudentGrade(quizId, studentId);
+            double studentGrade = await GetStudentGradeAsync(quizId, studentId);
 
-            Quiz? quiz = await _unitOfWork.GetRepository<Quiz>().Entities.FirstOrDefaultAsync(q => q.Id.Equals(quizId));
+            Quiz? quiz = await _unitOfWork.GetRepository<Quiz>().FindByConditionAsync(q => q.Id.Equals(quizId));
 
             // Check if quiz not null and student grade >= quiz criteria 
             if (quiz != null && studentGrade >= quiz.Criteria)
@@ -260,6 +267,95 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             return false; // Not Passed
+        }
+
+        // Identify which subject does the quiz belong to
+        public async Task<string> GetSubjectIdFromQuizIdAsync(string quizId)
+        {
+            // Get the chapter if the quiz associated with the chapter
+            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().FindByConditionAsync(c => c.QuizId != null && c.QuizId.Equals(quizId));
+
+            if (chapter is not null)
+            {
+                // Get subject from chapter id
+                Subject? subject = await _unitOfWork.GetRepository<Subject>().FindByConditionAsync(s => s.Id.Equals(chapter.SubjectId));
+                return (subject is not null) ? subject.Id : string.Empty; // return subject id if subject is not null
+            }
+
+            // Get the topic if the quiz associated with the topic
+            Topic? topic = await _unitOfWork.GetRepository<Topic>().FindByConditionAsync(t => t.QuizId != null && t.QuizId.Equals(quizId));
+
+            if (topic is not null)
+            {
+                // Get the chapter from the topic id
+                chapter = await _unitOfWork.GetRepository<Chapter>().FindByConditionAsync(c => c.Id.Equals(topic.ChapterId));
+
+                // Get subject from chapter id
+                Subject? subject = (chapter is not null) ? await _unitOfWork.GetRepository<Subject>().FindByConditionAsync(s => s.Id.Equals(chapter.SubjectId)) 
+                                                            : null;
+
+                return (subject is not null) ? subject.Id : string.Empty; // return subject id if subject is not null 
+            }
+
+            return string.Empty;
+        }
+
+        // Validate before perform any tasks
+        public async Task<string> IsGenerallyValidatedAsync(string quizId, string studentId)
+        {
+            string quizName = await _quizService.GetQuizNameAsync(quizId);
+
+            if (string.IsNullOrWhiteSpace(quizName)) return "Invalid quiz Id";
+
+            string subjectId = await GetSubjectIdFromQuizIdAsync(quizId);
+
+            if (!await HasStudentBeenAssignedToTheSubjectAsync(studentId, subjectId)) return "Student has not been assigned to this subject yet";
+
+            return string.Empty;
+        }
+
+        // Check if student has been assigned to a specific subject
+        public async Task<bool> HasStudentBeenAssignedToTheSubjectAsync(string studentId, string subjectId)
+        {
+            OrderDetail? orderDetail = await _unitOfWork.GetRepository<OrderDetail>().FindByConditionAsync(od => od.StudentId.Equals(studentId) && od.SubjectId.Equals(subjectId));
+
+            return orderDetail is not null ? true : false;
+        }
+
+        // Get a list of assigned subject of specific student
+        public async Task<BasePaginatedList<AssignedSubjectDto>?> GetAssignedSubjectListAsync(int pageNumber, int pageSize)
+        {
+            // Get logged in User Id from authorization header 
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var studentId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
+
+            // Get list of assigned subject of specific student
+            IQueryable<OrderDetail> orderDetailQuery = _unitOfWork.GetRepository<OrderDetail>().Entities
+                .Where(od => od.StudentId.Equals(studentId));
+
+            var assignedSubjectList = await orderDetailQuery.ToListAsync();
+            IList<AssignedSubjectDto> assignedSubjectDtos = new List<AssignedSubjectDto>();
+
+            foreach (OrderDetail assignedSubject in assignedSubjectList)
+            {
+                // Convert Id to Name
+                string? subjectName = await _subjectService.GetSubjectNameAsync(assignedSubject.SubjectId);
+
+                AssignedSubjectDto assignedSubjectDto = new()
+                {
+                    SubjectName = subjectName
+                };
+
+                assignedSubjectDtos.Add(assignedSubjectDto);
+            }
+
+            // Show all assigned subjects in 1 page
+            if (pageSize < 0 ||  pageNumber < 0)
+            {
+                return new BasePaginatedList<AssignedSubjectDto>((IReadOnlyCollection<AssignedSubjectDto>)assignedSubjectDtos, assignedSubjectDtos.Count, 1, assignedSubjectDtos.Count);
+            }
+
+            return _unitOfWork.GetRepository<AssignedSubjectDto>().GetPaggingDto(assignedSubjectDtos, pageNumber, pageSize);
         }
     }
 }

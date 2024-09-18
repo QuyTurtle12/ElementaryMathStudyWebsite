@@ -22,7 +22,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<bool> IsValidOrderAsync(string orderId);
 
         // General Validation
-        Task<string?> IsGenerallyValidated(string subjectId, string studentId);
+        Task<string?> IsGenerallyValidatedAsync(string subjectId, string studentId, OrderCreateDto dto);
 
         Task<BasePaginatedList<OrderAdminViewDto>?> GetOrderAdminDtosAsync(int pageNumber, int pageSize);
 
