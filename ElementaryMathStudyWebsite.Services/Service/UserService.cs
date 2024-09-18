@@ -88,7 +88,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<User> query = _unitOfWork.GetRepository<User>().GetEntitiesWithCondition(condition, includes);
 
             // Retrieve paginated users from the repository
-            var paginatedUsers = await _unitOfWork.GetRepository<User>().GetPaggingDto(query, pageNumber, pageSize);
+            var paginatedUsers = await _unitOfWork.GetRepository<User>().GetPagging(query, pageNumber, pageSize);
 
             // Return the paginated result with users
             return new BasePaginatedList<User>(paginatedUsers.Items, paginatedUsers.TotalItems, paginatedUsers.CurrentPage, paginatedUsers.PageSize);
@@ -339,7 +339,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<User> query = _unitOfWork.GetRepository<User>().GetEntitiesWithCondition(condition, includes);
 
             // Retrieve paginated users from the repository
-            var paginatedUsers = await _unitOfWork.GetRepository<User>().GetPaggingDto(query, pageNumber, pageSize);
+            var paginatedUsers = await _unitOfWork.GetRepository<User>().GetPagging(query, pageNumber, pageSize);
 
             // Return the paginated result with users
             return new BasePaginatedList<User>(paginatedUsers.Items, paginatedUsers.TotalItems, paginatedUsers.CurrentPage, paginatedUsers.PageSize);
