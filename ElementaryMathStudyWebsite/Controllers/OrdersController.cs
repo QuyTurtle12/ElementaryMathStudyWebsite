@@ -2,8 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ElementaryMathStudyWebsite.Core.Base;
 using System.ComponentModel.DataAnnotations;
-
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
@@ -32,44 +30,60 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Manager & Admin",
             Description = "View order list for Manager and Admin Role. Insert -1 to get all items"
             )]
-        public async Task<ActionResult<BasePaginatedList<Order>>> GetOrders(int pageNumber = -1, int pageSize = -1)
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<OrderAdminViewDto>>>> GetOrders(int pageNumber = -1, int pageSize = -1)
         {
             try
             {
-                BasePaginatedList<Order> orders = await _orderService.GetOrdersAsync(pageNumber, pageSize);
-                return Ok(orders);
+                BasePaginatedList<OrderAdminViewDto>? orders = await _orderService.GetOrderAdminDtosAsync(pageNumber, pageSize);
+                var response = BaseResponse<BasePaginatedList<OrderAdminViewDto>>.OkResponse(orders);
+                return response;
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Invalid input: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
-        // GET: api/orders/manager/{id}
-        // Get orders for Manager & Admin
-        [Authorize(Policy = "Admin-Manager")]
-        [HttpGet]
-        [Route("manager/{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: Manager & Admin",
-            Description = "View order for Manager and Admin Role."
-            )]
-        public async Task<ActionResult<Order>> GetOrder([Required] string id)
-        {
-            try
-            {
-                Order order = await _orderService.GetOrderByOrderIdAsync(id);
-                if (order == null)
-                {
-                    return BadRequest("Invalid Order Id");
-                }
-                return Ok(order);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error: " + ex.Message);
-            }
-        }
+        //// GET: api/orders/manager/{id}
+        //// Get orders for Manager & Admin
+        //[Authorize(Policy = "Admin-Manager")]
+        //[HttpGet]
+        //[Route("manager/{id}")]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Manager & Admin",
+        //    Description = "View order for Manager and Admin Role."
+        //    )]
+        //public async Task<ActionResult<Order>> GetOrder([Required] string id)
+        //{
+        //    try
+        //    {
+        //        Order? order = await _orderService.GetOrderByOrderIdAsync(id);
+        //        if (order == null)
+        //        {
+        //            return BadRequest("Invalid Order Id");
+        //        }
+        //        return Ok(order);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, "Error: " + ex.Message);
+        //    }
+        //}
 
         // GET: api/orders/order
         // Get orders for general user
@@ -104,16 +118,32 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Parent",
             Description = "View order list for Parent User. Insert -1 to get all items"
             )]
-        public async Task<ActionResult<BasePaginatedList<OrderViewDto>>> GetOrdersForParent(int pageNumber = -1, int pageSize = -1)
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<OrderViewDto>>>> GetOrdersForParent(int pageNumber = -1, int pageSize = -1)
         {
             try
             {
-                BasePaginatedList<OrderViewDto> orders = await _orderService.GetOrderDtosAsync(pageNumber, pageSize);
-                return Ok(orders);
+                BasePaginatedList<OrderViewDto>? orders = await _orderService.GetOrderDtosAsync(pageNumber, pageSize);
+                var response = BaseResponse<BasePaginatedList<OrderViewDto>>.OkResponse(orders);
+                return response;
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -151,23 +181,39 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/orders/detail
         // Get order detail list of order for parent
-        [Authorize(Policy = "Parent")]
+        [Authorize(Policy = "Admin-Manager-Parent")]
         [HttpGet]
         [Route("detail")]
         [SwaggerOperation(
-            Summary = "Authorization: Parent",
+            Summary = "Authorization: Admin & Manager & Parent",
             Description = "View order detail list for Parent. Insert -1 to get all items"
             )]
-        public async Task<ActionResult<BasePaginatedList<OrderDetailViewDto>>> GetOrderDetailsDto([Required] string orderId, int pageNumber = 1, int pageSize = 10)
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<OrderDetailViewDto>>>> GetOrderDetailsDto([Required] string orderId, int pageNumber = 1, int pageSize = 10)
         {
             try
             {
-                BasePaginatedList<OrderDetailViewDto> detail = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(pageNumber, pageSize, orderId);
-                return Ok(detail);
+                BasePaginatedList<OrderDetailViewDto>? detail = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(pageNumber, pageSize, orderId);
+                var response = BaseResponse<BasePaginatedList<OrderDetailViewDto>>.OkResponse(detail);
+                return response;
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Invalid input: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -179,21 +225,46 @@ namespace ElementaryMathStudyWebsite.Controllers
         [Route("search")]
         [SwaggerOperation(
             Summary = "Authorization: Admin-Manager",
-            Description = "Search order list by a filter. Filter list: customer id, customer email, customer phone, order date, total price. Example format: " +
-            "customer id: 00000000-0000-0000-0000-000000000000, " +
+            Description = "Search order list by a filter. Filter list: customer email, customer phone, order date, total price. Example format: " +
             "customer phone: 0XXXXXXXXXX using 10 digits or 11 digits," +
             "order date: dd/MM/yyyy, " +
-            "total amount: 1000000"
+            "total price: 1000000"
             )]
-        public async Task<ActionResult<BasePaginatedList<OrderDetailViewDto>>> SearchOrders(int pageNumber = 1, int pageSize = 5, string? firstInputValue = null, string? secondInputValue = null, string filter = "customer phone")
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<OrderViewDto>>>> SearchOrders(int pageNumber = 1, int pageSize = 5, string? firstInputValue = null, string? secondInputValue = null, string filter = "customer phone")
         {
             try
             {
-                return Ok(await _orderService.searchOrderDtosAsync(pageNumber, pageSize, firstInputValue, secondInputValue, filter));
+                BasePaginatedList<OrderViewDto>? viewDtos = await _orderService.searchOrderDtosAsync(pageNumber, pageSize, firstInputValue, secondInputValue, filter);
+                var response = BaseResponse<BasePaginatedList<OrderViewDto>>.OkResponse(viewDtos);
+                return response;
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle general CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle general BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (ArgumentException argEx)
+            {
+                // Handle general ArgumentException
+                return BadRequest(new
+                {
+                    errorCode = "invalid_argument",
+                    errorMessage = argEx.Message
+                });
             }
         }
     }

@@ -9,7 +9,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<User> CreateUserAsync(CreateUserDto dto);
         Task<User> UpdateUserAsync(string userId, UpdateUserDto dto);
         // Get user name by id
-        Task<string?> GetUserNameAsync(string userId);
+        Task<string> GetUserNameAsync(string userId);
 
         // Check if the relationship between two users is parents and child
         Task<bool> IsCustomerChildren(string parentId, string studentId);
