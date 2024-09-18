@@ -50,7 +50,7 @@ namespace ElementaryMathStudyWebsite
             services.AddScoped<IAppUserServices, UserService>();
             services.AddScoped<IAppRoleServices, RoleService>();
             services.AddScoped<IAppOptionServices, OptionService>();
-            services.AddScoped<IAppUserAnswerServices, UserAnswer>();
+            services.AddScoped<IAppUserAnswerServices, UserAnswerService>();
             services.AddScoped<IAppOrderServices, OrderService>();
             services.AddScoped<IAppOrderDetailServices, OrderDetailService>();
             services.AddScoped<IAppProgressServices, ProgressService>();
