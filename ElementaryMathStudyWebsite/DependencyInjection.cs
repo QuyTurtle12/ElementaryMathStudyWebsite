@@ -67,6 +67,7 @@ namespace ElementaryMathStudyWebsite
 
             // Add authentication services
             services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ITokenService, TokenService>();
         }
         public static void AddMapping(this IServiceCollection services)

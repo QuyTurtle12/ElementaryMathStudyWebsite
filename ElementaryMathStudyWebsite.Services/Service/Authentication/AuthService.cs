@@ -1,21 +1,28 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 
 namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 {
     public class AuthService : IAppAuthService
     {
         private readonly IAuthenticationService _authenticationService;
+        private readonly IEmailService _emailService;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AuthService(IAuthenticationService authenticationService)
+        public AuthService(
+            IAuthenticationService authenticationService,
+            IEmailService emailService,
+            IUnitOfWork unitOfWork)
         {
             _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
+            _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<string> LoginAsync(LoginDto loginDto)
         {
-            // Validate user credentials and retrieve the user
             User? user = await _authenticationService.ValidateUserCredentialsAsync(loginDto.Username, loginDto.Password);
 
             if (user == null)
@@ -23,14 +30,69 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
                 throw new UnauthorizedAccessException("Invalid username or password.");
             }
 
-            // Check if the user's status is active directly
             if (!user.Status)
             {
                 throw new UnauthorizedAccessException("User account is not active.");
             }
 
-            // Generate and return the JWT token
             return _authenticationService.GenerateJwtToken(user);
+        }
+
+        public async Task RegisterAsync(RegisterDto registerDto)
+        {
+            // Check if the user already exists
+            var existingUser = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Username == registerDto.Username);
+            if (existingUser != null)
+            {
+                throw new InvalidOperationException("User already exists.");
+            }
+
+            // Verify if the provided role name exists
+            var role = await _unitOfWork.GetRepository<Role>().FindByConditionAsync(r => r.RoleName == "Parent");
+            if (role == null)
+            {
+                throw new InvalidOperationException("Invalid role name.");
+            }
+
+            // Hash the password
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
+
+            // Create new user entity
+            var newUser = new User
+            {
+                FullName = registerDto.FullName,
+                PhoneNumber = registerDto.PhoneNumber,
+                Gender = registerDto.Gender,
+                Email = registerDto.Email,
+                Username = registerDto.Username,
+                Password = hashedPassword,
+                Status = false, // Set status to false until email is verified
+                VerificationToken = Guid.NewGuid().ToString(), // Generate verification token
+                Role = role // Set the role
+            };
+
+            // Save user to the database
+            await _unitOfWork.GetRepository<User>().InsertAsync(newUser);
+            await _unitOfWork.SaveAsync();
+
+            // Send verification email
+            await _emailService.SendVerificationEmailAsync(registerDto.Email, newUser.VerificationToken);
+        }
+
+        public async Task VerifyEmailAsync(string token)
+        {
+            var user = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.VerificationToken == token);
+
+            if (user == null)
+            {
+                throw new InvalidOperationException("Invalid verification token.");
+            }
+
+            // Activate the user account
+            user.Status = true;
+            user.VerificationToken = null; // Clear the verification token
+            await _unitOfWork.GetRepository<User>().UpdateAsync(user);
+            await _unitOfWork.SaveAsync();
         }
     }
 }
