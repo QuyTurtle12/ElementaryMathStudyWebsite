@@ -8,5 +8,7 @@
 
         public DateTimeOffset? OrderDate { get; set; }
 
+        public ICollection<OrderDetailViewDto>? details {  get; set; } 
+
     }
 }

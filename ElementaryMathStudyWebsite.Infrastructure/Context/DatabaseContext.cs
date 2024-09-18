@@ -22,6 +22,7 @@ namespace ElementaryMathStudyWebsite.Infrastructure.Context
         public DbSet<Topic> Topic { get; set; }
         public DbSet<UserAnswer> UserAnswer { get; set; }
         public DbSet<Payment> Payment { get; set; }
+        public DbSet<Result> Result { get; set; }
 
         // Mapping Configuration
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -29,14 +30,18 @@ namespace ElementaryMathStudyWebsite.Infrastructure.Context
             // Composite key
             modelBuilder.Entity<Progress>()
                 .HasKey(p => new { p.StudentId, p.QuizId });
-
+            
             // Composite key
             modelBuilder.Entity<OrderDetail>()
                 .HasKey(od => new { od.OrderId, od.SubjectId, od.StudentId });
 
             // Composite key
+            modelBuilder.Entity<Result>()
+                .HasKey(r => new { r.StudentId, r.QuizId, r.AttemptNumber });
+
+            // Composite key
             modelBuilder.Entity<UserAnswer>()
-                .HasKey(a => new { a.QuestionId, a.UserId });
+                .HasKey(a => new { a.QuestionId, a.UserId, a.AttemptNumber });
 
             // Configure the relationships for all entities that inherit from BaseEntity
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
@@ -192,6 +197,21 @@ namespace ElementaryMathStudyWebsite.Infrastructure.Context
                 .WithOne(o => o.Payment)
                 .HasForeignKey<Payment>(p => p.OrderId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            // Result - User Relationship
+            modelBuilder.Entity<Result>()
+                .HasOne(r => r.Student)
+                .WithMany(u => u.Results)
+                .HasForeignKey(r => r.StudentId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Result - Quiz Relationship
+            modelBuilder.Entity<Result>()
+                .HasOne(r => r.Quiz)
+                .WithMany(q => q.Results)
+                .HasForeignKey(r => r.QuizId)
+                .OnDelete(DeleteBehavior.NoAction);
+
         }
     }
 }
