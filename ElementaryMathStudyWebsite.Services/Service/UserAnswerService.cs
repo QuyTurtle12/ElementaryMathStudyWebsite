@@ -11,6 +11,9 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.Extensions.Options;
 using ElementaryMathStudyWebsite.Infrastructure.UOW;
 using ElementaryMathStudyWebsite.Core.Entity;
+using Microsoft.AspNetCore.Http;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using ElementaryMathStudyWebsite.Services.Service.Authentication;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -18,12 +21,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
         IGenericRepository<UserAnswer> userAnswerRepository,
         IGenericRepository<Question> questionRepository,
         IGenericRepository<User> userRepository,
-        IGenericRepository<Option> optionRepository) : IAppUserAnswerServices
+        IGenericRepository<Option> optionRepository,
+        IHttpContextAccessor httpContextAccessor,
+        ITokenService tokenService) : IAppUserAnswerServices
     {
         private readonly IGenericRepository<UserAnswer> _userAnswerRepository = userAnswerRepository ?? throw new ArgumentNullException(nameof(userAnswerRepository));
         private readonly IGenericRepository<Question> _questionRepository = questionRepository ?? throw new ArgumentNullException(nameof(questionRepository));
         private readonly IGenericRepository<User> _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         private readonly IGenericRepository<Option> _optionRepository = optionRepository ?? throw new ArgumentNullException(nameof(optionRepository));
+        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+        private readonly ITokenService _tokenService = tokenService;
 
         public async Task<BasePaginatedList<object>> GetAllUserAnswersAsync(int pageNumber, int pageSize)
         {
@@ -36,7 +43,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     QuestionId = userAnswer.QuestionId,
                     UserId = userAnswer.UserId,
-                    OptionId = userAnswer.OptionId
+                    OptionId = userAnswer.OptionId,
+                    AttemptNumber = userAnswer.AttemptNumber,
                 }).ToList();
 
                 return new BasePaginatedList<object>(userAnswerDtos, userAnswerDtos.Count, 1, userAnswerDtos.Count);
@@ -47,7 +55,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 QuestionId = userAnswer.QuestionId,
                 UserId = userAnswer.UserId,
-                OptionId = userAnswer.OptionId
+                OptionId = userAnswer.OptionId,
+                AttemptNumber = userAnswer.AttemptNumber,
             }).ToList();
 
 
@@ -61,7 +70,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 QuestionId = userAnswer.QuestionId,
                 UserId = userAnswer.UserId,
-                OptionId = userAnswer.OptionId
+                OptionId = userAnswer.OptionId,
+                AttemptNumber = userAnswer.AttemptNumber,
             };
         }
 
@@ -90,6 +100,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 QuestionId = userAnswerDTO.QuestionId,
                 UserId = userAnswerDTO.UserId,
                 OptionId = userAnswerDTO.OptionId,
+                AttemptNumber = userAnswerDTO.AttemptNumber,
             };
 
             await _userAnswerRepository.InsertAsync(userAnswer);
@@ -126,6 +137,40 @@ namespace ElementaryMathStudyWebsite.Services.Service
             await _userAnswerRepository.UpdateAsync(userAnswer);
             await _userAnswerRepository.SaveAsync();
             return userAnswerDTO;
+        }
+
+        public async Task<List<UserAnswerWithDetailsDTO>> GetUserAnswersByQuizIdAsync(string quizId)
+        {
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            // Fetch user answers for the given quizId and current user
+            var userAnswers = await _userAnswerRepository.Entities
+                .Where(ua => ua.Question.QuizId == quizId.ToString().ToUpper() && ua.UserId == currentUserId.ToString().ToUpper())
+                .ToListAsync();
+
+            // Return a list of user answers with contextual information
+            var result = new List<UserAnswerWithDetailsDTO>();
+            foreach (var userAnswer in userAnswers)
+            {
+                var question = await _questionRepository.GetByIdAsync(userAnswer.QuestionId);
+                var user = await _userRepository.GetByIdAsync(userAnswer.UserId);
+                var option = await _optionRepository.GetByIdAsync(userAnswer.OptionId);
+
+                var userAnswerWithDetails = new UserAnswerWithDetailsDTO
+                {
+                    QuestionId = userAnswer.QuestionId,
+                    QuestionContent = question?.QuestionContext ?? "Unknown Question",
+                    UserId = userAnswer.UserId,
+                    UserFullName = user?.FullName ?? "Unknown User",
+                    OptionId = userAnswer.OptionId,
+                    OptionAnswer = option?.Answer ?? "Unknown Answer",
+                    AttemptNumber = userAnswer.AttemptNumber
+                };
+                result.Add(userAnswerWithDetails);
+            }
+
+            return result;
         }
 
         //public async Task DeleteUserAnswerAsync(string id)

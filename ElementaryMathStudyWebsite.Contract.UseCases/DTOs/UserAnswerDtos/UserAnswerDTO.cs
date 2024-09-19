@@ -13,5 +13,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos
         public required string UserId { get; set; }
 
         public required string OptionId { get; set; }
+        public required int AttemptNumber { get; set; }
     }
 }

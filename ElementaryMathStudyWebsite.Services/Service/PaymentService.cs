@@ -23,118 +23,132 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<PaymentViewDto> Checkout(OptionCreateDto optionCreateDto)
+        public async Task<PaymentViewDto> Checkout(OrderCreateDto optionCreateDto)
         {
+            var orderId = optionCreateDto.OrderId;
 
-            throw new NotImplementedException();
-        }
+            // Fetch the order associated with the payment
+            var order = await _unitOfWork.GetRepository<Order>()
+                                         .Entities
+                                         .Include(o => o.User)
+                                         .FirstOrDefaultAsync(o => o.Id == orderId);
 
-        var order = await _unitOfWork.GetRepository<Order>().GetByIdAsync(orderId);
-
-        Payment payment = new()
-        {
-            Id = Guid.NewGuid().ToString().ToUpper(),
-            CustomerId = order.CustomerId,
-            OrderId = orderId,
-            PaymentDate = order.CreatedTime,
-            PaymentMethod = "VnPay",
-            Amount = order.TotalPrice,
-            Status = "Success"
-        };
-
-        await _unitOfWork.GetRepository<Payment>().InsertAsync(payment);
-        await _unitOfWork.SaveAsync();
-
-        PaymentViewDto paymentViewDto = new()
-        {
-            PaymentId = payment.Id,
-            CustomerName = order.User.FullName,
-            Amount = payment.Amount,
-            PaymentDate = payment.PaymentDate,
-            PaymentMethod = payment.PaymentMethod,
-            Status = payment.Status
-        };
-
-            foreach (var subjectStudent in orderCreateDto.SubjectStudents)
+            if (order == null)
             {
-                var subjectName = (await _unitOfWork.GetRepository<Subject>().GetByIdAsync(subjectStudent.SubjectId)).SubjectName;
-        var studentName = (await _unitOfWork.GetRepository<User>().GetByIdAsync(subjectStudent.StudentId)).FullName;
-        PaymentSubjectStudent paymentSubjectStudent = new()
-        {
-            SubjectName = subjectName,
-            StudentName = studentName
-        };
-        paymentViewDto.SubjectStudents.Add(paymentSubjectStudent);
+                throw new KeyNotFoundException("Order not found.");
+            }
+
+            Payment payment = new()
+            {
+                Id = Guid.NewGuid().ToString().ToUpper(),
+                CustomerId = order.CustomerId,
+                OrderId = orderId,
+                PaymentDate = DateTime.UtcNow,
+                PaymentMethod = "VnPay",
+                Amount = order.TotalPrice,
+                Status = "Success"
+            };
+
+            await _unitOfWork.GetRepository<Payment>().InsertAsync(payment);
+            await _unitOfWork.SaveAsync();
+
+            PaymentViewDto paymentViewDto = new()
+            {
+                PaymentId = payment.Id,
+                CustomerName = order.User.FullName,
+                Amount = payment.Amount,
+                PaymentDate = payment.PaymentDate,
+                PaymentMethod = payment.PaymentMethod,
+                Status = payment.Status
+            };
+
+            foreach (var subjectStudent in optionCreateDto.SubjectStudents)
+            {
+                var subject = await _unitOfWork.GetRepository<Subject>()
+                                               .GetByIdAsync(subjectStudent.SubjectId);
+                var student = await _unitOfWork.GetRepository<User>()
+                                               .GetByIdAsync(subjectStudent.StudentId);
+
+                if (subject != null && student != null)
+                {
+                    PaymentSubjectStudent paymentSubjectStudent = new()
+                    {
+                        SubjectName = subject.SubjectName,
+                        StudentName = student.FullName
+                    };
+                    paymentViewDto.SubjectStudents.Add(paymentSubjectStudent);
+                }
             }
 
             return paymentViewDto;
         }
 
-public async Task<Payment> GetPaymentById(string paymentId)
-{
-    var payment = await _unitOfWork.GetRepository<Payment>().GetByIdAsync(paymentId) ?? throw new KeyNotFoundException("Invalid payment ID");
-    return payment;
-}
-
-public async Task<BasePaginatedList<PaymentViewDto>> GetPaymentHistory(int pageNumber, int pageSize)
-{
-    var appUserService = _userService as IAppUserServices;
-    string customerId = appUserService.GetActionUserId();
-
-    IQueryable<Payment> query = _unitOfWork.GetRepository<Payment>().Entities.Where(q => q.CustomerId == customerId);
-    List<PaymentViewDto> paymentViewDtos = new();
-
-    //If params negative = show all
-    if (pageNumber <= 0 || pageSize <= 0)
-    {
-        var allPayments = await query.ToListAsync();
-
-        foreach (var payment in allPayments)
+        public async Task<Payment> GetPaymentById(string paymentId)
         {
-            paymentViewDtos.Add(PaymentViewMapper(payment));
+            var payment = await _unitOfWork.GetRepository<Payment>()
+                                           .GetByIdAsync(paymentId)
+                                           ?? throw new KeyNotFoundException("Invalid payment ID");
+            return payment;
         }
-        return new BasePaginatedList<PaymentViewDto>(paymentViewDtos, paymentViewDtos.Count, 1, paymentViewDtos.Count);
-    }
 
-    // Show with pagination
-    BasePaginatedList<Payment>? paginatedPayments = await _unitOfWork.GetRepository<Payment>().GetPagging(query, pageNumber, pageSize);
+        public async Task<BasePaginatedList<PaymentViewDto>> GetPaymentHistory(int pageNumber, int pageSize)
+        {
+            string customerId = _userService.GetActionUserId();
 
-    foreach (var payment in paginatedPayments.Items)
-    {
-        paymentViewDtos.Add(PaymentViewMapper(payment));
-    }
+            IQueryable<Payment> query = _unitOfWork.GetRepository<Payment>()
+                                                   .Entities
+                                                   .Where(q => q.CustomerId == customerId);
+            List<PaymentViewDto> paymentViewDtos = new();
 
-    return new BasePaginatedList<PaymentViewDto>(paymentViewDtos, paginatedPayments.TotalItems, pageNumber, pageSize);
-}
+            //If params negative = show all
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                var allPayments = await query.ToListAsync();
 
-public async Task<BasePaginatedList<Payment>> GetPayments(int pageNumber, int pageSize)
-{
-    IQueryable<Payment> query = _unitOfWork.GetRepository<Payment>().Entities;
+                foreach (var payment in allPayments)
+                {
+                    paymentViewDtos.Add(PaymentViewMapper(payment));
+                }
+                return new BasePaginatedList<PaymentViewDto>(paymentViewDtos, paymentViewDtos.Count, 1, paymentViewDtos.Count);
+            }
 
-    // Negative params = show all 
-    if (pageNumber <= 0 || pageSize <= 0)
-    {
-        List<Payment> allPayments = query.ToList();
-        return new BasePaginatedList<Payment>(allPayments, allPayments.Count, 1, allPayments.Count);
-    }
+            // Show with pagination
+            var paginatedPayments = await _unitOfWork.GetRepository<Payment>().GetPagging(query, pageNumber, pageSize);
 
-    // Show with pagination
-    return await _unitOfWork.GetRepository<Payment>().GetPagging(query, pageNumber, pageSize);
+            foreach (var payment in paginatedPayments.Items)
+            {
+                paymentViewDtos.Add(PaymentViewMapper(payment));
+            }
 
-}
+            return new BasePaginatedList<PaymentViewDto>(paymentViewDtos, paginatedPayments.TotalItems, pageNumber, pageSize);
+        }
 
-private PaymentViewDto PaymentViewMapper(Payment payment)
-{
-    return new PaymentViewDto
-    {
-        PaymentId = payment.Id,
-        CustomerName = payment.User.FullName,
-        PaymentDate = payment.PaymentDate,
-        Amount = payment.Amount,
-        PaymentMethod = payment.PaymentMethod,
-        Status = payment.Status
-    };
+        public async Task<BasePaginatedList<Payment>> GetPayments(int pageNumber, int pageSize)
+        {
+            IQueryable<Payment> query = _unitOfWork.GetRepository<Payment>().Entities;
 
-}
+            // Negative params = show all 
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                List<Payment> allPayments = await query.ToListAsync();
+                return new BasePaginatedList<Payment>(allPayments, allPayments.Count, 1, allPayments.Count);
+            }
+
+            // Show with pagination
+            return await _unitOfWork.GetRepository<Payment>().GetPagging(query, pageNumber, pageSize);
+        }
+
+        private PaymentViewDto PaymentViewMapper(Payment payment)
+        {
+            return new PaymentViewDto
+            {
+                PaymentId = payment.Id,
+                CustomerName = payment.User?.FullName ?? "Unknown",
+                PaymentDate = payment.PaymentDate,
+                Amount = payment.Amount,
+                PaymentMethod = payment.PaymentMethod,
+                Status = payment.Status
+            };
+        }
     }
 }

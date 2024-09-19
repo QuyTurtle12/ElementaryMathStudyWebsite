@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Utils;
+using ElementaryMathStudyWebsite.Core.Entity;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -14,14 +15,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IAppUserServices _userService;
         private readonly IAppOrderDetailServices _orderDetailService;
         private readonly IAppSubjectServices _subjectService;
+        private readonly IAppProgressServices _progressService;
+        private readonly IAppQuizServices _quizService;
 
         // Constructor
-        public OrderService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppOrderDetailServices orderDetailService, IAppSubjectServices subjectService)
+        public OrderService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppOrderDetailServices orderDetailService, IAppSubjectServices subjectService, IAppProgressServices progressService, IAppQuizServices quizService)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
             _orderDetailService = orderDetailService;
             _subjectService = subjectService;
+            _progressService = progressService;
+            _quizService = quizService;
         }
 
         // Add new order to database

@@ -15,7 +15,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         private readonly IAppUserAnswerServices _userAnswerService = userAnswerService ?? throw new ArgumentNullException(nameof(userAnswerService));
 
         // GET: api/UserAnswers
-        [Authorize(Policy = "Admin-Content")]
+        //[Authorize(Policy = "Admin-Content")]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
             Description = "Get all the user answers by paging, pageSize = -1 to get all"
@@ -28,7 +28,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/UserAnswers/{id}
-        [Authorize(Policy = "Admin-Content")]
+        //[Authorize(Policy = "Admin-Content")]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
             Description = "Get the user answer by id"
@@ -76,7 +76,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // PUT: api/UserAnswers/{id}
-        [Authorize(Policy = "Admin-Content")]
+        //[Authorize(Policy = "Admin-Content")]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
             Description = "Update user answer"
@@ -97,6 +97,26 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/QuizAnswers/quiz/{quizId}
+        //[Authorize]
+        [SwaggerOperation(
+            Summary = "Authorization: User",
+            Description = "Get all answers from the current user for the given quiz"
+        )]
+        [HttpGet("quiz/{quizId}")]
+        public async Task<IActionResult> GetUserAnswersByQuizId(string quizId)
+        {
+            try
+            {
+                var userAnswers = await _userAnswerService.GetUserAnswersByQuizIdAsync(quizId);
+                return Ok(userAnswers);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 

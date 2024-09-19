@@ -58,7 +58,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     {
                         string? studentName = await _userService.GetUserNameAsync(detail.StudentId);
                         string? subjectName = await _subjectService.GetSubjectNameAsync(detail.SubjectId);
-                        OrderDetailViewDto dto = new() { SubjectName = subjectName, StudentName = studentName };
+                        OrderDetailViewDto dto = new OrderDetailViewDto(subjectName, studentName);
                         detailDtos.Add(dto);
                     }
                 }
