@@ -271,6 +271,67 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        //[HttpGet("subject/{subjectId}")]
+        //public async Task<ActionResult<BasePaginatedList<ChapterDto>>> GetChaptersBySubjectIdAsync(string subjectId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        //{
+        //    try
+        //    {
+        //        if (string.IsNullOrWhiteSpace(subjectId))
+        //        {
+        //            return BadRequest("Chapter ID cannot be empty.");
+        //        }
+
+        //        var result = await _chapterService.GetChaptersBySubjectIdAsync(subjectId, pageNumber, pageSize);
+
+        //        if (result == null || result.Items.Count == 0)
+        //        {
+        //            return NotFound("No topics found for the specified chapter.");
+        //        }
+
+        //        return Ok(result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // Log the exception (use your logging framework)
+        //        // For example: _logger.LogError(ex, "Error occurred while retrieving topics by chapter ID");
+
+        //        return StatusCode(500, "An unexpected error occurred. Please try again later.");
+        //    }
+        //}
+        [HttpGet]
+        [Route("subject")]
+        [SwaggerOperation(
+            Summary = "Authorization: N/A",
+            Description = "View all chapters of 1 subject"
+            )]
+        public async Task<IActionResult> GetChapterBySubjectId([Required] string subjectId, int pageNumber = -1, int pageSize = -1)
+        {
+            try
+            {
+                var chapterAppService = _chapterService as IAppChapterServices;
+                return Ok(await chapterAppService.GetChaptersBySubjectIdAsync(pageNumber, pageSize, subjectId));
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
 
         [HttpGet("search")]
         [SwaggerOperation(

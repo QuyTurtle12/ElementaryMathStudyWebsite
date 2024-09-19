@@ -233,6 +233,90 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return dto;
         }
+
+        //public async Task<BasePaginatedList<ChapterDto>> GetChaptersBySubjectIdAsync(string subjectId, int pageNumber, int pageSize)
+        //{
+        //    if (string.IsNullOrWhiteSpace(subjectId))
+        //    {
+        //        throw new ArgumentException("Chapter ID cannot be empty.");
+        //    }
+
+        //    IQueryable<Chapter> query = _chapterRepository.Entities.Where(t => t.SubjectId == subjectId);
+
+        //    int totalItems = await query.CountAsync();
+
+        //    if (pageNumber <= 0 || pageSize <= 0)
+        //    {
+        //        var allChapters = await query.ToListAsync();
+        //        var chapterDtos = await MapToTopicViewDtos(allChapters);
+        //        return new BasePaginatedList<ChapterDto>(chapterDtos, totalItems, 1, totalItems);
+        //    }
+
+        //    var paginatedTopics = await _chapterRepository.GetPagging(query, pageNumber, pageSize);
+        //    var chapterDtosPaginated = await MapToTopicViewDtos(paginatedTopics.Items);
+
+        //    return new BasePaginatedList<TopicViewDto>(chapterDtosPaginated, totalItems, paginatedTopics.CurrentPage, paginatedTopics.PageSize);
+        //}
+
+        public async Task<BasePaginatedList<ChapterAdminViewDto>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId)
+        {
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(subjectId) ?? throw new KeyNotFoundException("Invalid subject ID");
+
+            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(q => q.SubjectId == subjectId && q.DeletedBy == null);
+            List<ChapterAdminViewDto> chapterView = [];
+
+            //If params negative = show all
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                var allChapters = await query.ToListAsync();
+
+                foreach (var chapter in allChapters)
+                {
+                    ChapterAdminViewDto dto = new()
+                    {
+                        Id = chapter.Id,
+                        Number = chapter.Number,
+                        ChapterName = chapter.ChapterName,
+                        Status = chapter.Status,
+                        SubjectId = chapter.SubjectId,
+                        QuizId = chapter.QuizId,
+                        CreatedBy = chapter.CreatedBy,
+                        CreatedTime = chapter.CreatedTime,
+                        LastUpdatedBy = chapter.LastUpdatedBy,
+                        LastUpdatedTime = chapter.LastUpdatedTime,
+                        DeletedBy = chapter.DeletedBy,
+                        DeletedTime = chapter.DeletedTime,
+                    };
+                    chapterView.Add(dto);
+                }
+                return new BasePaginatedList<ChapterAdminViewDto>(chapterView, chapterView.Count, 1, chapterView.Count);
+            }
+
+            // Show with pagination
+            BasePaginatedList<Chapter> paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
+
+            foreach (var chapter in paginatedChapters.Items)
+            {
+                ChapterAdminViewDto dto = new()
+                {
+                    Id = chapter.Id,
+                    Number = chapter.Number,
+                    ChapterName = chapter.ChapterName,
+                    Status = chapter.Status,
+                    SubjectId = chapter.SubjectId,
+                    QuizId = chapter.QuizId,
+                    CreatedBy = chapter.CreatedBy,
+                    CreatedTime = chapter.CreatedTime,
+                    LastUpdatedBy = chapter.LastUpdatedBy,
+                    LastUpdatedTime = chapter.LastUpdatedTime,
+                    DeletedBy = chapter.DeletedBy,
+                    DeletedTime = chapter.DeletedTime,
+                };
+                chapterView.Add(dto);
+            }
+
+            return new BasePaginatedList<ChapterAdminViewDto>(chapterView, paginatedChapters.TotalItems, pageNumber, pageSize);
+        }
         public async Task<BasePaginatedList<ChapterViewDto?>> GetChapterDtosAsync(int pageNumber, int pageSize)
         {
             // Get all chapters from database

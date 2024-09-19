@@ -24,5 +24,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<Chapter?> GetChapterByChapterIdAsync(string id);
 
         Task<ChapterAdminViewDto> ChangeChapterStatusAsync(string id);
+
+        Task<BasePaginatedList<ChapterAdminViewDto>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId);
     }
 }
