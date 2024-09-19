@@ -50,10 +50,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 foreach (var prog in studentProgresses)
                 {
                     double subjectPercentage = await CalculateSubjectPercentageAsync(studentId, prog.SubjectId);
-                    string studentName = await _userService.GetUserNameAsync(prog.StudentId);
+                    string studentName = await _userService.GetUserNameAsync(studentId);
                     string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
-                    ProgressViewDto dto = new ProgressViewDto { StudentName = studentName, SubjectName = subjectName, SubjectPercentage = subjectPercentage };
+                    ProgressViewDto dto = new ProgressViewDto {
+                        StudentId = studentId,
+                        StudentName = studentName,
+                        SubjectId = prog.SubjectId,
+                        SubjectName = subjectName,
+                        SubjectPercentage = subjectPercentage
+                    };
                     studentProgressDtos.Add(dto);
                 }
                 return new BasePaginatedList<ProgressViewDto>((IReadOnlyCollection<ProgressViewDto>)studentProgressDtos, studentProgressDtos.Count, 1, studentProgressDtos.Count);
@@ -103,7 +109,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     string studentName = await _userService.GetUserNameAsync(prog.StudentId);
                     string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
-                    ProgressViewDto dto = new() { StudentName = studentName, SubjectName = subjectName, SubjectPercentage = subjectPercentage };
+                    ProgressViewDto dto = new ProgressViewDto
+                    {
+                        StudentId = prog.StudentId,
+                        StudentName = studentName,
+                        SubjectId = prog.SubjectId,
+                        SubjectName = subjectName,
+                        SubjectPercentage = subjectPercentage
+                    };
                     studentProgressDtos.Add(dto);
                 }
             }

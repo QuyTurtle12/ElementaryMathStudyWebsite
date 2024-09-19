@@ -132,7 +132,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 ResultViewDto dto = new()
                 {
+                    StudentId = result.StudentId,
                     StudentName = result.Student.FullName,
+                    QuizId = result.QuizId,
                     QuizName = result.Quiz.QuizName,
                     Score = result.Score,
                     Attempt = result.AttemptNumber,
@@ -237,29 +239,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get the children latest result of assigned subject
         public async Task<ResultParentViewDto> GetChildrenLatestResultAsync(string studentId)
         {
-            var currentUser = await _userServices.GetCurrentUserAsync();
-
-            if (!await _userServices.IsCustomerChildren(currentUser.Id, studentId))
-            {
-                throw new BaseException.BadRequestException("bad_request", "They are not parents and child relationship");
-            }
-
-            // Get the list of result of specific student
+            // Get the list of result of specific student with related entities (Quiz and Student)
             IQueryable<Result> resultQuery = _unitOfWork.GetRepository<Result>()
                 .GetEntitiesWithCondition(
-                r => r.StudentId.Equals(studentId),
-                r => r.Quiz,
-                r => r.Student
+                    r => r.StudentId.Equals(studentId),
+                    r => r.Quiz,  // Include related Quiz entity
+                    r => r.Student // Include related Student entity
                 );
 
             // Group the results by QuizId and select the result with the highest AttemptNumber for each quiz
             var latestResultsForEachQuiz = await resultQuery
-                .GroupBy(r => r.QuizId) // Group by QuizId
-                .Select(g => g.OrderByDescending(r => r.AttemptNumber).FirstOrDefault()) // Select the result with the highest AttemptNumber
-                .ToListAsync();  // Convert the query into a list
+                .GroupBy(r => r.QuizId)  // Group by QuizId
+                .Select(g => g.OrderByDescending(r => r.AttemptNumber).FirstOrDefault())  // Get the latest attempt per quiz
+                .ToListAsync();  // Execute the query and get a list of results
 
             // Create a list to hold the results with their subject names
-            var resultWithSubject = new List<(string SubjectName, Result Result)>();
+            var resultWithSubject = new List<(string SubjectId, string SubjectName, Result Result)>();
 
             foreach (var result in latestResultsForEachQuiz)
             {
@@ -269,28 +264,31 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     var subjectId = await _progressServices.GetSubjectIdFromQuizIdAsync(result.QuizId);
                     var subjectName = await _subjectServices.GetSubjectNameAsync(subjectId);
 
-                    // Add the result along with its subject name to the list
-                    resultWithSubject.Add((subjectName, result));
+                    // Add the result along with its subject ID and name to the list
+                    resultWithSubject.Add((subjectId, subjectName, result));
                 }
             }
 
             // Group the results by subject name in-memory
             var groupedResultsBySubject = resultWithSubject
-                .GroupBy(rs => rs.SubjectName)
+                .GroupBy(rs => new { rs.SubjectId, rs.SubjectName })  // Group by both SubjectId and SubjectName
                 .Select(g => new SubjectResult
                 {
-                    SubjectName = g.Key,  // Group key is the subject name
+                    SubjectId = g.Key.SubjectId,  // Set SubjectId
+                    SubjectName = g.Key.SubjectName,  // Set SubjectName
                     resultInfos = g.Select(rs => new ResultInfo
                     {
-                        QuizName = rs.Result.Quiz.QuizName,  // Set quiz name
-                        Score = rs.Result.Score,             // Set score
-                        DateTaken = rs.Result.DateTaken      // Set date taken
+                        QuizId = rs.Result.QuizId,  // Set QuizId
+                        QuizName = rs.Result.Quiz.QuizName,  // Set QuizName
+                        Score = rs.Result.Score,  // Set Score
+                        DateTaken = rs.Result.DateTaken  // Set DateTaken
                     }).ToList()  // Create a list of ResultInfo for each subject
                 }).ToList();
 
             // Create the parent view DTO
             var resultParentViewDto = new ResultParentViewDto
             {
+                StudentId = studentId,
                 StudentName = latestResultsForEachQuiz.FirstOrDefault()?.Student?.FullName ?? string.Empty,
                 subjectResults = groupedResultsBySubject
             };

@@ -4,6 +4,8 @@
     {
         public string OrderId { get; set; } = string.Empty;
 
+        public string CustomerId { get; set; } = string.Empty;
+
         public string CustomerName { get; set; } = string.Empty;
 
         public double TotalPrice { get; set; } = 0;

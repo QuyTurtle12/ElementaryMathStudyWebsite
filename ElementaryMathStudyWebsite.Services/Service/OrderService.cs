@@ -135,6 +135,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             OrderViewDto dto = new()
             {
                 OrderId = order.Id,
+                CustomerId = order.CustomerId,
                 CustomerName = customerName,
                 TotalPrice = order.TotalPrice,
                 OrderDate = order.CreatedTime,
@@ -169,6 +170,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 OrderViewDto dto = new()
                 {
                     OrderId = order.Id,
+                    CustomerId = order.CustomerId,
                     CustomerName = customerName,
                     TotalPrice = order.TotalPrice,
                     OrderDate = order.CreatedTime,
@@ -219,12 +221,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     OrderAdminViewDto dto = new OrderAdminViewDto
                     {
                         OrderId = order?.Id ?? string.Empty,
+                        CustomerId = order?.CustomerId ?? string.Empty,
                         CustomerName = customerName,
                         OrderDate = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
                         TotalPrice = order?.TotalPrice ?? 0,
                         details = detailList?.Items,
+                        CreatedBy = order?.CreatedBy ?? string.Empty,
                         CreatorName = creator?.FullName ?? string.Empty,
                         CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                        LastUpdatedBy = order?.LastUpdatedBy ?? string.Empty,
                         LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
                         LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
                         CreatedTime = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
@@ -379,6 +384,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                             OrderViewDto dto = new()
                             {
                                 OrderId = order.Id,
+                                CustomerId = order.CustomerId,
                                 CustomerName = customerName,
                                 TotalPrice = order.TotalPrice,
                                 OrderDate = order.CreatedTime,
@@ -419,6 +425,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                             OrderViewDto dto = new()
                             {
                                 OrderId = order.Id,
+                                CustomerId = order.CustomerId,
                                 CustomerName = customerName,
                                 TotalPrice = order.TotalPrice,
                                 OrderDate = order.CreatedTime,
@@ -494,6 +501,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 OrderViewDto dto = new()
                 {
                     OrderId = order.Id,
+                    CustomerId = order.CustomerId,
                     CustomerName = customerName,
                     TotalPrice = order.TotalPrice,
                     OrderDate = order.CreatedTime,
@@ -537,6 +545,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 OrderViewDto dto = new()
                 {
                     OrderId = order.Id,
+                    CustomerId = order.CustomerId,
                     CustomerName = customerName,
                     TotalPrice = order.TotalPrice,
                     OrderDate = order.CreatedTime,
