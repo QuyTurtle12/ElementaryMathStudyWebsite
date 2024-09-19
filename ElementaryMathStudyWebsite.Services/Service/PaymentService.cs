@@ -10,17 +10,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
 {
     public class PaymentService : IPaymentService, IAppPaymentServices
     {
-        private readonly IGenericRepository<Payment> _paymentRepository;
-        private readonly IGenericRepository<Order> _orderRepository;
         private readonly IAppOrderServices _orderService;
         private readonly IAppSubjectServices _subjectService;
         private readonly IAppUserServices _userService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public PaymentService(IGenericRepository<Payment> paymentRepository, IGenericRepository<Order> orderRepository, IAppOrderServices orderService, IAppSubjectServices subjectService, IAppUserServices userService,IUnitOfWork unitOfWork)
+        public PaymentService(IAppOrderServices orderService, IAppSubjectServices subjectService, IAppUserServices userService, IUnitOfWork unitOfWork)
         {
-            _paymentRepository = paymentRepository;
-            _orderRepository = orderRepository;
             _orderService = orderService;
             _subjectService = subjectService;
             _userService = userService;
@@ -33,14 +29,50 @@ namespace ElementaryMathStudyWebsite.Services.Service
             throw new NotImplementedException();
         }
 
-        public Task<PaymentViewDto> Checkout(OrderCreateDto optionCreateDto)
-        {
-            throw new NotImplementedException();
+            var order = await _unitOfWork.GetRepository<Order>().GetByIdAsync(orderId);
+
+            Payment payment = new()
+            {
+                Id = Guid.NewGuid().ToString().ToUpper(),
+                CustomerId = order.CustomerId,
+                OrderId = orderId,
+                PaymentDate = order.CreatedTime,
+                PaymentMethod = "VnPay",
+                Amount = order.TotalPrice,
+                Status = "Success"
+            };
+
+            await _unitOfWork.GetRepository<Payment>().InsertAsync(payment);
+            await _unitOfWork.SaveAsync();
+
+            PaymentViewDto paymentViewDto = new()
+            {
+                PaymentId = payment.Id,
+                CustomerName = order.User.FullName,
+                Amount = payment.Amount,
+                PaymentDate = payment.PaymentDate,
+                PaymentMethod = payment.PaymentMethod,
+                Status = payment.Status
+            };
+
+            foreach (var subjectStudent in orderCreateDto.SubjectStudents)
+            {
+                var subjectName = (await _unitOfWork.GetRepository<Subject>().GetByIdAsync(subjectStudent.SubjectId)).SubjectName;
+                var studentName = (await _unitOfWork.GetRepository<User>().GetByIdAsync(subjectStudent.StudentId)).FullName;
+                PaymentSubjectStudent paymentSubjectStudent = new()
+                {
+                    SubjectName = subjectName,
+                    StudentName = studentName
+                };
+                paymentViewDto.SubjectStudents.Add(paymentSubjectStudent);
+            }
+
+            return paymentViewDto;
         }
 
         public async Task<Payment> GetPaymentById(string paymentId)
         {
-            var payment = await _paymentRepository.GetByIdAsync(paymentId) ?? throw new KeyNotFoundException("Invalid payment ID");
+            var payment = await _unitOfWork.GetRepository<Payment>().GetByIdAsync(paymentId) ?? throw new KeyNotFoundException("Invalid payment ID");
             return payment;
         }
 
@@ -49,7 +81,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var appUserService = _userService as IAppUserServices;
             string customerId = appUserService.GetActionUserId();
 
-            IQueryable<Payment> query = _paymentRepository.Entities.Where(q => q.CustomerId == customerId);
+            IQueryable<Payment> query = _unitOfWork.GetRepository<Payment>().Entities.Where(q => q.CustomerId == customerId);
             List<PaymentViewDto> paymentViewDtos = new();
 
             //If params negative = show all
@@ -65,7 +97,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Show with pagination
-            BasePaginatedList<Payment>? paginatedPayments = await _paymentRepository.GetPagging(query, pageNumber, pageSize);
+            BasePaginatedList<Payment>? paginatedPayments = await _unitOfWork.GetRepository<Payment>().GetPagging(query, pageNumber, pageSize);
 
             foreach (var payment in paginatedPayments.Items)
             {
@@ -77,7 +109,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<BasePaginatedList<Payment>> GetPayments(int pageNumber, int pageSize)
         {
-            IQueryable<Payment> query = _paymentRepository.Entities;
+            IQueryable<Payment> query = _unitOfWork.GetRepository<Payment>().Entities;
 
             // Negative params = show all 
             if (pageNumber <= 0 || pageSize <= 0)
@@ -87,7 +119,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Show with pagination
-            return await _paymentRepository.GetPagging(query, pageNumber, pageSize);
+            return await _unitOfWork.GetRepository<Payment>().GetPagging(query, pageNumber, pageSize);
 
         }
 

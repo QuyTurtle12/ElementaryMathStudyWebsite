@@ -164,7 +164,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         public string GetCurrentUserID()
-        {
+    {
             // Retrieve the JWT token from the Authorization header
             var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
             var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);

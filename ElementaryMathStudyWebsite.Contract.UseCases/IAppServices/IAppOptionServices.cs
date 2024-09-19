@@ -7,7 +7,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
     public interface IAppOptionServices
     {
         // Get options of a question for general user
-        Task<BasePaginatedList<OptionViewDto?>> GetOptionDtosByQuestion(int pageNumber, int pageSize, string questionId);
+        Task<BasePaginatedList<OptionViewDto>> GetOptionDtosByQuestion(int pageNumber, int pageSize, string questionId);
 
         // Add option to database
         Task<OptionViewDto> AddOption(OptionCreateDto optionCreateDto);
@@ -16,12 +16,12 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<OptionViewDto> UpdateOption(string optionId, OptionUpdateDto optionUpdateDto);
 
         //Check if the question is valid
-        Task<bool> IsValidOption(string optionId);
+        bool IsValidOption(string optionId);
         
         //Delete an option
         Task<bool> DeleteOption(string optionId);
 
-        Task<BasePaginatedList<Option?>> GetOptions(int pageNumber, int pageSize);
+        Task<BasePaginatedList<Option>> GetOptions(int pageNumber, int pageSize);
 
         // Get option with all properties
         Task<Option?> GetOptionById(string optionId);

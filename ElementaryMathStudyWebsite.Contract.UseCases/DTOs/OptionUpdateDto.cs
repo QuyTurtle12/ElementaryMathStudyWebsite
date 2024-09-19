@@ -2,7 +2,7 @@
 {
     public class OptionUpdateDto
     {
-        public string? Answer { get; set; }
-        public bool IsCorrect { get; set; }
+        public string Answer { get; set; } = string.Empty;
+        public bool IsCorrect { get; set; } = false;
     }
 }
