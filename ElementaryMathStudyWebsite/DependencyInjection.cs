@@ -63,12 +63,14 @@ namespace ElementaryMathStudyWebsite
             services.AddScoped<IAppTopicServices, TopicService>();
             services.AddScoped<IPaymentService, PaymentService>();
             services.AddSingleton<IVnPayService, VnPayService>();
+            services.AddScoped<IAppResultService, ResultService>();
 
             // Add application services
             services.AddScoped<IAppAuthService, AuthService>();
 
             // Add authentication services
             services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ITokenService, TokenService>();
         }
         public static void AddMapping(this IServiceCollection services)

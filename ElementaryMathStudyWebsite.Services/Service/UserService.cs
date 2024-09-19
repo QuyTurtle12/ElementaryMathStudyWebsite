@@ -14,16 +14,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
 {
     public class UserService : IAppUserServices
     {
-        private readonly IGenericRepository<User> _userRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ITokenService _tokenService;
 
         // Constructor
-        public UserService(IGenericRepository<User> userRepository, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ITokenService tokenService)
+        public UserService(IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ITokenService tokenService)
         {
-            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
@@ -42,14 +40,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
 
             // Get all users with their roles
-            IQueryable<User> query = _userRepository.GetEntitiesWithCondition(condition, includes);
+            IQueryable<User> query = _unitOfWork.GetRepository<User>().GetEntitiesWithCondition(condition, includes);
 
             // Execute the query asynchronously and return the list
             return await query.ToListAsync();
         }
-
-
-
 
         public async Task<User> CreateUserAsync(CreateUserDto dto)
         {
@@ -68,8 +63,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             AuditFields(user, isCreating: true);
 
             // Add user to the repository
-            await _userRepository.InsertAsync(user);
-            await _userRepository.SaveAsync();
+            await _unitOfWork.GetRepository<User>().InsertAsync(user);
+            await _unitOfWork.SaveAsync();
 
             return user;
         }
@@ -90,18 +85,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
-            IQueryable<User> query = _userRepository.GetEntitiesWithCondition(condition, includes);
+            IQueryable<User> query = _unitOfWork.GetRepository<User>().GetEntitiesWithCondition(condition, includes);
 
             // Retrieve paginated users from the repository
-            var paginatedUsers = await _userRepository.GetPagging(query, pageNumber, pageSize);
+            var paginatedUsers = await _unitOfWork.GetRepository<User>().GetPagging(query, pageNumber, pageSize);
 
             // Return the paginated result with users
             return new BasePaginatedList<User>(paginatedUsers.Items, paginatedUsers.TotalItems, paginatedUsers.CurrentPage, paginatedUsers.PageSize);
         }
-
-
-
-
 
         public async Task<User> UpdateUserAsync(string userId, UpdateUserDto dto)
         {
@@ -113,11 +104,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define the condition to find the user by ID
             Expression<Func<User, bool>> condition = u => u.Id == userId;
 
-            var user = await _userRepository.FindByConditionWithIncludesAsync(
+            var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
                 condition,
                 u => u.Role // Include the Role if needed
                 // Add other includes here if needed
             );
+
 
             if (user == null)
             {
@@ -158,14 +150,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             AuditFields(user);
 
             // Save changes
-            _userRepository.Update(user);
-            await _userRepository.SaveAsync();
+            _unitOfWork.GetRepository<User>().Update(user);
+            await _unitOfWork.SaveAsync();
 
             return user;
         }
-
-
-        // Implement other domain methods here
 
         public async Task<User?> GetUserByIdAsync(string userId)
         {
@@ -173,7 +162,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             Expression<Func<User, bool>> condition = u => u.Id == userId;
 
             // Optionally include related entities, if needed
-            var user = await _userRepository.FindByConditionWithIncludesAsync(
+            var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
                 condition,
                 u => u.Role // Include the Role if needed
                 // Add other includes here if needed
@@ -185,7 +174,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<bool> DisableUserAsync(string userId)
         {
             // Fetch the user by ID
-            var user = await _userRepository.GetByIdAsync(userId);
+            var user = await _unitOfWork.GetRepository<User>().GetByIdAsync(userId);
             if (user == null)
             {
                 throw new KeyNotFoundException("User not found");
@@ -195,21 +184,21 @@ namespace ElementaryMathStudyWebsite.Services.Service
             user.Status = false;
 
             // Set audit fields
-            AuditFields(user, false, true);
+            AuditFields(user);
 
             // Update the user in the repository
-            _userRepository.Update(user);
-            await _userRepository.SaveAsync();
+            _unitOfWork.GetRepository<User>().Update(user);
+            await _unitOfWork.SaveAsync();
 
             return true; // Return true if the user was successfully disabled
         }
 
         // Get user name from database
-        public async Task<string> GetUserNameAsync(string userId)
+        public async Task<string?> GetUserNameAsync(string userId)
         {
             try
             {
-                User? user = await _userRepository.GetByIdAsync(userId);
+                User? user = await _unitOfWork.GetRepository<User>().GetByIdAsync(userId);
 
                 if (user == null)
                 {
@@ -228,21 +217,23 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Check if the relationship between two users is parents and child
         public async Task<bool> IsCustomerChildren(string parentId, string studentId)
         {
-            User? student = await _userRepository.GetByIdAsync(studentId);
+            // Fetch the student by ID
+            User? student = await _unitOfWork.GetRepository<User>().GetByIdAsync(studentId);
+
+            // If student is null, return false
             if (student == null)
             {
                 return false;
             }
 
-            string creatorId = student?.CreatedBy ?? string.Empty;
-
-            if (creatorId.Equals(parentId))
+            // Check if creatorId (CreatedBy) is null
+            string? creatorId = student.CreatedBy;
+            if (creatorId != null && creatorId.Equals(parentId, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
-            } 
-                
+            }
+
             return false;
-            
         }
 
         public async Task<BasePaginatedList<User>> SearchUsersAsync(string? name, bool? status, string? phone, string? email, int pageNumber, int pageSize)
@@ -257,7 +248,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
-            IQueryable<User> query = _userRepository.GetEntitiesWithCondition(condition, includes);
+            IQueryable<User> query = _unitOfWork.GetRepository<User>().GetEntitiesWithCondition(condition, includes);
 
             // Apply filters if the corresponding parameters are provided
             if (!string.IsNullOrEmpty(name))
@@ -300,7 +291,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             );
         }
 
-
         public void AuditFields(BaseEntity entity, bool isCreating = false, bool isDisable = false)
         {
             // Retrieve the JWT token from the Authorization header
@@ -330,6 +320,31 @@ namespace ElementaryMathStudyWebsite.Services.Service
             
         }
 
+        public async Task<BasePaginatedList<User>> GetChildrenOfParentAsync(string parentId, int pageNumber, int pageSize)
+        {
+            // Validate pageNumber and pageSize
+            if (pageNumber <= 0) pageNumber = 1;
+            if (pageSize <= 0) pageSize = 10; // Set a default page size if invalid
+
+            // Define the condition to find children of the given parent
+            Expression<Func<User, bool>> condition = user => user.CreatedBy == parentId;
+
+            // Define includes to eagerly load the Role navigation property, if needed
+            Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
+            {
+        user => user.Role // Include the Role navigation property if necessary
+            };
+
+            // Use GetEntitiesWithCondition with includes to get the queryable set of users
+            IQueryable<User> query = _unitOfWork.GetRepository<User>().GetEntitiesWithCondition(condition, includes);
+
+            // Retrieve paginated users from the repository
+            var paginatedUsers = await _unitOfWork.GetRepository<User>().GetPagging(query, pageNumber, pageSize);
+
+            // Return the paginated result with users
+            return new BasePaginatedList<User>(paginatedUsers.Items, paginatedUsers.TotalItems, paginatedUsers.CurrentPage, paginatedUsers.PageSize);
+        }
+
         public string GetActionUserId()
         {
             // Retrieve the JWT token from the Authorization header
@@ -338,5 +353,32 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return currentUserId.ToString().ToUpper();
         }
+
+        public async Task<User> GetCurrentUserAsync()
+        {
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+
+            if (string.IsNullOrEmpty(token))
+            {
+                throw new UnauthorizedAccessException("Authorization token is missing.");
+            }
+
+            var userId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            if (userId == Guid.Empty)
+            {
+                throw new UnauthorizedAccessException("Invalid token.");
+            }
+
+            var user = await GetUserByIdAsync(userId.ToString());
+
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found.");
+            }
+
+            return user;
+        }
+
     }
 }

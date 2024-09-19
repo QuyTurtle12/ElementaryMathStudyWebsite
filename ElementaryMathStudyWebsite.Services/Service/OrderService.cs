@@ -4,8 +4,6 @@ using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
-using Microsoft.AspNetCore.Http;
 using ElementaryMathStudyWebsite.Core.Utils;
 
 namespace ElementaryMathStudyWebsite.Services.Service
@@ -16,18 +14,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IAppUserServices _userService;
         private readonly IAppOrderDetailServices _orderDetailService;
         private readonly IAppSubjectServices _subjectService;
-        private readonly ITokenService _tokenService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
         // Constructor
-        public OrderService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppOrderDetailServices orderDetailService, IAppSubjectServices subjectService, ITokenService tokenService, IHttpContextAccessor httpContextAccessor)
+        public OrderService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppOrderDetailServices orderDetailService, IAppSubjectServices subjectService)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
             _orderDetailService = orderDetailService;
             _subjectService = subjectService;
-            _tokenService = tokenService;
-            _httpContextAccessor = httpContextAccessor;
         }
 
         // Add new order to database
@@ -46,13 +40,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 // Calculate total price
                 double totalPrice = await CalculateTotalPrice(dto);
 
-                // Get logged in User Id from authorization header 
-                var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
+                // Get logged in User
+                User currentUser = await _userService.GetCurrentUserAsync();
 
                 Order order = new()
                 {
-                    CustomerId = currentUserId,
+                    CustomerId = currentUser.Id,
                     TotalPrice = totalPrice,
                 };
 
@@ -150,13 +143,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get order list with selected properties
         public async Task<BasePaginatedList<OrderViewDto>?> GetOrderDtosAsync(int pageNumber, int pageSize)
         {
-            // Get logged in User Id from authorization header 
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
+
+            // Get logged in User
+            User currentUser = await _userService.GetCurrentUserAsync();
 
             // Get all logged user's orders from the database
             IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities
-                .Where(o => o.CustomerId.Equals(currentUserId) && string.IsNullOrWhiteSpace(o.DeletedBy));
+                .Where(o => o.CustomerId.Equals(currentUser.Id) && string.IsNullOrWhiteSpace(o.DeletedBy));
 
             IList<OrderViewDto> orderDtos = new List<OrderViewDto>();
             var allOrders = await query.ToListAsync(); // Asynchronously fetch all orders
@@ -232,9 +225,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<string?> IsGenerallyValidatedAsync(string subjectId, string studentId, OrderCreateDto dto)
         {
 
-            // Get logged in User Id from authorization header 
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
+            // Get logged in User
+            User currentUser = await _userService.GetCurrentUserAsync();
 
             // Check if subject is existed
             if (!await _subjectService.IsValidSubjectAsync(subjectId)) return $"The subject Id {subjectId} is not exist";
@@ -253,7 +245,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // check if the role of inputted user is Student
             if (role.RoleName != "Student") return $"The Id {studentId} is not a student Id";
 
-            if (!await _userService.IsCustomerChildren(currentUserId, studentId)) return "They are not parents and children";
+            if (!await _userService.IsCustomerChildren(currentUser.Id, studentId)) return "They are not parents and children";
 
             // Check if student is currently studying a specific subjcet
             if (!await _orderDetailService.IsValidStudentSubjectBeforeCreateOrder(dto)) return "This subject has been assigned to this student or assigned twice";
