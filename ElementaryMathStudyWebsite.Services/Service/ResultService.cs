@@ -6,7 +6,6 @@ using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -15,13 +14,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userServices;
         private readonly IAppProgressServices _progressServices;
+        private readonly IAppSubjectServices _subjectServices;
 
         // Constructor
-        public ResultService(IUnitOfWork unitOfWork, IAppUserServices userServices, IAppProgressServices progressServices)
+        public ResultService(IUnitOfWork unitOfWork, IAppUserServices userServices, IAppProgressServices progressServices, IAppSubjectServices subjectServices)
         {
             _unitOfWork = unitOfWork;
             _userServices = userServices;
             _progressServices = progressServices;
+            _subjectServices = subjectServices;
         }
 
         // Calculate the latest student score
@@ -134,6 +135,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     StudentName = result.Student.FullName,
                     QuizName = result.Quiz.QuizName,
                     Score = result.Score,
+                    Attempt = result.AttemptNumber,
                     DateTaken = result.DateTaken
                 };
 
@@ -143,7 +145,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Show all student's results in 1 page
             if (pageNumber < 0 || pageSize < 0)
             {
-                return new BasePaginatedList<ResultViewDto>((IReadOnlyCollection<ResultViewDto>) resultViewDtos, resultViewDtos.Count, 1, resultViewDtos.Count);
+                return new BasePaginatedList<ResultViewDto>((IReadOnlyCollection<ResultViewDto>)resultViewDtos, resultViewDtos.Count, 1, resultViewDtos.Count);
             }
 
             // Show all student's results with pagination
@@ -188,7 +190,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 string subjectId = await _progressServices.GetSubjectIdFromQuizIdAsync(studentResult.QuizId);
 
                 // Update student progress
-                Progress newStudentProgress = new() {
+                Progress newStudentProgress = new()
+                {
                     StudentId = studentResult.StudentId,
                     QuizId = studentResult.QuizId,
                     SubjectId = subjectId,
@@ -229,6 +232,70 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             return 0;
+        }
+
+        // Get the children latest result of assigned subject
+        public async Task<ResultParentViewDto> GetChildrenLatestResultAsync(string studentId)
+        {
+            var currentUser = await _userServices.GetCurrentUserAsync();
+
+            if (!await _userServices.IsCustomerChildren(currentUser.Id, studentId))
+            {
+                throw new BaseException.BadRequestException("bad_request", "They are not parents and child relationship");
+            }
+
+            // Get the list of result of specific student
+            IQueryable<Result> resultQuery = _unitOfWork.GetRepository<Result>()
+                .GetEntitiesWithCondition(
+                r => r.StudentId.Equals(studentId),
+                r => r.Quiz,
+                r => r.Student
+                );
+
+            // Group the results by QuizId and select the result with the highest AttemptNumber for each quiz
+            var latestResultsForEachQuiz = await resultQuery
+                .GroupBy(r => r.QuizId) // Group by QuizId
+                .Select(g => g.OrderByDescending(r => r.AttemptNumber).FirstOrDefault()) // Select the result with the highest AttemptNumber
+                .ToListAsync();  // Convert the query into a list
+
+            // Create a list to hold the results with their subject names
+            var resultWithSubject = new List<(string SubjectName, Result Result)>();
+
+            foreach (var result in latestResultsForEachQuiz)
+            {
+                if (result != null)
+                {
+                    // Fetch subject ID from the quiz ID, then fetch the subject name
+                    var subjectId = await _progressServices.GetSubjectIdFromQuizIdAsync(result.QuizId);
+                    var subjectName = await _subjectServices.GetSubjectNameAsync(subjectId);
+
+                    // Add the result along with its subject name to the list
+                    resultWithSubject.Add((subjectName, result));
+                }
+            }
+
+            // Group the results by subject name in-memory
+            var groupedResultsBySubject = resultWithSubject
+                .GroupBy(rs => rs.SubjectName)
+                .Select(g => new SubjectResult
+                {
+                    SubjectName = g.Key,  // Group key is the subject name
+                    resultInfos = g.Select(rs => new ResultInfo
+                    {
+                        QuizName = rs.Result.Quiz.QuizName,  // Set quiz name
+                        Score = rs.Result.Score,             // Set score
+                        DateTaken = rs.Result.DateTaken      // Set date taken
+                    }).ToList()  // Create a list of ResultInfo for each subject
+                }).ToList();
+
+            // Create the parent view DTO
+            var resultParentViewDto = new ResultParentViewDto
+            {
+                StudentName = latestResultsForEachQuiz.FirstOrDefault()?.Student?.FullName ?? string.Empty,
+                subjectResults = groupedResultsBySubject
+            };
+
+            return resultParentViewDto;
         }
     }
 }

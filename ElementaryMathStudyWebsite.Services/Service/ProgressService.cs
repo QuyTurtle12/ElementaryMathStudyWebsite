@@ -42,10 +42,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             IList<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
 
-            // Cast domain service to application service
-            var userAppService = _userService as IAppUserServices;
-
-
             // If pageNumber or pageSize are 0 or negative, show all progresses without pagination
             if (pageNumber <= 0 || pageSize <= 0)
             {
@@ -54,7 +50,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 foreach (var prog in studentProgresses)
                 {
                     double subjectPercentage = await CalculateSubjectPercentageAsync(studentId, prog.SubjectId);
-                    string studentName = await userAppService.GetUserNameAsync(prog.StudentId);
+                    string studentName = await _userService.GetUserNameAsync(prog.StudentId);
                     string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
                     ProgressViewDto dto = new ProgressViewDto { StudentName = studentName, SubjectName = subjectName, SubjectPercentage = subjectPercentage };
@@ -69,7 +65,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (var prog in paginatedProgress.Items)
             {
                 double subjectPercentage = await CalculateSubjectPercentageAsync(studentId, prog.SubjectId);
-                string studentName = await userAppService.GetUserNameAsync(prog.StudentId);
+                string studentName = await _userService.GetUserNameAsync(prog.StudentId);
                 string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
                 ProgressViewDto dto = new ProgressViewDto { StudentName = studentName, SubjectName = subjectName, SubjectPercentage = subjectPercentage };
                 studentProgressDtos.Add(dto);
