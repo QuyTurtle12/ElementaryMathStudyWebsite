@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Net.Http;
+﻿using System.Globalization;
 using System.Net.Sockets;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
 namespace ElementaryMathStudyWebsite.Core.Utils
@@ -163,4 +158,5 @@ namespace ElementaryMathStudyWebsite.Core.Utils
             return vnpCompare.Compare(x, y, CompareOptions.Ordinal);
         }
     }
+
 }
