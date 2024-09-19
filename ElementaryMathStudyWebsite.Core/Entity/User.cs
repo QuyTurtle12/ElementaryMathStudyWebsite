@@ -14,6 +14,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public string? Email { get; set; }
 
         public string RoleId { get; set; } = string.Empty;
+
         public string? VerificationToken { get; set; }
 
         public required string Username { get; set; }

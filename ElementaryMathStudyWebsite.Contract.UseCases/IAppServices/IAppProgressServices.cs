@@ -18,12 +18,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         // Check if student is currently studying a specific subject
         Task<bool> IsCurrentlyStudyingThisSubjectAsync(string studentId, string subjectId);
 
-        // Get the student grade
-        Task<double> GetStudentGradeAsync(string quizId, string studentId);
-
-        // Check if the student passed the quiz
-        Task<bool> IsPassedTheQuizAsync(string quizId, string studentId);
-
         // Identify which subject does the quiz belong to
         Task<string> GetSubjectIdFromQuizIdAsync(string quizId);
 
@@ -35,5 +29,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         // Get a list of assigned subject of specific student
         Task<BasePaginatedList<AssignedSubjectDto>?> GetAssignedSubjectListAsync(int pageNumber, int pageSize);
+
     }
 }
