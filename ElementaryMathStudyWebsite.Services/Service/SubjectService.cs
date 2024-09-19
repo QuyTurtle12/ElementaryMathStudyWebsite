@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Entity;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -412,6 +413,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 entity.LastUpdatedTime = CoreHelper.SystemTimeNow;
             }
 
+        }
+
+        public async Task<bool> CheckCompleteQuizExistAsync(string subjectId, string quizId)
+        {
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            // Query the Progress table for a record with the specified SubjectId and QuizId
+            var progressRecord = await _unitOfWork.GetRepository<Progress>().Entities
+                .Where(p => p.StudentId == currentUserId.ToString().ToUpper() && p.SubjectId == subjectId && p.QuizId == quizId)
+                .FirstOrDefaultAsync();
+
+            // If the record is found, return true; otherwise, return false
+            return progressRecord != null;
         }
     }
 }

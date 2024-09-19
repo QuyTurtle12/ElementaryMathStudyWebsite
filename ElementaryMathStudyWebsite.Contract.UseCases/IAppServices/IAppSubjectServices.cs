@@ -36,6 +36,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         // Get a subject by ID uu
         Task<Subject> GetSubjectByIDAsync(string id);
+        Task<bool> CheckCompleteQuizExistAsync(string subjectId, string quizId);
 
     }
 }

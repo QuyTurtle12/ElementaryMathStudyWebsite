@@ -1,5 +1,6 @@
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Services.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -253,6 +254,24 @@ namespace ElementaryMathStudyWebsite.Controllers
                 // Handle unexpected errors
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
+        }
+
+
+        [HttpGet("check-subject-quiz")]
+        [SwaggerOperation(
+            Summary = "Authorization: Anyone",
+            Description = "Check if user have complete the course or not"
+        )]
+        public async Task<IActionResult> CheckCompleteQuizExist(string subjectId, string quizId)
+        {
+            var exists = await _appSubjectServices.CheckCompleteQuizExistAsync(subjectId, quizId);
+
+            if (exists)
+            {
+                return Ok(new { message = "Student have complete this course." });
+            }
+
+            return NotFound(new { message = "No record found with the given SubjectId and QuizId of this user." });
         }
     }
 }
