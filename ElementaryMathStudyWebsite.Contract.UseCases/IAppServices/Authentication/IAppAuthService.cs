@@ -5,5 +5,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authenticati
     public interface IAppAuthService
     {
         Task<string> LoginAsync(LoginDto loginDto);
+        Task RegisterAsync(RegisterDto registerDto);
+        Task VerifyEmailAsync(string token);
     }
 }

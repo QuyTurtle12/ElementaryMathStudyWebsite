@@ -7,6 +7,10 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
 using ElementaryMathStudyWebsite.Core.Base;
 using Swashbuckle.AspNetCore.Annotations;
+using ElementaryMathStudyWebsite.Services.Service;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using ElementaryMathStudyWebsite.Services.Service.Authentication;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -16,11 +20,72 @@ namespace ElementaryMathStudyWebsite.Controllers
     {
         private readonly IAppUserServices _userServices;
         private readonly IMapper _mapper;
+        private readonly ITokenService _tokenService;
 
-        public UsersController(IAppUserServices userServices, IMapper mapper)
+        public UsersController(IAppUserServices userServices, IMapper mapper, ITokenService tokenService)
         {
             _userServices = userServices;
             _mapper = mapper;
+            _tokenService = tokenService;
+        }
+
+        [HttpGet("profile")]
+        public async Task<ActionResult<UserProfile>> GetProfile()
+        {
+            // Get the token from the Authorization header
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+
+            // Extract user ID from the token
+            var userId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized();
+            }
+
+            // Fetch user profile using the user ID
+            var user = await _userServices.GetUserByIdAsync(userId.ToString());
+            var userProfile = _mapper.Map<UserProfile>(user);
+
+            return Ok(userProfile);
+        }
+
+        [HttpPut]
+        [Route("profile/update")]
+        [SwaggerOperation(
+            Summary = "Authorization: logged in user",
+            Description = "Updating a user profile"
+            )]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserDto updateUserDto)
+        {
+            // Get the token from the Authorization header
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+
+            // Extract user ID from the token
+            var userId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                var user = await _userServices.UpdateUserAsync(userId.ToString(), updateUserDto);
+                var UpdateProfileDto = _mapper.Map<UpdateProfileDto>(user);
+                UpdateProfileDto.Token = _tokenService.GenerateJwtToken(user);
+                
+
+                return Ok(UpdateProfileDto);
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -298,6 +363,53 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Retrieves all children of a given parent with pagination.
+        /// </summary>
+        /// <param name="parentId">The ID of the parent user.</param>
+        /// <param name="pageNumber">The page number to retrieve (default is 1).</param>
+        /// <param name="pageSize">The number of users per page (default is 10).</param>
+        /// <returns>Returns a paginated list of users who are children of the specified parent.</returns>
+        /// <response code="200">List of children retrieved successfully.</response>
+        /// <response code="400">Invalid parent ID provided.</response>
+        /// <response code="500">Internal server error.</response>
+        [HttpGet]
+        [Route("children/{parentId}")]
+        [SwaggerOperation(
+            Summary = "Authorization: N/A",
+            Description = "Get children of a parent user with pagination."
+        )]
+        public async Task<IActionResult> GetChildrenOfParent(string parentId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            if (string.IsNullOrWhiteSpace(parentId))
+            {
+                return BadRequest("Parent ID is required.");
+            }
+
+            try
+            {
+                var paginatedUsers = await _userServices.GetChildrenOfParentAsync(parentId, pageNumber, pageSize);
+
+                // Map users to UserResponseDto
+                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+
+                // Create a new paginated list of UserResponseDto
+                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                    userDtos.ToList(),
+                    paginatedUsers.TotalItems,
+                    paginatedUsers.CurrentPage,
+                    paginatedUsers.PageSize
+                );
+
+                return Ok(paginatedUserDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
+            }
+        }
+
 
     }
 }

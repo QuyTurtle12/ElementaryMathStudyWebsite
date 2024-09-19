@@ -43,7 +43,11 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             // Create claims based on user information, with null checks
             var claims = new List<Claim>
             {
-                new Claim("userId", user.Id ?? string.Empty)
+                new Claim("userId", user.Id ?? string.Empty),
+                new Claim("roleName", user.Role.RoleName ?? string.Empty),
+                new Claim("roleId", user.Role.Id ?? string.Empty),
+                new Claim("phone", user.PhoneNumber ?? string.Empty),
+                new Claim("email", user.Email ?? string.Empty),
             };
 
             // Retrieve the token expiry period from configuration, handle parsing errors

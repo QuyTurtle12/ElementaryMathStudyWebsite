@@ -15,6 +15,8 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public string RoleId { get; set; } = string.Empty;
 
+        public string? VerificationToken { get; set; }
+
         public required string Username { get; set; }
 
         public required string Password { get; set; }
@@ -25,7 +27,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public virtual User? CreatedByUser { get; set; }
         public virtual User? LastUpdatedByUser { get; set; }
         public virtual User? DeletedByUser { get; set; }
-        public virtual Role? Role { get; set; } // Navigation property, one user has one role
+        public required virtual Role Role { get; set; } // Navigation property, one user has one role
         public virtual ICollection<Order>? Orders { get; set; } // Navigation property, one user can create many orders
         public virtual ICollection<OrderDetail>? OrderDetails { get; set; } // Navigation property, one user can be assigned to many order detail
         public virtual ICollection<UserAnswer>? Answers { get; set; } // Navigation property, one user has many answers

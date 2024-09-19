@@ -127,71 +127,72 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // POST: api/progress
-        // Add student progress
-        [Authorize(Policy = "Student")]
-        [HttpPost]
-        [SwaggerOperation(
-            Summary = "Authorization: Student",
-            Description = "View children progress list. Insert -1 to get all items"
-            )]
-        public async Task<ActionResult<BaseResponse<Progress>>> AddProgress(ProgressCreateDto progress)
-        {
-            try
-            {
-                // Get logged in User Id from authorization header 
-                var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
+        //// POST: api/progress
+        //// Add student progress
+        //[Authorize(Policy = "Student")]
+        //[HttpPost]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Student",
+        //    Description = "View children progress list. Insert -1 to get all items"
+        //    )]
+        //public async Task<ActionResult<BaseResponse<Progress>>> AddProgress(ProgressCreateDto progress)
+        //{
+        //    try
+        //    {
+        //        // Get logged in User Id from authorization header 
+        //        var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        //        var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
 
-                // Validate before get to the main task
-                string error = await _progressService.IsGenerallyValidatedAsync(progress.QuizId, currentUserId);
-                if (!string.IsNullOrWhiteSpace(error))
-                {
-                    throw new BaseException.BadRequestException("bad_request", error);
-                }
+        //        // Validate before get to the main task
+        //        string error = await _progressService.IsGenerallyValidatedAsync(progress.QuizId, currentUserId);
+        //        if (!string.IsNullOrWhiteSpace(error))
+        //        {
+        //            throw new BaseException.BadRequestException("bad_request", error);
+        //        }
 
-                // Identify subject id using quiz id 
-                string subjectId = await _progressService.GetSubjectIdFromQuizIdAsync(progress.QuizId); 
+        //        // Identify subject id using quiz id 
+        //        string subjectId = await _progressService.GetSubjectIdFromQuizIdAsync(progress.QuizId); 
 
-                Progress newStudentProgress = new Progress { StudentId = currentUserId, QuizId = progress.QuizId, SubjectId = subjectId };
+        //        Progress newStudentProgress = new Progress { StudentId = currentUserId, QuizId = progress.QuizId, SubjectId = subjectId };
 
-                // Check 
-                bool IsAddedProgress = await _progressService.AddSubjectProgressAsync(newStudentProgress);
+        //        // Check 
+        //        bool IsAddedProgress = await _progressService.AddSubjectProgressAsync(newStudentProgress);
 
-                if (IsAddedProgress)
-                {
-                    // Return only a success message
-                    var passedQuizResponse = BaseResponse<Progress>.OkResponse("Congratulations, you passed the quiz.Keep it up!");
-                    return passedQuizResponse;
-                }
+        //        if (IsAddedProgress)
+        //        {
+        //            // Return only a success message
+        //            var passedQuizResponse = BaseResponse<Progress>.OkResponse("Congratulations, you passed the quiz.Keep it up!");
+        //            return passedQuizResponse;
+        //        }
 
-                // Return only a failure message
-                var failedQuizResponse = BaseResponse<Progress>.OkResponse("You worked hard, but hard is not enough, try again next time");
-                return failedQuizResponse;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-        }
+        //        // Return only a failure message
+        //        var failedQuizResponse = BaseResponse<Progress>.OkResponse("You worked hard, but hard is not enough, try again next time");
+        //        return failedQuizResponse;
+        //    }
+        //    catch (BaseException.CoreException coreEx)
+        //    {
+        //        // Handle specific CoreException
+        //        return StatusCode(coreEx.StatusCode, new
+        //        {
+        //            code = coreEx.Code,
+        //            message = coreEx.Message,
+        //            additionalData = coreEx.AdditionalData
+        //        });
+        //    }
+        //    catch (BaseException.BadRequestException badRequestEx)
+        //    {
+        //        // Handle specific BadRequestException
+        //        return BadRequest(new
+        //        {
+        //            errorCode = badRequestEx.ErrorDetail.ErrorCode,
+        //            errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+        //        });
+        //    }
+        //}
 
         // GET: api/progress/assigned-subject
         // Get list of assigned subject of specific student
+
         [Authorize(Policy = "Student")]
         [HttpGet]
         [Route("assigned-subject")]
