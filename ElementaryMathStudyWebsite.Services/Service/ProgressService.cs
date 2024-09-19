@@ -13,36 +13,23 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IAppUserServices _userService;
         private readonly IAppSubjectServices _subjectService;
         private readonly IAppQuizServices _quizService;
-        private readonly IAppResultService _resultService;
 
         // Constructor
-        public ProgressService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppSubjectServices subjectService, IAppQuizServices quizService, IAppResultService resultService)
+        public ProgressService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppSubjectServices subjectService, IAppQuizServices quizService)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
             _subjectService = subjectService;
             _quizService = quizService;
-            _resultService = resultService;
         }
 
         // Add new progress that student has just assigned to study a subject
         public async Task<bool> AddSubjectProgressAsync(Progress studentProgress)
         {
-            try
-            {
-                if(await _resultService.IsPassedTheQuizAsync(studentProgress.QuizId, studentProgress.StudentId))
-                {
-                    await _unitOfWork.GetRepository<Progress>().InsertAsync(studentProgress);
-                    await _unitOfWork.SaveAsync();
-                    return true;
-                }
+            await _unitOfWork.GetRepository<Progress>().InsertAsync(studentProgress);
+            await _unitOfWork.SaveAsync();
+            return true;
 
-                return false;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
         }
 
         // Get a list of subject progress that student currently studying
