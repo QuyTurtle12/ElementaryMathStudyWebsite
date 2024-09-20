@@ -50,11 +50,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                 // Check if current logged user and the inputted student Id are parent-child relationship
                 if (!await _userService.IsCustomerChildren(currentUserId, studentId))
                 {
-                    return BadRequest(new BaseResponse<BasePaginatedList<ProgressViewDto>>(
-                    StatusCodeHelper.BadRequest,
-                    StatusCodeHelper.BadRequest.Name(),
-                    "They are not parent and child"
-                    ));
+                    throw new BaseException.BadRequestException("invalid_argument", "They are not parent and child");
                 }
 
                 BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetStudentProgressesDtoAsync(studentId, pageNumber, pageSize);

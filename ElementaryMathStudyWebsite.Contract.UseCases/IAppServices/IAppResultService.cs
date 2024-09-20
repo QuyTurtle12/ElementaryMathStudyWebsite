@@ -17,5 +17,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         // Add student result to database
         Task<ResultProgressDto> AddStudentResultAsync(ResultCreateDto result);
 
+        // Get the children latest result of assigned subject
+        Task<ResultParentViewDto> GetChildrenLatestResultAsync(string studentId);
+
     }
 }

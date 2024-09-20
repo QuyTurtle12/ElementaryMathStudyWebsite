@@ -115,5 +115,45 @@ namespace ElementaryMathStudyWebsite.Controllers
                 });
             }
         }
+
+        // GET: api/results/parent
+        // Get student result of specific quiz
+        [Authorize(Policy = "Parent")]
+        [HttpGet]
+        [Route("parent")]
+        [SwaggerOperation(
+            Summary = "Authorization: Parent",
+            Description = "Get a list of quiz result of specific child"
+            )]
+        public async Task<ActionResult<BaseResponse<ResultParentViewDto>>> GetChildResult([Required] string studentId)
+        {
+            try
+            {
+                ResultParentViewDto result = await _resultService.GetChildrenLatestResultAsync(studentId);
+
+                var response = BaseResponse<ResultParentViewDto>.OkResponse(result);
+
+                return response;
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
     }
 }

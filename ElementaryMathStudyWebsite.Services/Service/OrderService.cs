@@ -127,9 +127,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (order == null) return null;
 
+            // Get list of detail info about an order
+            BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
+
             string customerName = await _userService.GetUserNameAsync(order.CustomerId);
 
-            OrderViewDto dto = new() { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
+            OrderViewDto dto = new()
+            {
+                OrderId = order.Id,
+                CustomerId = order.CustomerId,
+                CustomerName = customerName,
+                TotalPrice = order.TotalPrice,
+                OrderDate = order.CreatedTime,
+                details = detailList?.Items
+            };
 
             return dto;
         }
@@ -151,8 +162,21 @@ namespace ElementaryMathStudyWebsite.Services.Service
             
             foreach (var order in allOrders)
             {
-                string? customerName = await _userService.GetUserNameAsync(order.CustomerId);
-                OrderViewDto dto = new() { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
+                // Get list of detail info about an order
+                BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
+
+                string customerName = await _userService.GetUserNameAsync(order.CustomerId);
+
+                OrderViewDto dto = new()
+                {
+                    OrderId = order.Id,
+                    CustomerId = order.CustomerId,
+                    CustomerName = customerName,
+                    TotalPrice = order.TotalPrice,
+                    OrderDate = order.CreatedTime,
+                    details = detailList?.Items
+                };
+
                 orderDtos.Add(dto);
             }
 
@@ -186,22 +210,34 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(order?.CreatedBy ?? string.Empty);
                 User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(order?.LastUpdatedBy ?? string.Empty);
 
-                // Convert id to name
-                string customerName = await _userService.GetUserNameAsync(order?.CustomerId ?? string.Empty);
-
-                OrderAdminViewDto dto = new OrderAdminViewDto
+                if (order != null)
                 {
-                    CustomerName = customerName,
-                    OrderDate = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                    TotalPrice = order?.TotalPrice ?? 0,
-                    CreatorName = creator?.FullName ?? string.Empty,
-                    CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                    LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
-                    LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
-                    CreatedTime = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                    LastUpdatedTime = order?.LastUpdatedTime ?? CoreHelper.SystemTimeNow,
-                };
-                adminOrders.Add(dto);
+                    // Get list of detail info about an order
+                    BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
+
+                    // Convert id to name
+                    string customerName = await _userService.GetUserNameAsync(order?.CustomerId ?? string.Empty);
+
+                    OrderAdminViewDto dto = new OrderAdminViewDto
+                    {
+                        OrderId = order?.Id ?? string.Empty,
+                        CustomerId = order?.CustomerId ?? string.Empty,
+                        CustomerName = customerName,
+                        OrderDate = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
+                        TotalPrice = order?.TotalPrice ?? 0,
+                        details = detailList?.Items,
+                        CreatedBy = order?.CreatedBy ?? string.Empty,
+                        CreatorName = creator?.FullName ?? string.Empty,
+                        CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                        LastUpdatedBy = order?.LastUpdatedBy ?? string.Empty,
+                        LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                        LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                        CreatedTime = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
+                        LastUpdatedTime = order?.LastUpdatedTime ?? CoreHelper.SystemTimeNow,
+                    };
+                    adminOrders.Add(dto);
+                }
+
             }
 
             // If pageNumber or pageSize are 0 or negative, show all orders without pagination
@@ -262,6 +298,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return true;
         }
 
+        // Search Order by specific filter
         public async Task<BasePaginatedList<OrderViewDto>?> searchOrderDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter)
         {
 
@@ -323,26 +360,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return result;
         }
 
-        // Get order dto list by customer id
-        //public async Task<BasePaginatedList<OrderViewDto>> CustomerIdFilterAsync(string? inputvalue, IEnumerable<Order> orders, int pageNumber, int pageSize)
-        //{
-        //    IList<OrderViewDto> result = new List<OrderViewDto>();
-
-        //    // Transfer entity data to dto value that human understand
-        //    foreach (var order in orders)
-        //    {
-        //        if (order.CustomerId == inputvalue)
-        //        {
-        //            string customerName = await _userService.GetUserNameAsync(order.CustomerId) ?? string.Empty;
-        //            OrderViewDto dto = new() { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
-        //            result.Add(dto);
-        //        }
-        //    }
-
-        //    // Use generic repository's GetPagging method to apply pagination
-        //    return await _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
-        //}
-
         // Get order dto list by customer email
         public async Task<BasePaginatedList<OrderViewDto>> CustomerEmailFilterAsync(string? inputvalue, IEnumerable<Order> orders, int pageNumber, int pageSize)
         {
@@ -359,8 +376,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     {
                         if (order.CustomerId == user.Id)
                         {
-                            string customerName = await _userService.GetUserNameAsync(order.CustomerId) ?? string.Empty;
-                            OrderViewDto dto = new() { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
+                            // Get list of detail info about an order
+                            BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
+
+                            string customerName = await _userService.GetUserNameAsync(order.CustomerId);
+
+                            OrderViewDto dto = new()
+                            {
+                                OrderId = order.Id,
+                                CustomerId = order.CustomerId,
+                                CustomerName = customerName,
+                                TotalPrice = order.TotalPrice,
+                                OrderDate = order.CreatedTime,
+                                details = detailList?.Items
+                            };
                             result.Add(dto);
                         }
                     }
@@ -388,8 +417,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     {
                         if (order.CustomerId == user.Id)
                         {
-                            string customerName = await _userService.GetUserNameAsync(order.CustomerId) ?? string.Empty;
-                            OrderViewDto dto = new() { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
+                            // Get list of detail info about an order
+                            BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
+
+                            string customerName = await _userService.GetUserNameAsync(order.CustomerId);
+
+                            OrderViewDto dto = new()
+                            {
+                                OrderId = order.Id,
+                                CustomerId = order.CustomerId,
+                                CustomerName = customerName,
+                                TotalPrice = order.TotalPrice,
+                                OrderDate = order.CreatedTime,
+                                details = detailList?.Items
+                            };
                             result.Add(dto);
                         }
                     }
@@ -452,15 +493,26 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             foreach (var order in filteredOrders)
             {
-                string? customerName = await appService.GetUserNameAsync(order.CustomerId);
-                OrderViewDto dto = new() { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
+                // Get list of detail info about an order
+                BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
+
+                string customerName = await _userService.GetUserNameAsync(order.CustomerId);
+
+                OrderViewDto dto = new()
+                {
+                    OrderId = order.Id,
+                    CustomerId = order.CustomerId,
+                    CustomerName = customerName,
+                    TotalPrice = order.TotalPrice,
+                    OrderDate = order.CreatedTime,
+                    details = detailList?.Items
+                };
                 orderDtos.Add(dto);
             }
 
             // Paginate the result
             return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(orderDtos, pageNumber, pageSize);
         }
-
 
         // Get order list by order price
         public async Task<BasePaginatedList<OrderViewDto>> GetTotalPriceInRangeAsync(double? minTotalAmount, double? maxTotalAmount, IEnumerable<Order> orders, int pageNumber, int pageSize)
@@ -485,8 +537,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             foreach (var order in filteredOrders)
             {
-                string? customerName = await _userService.GetUserNameAsync(order.CustomerId);
-                OrderViewDto dto = new OrderViewDto { CustomerName = customerName, TotalPrice = order.TotalPrice, OrderDate = order.CreatedTime };
+                // Get list of detail info about an order
+                BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
+
+                string customerName = await _userService.GetUserNameAsync(order.CustomerId);
+
+                OrderViewDto dto = new()
+                {
+                    OrderId = order.Id,
+                    CustomerId = order.CustomerId,
+                    CustomerName = customerName,
+                    TotalPrice = order.TotalPrice,
+                    OrderDate = order.CreatedTime,
+                    details = detailList?.Items
+                };
                 orderDtos.Add(dto);
             }
 
