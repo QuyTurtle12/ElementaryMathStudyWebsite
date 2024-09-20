@@ -183,31 +183,70 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
-        public bool IsValidChapter(string chapterId)
-        {
-            Chapter? chapter = _unitOfWork.GetRepository<Chapter>().GetById(chapterId);
+        //public bool IsValidChapter(string chapterId)
+        //{
+        //    Chapter? chapter = _unitOfWork.GetRepository<Chapter>().GetById(chapterId);
 
-            return (chapter is not null && chapter.DeletedBy is null);
-        }
+        //    return (chapter is not null && chapter.DeletedBy is null);
+        //}
 
-        public async Task<bool> DeleteChapterAsync(string chapterId)
+        public async Task<ChapterAdminViewDto> DeleteChapterAsync(string chapterId)
         {
             //var chapter = await _chapterRepository.GetByIdAsync(chapterId) ?? throw new KeyNotFoundException("Invalid chapter ID");
 
             //await _chapterRepository.DeleteAsync(chapterId);
             //await _unitOfWork.SaveAsync();
             //return true;
-            Chapter? chapter = new();
+            //------------------------------------------------------------------------------------
+            //Chapter? chapter = new();
 
-            if (IsValidChapter(chapterId))
-                chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId);
-            else throw new KeyNotFoundException("Invalid chapter ID");
+            //if (IsValidChapter(chapterId))
+            //    chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId);
+            //else throw new KeyNotFoundException("Invalid chapter ID");
 
-            AuditFields(chapter, isCreating: false);
 
-            await _unitOfWork.SaveAsync();
+            //AuditFields(chapter, isCreating: false);
 
-            return true;
+            ////await _unitOfWork.SaveAsync();.
+            //await _unitOfWork.GetRepository<Chapter>().DeleteAsync(chapterId);
+            //await _unitOfWork.SaveAsync();
+
+            //return true;
+            
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
+            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new KeyNotFoundException($"Chapter with ID '{chapterId}' not found.");
+            if (chapter.DeletedBy != null)
+            {
+                throw new InvalidOperationException("This chapter was deleted");
+            }
+            if (chapter.Status == true)
+            {
+                chapter.Status = false;
+            }
+            chapter.DeletedBy = currentUserId.ToString().ToUpper();
+            chapter.DeletedTime = DateTime.UtcNow;
+
+            AuditFields(chapter);
+
+            _unitOfWork.GetRepository<Chapter>().Update(chapter);
+            await _unitOfWork.GetRepository<Chapter>().SaveAsync();
+
+            return new ChapterAdminViewDto
+            {
+                Id = chapter.Id,
+                Number = chapter.Number,
+                ChapterName = chapter.ChapterName,
+                Status = chapter.Status,
+                SubjectId = chapter.SubjectId,
+                QuizId = chapter.QuizId,
+                CreatedBy = chapter.CreatedBy,
+                CreatedTime = chapter.CreatedTime,
+                LastUpdatedBy = chapter.LastUpdatedBy,
+                LastUpdatedTime = chapter.LastUpdatedTime,
+                DeletedBy = chapter.DeletedBy,
+                DeletedTime = chapter.DeletedTime
+            };
         }
 
 
@@ -215,6 +254,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<Chapter?> GetChapterByChapterIdAsync(string Id)
         {
             Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(Id);
+            
             return chapter;
         }
 
@@ -222,7 +262,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(Id);
 
-            if (chapter == null) return null;
+            if (chapter == null || chapter.Status == false) return null;
 
             ChapterViewDto dto = new ChapterViewDto { Number = chapter.Number, ChapterName = chapter.ChapterName };
 
@@ -302,7 +342,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             //// Show all chapters with pagination
             //var paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
             //return paginatedChapters;
-            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities;
+            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.DeletedBy == null && c.DeletedTime == null);
             List<ChapterAdminViewDto> chapterView = [];
 
             //If params negative = show all
@@ -360,7 +400,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<ChapterViewDto?>> GetChapterDtosAsync(int pageNumber, int pageSize)
         {
             // Get all chapters from database
-            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities;
+            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.Status == true && c.DeletedBy == null);
             List<ChapterViewDto> chapterDtos = new List<ChapterViewDto>();
 
             // If pageNumber or pageSize are 0 or negative, show all chapters without pagination
@@ -373,6 +413,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     ChapterViewDto dto = new ChapterViewDto { Number = chapter.Number, ChapterName = chapter.ChapterName };
                     chapterDtos.Add(dto);
                 }
+
                 return new BasePaginatedList<ChapterViewDto?>(chapterDtos, chapterDtos.Count, 1, chapterDtos.Count);
             }
 
@@ -426,7 +467,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<BasePaginatedList<object>> SearchChapterAsync(string searchTerm, int pageNumber, int pageSize)
         {
-            var query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.Status == true);
+            var query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.Status == true && c.DeletedBy == null);
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -473,7 +514,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<BasePaginatedList<ChapterAdminViewDto>> SearchChapterForAdminAsync(string searchTerm, int pageNumber, int pageSize)
         {
-            var query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.Status == true);
+            var query = _unitOfWork.GetRepository<Chapter>().Entities;
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {

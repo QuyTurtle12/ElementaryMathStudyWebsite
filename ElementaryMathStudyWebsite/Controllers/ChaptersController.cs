@@ -356,34 +356,49 @@ namespace ElementaryMathStudyWebsite.Controllers
             //{
             //    return StatusCode(500, "Error: " + ex.Message);
             //}
+            //-----------------------------------------------------------------------
+            //try
+            //{
+            //    var chapterAppService = _chapterService as IAppChapterServices;
+            //    if (await chapterAppService.DeleteChapterAsync(id))
+            //    {
+            //        return Ok("Delete successfully");
+
+            //    }
+            //    return BadRequest("Delete unsuccessfully");
+            //}
+            //catch (BaseException.CoreException coreEx)
+            //{
+            //    // Handle specific CoreException
+            //    return StatusCode(coreEx.StatusCode, new
+            //    {
+            //        code = coreEx.Code,
+            //        message = coreEx.Message,
+            //        additionalData = coreEx.AdditionalData
+            //    });
+            //}
+            //catch (BaseException.BadRequestException badRequestEx)
+            //{
+            //    // Handle specific BadRequestException
+            //    return BadRequest(new
+            //    {
+            //        errorCode = badRequestEx.ErrorDetail.ErrorCode,
+            //        errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+            //    });
+            //}
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             try
             {
-                var chapterAppService = _chapterService as IAppChapterServices;
-                if (await chapterAppService.DeleteChapterAsync(id))
-                {
-                    return Ok("Delete successfully");
-
-                }
-                return BadRequest("Delete unsuccessfully");
+                var chapter = await _chapterService.DeleteChapterAsync(id);
+                return Ok(chapter);
             }
-            catch (BaseException.CoreException coreEx)
+            catch (KeyNotFoundException ex)
             {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
+                return NotFound(new { message = ex.Message });
             }
         }
 

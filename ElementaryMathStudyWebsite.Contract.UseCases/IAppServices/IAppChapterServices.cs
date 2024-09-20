@@ -14,7 +14,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterDto subjectDTO);
 
-        Task<bool> DeleteChapterAsync(string optionId);
+        Task<ChapterAdminViewDto> DeleteChapterAsync(string optionId);
         Task<BasePaginatedList<ChapterViewDto?>> GetChapterDtosAsync(int pageNumber, int pageSize);
 
         Task<ChapterViewDto?> GetChapterDtoByChapterIdAsync(string Id);
