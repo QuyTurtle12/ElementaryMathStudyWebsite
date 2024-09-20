@@ -7,6 +7,8 @@ using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Annotations;
+using ElementaryMathStudyWebsite.Core.Store;
+using ElementaryMathStudyWebsite.Core.Utils;
 
 
 namespace ElementaryMathStudyWebsite.Controllers
@@ -172,7 +174,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/TopicAccess/{topicId}/CanAccess
         [HttpGet("/TopicAccess/{topicId}")]
-        public async Task<IActionResult> CanAccessTopic(string topicId)
+        public async Task<ActionResult<BaseResponse<object>>> CanAccessTopic(string topicId)
         {
             try
             {
@@ -182,23 +184,68 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                 if (canAccess)
                 {
-                    return Ok(new { Message = $"You can access topic '{topicName}'." });
+                    // Return a successful response using BaseResponse
+                    return Ok(BaseResponse<object>.OkResponse($"You can access topic '{topicName}'."));
                 }
                 else
                 {
-                    return Forbid($"You cannot access topic '{topicName}' until the required quiz for the previous topic is completed.");
+                    // Return a forbidden response using BaseResponse
+                    return StatusCode(StatusCodes.Status403Forbidden, new BaseResponse<object>(
+                        StatusCodeHelper.BadRequest,
+                        "Forbbiden",
+                        $"You cannot access topic '{topicName}' until the required quiz for the previous topic is completed."
+                    ));
                 }
             }
             catch (KeyNotFoundException ex)
             {
-                // If a topic, chapter, or previous topic is not found, return 404
-                return NotFound(new { Message = ex.Message });
+                // Handle KeyNotFoundException by returning a 404 response using BaseResponse
+                return NotFound(new BaseResponse<object>(
+                    StatusCodeHelper.BadRequest,
+                    "Not Found",
+                    ex.Message
+                ));
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                var errorResponse = new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                };
+                return StatusCode(coreEx.StatusCode, new BaseResponse<object>(
+                    StatusCodeHelper.BadRequest,
+                    coreEx.Code,
+                    errorResponse
+                ));
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new BaseResponse<object>(
+                    StatusCodeHelper.BadRequest,
+                    badRequestEx.ErrorDetail.ErrorCode,
+                    badRequestEx.ErrorDetail.ErrorMessage
+                ));
             }
             catch (Exception ex)
             {
-                // Handle any other exceptions
-                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred.", Details = ex.Message });
+                // Handle any other exceptions with a 500 response using BaseResponse
+                var errorResponse = new
+                {
+                    Message = "An error occurred.",
+                    Details = ex.Message
+                };
+                return StatusCode(StatusCodes.Status500InternalServerError, new BaseResponse<object>(
+                    StatusCodeHelper.ServerError,
+                    "Server Error",
+                    errorResponse
+                ));
             }
         }
+
+
     }
 }
