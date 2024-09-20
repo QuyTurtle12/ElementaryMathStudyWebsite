@@ -22,5 +22,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<BasePaginatedList<Chapter?>> GetChaptersAsync(int pageNumber, int pageSize);
 
         Task<Chapter?> GetChapterByChapterIdAsync(string id);
+
+        Task<bool> CanAccessChapterAsync(string chapterId);
     }
 }

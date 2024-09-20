@@ -14,6 +14,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<BasePaginatedList<object>> SearchTopicByNameAsync(string searchTerm, int pageNumber, int pageSize);
 
         Task<BasePaginatedList<Topic?>> GetAllExistTopicsAsync(int pageNumber, int pageSize); // Lấy danh sách Topic
+        Task<bool> CanAccessTopicAsync(string topicId);
+        Task<string> GetTopicNameAsync(string topicId);
 
         //Task<IEnumerable<object>> GetTopicsAsync(int pageNumber, int pageSize);
         //Task<IEnumerable<TopicViewDTO>> SearchTopicsAsync(string searchTerm, int pageNumber, int pageSize);

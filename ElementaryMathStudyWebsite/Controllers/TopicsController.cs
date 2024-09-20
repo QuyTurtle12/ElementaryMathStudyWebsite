@@ -169,5 +169,36 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return StatusCode(500, "Error: " + ex.Message);
             }
         }
+
+        // GET: api/TopicAccess/{topicId}/CanAccess
+        [HttpGet("/TopicAccess/{topicId}")]
+        public async Task<IActionResult> CanAccessTopic(string topicId)
+        {
+            try
+            {
+                // Call the service method to check if the student can access the topic
+                bool canAccess = await _topicService.CanAccessTopicAsync(topicId);
+                string topicName = await _topicService.GetTopicNameAsync(topicId);
+
+                if (canAccess)
+                {
+                    return Ok(new { Message = $"You can access topic '{topicName}'." });
+                }
+                else
+                {
+                    return Forbid($"You cannot access topic '{topicName}' until the required quiz for the previous topic is completed.");
+                }
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // If a topic, chapter, or previous topic is not found, return 404
+                return NotFound(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Handle any other exceptions
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred.", Details = ex.Message });
+            }
+        }
     }
 }

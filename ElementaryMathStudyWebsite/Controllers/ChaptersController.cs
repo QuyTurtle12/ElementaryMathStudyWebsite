@@ -253,5 +253,38 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        // GET: api/ChapterAccess/{chapterId}
+        [HttpGet("/ChapterAccess/{chapterId}")]
+        public async Task<IActionResult> CanAccessChapter(string chapterId)
+        {
+            if (string.IsNullOrWhiteSpace(chapterId))
+            {
+                return BadRequest("Chapter Id is required.");
+            }
+
+            try
+            {
+                bool canAccess = await _chapterService.CanAccessChapterAsync(chapterId);
+                string chapterName = await _chapterService.GetChapterNameAsync(chapterId);
+
+                if (canAccess)
+                {
+                    return Ok(new { Message = $"You can access chapter '{chapterName}'." });
+                }
+                else
+                {
+                    return Forbid($"You cannot access chapter '{chapterName}' until the required quiz for the previous chapter is completed.");
+                }
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
     }
 }
