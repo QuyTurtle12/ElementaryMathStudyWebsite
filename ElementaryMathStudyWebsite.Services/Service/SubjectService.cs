@@ -7,22 +7,17 @@ using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Utils;
+using ElementaryMathStudyWebsite.Infrastructure.UOW;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class SubjectService(IGenericRepository<Subject> detailReposiotry,
-                          IGenericRepository<Subject> subjectRepository,
-                          IUnitOfWork unitOfWork,
-                          IHttpContextAccessor httpContextAccessor,
-                          ITokenService tokenService) : IAppSubjectServices
+    public class SubjectService(IUnitOfWork unitOfWork, IAppUserServices userServices, IGenericRepository<Subject> detailRepository) : IAppSubjectServices
     {
-        private readonly IGenericRepository<Subject> _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
-        private readonly IGenericRepository<Subject> _subjectRepository = subjectRepository ?? throw new ArgumentNullException(nameof(subjectRepository));
         private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
-        private readonly ITokenService _tokenService = tokenService;
+        private readonly IAppUserServices _userServices = userServices ?? throw new ArgumentNullException(nameof(userServices));
+        private readonly IGenericRepository<Subject> _detailReposiotry = detailRepository;
 
         // Helper method for validation
         private static void ValidateSubject(SubjectDTO subjectDTO)
@@ -44,7 +39,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             ValidateSubject(subjectDTO);
 
             // Check if another subject with the same name already exists
-            var existingSubject = await _subjectRepository.Entities
+            var existingSubject = await _unitOfWork.GetRepository<Subject>().Entities
                 .Where(s => s.SubjectName == subjectDTO.SubjectName)
                 .FirstOrDefaultAsync();
 
@@ -64,8 +59,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             AuditFields(subject, isCreating: true);
 
-            _subjectRepository.Insert(subject);
-            await _subjectRepository.SaveAsync();
+            _unitOfWork.GetRepository<Subject>().Insert(subject);
+            await _unitOfWork.GetRepository<Subject>().SaveAsync();
 
             return new SubjectAdminViewDTO
             {
@@ -86,7 +81,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get all subjects, returning as DTOs
         public async Task<BasePaginatedList<object>> GetAllSubjectsAsync(int pageNumber, int pageSize, bool isAdmin)
         {
-            IQueryable<Subject> query = _subjectRepository.Entities;
+            IQueryable<Subject> query = _unitOfWork.GetRepository<Subject>().Entities;
 
             if (!isAdmin)
             {
@@ -150,7 +145,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get a specific subject by ID
         public async Task<object> GetSubjectByIDAsync(string id, bool isAdmin)
         {
-            var subject = await _subjectRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"Cannot find product with ID '{id}'.");
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Cannot find product with ID '{id}'.");
             if (!isAdmin && !subject.Status)
             {
                 throw new KeyNotFoundException($"Cannot find product with ID '{id}'.");
@@ -182,7 +177,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<object>> SearchSubjectAsync(string searchTerm, double lowestPrice,
                     double highestPrice, int pageNumber, int pageSize)
         {
-            var query = _subjectRepository.Entities.Where(s => s.Status == true);
+            var query = _unitOfWork.GetRepository<Subject>().Entities.Where(s => s.Status == true);
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -236,7 +231,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<object>> SearchSubjectAdminAsync(string searchTerm, double lowestPrice,
                     double highestPrice, bool? status, int pageNumber, int pageSize)
         {
-            var query = _subjectRepository.Entities.AsQueryable();
+            var query = _unitOfWork.GetRepository<Subject>().Entities.AsQueryable();
 
             if (status.HasValue)
             {
@@ -309,10 +304,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Update subject and set LastUpdatedTime to current time
         public async Task<SubjectAdminViewDTO> UpdateSubjectAsync(string id, SubjectDTO subjectDTO)
         {
-            var subject = await _subjectRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
 
             // Check if another subject with the same name already exists
-            var existingSubject = await _subjectRepository.Entities
+            var existingSubject = await _unitOfWork.GetRepository<Subject>().Entities
                 .Where(s => s.SubjectName == subjectDTO.SubjectName) // Exclude the current subject by its ID
                 .FirstOrDefaultAsync();
 
@@ -329,7 +324,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             AuditFields(subject, isCreating: false);
 
-            _subjectRepository.Update(subject);
+            _unitOfWork.GetRepository<Subject>().Update(subject);
             await _unitOfWork.SaveAsync();
 
             return new SubjectAdminViewDTO
@@ -350,14 +345,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Change subject status and set LastUpdatedTime to current time
         public async Task<SubjectAdminViewDTO> ChangeSubjectStatusAsync(string id)
         {
-            var subject = await _subjectRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
             subject.Status = !subject.Status;
             //subject.LastUpdatedTime = DateTime.UtcNow;
 
             AuditFields(subject);
 
-            _subjectRepository.Update(subject);
-            await _subjectRepository.SaveAsync();
+            _unitOfWork.GetRepository<Subject>().Update(subject);
+            await _unitOfWork.GetRepository<Subject>().SaveAsync();
 
             return new SubjectAdminViewDTO
             {
@@ -376,27 +371,27 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<string> GetSubjectNameAsync(string subjectId)
         {
-            Subject? subject = await _subjectRepository.GetByIdAsync(subjectId);
+            Subject? subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(subjectId);
             return subject?.SubjectName ?? string.Empty;
         }
 
         public async Task<bool> IsValidSubjectAsync(string subjectId)
         {
-            return await _subjectRepository.GetByIdAsync(subjectId) != null;
+            return await _unitOfWork.GetRepository<Subject>().GetByIdAsync(subjectId) != null;
         }
 
         // Get a specific subject by ID (For Order)
         public async Task<Subject> GetSubjectByIDAsync(string id)
         {
-            var subject = await _subjectRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
             return subject;
         }
 
-        public void AuditFields(BaseEntity entity, bool isCreating = false)
+        public async void AuditFields(BaseEntity entity, bool isCreating = false)
         {
-            // Retrieve the JWT token from the Authorization header
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
+            // Get current logged in user info
+            User currentUser = await _userServices.GetCurrentUserAsync();
+            var currentUserId = currentUser.Id;
 
             // If creating a new entity, set the CreatedBy field
             if (isCreating)
@@ -417,12 +412,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<bool> CheckCompleteQuizExistAsync(string subjectId, string quizId)
         {
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
+            // Get current logged in user info
+            User currentUser = await _userServices.GetCurrentUserAsync();
+            var currentUserId = currentUser.Id;
 
             // Query the Progress table for a record with the specified SubjectId and QuizId
             var progressRecord = await _unitOfWork.GetRepository<Progress>().Entities
-                .Where(p => p.StudentId == currentUserId.ToString().ToUpper() && p.SubjectId == subjectId && p.QuizId == quizId)
+                .Where(p => p.StudentId.Equals(currentUserId.ToString(), StringComparison.CurrentCultureIgnoreCase) && p.SubjectId == subjectId && p.QuizId == quizId)
                 .FirstOrDefaultAsync();
 
             // If the record is found, return true; otherwise, return false
