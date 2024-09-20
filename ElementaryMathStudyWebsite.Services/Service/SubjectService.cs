@@ -108,6 +108,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     }
                     : new SubjectDTO
                     {
+                        Id = subject.Id,
                         SubjectName = subject.SubjectName,
                         Price = subject.Price,
                         Status = subject.Status
@@ -133,6 +134,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
                 : new SubjectDTO
                 {
+                    Id = subject.Id,
                     SubjectName = subject.SubjectName,
                     Price = subject.Price,
                     Status = subject.Status
@@ -167,6 +169,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
                 : new SubjectDTO
                 {
+                    Id = subject.Id,
                     SubjectName = subject.SubjectName,
                     Price = subject.Price,
                     Status = subject.Status
@@ -199,6 +202,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 var allSubjects = await query.ToListAsync();
                 var subjectDtos = allSubjects.Select(s => new SubjectDTO
                 {
+                    Id = s.Id,
                     SubjectName = s.SubjectName,
                     Price = s.Price,
                     Status = s.Status
@@ -215,6 +219,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
             var subjectDtosPaginated = paginatedSubjects.Items.Select(s => new SubjectDTO
             {
+                Id = s.Id,
                 SubjectName = s.SubjectName,
                 Price = s.Price,
                 Status = s.Status

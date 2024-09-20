@@ -1,5 +1,6 @@
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Services.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,9 +22,24 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> GetAllActiveSubjects(int pageNumber = 1, int pageSize = 10)
         {
-            var activeSubjects = await _appSubjectServices.GetAllSubjectsAsync(pageNumber, pageSize, false);
+            try
+            {
+                var activeSubjects = await _appSubjectServices.GetAllSubjectsAsync(pageNumber, pageSize, false);
+                if (activeSubjects?.Items.Count == 0 || activeSubjects == null)
+                {
+                    throw new BaseException.BadRequestException("no_subjects_found", "No active subjects found.");
+                }
 
-            return Ok(activeSubjects);
+                return Ok(BaseResponse<BasePaginatedList<object>>.OkResponse(activeSubjects));
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
         }
 
         // GET: api/Subjects/{id}
@@ -36,16 +52,21 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var subject = await _appSubjectServices.GetSubjectByIDAsync(id, false); //not Admin
+                var subject = await _appSubjectServices.GetSubjectByIDAsync(id, false);
+                if (subject == null)
+                {
+                    throw new BaseException.BadRequestException("subject_not_found", "Subject not found.");
+                }
+
                 return Ok(subject);
             }
-            catch (KeyNotFoundException ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return NotFound(new { message = ex.Message });
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
-            catch (Exception ex)
+            catch (BaseException.BadRequestException badRequestEx)
             {
-                return StatusCode(500, new { message = $"Internal server error: {ex.Message}" });
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
         }
 
@@ -58,9 +79,25 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> GetAllSubjectsForAdmin(int pageNumber = 1, int pageSize = 10)
         {
-            var subjects = await _appSubjectServices.GetAllSubjectsAsync(pageNumber, pageSize, true); //true mean it was admin
+            try
+            {
+                var subjects = await _appSubjectServices.GetAllSubjectsAsync(pageNumber, pageSize, true); // true for admin access
+                if (subjects?.Items.Count == 0 || subjects == null)
+                {
+                    throw new BaseException.BadRequestException("no_subjects_found", "No subjects found.");
+                }
 
-            return Ok(subjects);
+                var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
+                return Ok(response);
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
         }
 
         // GET: api/Subjects/Admin/{id}
@@ -74,16 +111,20 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var subject = await _appSubjectServices.GetSubjectByIDAsync(id, true); //is Admin
+                var subject = await _appSubjectServices.GetSubjectByIDAsync(id, true); // isAdmin = true
+                if (subject == null)
+                {
+                    throw new BaseException.BadRequestException("subject_not_found", "The requested subject was not found.");
+                }
                 return Ok(subject);
             }
-            catch (KeyNotFoundException ex)
+            catch (BaseException.BadRequestException badRequestEx)
             {
-                return NotFound(new { message = ex.Message });
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, new { message = $"Internal server error: {ex.Message}" });
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
         }
 
@@ -106,20 +147,21 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 var createdSubject = await _appSubjectServices.CreateSubjectAsync(new SubjectDTO
                 {
+                    Id = "",
                     SubjectName = subjectDTO.SubjectName,
                     Price = subjectDTO.Price,
                     Status = true // Set status as active when created
                 });
 
-                return CreatedAtAction(nameof(GetSubjectByIdForAdmin), new { id = createdSubject.Id }, createdSubject);
+                return CreatedAtAction(nameof(GetActiveSubjectById), new { id = createdSubject.Id }, createdSubject);
             }
-            catch (InvalidOperationException ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return BadRequest(ex.Message); // Return the error message if a duplicate name is found
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
-            catch (ArgumentException ex)
+            catch (BaseException.BadRequestException badRequestEx)
             {
-                return BadRequest(ex.Message); // Return the error message if a validation error is found
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
         }
 
@@ -139,20 +181,16 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             try
             {
-                var subject = await _appSubjectServices.UpdateSubjectAsync(id, subjectDTO);
-                return Ok(subject);
+                var updatedSubject = await _appSubjectServices.UpdateSubjectAsync(id, subjectDTO);
+                return Ok(updatedSubject);
             }
-            catch (InvalidOperationException ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return BadRequest(ex.Message); // Return the error message if a duplicate name is found
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
-            catch (ArgumentException ex)
+            catch (BaseException.BadRequestException badRequestEx)
             {
-                return BadRequest(ex.Message); // Return the error message if a validation error is found
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message); // Return 404 if the subject is not found
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
         }
 
@@ -165,19 +203,18 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> ChangeSubjectStatus(string id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             try
             {
                 var subject = await _appSubjectServices.ChangeSubjectStatusAsync(id);
                 return Ok(subject);
             }
-            catch (KeyNotFoundException ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return NotFound(new { message = ex.Message });
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
         }
 
@@ -187,34 +224,20 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Anyone",
             Description = "Search subject with filters and paginations, set price = -1 to not search for it"
         )]
-        public async Task<IActionResult> SearchSubject([FromQuery] string searchTerm, double lowestPrice = -1,
-                double highestPrice = -1, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> SearchSubject([FromQuery] string searchTerm, double lowestPrice = -1, double highestPrice = -1, int pageNumber = 1, int pageSize = 10)
         {
-            // Validate the search term
-            if (string.IsNullOrWhiteSpace(searchTerm))
-            {
-                return BadRequest("Search term cannot be empty.");
-            }
-
-            if (searchTerm.Length < 2)
-            {
-                return BadRequest("Search term must be at least 2 characters long.");
-            }
-
             try
             {
                 var subjects = await _appSubjectServices.SearchSubjectAsync(searchTerm, lowestPrice, highestPrice, pageNumber, pageSize);
                 return Ok(subjects);
             }
-            catch (KeyNotFoundException ex)
+            catch (BaseException.CoreException coreEx)
             {
-                // Handle case when no subjects are found
-                return NotFound(ex.Message);
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
-            catch (Exception ex)
+            catch (BaseException.BadRequestException badRequestEx)
             {
-                // Handle unexpected errors
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
         }
 
@@ -225,10 +248,8 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Admin, Content Manager",
             Description = "Search subject with filters and paginations, set price = -1, or leave status null to not search for it"
         )]
-        public async Task<IActionResult> SearchSubjectAdmin([FromQuery] string searchTerm, double lowestPrice = -1,
-                double highestPrice = -1, bool? status = null, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> SearchSubjectAdmin([FromQuery] string searchTerm, double lowestPrice = -1, double highestPrice = -1, bool? status = null, int pageNumber = 1, int pageSize = 10)
         {
-            // Validate the search term
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
                 return BadRequest("Search term cannot be empty.");
@@ -242,17 +263,21 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var subjects = await _appSubjectServices.SearchSubjectAdminAsync(searchTerm, lowestPrice, highestPrice, status, pageNumber, pageSize);
-                return Ok(subjects);
+                if (subjects?.Items.Count == 0 || subjects == null)
+                {
+                    throw new BaseException.BadRequestException("no_subjects_found", "No subjects match the search criteria.");
+                }
+
+                var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
+                return Ok(response);
             }
-            catch (KeyNotFoundException ex)
+            catch (BaseException.CoreException coreEx)
             {
-                // Handle case when no subjects are found
-                return NotFound(ex.Message);
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
-            catch (Exception ex)
+            catch (BaseException.BadRequestException badRequestEx)
             {
-                // Handle unexpected errors
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
         }
 
@@ -264,14 +289,23 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> CheckCompleteQuizExist(string subjectId, string quizId)
         {
-            var exists = await _appSubjectServices.CheckCompleteQuizExistAsync(subjectId, quizId);
-
-            if (exists)
+            try
             {
-                return Ok(new { message = "Student have complete this course." });
+                var exists = await _appSubjectServices.CheckCompleteQuizExistAsync(subjectId, quizId);
+                if (!exists)
+                {
+                    throw new BaseException.BadRequestException("quiz_not_found", "No record found with the given SubjectId and QuizId for this user.");
+                }
+                return Ok(new { message = "Student has completed this course." });
             }
-
-            return NotFound(new { message = "No record found with the given SubjectId and QuizId of this user." });
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
         }
     }
 }
