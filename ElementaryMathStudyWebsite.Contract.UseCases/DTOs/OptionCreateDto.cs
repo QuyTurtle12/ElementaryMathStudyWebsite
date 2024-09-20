@@ -2,8 +2,8 @@
 {
     public class OptionCreateDto
     {
-        public required string QuestionId { get; set; }
-        public string? Answer { get; set; }
-        public bool IsCorrect { get; set; }
+        public string QuestionId { get; set; } = string.Empty;
+        public string Answer { get; set; } = string.Empty;
+        public bool IsCorrect { get; set; } = false;
     }
 }

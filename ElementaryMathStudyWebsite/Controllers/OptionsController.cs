@@ -1,5 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Base;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -32,37 +33,68 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var optionAppService = _optionService as IAppOptionServices;
                 return Ok(await optionAppService.AddOption(dto));
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
-        //// DELETE: api/options/{id}
-        //[Authorize(Policy = "Admin-Content")]
-        //[HttpDelete]
-        //[Route("{id}")]
-        //[SwaggerOperation(
-        //    Summary = "Authorization: Admin & Content Manager",
-        //    Description = "Delete an option (of a question)"
-        //    )]
-        //public async Task<IActionResult> DeleteOption([Required] string id)
-        //{
-        //    try
-        //    {
-        //        var optionAppService = _optionService as IAppOptionServices;
-        //        if (await optionAppService.DeleteOption(id))
-        //        {
-        //            return Ok("Delete successfully");
 
-        //        }
-        //        return BadRequest("Delete unsuccessfully");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, "Error: " + ex.Message);
-        //    }
-        //}
+        // DELETE: api/options/{id}
+        [Authorize(Policy = "Admin-Content")]
+        [HttpDelete]
+        [Route("{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "Delete an option (of a question)"
+            )]
+        public async Task<IActionResult> DeleteOption([Required] string id)
+        {
+            try
+            {
+                var optionAppService = _optionService as IAppOptionServices;
+                if (await optionAppService.DeleteOption(id))
+                {
+                    return Ok("Delete successfully");
+
+                }
+                return BadRequest("Delete unsuccessfully");
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
 
 
         // GET: api/options/raw/{id}
@@ -79,9 +111,24 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return Ok(await _optionService.GetOptionById(id));
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -99,9 +146,24 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var optionAppService = _optionService as IAppOptionServices;
                 return Ok(await optionAppService.GetOptionDtosByQuestion(pageNumber, pageSize, questionId));
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -120,9 +182,24 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return Ok(await _optionService.GetOptions(pageNumber, pageSize));
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -141,9 +218,24 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var optionAppService = _optionService as IAppOptionServices;
                 return Ok(await optionAppService.UpdateOption(id, dto));
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
