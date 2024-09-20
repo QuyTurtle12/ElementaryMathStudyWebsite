@@ -21,7 +21,6 @@ namespace ElementaryMathStudyWebsite.Infrastructure.Context
         public DbSet<Subject> Subject { get; set; }
         public DbSet<Topic> Topic { get; set; }
         public DbSet<UserAnswer> UserAnswer { get; set; }
-        public DbSet<Payment> Payment { get; set; }
         public DbSet<Result> Result { get; set; }
 
         // Mapping Configuration
@@ -178,24 +177,6 @@ namespace ElementaryMathStudyWebsite.Infrastructure.Context
                 .HasOne(d => d.User)
                 .WithMany(u => u.OrderDetails)
                 .HasForeignKey(d => d.StudentId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            // Define the Payment's primary key
-            modelBuilder.Entity<Payment>()
-                .HasKey(p => p.Id); 
-
-            // Payment - User Relationship
-            modelBuilder.Entity<Payment>()
-                .HasOne(p => p.User)
-                .WithMany(u => u.Payments)
-                .HasForeignKey(p => p.CustomerId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            // Payment - Order Relationship
-            modelBuilder.Entity<Payment>()
-                .HasOne(p => p.Order)
-                .WithOne(o => o.Payment)
-                .HasForeignKey<Payment>(p => p.OrderId)
                 .OnDelete(DeleteBehavior.NoAction);
 
             // Result - User Relationship
