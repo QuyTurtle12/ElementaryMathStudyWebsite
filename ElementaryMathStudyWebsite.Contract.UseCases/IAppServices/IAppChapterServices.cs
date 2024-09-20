@@ -8,6 +8,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
     {
         Task<BasePaginatedList<object>> SearchChapterAsync(string searchTerm, int pageNumber, int pageSize);
 
+        Task<BasePaginatedList<ChapterAdminViewDto>> SearchChapterForAdminAsync(string searchTerm, int pageNumber, int pageSize);
+
         Task<ChapterAdminViewDto> CreateChapterAsync(ChapterDto chapterDTO);
 
         Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterDto subjectDTO);
@@ -19,7 +21,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         Task<string?> GetChapterNameAsync(string id);
 
-        Task<BasePaginatedList<Chapter?>> GetChaptersAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<ChapterAdminViewDto?>> GetChaptersAsync(int pageNumber, int pageSize);
 
         Task<Chapter?> GetChapterByChapterIdAsync(string id);
 

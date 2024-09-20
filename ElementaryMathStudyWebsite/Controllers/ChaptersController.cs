@@ -14,12 +14,7 @@ namespace ElementaryMathStudyWebsite.Controllers
     [ApiController]
     public class ChaptersController(IAppChapterServices appChapterServices) : ControllerBase
     {
-        //private readonly IAppChapterServices _chapterService;
         private readonly IAppChapterServices _chapterService = appChapterServices;
-        //public ChaptersController(IAppChapterServices chapterService)
-        //{
-        //    _chapterService = chapterService ?? throw new ArgumentNullException(nameof(chapterService));
-        //}
 
         // GET: api/chapters/manager
         // Get chapters for Manager & Admin
@@ -34,12 +29,27 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                BasePaginatedList<Chapter?> chapters = await _chapterService.GetChaptersAsync(pageNumber, pageSize);
-                return Ok(chapters);
+                var chapterAppService = _chapterService as IAppChapterServices;
+                return Ok(await chapterAppService.GetChaptersAsync(pageNumber, pageSize));
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, "Invalid input: " + ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -68,30 +78,6 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "Error: " + ex.Message);
-            }
-        }
-
-        //[Authorize(Policy = "Admin-Content")]
-        [HttpPut("/StatusChange/{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin, Content Manager",
-            Description = "Change chapter status from true to false and otherwise."
-        )]
-        public async Task<IActionResult> ChangeChapterStatus(string id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                var chapter = await _chapterService.ChangeChapterStatusAsync(id);
-                return Ok(chapter);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
             }
         }
 
@@ -140,6 +126,112 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("subject")]
+        [SwaggerOperation(
+           Summary = "Authorization: Admin-Manager",
+           Description = "View all chapters of 1 subject"
+           )]
+        public async Task<IActionResult> GetChapterBySubjectId([Required] string subjectId, int pageNumber = -1, int pageSize = -1)
+        {
+            try
+            {
+                var chapterAppService = _chapterService as IAppChapterServices;
+                return Ok(await chapterAppService.GetChaptersBySubjectIdAsync(pageNumber, pageSize, subjectId));
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
+
+        [HttpGet("search")]
+        [SwaggerOperation(
+            Summary = "Authorization: N/A",
+            Description = "Search chapter by name, pageSize = -1 to have it show all."
+        )]
+        public async Task<IActionResult> SearchChapter([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)
+        {
+            // Validate the search term
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return BadRequest("Search term cannot be empty.");
+            }
+
+            if (searchTerm.Length < 2)
+            {
+                return BadRequest("Search term must be at least 2 characters long.");
+            }
+
+            try
+            {
+                var chapters = await _chapterService.SearchChapterAsync(searchTerm, pageNumber, pageSize);
+                return Ok(chapters);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // Handle case when no subjects are found
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // Handle unexpected errors
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        //[Authorize(Policy = "Admin-Manager")]
+        [HttpGet("search/admin")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Search chapter by name, pageSize = -1 to have it show all."
+        )]
+        public async Task<IActionResult> SearchChapterForAdmin([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)
+        {
+            // Validate the search term
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return BadRequest("Search term cannot be empty.");
+            }
+
+            if (searchTerm.Length < 2)
+            {
+                return BadRequest("Search term must be at least 2 characters long.");
+            }
+
+            try
+            {
+                var chapters = await _chapterService.SearchChapterForAdminAsync(searchTerm, pageNumber, pageSize);
+                return Ok(chapters);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // Handle case when no subjects are found
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // Handle unexpected errors
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
@@ -214,6 +306,30 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        //[Authorize(Policy = "Admin-Content")]
+        [HttpPut("/StatusChange/{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin, Content Manager",
+            Description = "Change chapter status from true to false and otherwise."
+        )]
+        public async Task<IActionResult> ChangeChapterStatus(string id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var chapter = await _chapterService.ChangeChapterStatusAsync(id);
+                return Ok(chapter);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         //[Authorize(Policy = "Admin-Manager")]
         [HttpDelete]
         [Route("{id}")]
@@ -268,103 +384,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
-            }
-        }
-
-        //[HttpGet("subject/{subjectId}")]
-        //public async Task<ActionResult<BasePaginatedList<ChapterDto>>> GetChaptersBySubjectIdAsync(string subjectId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
-        //{
-        //    try
-        //    {
-        //        if (string.IsNullOrWhiteSpace(subjectId))
-        //        {
-        //            return BadRequest("Chapter ID cannot be empty.");
-        //        }
-
-        //        var result = await _chapterService.GetChaptersBySubjectIdAsync(subjectId, pageNumber, pageSize);
-
-        //        if (result == null || result.Items.Count == 0)
-        //        {
-        //            return NotFound("No topics found for the specified chapter.");
-        //        }
-
-        //        return Ok(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Log the exception (use your logging framework)
-        //        // For example: _logger.LogError(ex, "Error occurred while retrieving topics by chapter ID");
-
-        //        return StatusCode(500, "An unexpected error occurred. Please try again later.");
-        //    }
-        //}
-        [HttpGet]
-        [Route("subject")]
-        [SwaggerOperation(
-            Summary = "Authorization: N/A",
-            Description = "View all chapters of 1 subject"
-            )]
-        public async Task<IActionResult> GetChapterBySubjectId([Required] string subjectId, int pageNumber = -1, int pageSize = -1)
-        {
-            try
-            {
-                var chapterAppService = _chapterService as IAppChapterServices;
-                return Ok(await chapterAppService.GetChaptersBySubjectIdAsync(pageNumber, pageSize, subjectId));
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-        }
-
-
-        [HttpGet("search")]
-        [SwaggerOperation(
-            Summary = "Authorization: N/A",
-            Description = "Search chapter by name, pageSize = -1 to have it show all."
-        )]
-        public async Task<IActionResult> SearchChapter([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)
-        {
-            // Validate the search term
-            if (string.IsNullOrWhiteSpace(searchTerm))
-            {
-                return BadRequest("Search term cannot be empty.");
-            }
-
-            if (searchTerm.Length < 2)
-            {
-                return BadRequest("Search term must be at least 2 characters long.");
-            }
-
-            try
-            {
-                var chapters = await _chapterService.SearchChapterAsync(searchTerm, pageNumber, pageSize);
-                return Ok(chapters);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                // Handle case when no subjects are found
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                // Handle unexpected errors
-                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
