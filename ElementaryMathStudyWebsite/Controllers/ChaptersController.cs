@@ -18,7 +18,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/chapters/manager
         // Get chapters for Manager & Admin
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("manager")]
         [SwaggerOperation(
@@ -53,11 +53,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-
-
         // GET: api/chapters/manager/{id}
         // Get chapters for Manager & Admin
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("manager/{id}")]
         [SwaggerOperation(
@@ -129,6 +127,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("subject")]
         [SwaggerOperation(
@@ -199,11 +198,11 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Manager")]
         [HttpGet("search/admin")]
         [SwaggerOperation(
             Summary = "Authorization: Admin-Manager",
-            Description = "Search chapter by name, pageSize = -1 to have it show all."
+            Description = "Search chapter by name for admin, pageSize = -1 to have it show all."
         )]
         public async Task<IActionResult> SearchChapterForAdmin([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)
         {
@@ -237,7 +236,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // POST: api/chapters/
         // Add chapters
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Manager")]
         [HttpPost]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -274,7 +273,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Manager")]
         [HttpPut("{id}")]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -306,7 +305,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        //[Authorize(Policy = "Admin-Content")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut("/StatusChange/{id}")]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -330,7 +329,31 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        //[Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Manager")]
+        [HttpPut("/rollbakChapter/{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "Rollback chapter was deleted"
+        )]
+        public async Task<IActionResult> rollbackChapterDeleted([Required] string id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var chapter = await _chapterService.rollbackChapterDeletedAsync(id);
+                return Ok(chapter);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        [Authorize(Policy = "Admin-Manager")]
         [HttpDelete]
         [Route("{id}")]
         [SwaggerOperation(
@@ -339,53 +362,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> DeleteChapter([Required] string id)
         {
-            //try
-            //{
-            //    var chapterAppService = _chapterService as IAppChapterServices;
-            //    if (await chapterAppService.DeleteChapterAsync(id))
-            //    {
-            //        return Ok("Delete successfully");
-            //    }
-            //    return BadRequest("Delete unsuccessfully");
-            //}
-            //catch (KeyNotFoundException ex)
-            //{
-            //    return NotFound("Error: " + ex.Message);
-            //}
-            //catch (Exception ex)
-            //{
-            //    return StatusCode(500, "Error: " + ex.Message);
-            //}
-            //-----------------------------------------------------------------------
-            //try
-            //{
-            //    var chapterAppService = _chapterService as IAppChapterServices;
-            //    if (await chapterAppService.DeleteChapterAsync(id))
-            //    {
-            //        return Ok("Delete successfully");
-
-            //    }
-            //    return BadRequest("Delete unsuccessfully");
-            //}
-            //catch (BaseException.CoreException coreEx)
-            //{
-            //    // Handle specific CoreException
-            //    return StatusCode(coreEx.StatusCode, new
-            //    {
-            //        code = coreEx.Code,
-            //        message = coreEx.Message,
-            //        additionalData = coreEx.AdditionalData
-            //    });
-            //}
-            //catch (BaseException.BadRequestException badRequestEx)
-            //{
-            //    // Handle specific BadRequestException
-            //    return BadRequest(new
-            //    {
-            //        errorCode = badRequestEx.ErrorDetail.ErrorCode,
-            //        errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-            //    });
-            //}
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -399,6 +375,41 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+        }
+
+        [Authorize(Policy = "Admin-Manager")]
+        [HttpGet]
+        [Route("manager/deleted")]
+        [SwaggerOperation(
+            Summary = "Authorization: Manager & Admin",
+            Description = "View list chapter was deleted for Manager and Admin Role. Insert -1 to get all items"
+        )]
+        public async Task<ActionResult<BasePaginatedList<Chapter?>>> GetChaptersDeleted(int pageNumber = -1, int pageSize = -1)
+        {
+            try
+            {
+                var chapterAppService = _chapterService as IAppChapterServices;
+                return Ok(await chapterAppService.GetChaptersDeletedAsync(pageNumber, pageSize));
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 

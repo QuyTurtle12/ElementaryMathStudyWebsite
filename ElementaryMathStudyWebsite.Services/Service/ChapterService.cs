@@ -249,6 +249,41 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
+        public async Task<ChapterAdminViewDto> rollbackChapterDeletedAsync(string chapterId)
+        {
+            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new KeyNotFoundException($"Chapter with ID '{chapterId}' not found.");
+            if (chapter.DeletedBy == null)
+            {
+                throw new InvalidOperationException("This chapter was rollback");
+            }
+            if (chapter.Status == false)
+            {
+                chapter.Status = true;
+            }
+            chapter.DeletedBy = null;
+            chapter.DeletedTime = null;
+
+            AuditFields(chapter);
+
+            _unitOfWork.GetRepository<Chapter>().Update(chapter);
+            await _unitOfWork.GetRepository<Chapter>().SaveAsync();
+
+            return new ChapterAdminViewDto
+            {
+                Id = chapter.Id,
+                Number = chapter.Number,
+                ChapterName = chapter.ChapterName,
+                Status = chapter.Status,
+                SubjectId = chapter.SubjectId,
+                QuizId = chapter.QuizId,
+                CreatedBy = chapter.CreatedBy,
+                CreatedTime = chapter.CreatedTime,
+                LastUpdatedBy = chapter.LastUpdatedBy,
+                LastUpdatedTime = chapter.LastUpdatedTime,
+                DeletedBy = chapter.DeletedBy,
+                DeletedTime = chapter.DeletedTime
+            };
+        }
 
         // Get one order with all properties
         public async Task<Chapter?> GetChapterByChapterIdAsync(string Id)
@@ -371,6 +406,68 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
                 return new BasePaginatedList<ChapterAdminViewDto?>(chapterView, chapterView.Count, 1, chapterView.Count);
             }
+
+
+
+            // Show with pagination
+            BasePaginatedList<Chapter> paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
+
+            foreach (var chapter in paginatedChapters.Items)
+            {
+                ChapterAdminViewDto dto = new()
+                {
+                    Id = chapter.Id,
+                    Number = chapter.Number,
+                    ChapterName = chapter.ChapterName,
+                    Status = chapter.Status,
+                    SubjectId = chapter.SubjectId,
+                    QuizId = chapter.QuizId,
+                    CreatedBy = chapter.CreatedBy,
+                    CreatedTime = chapter.CreatedTime,
+                    LastUpdatedBy = chapter.LastUpdatedBy,
+                    LastUpdatedTime = chapter.LastUpdatedTime,
+                    DeletedBy = chapter.DeletedBy,
+                    DeletedTime = chapter.DeletedTime,
+                };
+                chapterView.Add(dto);
+            }
+
+            return new BasePaginatedList<ChapterAdminViewDto?>(chapterView, paginatedChapters.TotalItems, pageNumber, pageSize);
+        }
+
+        public async Task<BasePaginatedList<ChapterAdminViewDto?>> GetChaptersDeletedAsync(int pageNumber, int pageSize)
+        {
+            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.Status == false && c.DeletedBy != null && c.DeletedTime != null);
+            List<ChapterAdminViewDto> chapterView = [];
+
+            //If params negative = show all
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                var allChapters = await query.ToListAsync();
+
+                foreach (var chapter in allChapters)
+                {
+                    ChapterAdminViewDto dto = new()
+                    {
+                        Id = chapter.Id,
+                        Number = chapter.Number,
+                        ChapterName = chapter.ChapterName,
+                        Status = chapter.Status,
+                        SubjectId = chapter.SubjectId,
+                        QuizId = chapter.QuizId,
+                        CreatedBy = chapter.CreatedBy,
+                        CreatedTime = chapter.CreatedTime,
+                        LastUpdatedBy = chapter.LastUpdatedBy,
+                        LastUpdatedTime = chapter.LastUpdatedTime,
+                        DeletedBy = chapter.DeletedBy,
+                        DeletedTime = chapter.DeletedTime,
+                    };
+                    chapterView.Add(dto);
+                }
+                return new BasePaginatedList<ChapterAdminViewDto?>(chapterView, chapterView.Count, 1, chapterView.Count);
+            }
+
+
 
             // Show with pagination
             BasePaginatedList<Chapter> paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
