@@ -11,7 +11,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
     public class QuestionService : IAppQuestionServices
     {
         public readonly IGenericRepository<Question> _questionRepository;
+
         public readonly IUnitOfWork _unitOfWork;
+       //------------
 
         public QuestionService(IGenericRepository<Question> questionRepository, IUnitOfWork unitOfWork)
         {
@@ -21,8 +23,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<QuestionViewDto> CreateQuestionAsync(CreateQuestionDto dto)
         {
+            int id = 0;
             var question = new Question
             {
+
                 QuestionContext = dto.QuestionContext,
                 QuizId = dto.QuizId
             };
