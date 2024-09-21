@@ -1,6 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -91,32 +90,32 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        [HttpDelete]
-        [Route("quiz/{id}")]
-        public async Task<IActionResult> DeleteQuiz([Required] string id)
-        {
-            try
-            {
-                bool result = await _quizService.DeleteQuizAsync(id);
-                if (result)
-                {
-                    return NoContent();
-                }
-                return NotFound("Quiz does not exist.");
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error: " + ex.Message);
-            }
-        }
+        //[HttpDelete]
+        //[Route("quiz/{id}")]
+        //public async Task<IActionResult> DeleteQuiz([Required] string id)
+        //{
+        //    try
+        //    {
+        //        bool result = await _quizService.DeleteQuizAsync(id);
+        //        if (result)
+        //        {
+        //            return NoContent();
+        //        }
+        //        return NotFound("Quiz does not exist.");
+        //    }
+        //    catch (ArgumentException ex)
+        //    {
+        //        return BadRequest(ex.Message);
+        //    }
+        //    catch (KeyNotFoundException ex)
+        //    {
+        //        return NotFound(ex.Message);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, "Error: " + ex.Message);
+        //    }
+        //}
 
     }
 }

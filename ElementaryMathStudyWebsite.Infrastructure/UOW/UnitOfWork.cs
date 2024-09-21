@@ -1,8 +1,7 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
-using ElementaryMathStudyWebsite.Infrastructure.UOW;
 
-namespace ElementaryMathStudyWebsite.Repositories.UOW
+namespace ElementaryMathStudyWebsite.Infrastructure.UOW
 {
     public class UnitOfWork(DatabaseContext dbContext) : IUnitOfWork
     {
@@ -55,5 +54,6 @@ namespace ElementaryMathStudyWebsite.Repositories.UOW
         {
             return new GenericRepository<T>(_dbContext);
         }
+
     }
 }

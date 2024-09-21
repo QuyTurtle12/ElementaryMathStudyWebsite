@@ -1,21 +1,21 @@
-﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
-using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+
+using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class QuizService : IQuizService, IAppQuizServices
+    public class QuizService : IAppQuizServices
     {
         private readonly IGenericRepository<Quiz> _quizRepository;
         private readonly IGenericRepository<Chapter> _chapterRepository;
         private readonly IGenericRepository<Topic> _topicRepository;
 
         // constructor
-        public QuizService (IGenericRepository<Quiz> QuizRepository)
+        public QuizService(IGenericRepository<Quiz> QuizRepository)
         {
             _quizRepository = QuizRepository;
         }
@@ -31,11 +31,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             IQueryable<Quiz> query = _quizRepository.Entities;
             IList<QuizViewDto> listQuiz = new List<QuizViewDto>();
-            
+
             var allQuiz = query.ToList();
-            foreach (var quiz  in allQuiz)
+            foreach (var quiz in allQuiz)
             {
-                QuizViewDto dto = new QuizViewDto(quiz.QuizName, quiz.Criteria, quiz.Status);
+                QuizViewDto dto = new QuizViewDto { QuizName = quiz.QuizName, Criteria = quiz.Criteria, Status = quiz.Status };
                 listQuiz.Add(dto);
             }
             return listQuiz;
@@ -45,8 +45,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             Quiz? quiz = await _quizRepository.Entities
                 .Include(q => q.Questions)
-                .Include(q => q.Chapter)  
-                .Include(q => q.Topic)   
+                .Include(q => q.Chapter)
+                .Include(q => q.Topic)
                 .FirstOrDefaultAsync(q => q.Id == quizId);
 
             if (quiz == null) return null;
@@ -55,11 +55,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 QuizName = quiz.QuizName,
                 Criteria = quiz.Criteria,
-                Chapter = quiz.Chapter != null ? new ChapterDto
+                Chapter = quiz.Chapter != null ? new ChapterDetailDto
                 {
                     ChapterName = quiz.Chapter.ChapterName
                 } : null,
-                Topic = quiz.Topic != null ? new TopicDto
+                Topic = quiz.Topic != null ? new TopicDetailDto
                 {
                     TopicName = quiz.Topic.TopicName
                 } : null,
@@ -126,7 +126,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 QuizName = newQuiz.QuizName,
                 Criteria = newQuiz.Criteria,
                 ChapterName = chapter.ChapterName,
-                TopicName = topic.TopicName 
+                TopicName = topic.TopicName
             };
         }
 
@@ -147,6 +147,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             await _quizRepository.SaveAsync();
 
             return true;
+        }
+
+        public async Task<string> GetQuizNameAsync(string quizId)
+        {
+            Quiz? quiz = await _quizRepository.GetByIdAsync(quizId);
+            return quiz?.QuizName ?? string.Empty;
         }
     }
 }

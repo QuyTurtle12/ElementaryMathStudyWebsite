@@ -1,8 +1,8 @@
-﻿using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+﻿using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class RoleService : IRoleService
+    public class RoleService : IAppRoleServices
     {
     }
 }

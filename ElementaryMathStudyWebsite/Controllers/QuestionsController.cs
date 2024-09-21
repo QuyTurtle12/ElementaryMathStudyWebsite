@@ -1,10 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -19,12 +15,8 @@ namespace ElementaryMathStudyWebsite.Controllers
             _questionService = questionService;
         }
 
-        [Authorize(Policy = "Admin-Manager")]
+        // GET api/question
         [HttpGet]
-        [SwaggerOperation(
-            Summary = "Authorization:  Admin-Manager",
-            Description = "View question list"
-            )]
         public async Task<ActionResult<IList<QuestionDto>>> GetAllQuestions()
         {
             var questions = await _questionService.GetAllQuestionsAsync();
@@ -32,12 +24,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET api/question/5
-        [Authorize(Policy = "Admin-Manager")]
         [HttpGet("{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin-Manager",
-            Description = "View question"
-            )]
         public async Task<ActionResult<QuestionDto>> GetQuestionById(int id)
         {
             try
@@ -52,12 +39,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // POST api/question
-        [Authorize(Policy = "Admin-Manager")]
         [HttpPost]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin-Manager",
-            Description = "Create Question"
-            )]
         public async Task<ActionResult<QuestionDto>> CreateQuestion(CreateQuestionDto dto)
         {
             var question = await _questionService.CreateQuestionAsync(dto);
@@ -66,12 +48,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // PUT api/question/5
-        [Authorize(Policy = "Admin-Manager")]
         [HttpPut("{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin-Manager",
-            Description = "Update Question"
-            )]
         public async Task<IActionResult> UpdateQuestion(int id, UpdateQuestionDto dto)
         {
             try
@@ -89,28 +66,23 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // DELETE api/question/5
-        [Authorize(Policy = "Admin-Manager")]
-        [HttpDelete("{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin-Manager",
-            Description = "Delete Question"
-            )]
-        public async Task<IActionResult> DeleteQuestion(int id)
-        {
-            try
-            {
-                var success = await _questionService.DeleteQuestionAsync(id);
-                if (success)
-                {
-                    return NoContent();
-                }
-                return NotFound();
-            }
-            catch (Exception)
-            {
-                return BadRequest();
-            }
-        }
+        //// DELETE api/question/5
+        //[HttpDelete("{id}")]
+        //public async Task<IActionResult> DeleteQuestion(int id)
+        //{
+        //    try
+        //    {
+        //        var success = await _questionService.DeleteQuestionAsync(id);
+        //        if (success)
+        //        {
+        //            return NoContent();
+        //        }
+        //        return NotFound();
+        //    }
+        //    catch (Exception)
+        //    {
+        //        return BadRequest();
+        //    }
+        //}
     }
 }

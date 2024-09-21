@@ -7,7 +7,7 @@ namespace ElementaryMathStudyWebsite.Core.Base
     {
         protected BaseEntity()
         {
-            Id = Guid.NewGuid().ToString();
+            Id = Guid.NewGuid().ToString().ToUpper();
             CreatedTime = LastUpdatedTime = CoreHelper.SystemTimeNow;
         }
 

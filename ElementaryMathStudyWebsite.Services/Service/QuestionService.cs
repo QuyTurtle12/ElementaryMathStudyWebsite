@@ -1,18 +1,22 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Services.IDomainService;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class QuestionService : IQuestionService, IAppQuestionServices
+    public class QuestionService : IAppQuestionServices
     {
         public readonly IGenericRepository<Question> _questionRepository;
+        public readonly IUnitOfWork _unitOfWork;
 
-        public QuestionService(IGenericRepository<Question> questionRepository)
+        public QuestionService(IGenericRepository<Question> questionRepository, IUnitOfWork unitOfWork)
         {
             _questionRepository = questionRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<QuestionViewDto> CreateQuestionAsync(CreateQuestionDto dto)

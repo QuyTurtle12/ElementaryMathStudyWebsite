@@ -1,4 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Base;
+using System.Text.Json.Serialization;
 
 namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 {
@@ -6,25 +7,23 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
     {
         public string SubjectName { get; set; } = string.Empty; // avoid null reference issues
 
-        public double? Price { get; set; }
+        public double Price { get; set; } = 0;
 
-        public bool Status { get; set; }
+        public bool Status { get; set; } = true;
 
         // Navigation properties
+        [JsonIgnore]
         public virtual User? CreatedByUser { get; set; }
+        [JsonIgnore]
         public virtual User? LastUpdatedByUser { get; set; }
+        [JsonIgnore]
         public virtual User? DeletedByUser { get; set; }
+        [JsonIgnore]
         public virtual ICollection<OrderDetail>? Detail { get; set; } // Navigation property, one subject may belong to many order detail
+        [JsonIgnore]
         public virtual ICollection<Chapter>? Chapters { get; set; } // Navigation property, one subject has many chapters
+        [JsonIgnore]
         public virtual ICollection<Progress>? Progresses { get; set; } // Navigation property, one subject has many progresses
 
-        public Subject() { }
-
-        public Subject(string subjectName, double? price)
-        {
-            SubjectName = subjectName;
-            Price = price;
-            Status = true; // Always true when initialized
-        }
     }
 }

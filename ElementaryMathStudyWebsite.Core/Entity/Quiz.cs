@@ -1,4 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Entity;
 using System.Text.Json.Serialization;
 
 namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
@@ -8,7 +9,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public string QuizName { get; set; } = string.Empty;
         public double? Criteria { get; set; } // Mark that need to be achieved to passed
         [JsonIgnore]
-        public bool? Status { get; set; }
+        public bool? Status { get; set; } = true;
 
         // Navigation properties
         [JsonIgnore]
@@ -25,13 +26,8 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public virtual ICollection<Question>? Questions { get; set; } // Navigation property, one quiz has many question
         [JsonIgnore]
         public virtual ICollection<Progress>? Progresses { get; set; } // Navigation property, one quiz can be in many progresses
+        [JsonIgnore]
+        public virtual ICollection<Result>? Results { get; set; } // Navigation property, one quiz can be in many student's result
 
-        public Quiz() { }
-
-        public Quiz(string quizName, double criteria)
-        {
-            QuizName = quizName;
-            Criteria = criteria;
-        }
     }
 }

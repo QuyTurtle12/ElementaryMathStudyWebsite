@@ -1,25 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
+﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
 {
     public class QuizDetailsDto
     {
         public string QuizName { get; set; } = string.Empty;
         public double? Criteria { get; set; }
-        public ChapterDto? Chapter { get; set; }
-        public TopicDto? Topic { get; set; }  
+        public ChapterDetailDto? Chapter { get; set; }
+        public TopicDetailDto? Topic { get; set; }  
         public IList<QuestionDto> Questions { get; set; } = new List<QuestionDto>();
     }
-    public class ChapterDto
+    public class ChapterDetailDto
     {
         public string ChapterName { get; set; } = string.Empty;
     }
 
-    public class TopicDto
+    public class TopicDetailDto
     {
         public string TopicName { get; set; } = string.Empty;
     }

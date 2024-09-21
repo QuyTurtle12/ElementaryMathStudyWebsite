@@ -1,41 +1,46 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 
 namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 {
-    internal class AuthenticationService : IAuthenticationService
+    public class AuthenticationService : IAuthenticationService
     {
-        private readonly DatabaseContext _dbContext;
+        private readonly IGenericRepository<User> _userRepository;
         private readonly ITokenService _tokenService;
 
-        // Constructor for dependency injection
-        public AuthenticationService(DatabaseContext dbContext, ITokenService tokenService)
+        public AuthenticationService(IGenericRepository<User> userRepository, ITokenService tokenService)
         {
-            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
         }
-        public async Task<string> LoginAsync(LoginDto loginDto)
+
+        public async Task<User?> ValidateUserCredentialsAsync(string username, string password)
         {
-            // Retrieve the user from the database based on the provided username
-            var user = await _dbContext.User
-                .FirstOrDefaultAsync(u => u.Username == loginDto.Username);
+            User? user = await _userRepository.FindByConditionWithIncludesAsync(
+                u => u.Username == username,
+                u => u.Role // Include the 'Role' navigation property
+            );
 
-            // Validate the user credentials
-            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password))
+            if (user != null && BCrypt.Net.BCrypt.Verify(password, user.Password))
             {
-                throw new UnauthorizedAccessException("Invalid username or password.");
+                return user;
             }
 
-            // Check if the user's status is active
-            if (user.Status != true)
-            {
-                throw new UnauthorizedAccessException("User account is not active.");
-            }
+            return null;
+        }
 
-            // Generate and return the JWT token
+        public string GenerateJwtToken(User user)
+        {
             return _tokenService.GenerateJwtToken(user);
         }
+
+        public async Task<bool> IsUserActiveAsync(string username)
+        {
+            User? user = await _userRepository.Entities.FirstOrDefaultAsync(u => u.Username == username);
+            return user?.Status ?? false;
+        }
     }
+
 }

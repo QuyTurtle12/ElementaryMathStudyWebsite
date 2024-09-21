@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Contract.UseCases\ElementaryMathStudyWebsite.Contract.UseCases.csproj" />
     <ProjectReference Include="..\ElementaryMathStudyWebsite.Core\ElementaryMathStudyWebsite.Core.csproj" />
   </ItemGroup>
 

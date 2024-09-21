@@ -2,19 +2,17 @@
 {
     public class OrderViewDto
     {
+        public string OrderId { get; set; } = string.Empty;
+
+        public string CustomerId { get; set; } = string.Empty;
+
         public string CustomerName { get; set; } = string.Empty;
 
-        public double? TotalPrice { get; set; }
+        public double TotalPrice { get; set; } = 0;
 
         public DateTimeOffset? OrderDate { get; set; }
 
-        public OrderViewDto() { }
+        public IEnumerable<OrderDetailViewDto>? details {  get; set; } 
 
-        public OrderViewDto(string customerName, double? totalPrice, DateTimeOffset? orderDate)
-        {
-            CustomerName = customerName;
-            TotalPrice = totalPrice;
-            OrderDate = orderDate;
-        }
     }
 }
