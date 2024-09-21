@@ -13,16 +13,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
 {
     public class VnPayService : IVnPayService
     {
+        private readonly IConfiguration _config;
         private readonly IAppUserServices _userService;
         private readonly IUnitOfWork _unitOfWork;
 
 
-        public VnPayService(IAppUserServices appUserService, IUnitOfWork unitOfWork)
+        public VnPayService(IConfiguration config, IAppUserServices appUserService, IUnitOfWork unitOfWork)
         {
+            _config = config;
             _userService = appUserService;
             _unitOfWork = unitOfWork;
         }
-        public async Task<string> CreatePaymentUrl(HttpContext context)
+        public async Task<VnPayUrl> CreatePaymentUrl(HttpContext context)
         {
             // Get logged in User
             User currentUser = await _userService.GetCurrentUserAsync();
@@ -64,7 +66,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             var paymentUrl = vnpay.CreateRequestUrl(VnPayConfig.BaseUrl, VnPayConfig.HashSecret);
 
-            return paymentUrl;
+            return new VnPayUrl
+            {
+                Url = paymentUrl,
+            };
         }
 
         public VnPayResponseDto PaymentExecute(IQueryCollection collections)
