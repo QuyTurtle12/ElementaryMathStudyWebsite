@@ -30,8 +30,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var optionAppService = _optionService as IAppOptionServices;
-                return Ok(await optionAppService.AddOption(dto));
+                return Ok(await _optionService.AddOption(dto));
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -67,8 +66,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var optionAppService = _optionService as IAppOptionServices;
-                if (await optionAppService.DeleteOption(id))
+                if (await _optionService.DeleteOption(id))
                 {
                     return Ok("Delete successfully");
 
@@ -97,40 +95,40 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
 
-        // GET: api/options/raw/{id}
-        [Authorize(Policy = "Admin-Content")]
-        [HttpGet]
-        [Route("raw/{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin & Content Manager",
-            Description = "View an option (of a question)"
-            )]
-        public async Task<IActionResult> GetOptionById([Required] string id)
-        {
-            try
-            {
-                return Ok(await _optionService.GetOptionById(id));
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-        }
+        //// GET: api/options/raw/{id}
+        //[Authorize(Policy = "Admin-Content")]
+        //[HttpGet]
+        //[Route("raw/{id}")]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Admin & Content Manager",
+        //    Description = "View an option (of a question)"
+        //    )]
+        //public async Task<IActionResult> GetOptionById([Required] string id)
+        //{
+        //    try
+        //    {
+        //        return Ok(await _optionService.GetOptionById(id));
+        //    }
+        //    catch (BaseException.CoreException coreEx)
+        //    {
+        //        // Handle specific CoreException
+        //        return StatusCode(coreEx.StatusCode, new
+        //        {
+        //            code = coreEx.Code,
+        //            message = coreEx.Message,
+        //            additionalData = coreEx.AdditionalData
+        //        });
+        //    }
+        //    catch (BaseException.BadRequestException badRequestEx)
+        //    {
+        //        // Handle specific BadRequestException
+        //        return BadRequest(new
+        //        {
+        //            errorCode = badRequestEx.ErrorDetail.ErrorCode,
+        //            errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+        //        });
+        //    }
+        //}
 
         // GET: api/options
         [HttpGet]
@@ -169,39 +167,39 @@ namespace ElementaryMathStudyWebsite.Controllers
 
 
         // GET: api/options/raw
-        [Authorize(Policy = "Admin-Content")]
-        [HttpGet]
-        [Route("raw")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin & Content Manager",
-            Description = "View all options + properties (of a question)"
-            )]
-        public async Task<IActionResult> GetOptions(int pageNumber = -1, int pageSize = -1)
-        {
-            try
-            {
-                return Ok(await _optionService.GetOptions(pageNumber, pageSize));
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-        }
+        //[Authorize(Policy = "Admin-Content")]
+        //[HttpGet]
+        //[Route("raw")]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Admin & Content Manager",
+        //    Description = "View all options + properties (of a question)"
+        //    )]
+        //public async Task<IActionResult> GetOptions(int pageNumber = -1, int pageSize = -1)
+        //{
+        //    try
+        //    {
+        //        return Ok(await _optionService.GetOptions(pageNumber, pageSize));
+        //    }
+        //    catch (BaseException.CoreException coreEx)
+        //    {
+        //        // Handle specific CoreException
+        //        return StatusCode(coreEx.StatusCode, new
+        //        {
+        //            code = coreEx.Code,
+        //            message = coreEx.Message,
+        //            additionalData = coreEx.AdditionalData
+        //        });
+        //    }
+        //    catch (BaseException.BadRequestException badRequestEx)
+        //    {
+        //        // Handle specific BadRequestException
+        //        return BadRequest(new
+        //        {
+        //            errorCode = badRequestEx.ErrorDetail.ErrorCode,
+        //            errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+        //        });
+        //    }
+        //}
 
         // PUT: api/options/{id}
         [Authorize(Policy = "Admin-Content")]
@@ -215,8 +213,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var optionAppService = _optionService as IAppOptionServices;
-                return Ok(await optionAppService.UpdateOption(id, dto));
+                return Ok(await _optionService.UpdateOption(id, dto));
             }
             catch (BaseException.CoreException coreEx)
             {

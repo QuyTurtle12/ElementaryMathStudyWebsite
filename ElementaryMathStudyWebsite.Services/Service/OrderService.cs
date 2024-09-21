@@ -5,6 +5,8 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Utils;
+using ElementaryMathStudyWebsite.Core.Store;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -25,64 +27,188 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Add new order to database
-        public async Task<string> AddOrderAsync(OrderCreateDto dto)
+        public async Task<OrderViewDto> AddItemsToCart(CartCreateDto cartCreateDto)
         {
-                // General Validation for each Subject-Student pair
-                foreach (var subjectStudent in dto.SubjectStudents)
+
+            // Get logged in User
+            User currentUser = await _userService.GetCurrentUserAsync();
+
+            IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == currentUser.Id && o.Status == PaymentStatusHelper.CART.ToString());
+
+            if (query.Count() > 0) throw new BaseException.BadRequestException(
+                "invalid argument",
+                "You already have something in your cart, please discard your current cart or proceed to checkout"
+                );
+
+            // General Validation for each Subject-Student pair
+            foreach (var subjectStudent in cartCreateDto.SubjectStudents)
+            {
+                string? error = await IsGenerallyValidatedAsync(subjectStudent.SubjectId, subjectStudent.StudentId, cartCreateDto);
+                if (!string.IsNullOrWhiteSpace(error)) throw new BaseException.BadRequestException(
+                    "invalid_argument", // Error code
+                    error // Error message
+                    );
+            }
+
+            // Calculate total price
+            double totalPrice = await CalculateTotalPrice(cartCreateDto);
+
+            Order order = new()
+            {
+                CustomerId = currentUser.Id,
+                TotalPrice = totalPrice,
+                Status = PaymentStatusHelper.CART.ToString()
+            };
+
+            // Audit field in new order
+            _userService.AuditFields(order, true);
+
+            await _unitOfWork.GetRepository<Order>().InsertAsync(order);
+            await _unitOfWork.SaveAsync();
+
+            bool result = true; // Check create order detail result
+
+            List<OrderDetailViewDto> detailDtos = new();
+
+            // Add order details for each subject-student pair
+            foreach (var subjectStudent in cartCreateDto.SubjectStudents)
+            {
+                OrderDetail orderDetail = new()
                 {
-                    string? error = await IsGenerallyValidatedAsync(subjectStudent.SubjectId, subjectStudent.StudentId, dto);
-                    if (!string.IsNullOrWhiteSpace(error)) throw new BaseException.BadRequestException(
-                        "invalid_argument", // Error code
-                        error // Error message
-                        );
-                }
+                    OrderId = order.Id,
+                    SubjectId = subjectStudent.SubjectId,
+                    StudentId = subjectStudent.StudentId
+                };
+                string? studentName = await _userService.GetUserNameAsync(orderDetail.StudentId);
+                string? subjectName = await _subjectService.GetSubjectNameAsync(orderDetail.SubjectId);
 
-                // Calculate total price
-                double totalPrice = await CalculateTotalPrice(dto);
-
-                // Get logged in User
-                User currentUser = await _userService.GetCurrentUserAsync();
-
-                Order order = new()
+                OrderDetailViewDto dto = new()
                 {
-                    CustomerId = currentUser.Id,
-                    TotalPrice = totalPrice,
+                    SubjectId = subjectStudent.SubjectId,
+                    StudentId = subjectStudent.StudentId,
+                    StudentName = studentName,
+                    SubjectName = subjectName
                 };
 
-                // Audit field in new order
-                _userService.AuditFields(order, true);
+                detailDtos.Add(dto);
 
-                await _unitOfWork.GetRepository<Order>().InsertAsync(order);
+                // Add order detail in database
+                bool IsAddedNewOrderDetail = await _orderDetailService.AddOrderDetailAsync(orderDetail);
+                result = IsAddedNewOrderDetail;
+            }
+
+            if (result is false)
+            {
+                throw new BaseException.CoreException("server_error", "Failed to create order detail");
+            }
+
+            return new OrderViewDto
+            {
+                OrderId = order.Id,
+                CustomerId = currentUser.Id,
+                CustomerName = currentUser.FullName,
+                TotalPrice = order.TotalPrice,
+                Status = order.Status,
+                OrderDate = order.CreatedTime,
+                Details = detailDtos
+            }; // Show that create order process is completed
+        }
+
+        public async Task<bool> RemoveCart()
+        {
+            // Get logged in User
+            User currentUser = await _userService.GetCurrentUserAsync();
+
+            IQueryable<Order> orderQuery = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == currentUser.Id && o.Status == PaymentStatusHelper.CART.ToString());
+
+            if (orderQuery.Count() <= 0) throw new BaseException.BadRequestException(
+                "invalid argument",
+                "You have no items in your cart"
+            );
+
+            var cart = orderQuery.First();
+
+            IQueryable<OrderDetail> orderDetailQuery = _unitOfWork.GetRepository<OrderDetail>().Entities.Where(od => od.OrderId == cart.Id);
+
+            foreach (var orderDetail in orderDetailQuery)
+            {
+                _unitOfWork.GetRepository<OrderDetail>().Delete(orderDetail);
+            }
+
+            _unitOfWork.GetRepository<Order>().Delete(cart);
+
+            await _unitOfWork.SaveAsync();
+            return true;
+        }
+
+        public async Task<OrderViewDto> ViewCart()
+        {
+            // Get logged in User
+            User currentUser = await _userService.GetCurrentUserAsync();
+
+            IQueryable<Order> orderQuery = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == currentUser.Id && o.Status == PaymentStatusHelper.CART.ToString());
+
+            if (orderQuery.Count() <= 0) throw new BaseException.BadRequestException(
+                "invalid argument",
+                "You have no items in your cart"
+            );
+
+            var cart = orderQuery.First();
+            IQueryable<OrderDetail> orderDetailQuery = _unitOfWork.GetRepository<OrderDetail>().Entities.Where(o => o.OrderId == cart.Id);
+            List<OrderDetailViewDto> detailDtos = new();
+
+            foreach (var orderDetail in orderDetailQuery)
+            {
+                string? studentName = await _userService.GetUserNameAsync(orderDetail.StudentId);
+                string? subjectName = await _subjectService.GetSubjectNameAsync(orderDetail.SubjectId);
+
+                OrderDetailViewDto dto = new()
+                {
+                    SubjectId = orderDetail.SubjectId,
+                    StudentId = orderDetail.StudentId,
+                    StudentName = studentName,
+                    SubjectName = subjectName
+                };
+
+                detailDtos.Add(dto);
+            }
+
+            return new OrderViewDto
+            {
+                OrderId = cart.Id,
+                CustomerId = currentUser.Id,
+                CustomerName = currentUser.FullName,
+                TotalPrice = cart.TotalPrice,
+                PaymentMethod = cart.PaymentMethod,
+                Status = cart.Status,
+                OrderDate = cart.CreatedTime,
+                Details = detailDtos,
+            };
+        }
+
+        public async Task<string> HandleVnPayCallback(string orderId, bool isSuccess)
+        {
+            Order? order = await _unitOfWork.GetRepository<Order>().GetByIdAsync(orderId);
+            if (order == null)
+            {
+                return "Unsuccessfully";
+            }
+            if (isSuccess)
+            {
+                order.Status = PaymentStatusHelper.SUCCESS.ToString();
+                order.LastUpdatedTime = CoreHelper.SystemTimeNow;
                 await _unitOfWork.SaveAsync();
+                return "Successfully";
+            }
 
-                bool result = true; // Check create order detail result
+            order.Status = PaymentStatusHelper.FAILED.ToString();
+            await _unitOfWork.SaveAsync();
 
-                // Add order details for each subject-student pair
-                foreach (var subjectStudent in dto.SubjectStudents)
-                {
-                    OrderDetail orderDetail = new()
-                    {
-                        OrderId = order.Id,
-                        SubjectId = subjectStudent.SubjectId,
-                        StudentId = subjectStudent.StudentId
-                    };
-
-                    // Add order detail in database
-                    bool IsAddedNewOrderDetail = await _orderDetailService.AddOrderDetailAsync(orderDetail);
-                    result = IsAddedNewOrderDetail;
-                }
-
-                if (result is false)
-                {
-                    throw new BaseException.CoreException("server_error", "Failed to create order detail");
-                }
-
-                return order.Id; // Show that create order process is completed
-
+            return "Failed to purchase";
         }
 
         // Calculate total price for order
-        private async Task<double> CalculateTotalPrice(OrderCreateDto dto)
+        private async Task<double> CalculateTotalPrice(CartCreateDto dto)
         {
             try
             {
@@ -139,7 +265,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 CustomerName = customerName,
                 TotalPrice = order.TotalPrice,
                 OrderDate = order.CreatedTime,
-                details = detailList?.Items
+                Details = detailList?.Items
             };
 
             return dto;
@@ -159,7 +285,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IList<OrderViewDto> orderDtos = new List<OrderViewDto>();
             var allOrders = await query.ToListAsync(); // Asynchronously fetch all orders
                                                        // Map orders to OrderViewDto
-            
+
             foreach (var order in allOrders)
             {
                 // Get list of detail info about an order
@@ -174,7 +300,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     CustomerName = customerName,
                     TotalPrice = order.TotalPrice,
                     OrderDate = order.CreatedTime,
-                    details = detailList?.Items
+                    Details = detailList?.Items
                 };
 
                 orderDtos.Add(dto);
@@ -225,7 +351,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         CustomerName = customerName,
                         OrderDate = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
                         TotalPrice = order?.TotalPrice ?? 0,
-                        details = detailList?.Items,
+                        Details = detailList?.Items,
                         CreatedBy = order?.CreatedBy ?? string.Empty,
                         CreatorName = creator?.FullName ?? string.Empty,
                         CreatorPhone = creator?.PhoneNumber ?? string.Empty,
@@ -252,7 +378,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
 
         // General Validation
-        public async Task<string?> IsGenerallyValidatedAsync(string subjectId, string studentId, OrderCreateDto dto)
+        public async Task<string?> IsGenerallyValidatedAsync(string subjectId, string studentId, CartCreateDto dto)
         {
 
             // Get logged in User
@@ -302,62 +428,62 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<OrderViewDto>?> searchOrderDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter)
         {
 
-                // Get all orders from database
-                IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities;
+            // Get all orders from database
+            IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities;
 
-                var orders = await query.ToListAsync();
-                // Modified variable
-                filter = filter.Trim().ToLower() ?? string.Empty;
-                firstInputValue = firstInputValue?.Trim() ?? null;
-                secondInputValue = secondInputValue?.Trim() ?? null;
+            var orders = await query.ToListAsync();
+            // Modified variable
+            filter = filter.Trim().ToLower() ?? string.Empty;
+            firstInputValue = firstInputValue?.Trim() ?? null;
+            secondInputValue = secondInputValue?.Trim() ?? null;
 
-                // Create an empty list
-                BasePaginatedList<OrderViewDto>? result = null;
+            // Create an empty list
+            BasePaginatedList<OrderViewDto>? result = null;
 
-                // variable for using only one input
-                string? inputValue = string.Empty;
+            // variable for using only one input
+            string? inputValue = string.Empty;
 
-                // Choosing the input that not null
-                if (!string.IsNullOrWhiteSpace(firstInputValue) || !string.IsNullOrWhiteSpace(secondInputValue))
-                {
-                    // If the first value not null then choose the first value else the second value
-                    inputValue = firstInputValue ?? secondInputValue;
-                }
+            // Choosing the input that not null
+            if (!string.IsNullOrWhiteSpace(firstInputValue) || !string.IsNullOrWhiteSpace(secondInputValue))
+            {
+                // If the first value not null then choose the first value else the second value
+                inputValue = firstInputValue ?? secondInputValue;
+            }
 
-                switch (filter)
-                {
-                    //case "customer id": // Search orders by customer id
-                    //    result = await CustomerIdFilterAsync(inputValue, orders, pageNumber, pageSize);
-                    //    break;
-                    case "customer email": // Search orders by customer email
-                        result = await CustomerEmailFilterAsync(inputValue, orders, pageNumber, pageSize);
-                        break;
-                    case "customer phone": // Search orders by customer phone
-                        result = await CustomerPhoneFilterAsync(inputValue, orders, pageNumber, pageSize);
-                        break;
-                    case "order date": // Search orders by order date
-                        result = await DateFilterAsync(firstInputValue, secondInputValue, orders, pageNumber, pageSize);
-                        break;
-                    case "total price": // Search orders by total price
+            switch (filter)
+            {
+                //case "customer id": // Search orders by customer id
+                //    result = await CustomerIdFilterAsync(inputValue, orders, pageNumber, pageSize);
+                //    break;
+                case "customer email": // Search orders by customer email
+                    result = await CustomerEmailFilterAsync(inputValue, orders, pageNumber, pageSize);
+                    break;
+                case "customer phone": // Search orders by customer phone
+                    result = await CustomerPhoneFilterAsync(inputValue, orders, pageNumber, pageSize);
+                    break;
+                case "order date": // Search orders by order date
+                    result = await DateFilterAsync(firstInputValue, secondInputValue, orders, pageNumber, pageSize);
+                    break;
+                case "total price": // Search orders by total price
 
-                        // Validation
-                        if (string.IsNullOrWhiteSpace(firstInputValue)) firstInputValue = "0";
-                        if (string.IsNullOrWhiteSpace(secondInputValue))
-                        {
-                            throw new BaseException.BadRequestException(
-                            "invalid_max_amount", // Error Code
-                            "Invalid maximum total amount. Please provide a valid non-negative number."  // Error Message
-                            );
-                        }
+                    // Validation
+                    if (string.IsNullOrWhiteSpace(firstInputValue)) firstInputValue = "0";
+                    if (string.IsNullOrWhiteSpace(secondInputValue))
+                    {
+                        throw new BaseException.BadRequestException(
+                        "invalid_max_amount", // Error Code
+                        "Invalid maximum total amount. Please provide a valid non-negative number."  // Error Message
+                        );
+                    }
 
-                        result = await GetTotalPriceInRangeAsync(Double.Parse(firstInputValue), Double.Parse(secondInputValue), orders, pageNumber, pageSize);
-                        break;
-                    default:
-                        throw new BaseException.BadRequestException("invalid_argument", $"Invalid {nameof(filter)}: {filter}. Allowed filters are 'customer email', 'customer phone', 'order date', 'total price'.");
-                }
+                    result = await GetTotalPriceInRangeAsync(Double.Parse(firstInputValue), Double.Parse(secondInputValue), orders, pageNumber, pageSize);
+                    break;
+                default:
+                    throw new BaseException.BadRequestException("invalid_argument", $"Invalid {nameof(filter)}: {filter}. Allowed filters are 'customer email', 'customer phone', 'order date', 'total price'.");
+            }
 
-                // Retrieve the paginated items from the PaginatedList.
-                return result;
+            // Retrieve the paginated items from the PaginatedList.
+            return result;
         }
 
         // Get order dto list by customer email
@@ -388,7 +514,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                                 CustomerName = customerName,
                                 TotalPrice = order.TotalPrice,
                                 OrderDate = order.CreatedTime,
-                                details = detailList?.Items
+                                Details = detailList?.Items
                             };
                             result.Add(dto);
                         }
@@ -429,7 +555,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                                 CustomerName = customerName,
                                 TotalPrice = order.TotalPrice,
                                 OrderDate = order.CreatedTime,
-                                details = detailList?.Items
+                                Details = detailList?.Items
                             };
                             result.Add(dto);
                         }
@@ -443,7 +569,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Get order list by order date
-        public async Task<BasePaginatedList<OrderViewDto>> DateFilterAsync(string? startDate, string? endDate, IEnumerable<Order> orders, int pageNumber, int pageSize) 
+        public async Task<BasePaginatedList<OrderViewDto>> DateFilterAsync(string? startDate, string? endDate, IEnumerable<Order> orders, int pageNumber, int pageSize)
         {
             // Define the date format
             string dateFormat = "dd/MM/yyyy";
@@ -505,7 +631,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     CustomerName = customerName,
                     TotalPrice = order.TotalPrice,
                     OrderDate = order.CreatedTime,
-                    details = detailList?.Items
+                    Details = detailList?.Items
                 };
                 orderDtos.Add(dto);
             }
@@ -549,7 +675,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     CustomerName = customerName,
                     TotalPrice = order.TotalPrice,
                     OrderDate = order.CreatedTime,
-                    details = detailList?.Items
+                    Details = detailList?.Items
                 };
                 orderDtos.Add(dto);
             }

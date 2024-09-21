@@ -91,7 +91,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Validate if the subject has been assigned before 
-        public async Task<bool> IsValidStudentSubjectBeforeCreateOrder(OrderCreateDto orderCreateDto)
+        public async Task<bool> IsValidStudentSubjectBeforeCreateOrder(CartCreateDto orderCreateDto)
         {
             // Check for duplicates in the SubjectStudents list
             var uniqueSubjectStudents = orderCreateDto.SubjectStudents

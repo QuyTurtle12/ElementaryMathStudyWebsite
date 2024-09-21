@@ -9,8 +9,17 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         // Search Order
         Task<BasePaginatedList<OrderViewDto>?> searchOrderDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter);
 
-        // Add Order to database
-        Task<string> AddOrderAsync(OrderCreateDto dto);
+        // Add the cart to database
+        Task<OrderViewDto> AddItemsToCart(CartCreateDto dto);
+
+        // Remove the current cart of the user
+        Task<bool> RemoveCart();
+        
+        // View the current items in the user's cart
+        Task<OrderViewDto> ViewCart();
+
+        // Handle the database after the callback
+        Task<string> HandleVnPayCallback(string orderId, bool isSuccess);
 
         // Get Order list for general user
         Task<BasePaginatedList<OrderViewDto>?> GetOrderDtosAsync(int pageNumber, int pageSize);
@@ -22,7 +31,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<bool> IsValidOrderAsync(string orderId);
 
         // General Validation
-        Task<string?> IsGenerallyValidatedAsync(string subjectId, string studentId, OrderCreateDto dto);
+        Task<string?> IsGenerallyValidatedAsync(string subjectId, string studentId, CartCreateDto dto);
 
         Task<BasePaginatedList<OrderAdminViewDto>?> GetOrderAdminDtosAsync(int pageNumber, int pageSize);
 
