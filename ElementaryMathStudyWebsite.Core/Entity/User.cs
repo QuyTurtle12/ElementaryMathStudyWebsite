@@ -11,7 +11,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public string? Gender { get; set; } // Male, Female, Others
 
-        public string Email { get; set; } = string.Empty;
+        public string? Email { get; set; } = string.Empty;
 
         public string RoleId { get; set; } = string.Empty;
 
