@@ -122,6 +122,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         [HttpGet]
         [Route("get-children")]
+        [Authorize(Policy = "Parent")]
         [SwaggerOperation(
             Summary = "Authorization: Parent",
             Description = "Get page with all children of logged in parent"
