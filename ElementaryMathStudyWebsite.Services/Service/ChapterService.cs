@@ -152,7 +152,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterDto chapterDTO)
         {
-            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
+            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("Not Found", "Chapter with ID not found");
 
             // Check if another subject with the same name already exists
             var existingSubject = await _unitOfWork.GetRepository<Chapter>().Entities
@@ -237,7 +237,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             
             var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
             var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
-            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new KeyNotFoundException($"Chapter with ID '{chapterId}' not found.");
+            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new BaseException.BadRequestException("Not Found", "Chapter ID not found");
             if (chapter.DeletedBy != null)
             {
                 throw new InvalidOperationException("This chapter was deleted");
@@ -286,7 +286,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<ChapterAdminDelete> rollbackChapterDeletedAsync(string chapterId)
         {
-            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new KeyNotFoundException($"Chapter with ID '{chapterId}' not found.");
+            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new BaseException.BadRequestException("Not Found", "Chapter ID not found");
             if (chapter.DeletedBy == null)
             {
                 throw new InvalidOperationException("This chapter was rollback");
@@ -388,7 +388,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
         public async Task<BasePaginatedList<ChapterViewDto>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId)
         {
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(subjectId) ?? throw new KeyNotFoundException("Invalid subject ID");
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(subjectId) ?? throw new BaseException.BadRequestException("Not Found", "Subject ID not found");
 
             IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.SubjectId == subjectId && c.DeletedBy == null);
 
@@ -673,7 +673,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Change subject status and set LastUpdatedTime to current time
         public async Task<ChapterAdminViewDto> ChangeChapterStatusAsync(string id)
         {
-            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Chapter with ID '{id}' not found.");
+            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("Not Found", "Chapter ID not found"); 
             chapter.Status = !chapter.Status;
             //subject.LastUpdatedTime = DateTime.UtcNow;
 
