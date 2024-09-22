@@ -7,10 +7,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
 using ElementaryMathStudyWebsite.Core.Base;
 using Swashbuckle.AspNetCore.Annotations;
-using ElementaryMathStudyWebsite.Services.Service;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
-using ElementaryMathStudyWebsite.Services.Service.Authentication;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -81,6 +78,48 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (ArgumentException ex)
             {
                 return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet]
+        [Route("get-children")]
+        [SwaggerOperation(
+            Summary = "Authorization: Parent",
+            Description = "Get page with all children of logged in parent"
+            )]
+        public async Task<IActionResult> GetChildren([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            // Get the token from the Authorization header
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+
+            // Extract user ID from the token
+            var userId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                var paginatedUsers = await _userServices.GetChildrenOfParentAsync(userId.ToString(), pageNumber, pageSize);
+
+                // Map users to UserResponseDto
+                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+
+                // Create a new paginated list of UserResponseDto
+                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                    userDtos.ToList(),
+                    paginatedUsers.TotalItems,
+                    paginatedUsers.CurrentPage,
+                    paginatedUsers.PageSize
+                );
+
+                return Ok(paginatedUserDtos);
             }
             catch (Exception ex)
             {

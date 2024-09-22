@@ -327,12 +327,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (pageSize <= 0) pageSize = 10; // Set a default page size if invalid
 
             // Define the condition to find children of the given parent
-            Expression<Func<User, bool>> condition = user => user.CreatedBy == parentId;
+            Expression<Func<User, bool>> condition = user => user.CreatedBy == parentId && user.Id != parentId;
+
 
             // Define includes to eagerly load the Role navigation property, if needed
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-        user => user.Role // Include the Role navigation property if necessary
+                user => user.Role // Include the Role navigation property if necessary
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
