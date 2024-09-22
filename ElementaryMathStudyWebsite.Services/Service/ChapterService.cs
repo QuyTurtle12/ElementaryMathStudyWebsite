@@ -28,25 +28,42 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         private void ValidateChapter(ChapterDto chapterDTO)
         {
-            if (chapterDTO.Number == null)
-            {
-                throw new ArgumentException("Number is required and cannot be empty.");
-            }
+            //if (chapterDTO.Number == null)
+            //{
+            //    throw new ArgumentException("Number is required and cannot be empty.");
+            //}
             if (string.IsNullOrWhiteSpace(chapterDTO.ChapterName))
             {
                 throw new ArgumentException("Chapter name is required and cannot be empty.");
             }
-            if (!chapterDTO.Status)
-            {
-                throw new ArgumentException("Status is required and cannot be false.");
-            }
+            //if (!chapterDTO.Status)
+            //{
+            //    throw new ArgumentException("Status is required and cannot be false.");
+            //}
             if (string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
             {
                 throw new ArgumentException("Subject Id is required and cannot be empty.");
             }
         }
 
+        public async Task<int?> CountChaptersInSubjectAsync(string subjectId)
+        {
+            if (string.IsNullOrWhiteSpace(subjectId))
+            {
+                throw new ArgumentException("Subject ID cannot be null or empty", nameof(subjectId));
+            }
 
+            return await _unitOfWork.GetRepository<Chapter>().Entities
+                .Where(c => c.SubjectId == subjectId)
+                .CountAsync();
+        }
+        public async Task<bool> IsQuizIdInChaptersAsync(string quizId)
+        {
+            var quizExists = await _unitOfWork.GetRepository<Chapter>().Entities
+                .AnyAsync(c => c.QuizId == quizId);
+
+            return quizExists;
+        }
         public async Task<ChapterAdminViewDto> CreateChapterAsync(ChapterDto chapterDTO)
         {
             ValidateChapter(chapterDTO);
@@ -72,6 +89,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
             }
 
+
+
             if (!string.IsNullOrWhiteSpace(chapterDTO.QuizId))
             {
                 var quizExists = await _unitOfWork.GetRepository<Quiz>().Entities
@@ -81,13 +100,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     throw new ArgumentException($"Quiz with Id '{chapterDTO.QuizId}' does not exist.");
                 }
+                var isQuizId = await IsQuizIdInChaptersAsync(chapterDTO.QuizId);
+                if (isQuizId)
+                {
+                    throw new ArgumentException($"Subject with Id '{chapterDTO.SubjectId}' was used.");
+                }
             }
+
+            var chapterCount = await CountChaptersInSubjectAsync(chapterDTO.SubjectId);
 
             var chapter = new Chapter
             {
-                Number = chapterDTO.Number,
+                Number = chapterCount + 1,
                 ChapterName = chapterDTO.ChapterName,
-                Status = chapterDTO.Status,
+                Status = true,
                 SubjectId = chapterDTO.SubjectId,
                 QuizId = chapterDTO.QuizId,
                 //CreatedTime = DateTime.UtcNow,
@@ -95,10 +121,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
 
             AuditFields(chapter, isCreating: true);
-
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+            var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+            User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
+            User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
             _unitOfWork.GetRepository<Chapter>().Insert(chapter);
             await _unitOfWork.GetRepository<Chapter>().SaveAsync();
-
             return new ChapterAdminViewDto
             {
                 Id = chapter.Id,
@@ -106,13 +134,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 ChapterName = chapter.ChapterName,
                 Status = chapter.Status,
                 SubjectId = chapter.SubjectId,
+                SubjectName = subject?.SubjectName ?? string.Empty,
                 QuizId = chapter.QuizId,
+                QuizName = quiz?.QuizName ?? string.Empty,
                 CreatedBy = chapter.CreatedBy,
                 CreatedTime = chapter.CreatedTime,
+                CreatorName = creator?.FullName ?? string.Empty,
+                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
                 LastUpdatedBy = chapter.LastUpdatedBy,
                 LastUpdatedTime = chapter.LastUpdatedTime,
-                DeletedBy = chapter.DeletedBy,
-                DeletedTime = chapter.DeletedTime
+                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                //DeletedBy = chapter.DeletedBy,
+                //DeletedTime = chapter.DeletedTime
             };
         }
 
@@ -150,19 +184,27 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     throw new ArgumentException($"Quiz with Id '{chapterDTO.QuizId}' does not exist.");
                 }
+                //var isQuizId = await IsQuizIdInChaptersAsync(chapterDTO.QuizId);
+                //if (isQuizId)
+                //{
+                //    throw new ArgumentException($"Subject with Id '{chapterDTO.SubjectId}' was used.");
+                //}
             }
 
             ValidateChapter(chapterDTO);
 
-            chapter.Number = chapterDTO.Number;
             chapter.ChapterName = chapterDTO.ChapterName;
-            chapter.Status = chapterDTO.Status;
+            //chapter.Status = chapterDTO.Status;
             chapter.SubjectId = chapterDTO.SubjectId;
             chapter.QuizId = chapterDTO.QuizId;
             //chapter.LastUpdatedTime = DateTime.UtcNow;
 
             AuditFields(chapter, isCreating: false);
 
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+            var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+            User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
+            User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
             _unitOfWork.GetRepository<Chapter>().Update(chapter);
             await _unitOfWork.GetRepository<Chapter>().SaveAsync();
 
@@ -173,45 +215,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 ChapterName = chapter.ChapterName,
                 Status = chapter.Status,
                 SubjectId = chapter.SubjectId,
+                SubjectName = subject?.SubjectName ?? string.Empty,
                 QuizId = chapter.QuizId,
+                QuizName = quiz?.QuizName ?? string.Empty,
                 CreatedBy = chapter.CreatedBy,
                 CreatedTime = chapter.CreatedTime,
+                CreatorName = creator?.FullName ?? string.Empty,
+                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
                 LastUpdatedBy = chapter.LastUpdatedBy,
                 LastUpdatedTime = chapter.LastUpdatedTime,
-                DeletedBy = chapter.DeletedBy,
-                DeletedTime = chapter.DeletedTime
+                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                //DeletedBy = chapter.DeletedBy,
+                //DeletedTime = chapter.DeletedTime
             };
         }
 
-        //public bool IsValidChapter(string chapterId)
-        //{
-        //    Chapter? chapter = _unitOfWork.GetRepository<Chapter>().GetById(chapterId);
 
-        //    return (chapter is not null && chapter.DeletedBy is null);
-        //}
-
-        public async Task<ChapterAdminViewDto> DeleteChapterAsync(string chapterId)
+        public async Task<ChapterAdminDelete> DeleteChapterAsync(string chapterId)
         {
-            //var chapter = await _chapterRepository.GetByIdAsync(chapterId) ?? throw new KeyNotFoundException("Invalid chapter ID");
-
-            //await _chapterRepository.DeleteAsync(chapterId);
-            //await _unitOfWork.SaveAsync();
-            //return true;
-            //------------------------------------------------------------------------------------
-            //Chapter? chapter = new();
-
-            //if (IsValidChapter(chapterId))
-            //    chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId);
-            //else throw new KeyNotFoundException("Invalid chapter ID");
-
-
-            //AuditFields(chapter, isCreating: false);
-
-            ////await _unitOfWork.SaveAsync();.
-            //await _unitOfWork.GetRepository<Chapter>().DeleteAsync(chapterId);
-            //await _unitOfWork.SaveAsync();
-
-            //return true;
             
             var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
             var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
@@ -229,27 +251,40 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             AuditFields(chapter);
 
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+            var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+            User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
+            User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
+            User? deleteBy = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.DeletedBy ?? string.Empty);
+
             _unitOfWork.GetRepository<Chapter>().Update(chapter);
             await _unitOfWork.GetRepository<Chapter>().SaveAsync();
 
-            return new ChapterAdminViewDto
+            return new ChapterAdminDelete
             {
                 Id = chapter.Id,
                 Number = chapter.Number,
                 ChapterName = chapter.ChapterName,
                 Status = chapter.Status,
                 SubjectId = chapter.SubjectId,
+                SubjectName = subject?.SubjectName ?? string.Empty,
                 QuizId = chapter.QuizId,
+                QuizName = quiz?.QuizName ?? string.Empty,
                 CreatedBy = chapter.CreatedBy,
                 CreatedTime = chapter.CreatedTime,
+                CreatorName = creator?.FullName ?? string.Empty,
+                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
                 LastUpdatedBy = chapter.LastUpdatedBy,
                 LastUpdatedTime = chapter.LastUpdatedTime,
+                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
                 DeletedBy = chapter.DeletedBy,
-                DeletedTime = chapter.DeletedTime
+                DeleteChapterBy = deleteBy?.FullName ?? string.Empty,
+                DeletedTime = chapter.DeletedTime,
             };
         }
 
-        public async Task<ChapterAdminViewDto> rollbackChapterDeletedAsync(string chapterId)
+        public async Task<ChapterAdminDelete> rollbackChapterDeletedAsync(string chapterId)
         {
             var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new KeyNotFoundException($"Chapter with ID '{chapterId}' not found.");
             if (chapter.DeletedBy == null)
@@ -265,32 +300,69 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             AuditFields(chapter);
 
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+            var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+            User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
+            User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
+            User? deleteBy = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.DeletedBy ?? string.Empty);
             _unitOfWork.GetRepository<Chapter>().Update(chapter);
             await _unitOfWork.GetRepository<Chapter>().SaveAsync();
 
-            return new ChapterAdminViewDto
+            return new ChapterAdminDelete
             {
                 Id = chapter.Id,
                 Number = chapter.Number,
                 ChapterName = chapter.ChapterName,
                 Status = chapter.Status,
                 SubjectId = chapter.SubjectId,
+                SubjectName = subject?.SubjectName ?? string.Empty,
                 QuizId = chapter.QuizId,
+                QuizName = quiz?.QuizName ?? string.Empty,
                 CreatedBy = chapter.CreatedBy,
                 CreatedTime = chapter.CreatedTime,
+                CreatorName = creator?.FullName ?? string.Empty,
+                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
                 LastUpdatedBy = chapter.LastUpdatedBy,
                 LastUpdatedTime = chapter.LastUpdatedTime,
-                DeletedBy = chapter.DeletedBy,
-                DeletedTime = chapter.DeletedTime
+                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                //DeletedBy = chapter.DeletedBy,
+                //DeleteChapterBy = deleteBy?.FullName ?? string.Empty,
+                //DeletedTime = chapter.DeletedTime,
             };
         }
 
         // Get one order with all properties
-        public async Task<Chapter?> GetChapterByChapterIdAsync(string Id)
+        public async Task<ChapterAdminViewDto?> GetChapterByChapterIdAsync(string Id)
         {
             Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(Id);
-            
-            return chapter;
+
+            if (chapter == null || chapter.Status == false) return null;
+
+            User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
+            User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+            var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+            ChapterAdminViewDto dto = new ChapterAdminViewDto {
+                Id = chapter.Id,
+                Number = chapter.Number,
+                ChapterName = chapter.ChapterName,
+                Status = chapter.Status,
+                SubjectId = chapter.SubjectId,
+                SubjectName = subject?.SubjectName ?? string.Empty,
+                QuizId = chapter.QuizId,
+                QuizName = quiz?.QuizName ?? string.Empty,
+                CreatedBy = chapter.CreatedBy,
+                CreatedTime = chapter.CreatedTime,
+                CreatorName = creator?.FullName ?? string.Empty,
+                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                LastUpdatedBy = chapter.LastUpdatedBy,
+                LastUpdatedTime = chapter.LastUpdatedTime,
+                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+            };
+
+            return dto;
         }
 
         public async Task<ChapterViewDto?> GetChapterDtoByChapterIdAsync(string Id)
@@ -299,16 +371,28 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (chapter == null || chapter.Status == false) return null;
 
-            ChapterViewDto dto = new ChapterViewDto { Number = chapter.Number, ChapterName = chapter.ChapterName };
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+            var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+            ChapterViewDto dto = new ChapterViewDto { 
+                Id = chapter.Id, 
+                Number = chapter.Number, 
+                ChapterName = chapter.ChapterName, 
+                Status = chapter.Status, 
+                SubjectId = chapter.SubjectId, 
+                SubjectName = subject?.SubjectName ?? string.Empty, 
+                QuizId = chapter.QuizId, 
+                QuizName = quiz?.QuizName ?? string.Empty 
+            };
 
             return dto;
         }
-        public async Task<BasePaginatedList<ChapterAdminViewDto>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId)
+        public async Task<BasePaginatedList<ChapterViewDto>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId)
         {
             var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(subjectId) ?? throw new KeyNotFoundException("Invalid subject ID");
 
-            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(q => q.SubjectId == subjectId && q.DeletedBy == null);
-            List<ChapterAdminViewDto> chapterView = [];
+            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.SubjectId == subjectId && c.DeletedBy == null);
+
+            List<ChapterViewDto> chapterView = [];
 
             //If params negative = show all
             if (pageNumber <= 0 || pageSize <= 0)
@@ -317,76 +401,111 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 foreach (var chapter in allChapters)
                 {
-                    ChapterAdminViewDto dto = new()
+                    var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                    ChapterViewDto dto = new()
+                        {
+                            Id = chapter.Id,
+                            Number = chapter.Number,
+                            ChapterName = chapter.ChapterName,
+                            Status = chapter.Status,
+                            SubjectId = chapter.SubjectId,
+                            SubjectName = subject.SubjectName,
+                            QuizId = chapter.QuizId,
+                            QuizName = quiz?.QuizName ?? string.Empty,
+                        //CreatedBy = chapter.CreatedBy,
+                        //CreatedTime = chapter.CreatedTime,
+                        //LastUpdatedBy = chapter.LastUpdatedBy,
+                        //LastUpdatedTime = chapter.LastUpdatedTime,
+                        //DeletedBy = chapter.DeletedBy,
+                        //DeletedTime = chapter.DeletedTime,
+                    };
+                        chapterView.Add(dto);
+
+                }
+                return new BasePaginatedList<ChapterViewDto>(chapterView, chapterView.Count, 1, chapterView.Count);
+            }
+
+            // Show with pagination
+            BasePaginatedList<Chapter> paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
+            foreach (var chapter in paginatedChapters.Items)
+            {
+                var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                ChapterViewDto dto = new()
                     {
                         Id = chapter.Id,
                         Number = chapter.Number,
                         ChapterName = chapter.ChapterName,
                         Status = chapter.Status,
                         SubjectId = chapter.SubjectId,
+                        SubjectName = subject.SubjectName,
                         QuizId = chapter.QuizId,
-                        CreatedBy = chapter.CreatedBy,
-                        CreatedTime = chapter.CreatedTime,
-                        LastUpdatedBy = chapter.LastUpdatedBy,
-                        LastUpdatedTime = chapter.LastUpdatedTime,
-                        DeletedBy = chapter.DeletedBy,
-                        DeletedTime = chapter.DeletedTime,
-                    };
-                    chapterView.Add(dto);
-                }
-                return new BasePaginatedList<ChapterAdminViewDto>(chapterView, chapterView.Count, 1, chapterView.Count);
-            }
-
-            // Show with pagination
-            BasePaginatedList<Chapter> paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
-
-            foreach (var chapter in paginatedChapters.Items)
-            {
-                ChapterAdminViewDto dto = new()
-                {
-                    Id = chapter.Id,
-                    Number = chapter.Number,
-                    ChapterName = chapter.ChapterName,
-                    Status = chapter.Status,
-                    SubjectId = chapter.SubjectId,
-                    QuizId = chapter.QuizId,
-                    CreatedBy = chapter.CreatedBy,
-                    CreatedTime = chapter.CreatedTime,
-                    LastUpdatedBy = chapter.LastUpdatedBy,
-                    LastUpdatedTime = chapter.LastUpdatedTime,
-                    DeletedBy = chapter.DeletedBy,
-                    DeletedTime = chapter.DeletedTime,
+                        QuizName = quiz?.QuizName ?? string.Empty,
+                    //CreatedBy = chapter.CreatedBy,
+                    //CreatedTime = chapter.CreatedTime,
+                    //LastUpdatedBy = chapter.LastUpdatedBy,
+                    //LastUpdatedTime = chapter.LastUpdatedTime,
+                    //DeletedBy = chapter.DeletedBy,
+                    //DeletedTime = chapter.DeletedTime,
                 };
-                chapterView.Add(dto);
+                    chapterView.Add(dto);
             }
 
-            return new BasePaginatedList<ChapterAdminViewDto>(chapterView, paginatedChapters.TotalItems, pageNumber, pageSize);
+            return new BasePaginatedList<ChapterViewDto>(chapterView, paginatedChapters.TotalItems, pageNumber, pageSize);
         }
         public async Task<BasePaginatedList<ChapterAdminViewDto?>> GetChaptersAsync(int pageNumber, int pageSize)
         {
-            //// Get all chapters from database
-            //IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities;
-
-            //// If pageNumber or pageSize are 0 or negative, show all chapters without pagination
-            //if (pageNumber <= 0 || pageSize <= 0)
-            //{
-            //    var allChapters = await query.ToListAsync();
-            //    return new BasePaginatedList<Chapter?>(allChapters, allChapters.Count, 1, allChapters.Count);
-            //}
-
-            //// Show all chapters with pagination
-            //var paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
-            //return paginatedChapters;
             IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.DeletedBy == null && c.DeletedTime == null);
-            List<ChapterAdminViewDto> chapterView = [];
+            List<ChapterAdminViewDto> chapterView = new List<ChapterAdminViewDto>();
 
-            //If params negative = show all
+            // If params negative = show all
             if (pageNumber <= 0 || pageSize <= 0)
             {
                 var allChapters = await query.ToListAsync();
 
                 foreach (var chapter in allChapters)
                 {
+                    if (chapter != null)
+                    {
+                        User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
+                        User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
+                        var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+                        var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                        ChapterAdminViewDto dto = new()
+                        {
+                            Id = chapter.Id,
+                            Number = chapter.Number,
+                            ChapterName = chapter.ChapterName,
+                            Status = chapter.Status,
+                            SubjectId = chapter.SubjectId,
+                            SubjectName = subject?.SubjectName ?? string.Empty,
+                            QuizId = chapter.QuizId,
+                            QuizName = quiz?.QuizName ?? string.Empty,
+                            CreatedBy = chapter.CreatedBy,
+                            CreatedTime = chapter.CreatedTime,
+                            CreatorName = creator?.FullName ?? string.Empty,
+                            CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                            LastUpdatedBy = chapter.LastUpdatedBy,
+                            LastUpdatedTime = chapter.LastUpdatedTime,
+                            LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                            LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                            //DeletedBy = chapter.DeletedBy,
+                            //DeletedTime = chapter.DeletedTime,
+                        };
+                        chapterView.Add(dto);
+                    }
+                }
+                return new BasePaginatedList<ChapterAdminViewDto?>(chapterView, chapterView.Count, 1, chapterView.Count);
+            }
+
+            // Show with pagination
+            BasePaginatedList<Chapter> paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
+
+            foreach (var chapter in paginatedChapters.Items)
+            {
+                if (chapter != null)
+                {
+                    User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
+                    User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
                     ChapterAdminViewDto dto = new()
                     {
                         Id = chapter.Id,
@@ -397,48 +516,27 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         QuizId = chapter.QuizId,
                         CreatedBy = chapter.CreatedBy,
                         CreatedTime = chapter.CreatedTime,
+                        CreatorName = creator?.FullName ?? string.Empty,
+                        CreatorPhone = creator?.PhoneNumber ?? string.Empty,
                         LastUpdatedBy = chapter.LastUpdatedBy,
                         LastUpdatedTime = chapter.LastUpdatedTime,
-                        DeletedBy = chapter.DeletedBy,
-                        DeletedTime = chapter.DeletedTime,
+                        LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                        LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                        //DeletedBy = chapter.DeletedBy,
+                        //DeletedTime = chapter.DeletedTime,
                     };
                     chapterView.Add(dto);
                 }
-                return new BasePaginatedList<ChapterAdminViewDto?>(chapterView, chapterView.Count, 1, chapterView.Count);
-            }
-
-
-
-            // Show with pagination
-            BasePaginatedList<Chapter> paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
-
-            foreach (var chapter in paginatedChapters.Items)
-            {
-                ChapterAdminViewDto dto = new()
-                {
-                    Id = chapter.Id,
-                    Number = chapter.Number,
-                    ChapterName = chapter.ChapterName,
-                    Status = chapter.Status,
-                    SubjectId = chapter.SubjectId,
-                    QuizId = chapter.QuizId,
-                    CreatedBy = chapter.CreatedBy,
-                    CreatedTime = chapter.CreatedTime,
-                    LastUpdatedBy = chapter.LastUpdatedBy,
-                    LastUpdatedTime = chapter.LastUpdatedTime,
-                    DeletedBy = chapter.DeletedBy,
-                    DeletedTime = chapter.DeletedTime,
-                };
-                chapterView.Add(dto);
             }
 
             return new BasePaginatedList<ChapterAdminViewDto?>(chapterView, paginatedChapters.TotalItems, pageNumber, pageSize);
         }
 
-        public async Task<BasePaginatedList<ChapterAdminViewDto?>> GetChaptersDeletedAsync(int pageNumber, int pageSize)
+
+        public async Task<BasePaginatedList<ChapterAdminDelete?>> GetChaptersDeletedAsync(int pageNumber, int pageSize)
         {
             IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.Status == false && c.DeletedBy != null && c.DeletedTime != null);
-            List<ChapterAdminViewDto> chapterView = [];
+            List<ChapterAdminDelete> chapterView = [];
 
             //If params negative = show all
             if (pageNumber <= 0 || pageSize <= 0)
@@ -447,24 +545,36 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 foreach (var chapter in allChapters)
                 {
-                    ChapterAdminViewDto dto = new()
+                    var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+                    var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                    User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
+                    User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
+                    User? deleteBy = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.DeletedBy ?? string.Empty);
+                    ChapterAdminDelete dto = new()
                     {
                         Id = chapter.Id,
                         Number = chapter.Number,
                         ChapterName = chapter.ChapterName,
                         Status = chapter.Status,
                         SubjectId = chapter.SubjectId,
+                        SubjectName = subject?.SubjectName ?? string.Empty,
                         QuizId = chapter.QuizId,
+                        QuizName = quiz?.QuizName ?? string.Empty,
                         CreatedBy = chapter.CreatedBy,
                         CreatedTime = chapter.CreatedTime,
+                        CreatorName = creator?.FullName ?? string.Empty,
+                        CreatorPhone = creator?.PhoneNumber ?? string.Empty,
                         LastUpdatedBy = chapter.LastUpdatedBy,
                         LastUpdatedTime = chapter.LastUpdatedTime,
+                        LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                        LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
                         DeletedBy = chapter.DeletedBy,
+                        DeleteChapterBy = deleteBy?.FullName ?? string.Empty,
                         DeletedTime = chapter.DeletedTime,
                     };
                     chapterView.Add(dto);
                 }
-                return new BasePaginatedList<ChapterAdminViewDto?>(chapterView, chapterView.Count, 1, chapterView.Count);
+                return new BasePaginatedList<ChapterAdminDelete?>(chapterView, chapterView.Count, 1, chapterView.Count);
             }
 
 
@@ -474,25 +584,36 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             foreach (var chapter in paginatedChapters.Items)
             {
-                ChapterAdminViewDto dto = new()
+
+                var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+                var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
+                User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
+                ChapterAdminDelete dto = new()
                 {
                     Id = chapter.Id,
                     Number = chapter.Number,
                     ChapterName = chapter.ChapterName,
                     Status = chapter.Status,
                     SubjectId = chapter.SubjectId,
+                    SubjectName = subject?.SubjectName ?? string.Empty,
                     QuizId = chapter.QuizId,
+                    QuizName = quiz?.QuizName ?? string.Empty,
                     CreatedBy = chapter.CreatedBy,
                     CreatedTime = chapter.CreatedTime,
+                    CreatorName = creator?.FullName ?? string.Empty,
+                    CreatorPhone = creator?.PhoneNumber ?? string.Empty,
                     LastUpdatedBy = chapter.LastUpdatedBy,
                     LastUpdatedTime = chapter.LastUpdatedTime,
+                    LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                    LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
                     DeletedBy = chapter.DeletedBy,
                     DeletedTime = chapter.DeletedTime,
                 };
                 chapterView.Add(dto);
             }
 
-            return new BasePaginatedList<ChapterAdminViewDto?>(chapterView, paginatedChapters.TotalItems, pageNumber, pageSize);
+            return new BasePaginatedList<ChapterAdminDelete?>(chapterView, paginatedChapters.TotalItems, pageNumber, pageSize);
         }
         public async Task<BasePaginatedList<ChapterViewDto?>> GetChapterDtosAsync(int pageNumber, int pageSize)
         {
@@ -507,7 +628,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 // Map chapters to ChapterViewDto
                 foreach (var chapter in allChapters)
                 {
-                    ChapterViewDto dto = new ChapterViewDto { Number = chapter.Number, ChapterName = chapter.ChapterName };
+                    var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+                    var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                    ChapterViewDto dto = new ChapterViewDto { 
+                        Id = chapter.Id, 
+                        Number = chapter.Number, 
+                        ChapterName = chapter.ChapterName, 
+                        Status = chapter.Status, 
+                        SubjectId = chapter.SubjectId, 
+                        SubjectName = subject?.SubjectName ?? string.Empty, 
+                        QuizId = chapter.QuizId, 
+                        QuizName = quiz?.QuizName ?? string.Empty
+                    };
+
                     chapterDtos.Add(dto);
                 }
 
@@ -518,8 +651,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
             BasePaginatedList<Chapter> paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
             foreach (var chapter in paginatedChapters.Items)
             {
-                //chapterDtos.Add(new ChapterViewDto(chapter.Number, chapter.ChapterName));
-                ChapterViewDto dto = new ChapterViewDto { Number = chapter.Number, ChapterName = chapter.ChapterName };
+                    var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+                    var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                ChapterViewDto dto = new ChapterViewDto { 
+                    Id = chapter.Id, 
+                    Number = chapter.Number, 
+                    ChapterName = chapter.ChapterName, 
+                    Status = chapter.Status, 
+                    SubjectId = chapter.SubjectId, 
+                    SubjectName = subject?.SubjectName ?? string.Empty, 
+                    QuizId = chapter.QuizId, 
+                    QuizName = quiz?.QuizName ?? string.Empty 
+                };
+
                 chapterDtos.Add(dto);
             }
 
@@ -534,6 +678,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
             //subject.LastUpdatedTime = DateTime.UtcNow;
 
             AuditFields(chapter);
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+            var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+            User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
+            User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
 
             _unitOfWork.GetRepository<Chapter>().Update(chapter);
             await _unitOfWork.GetRepository<Chapter>().SaveAsync();
@@ -545,13 +693,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 ChapterName = chapter.ChapterName,
                 Status = chapter.Status,
                 SubjectId = chapter.SubjectId,
+                SubjectName = subject?.SubjectName ?? string.Empty,
                 QuizId = chapter.QuizId,
+                QuizName = quiz?.QuizName ?? string.Empty,
                 CreatedBy = chapter.CreatedBy,
                 CreatedTime = chapter.CreatedTime,
+                CreatorName = creator?.FullName ?? string.Empty,
+                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
                 LastUpdatedBy = chapter.LastUpdatedBy,
                 LastUpdatedTime = chapter.LastUpdatedTime,
-                DeletedBy = chapter.DeletedBy,
-                DeletedTime = chapter.DeletedTime
+                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                //DeletedBy = chapter.DeletedBy,
+                //DeletedTime = chapter.DeletedTime
             };
         }
 
@@ -562,51 +716,69 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return (await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(Id) is not null);
         }
 
-        public async Task<BasePaginatedList<object>> SearchChapterAsync(string searchTerm, int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<ChapterViewDto>> SearchChapterAsync(string searchTerm, int pageNumber, int pageSize)
         {
-            var query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.Status == true && c.DeletedBy == null);
+            var query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.Status == true);
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 query = query.Where(c => EF.Functions.Like(c.ChapterName, $"%{searchTerm}%"));
             }
 
-            if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
-            {
-                var allChapter = await query.ToListAsync();
-                var chapterDtos = allChapter.Select(c => new ChapterDto
-                {
-                    Number = c.Number,
-                    ChapterName = c.ChapterName,
-                    Status = c.Status,
-                    SubjectId = c.SubjectId,
-                    QuizId = c.QuizId,
-                }).ToList();
+            List<ChapterViewDto> chapterView = [];
 
-                if (!chapterDtos.Any())
+            //If params negative = show all
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                var allChapters = await query.ToListAsync();
+
+                foreach (var chapter in allChapters)
                 {
-                    throw new KeyNotFoundException($"No chapter found with name containing '{searchTerm}'.");
+                    var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+                    var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                    ChapterViewDto dto = new()
+                    {
+                        Id = chapter.Id,
+                        Number = chapter.Number,
+                        ChapterName = chapter.ChapterName,
+                        Status = chapter.Status,
+                        SubjectId = chapter.SubjectId,
+                        SubjectName = subject?.SubjectName ?? string.Empty,
+                        QuizId = chapter.QuizId,
+                        QuizName = quiz?.QuizName ?? string.Empty
+
+                        //DeletedBy = chapter.DeletedBy,
+                        //DeletedTime = chapter.DeletedTime,
+                    };
+                    chapterView.Add(dto);
                 }
-
-                return new BasePaginatedList<object>(chapterDtos, chapterDtos.Count, 1, chapterDtos.Count);
+                return new BasePaginatedList<ChapterViewDto>(chapterView, chapterView.Count, 1, chapterView.Count);
             }
 
-            var paginatedChapters = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
-            var chapterDtosPaginated = paginatedChapters.Items.Select(c => new ChapterDto
-            {
-                Number = c.Number,
-                ChapterName = c.ChapterName,
-                Status = c.Status,
-                SubjectId = c.SubjectId,
-                QuizId = c.QuizId,
-            }).ToList();
+            // Show with pagination
+            BasePaginatedList<Chapter> paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
 
-            if (!chapterDtosPaginated.Any())
+            foreach (var chapter in paginatedChapters.Items)
             {
-                throw new KeyNotFoundException($"No chapter found with name containing '{searchTerm}'.");
+                var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+                var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                ChapterViewDto dto = new()
+                {
+                    Id = chapter.Id,
+                    Number = chapter.Number,
+                    ChapterName = chapter.ChapterName,
+                    Status = chapter.Status,
+                    SubjectId = chapter.SubjectId,
+                    SubjectName = subject?.SubjectName ?? string.Empty,
+                    QuizId = chapter.QuizId,
+                    QuizName = quiz?.QuizName ?? string.Empty
+                    //DeletedBy = chapter.DeletedBy,
+                    //DeletedTime = chapter.DeletedTime,
+                };
+                chapterView.Add(dto);
             }
 
-            return new BasePaginatedList<object>(chapterDtosPaginated, chapterDtosPaginated.Count(), pageNumber, pageSize);
+            return new BasePaginatedList<ChapterViewDto>(chapterView, paginatedChapters.TotalItems, pageNumber, pageSize);
         }
 
         public async Task<BasePaginatedList<ChapterAdminViewDto>> SearchChapterForAdminAsync(string searchTerm, int pageNumber, int pageSize)
@@ -627,6 +799,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 foreach (var chapter in allChapters)
                 {
+                    var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+                    var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                    User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
+                    User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
                     ChapterAdminViewDto dto = new()
                     {
                         Id = chapter.Id,
@@ -634,13 +810,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         ChapterName = chapter.ChapterName,
                         Status = chapter.Status,
                         SubjectId = chapter.SubjectId,
+                        SubjectName = subject?.SubjectName ?? string.Empty,
                         QuizId = chapter.QuizId,
+                        QuizName = quiz?.QuizName ?? string.Empty,
                         CreatedBy = chapter.CreatedBy,
                         CreatedTime = chapter.CreatedTime,
+                        CreatorName = creator?.FullName ?? string.Empty,
+                        CreatorPhone = creator?.PhoneNumber ?? string.Empty,
                         LastUpdatedBy = chapter.LastUpdatedBy,
                         LastUpdatedTime = chapter.LastUpdatedTime,
-                        DeletedBy = chapter.DeletedBy,
-                        DeletedTime = chapter.DeletedTime,
+                        LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                        LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                        //DeletedBy = chapter.DeletedBy,
+                        //DeletedTime = chapter.DeletedTime,
                     };
                     chapterView.Add(dto);
                 }
@@ -652,6 +834,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             foreach (var chapter in paginatedChapters.Items)
             {
+                var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+                var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
+                User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
                 ChapterAdminViewDto dto = new()
                 {
                     Id = chapter.Id,
@@ -659,13 +845,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     ChapterName = chapter.ChapterName,
                     Status = chapter.Status,
                     SubjectId = chapter.SubjectId,
+                    SubjectName = subject?.SubjectName ?? string.Empty,
                     QuizId = chapter.QuizId,
+                    QuizName = quiz?.QuizName ?? string.Empty,
                     CreatedBy = chapter.CreatedBy,
                     CreatedTime = chapter.CreatedTime,
+                    CreatorName = creator?.FullName ?? string.Empty,
+                    CreatorPhone = creator?.PhoneNumber ?? string.Empty,
                     LastUpdatedBy = chapter.LastUpdatedBy,
                     LastUpdatedTime = chapter.LastUpdatedTime,
-                    DeletedBy = chapter.DeletedBy,
-                    DeletedTime = chapter.DeletedTime,
+                    LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                    LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                    //DeletedBy = chapter.DeletedBy,
+                    //DeletedTime = chapter.DeletedTime,
                 };
                 chapterView.Add(dto);
             }
