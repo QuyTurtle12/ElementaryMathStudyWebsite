@@ -59,7 +59,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     {
                         string? studentName = await _userService.GetUserNameAsync(detail.StudentId);
                         string? subjectName = await _subjectService.GetSubjectNameAsync(detail.SubjectId);
-                        OrderDetailViewDto dto = new() { SubjectName = subjectName, StudentName = studentName };
+                        OrderDetailViewDto dto = new() {
+                            SubjectId = detail.SubjectId,
+                            SubjectName = subjectName,
+                            StudentId = detail.StudentId,
+                            StudentName = studentName 
+                        };
                         detailDtos.Add(dto);
                     }
                 }
