@@ -24,7 +24,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _userService = appUserService;
             _unitOfWork = unitOfWork;
         }
-        public async Task<VnPayUrl> CreatePaymentUrl(HttpContext context)
+        public async Task<string> CreatePaymentUrl(HttpContext context)
         {
             // Get logged in User
             User currentUser = await _userService.GetCurrentUserAsync();
@@ -66,10 +66,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             var paymentUrl = vnpay.CreateRequestUrl(VnPayConfig.BaseUrl, VnPayConfig.HashSecret);
 
-            return new VnPayUrl
-            {
-                Url = paymentUrl,
-            };
+            return paymentUrl;
         }
 
         public VnPayResponseDto PaymentExecute(IQueryCollection collections)
