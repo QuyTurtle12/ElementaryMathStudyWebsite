@@ -155,13 +155,42 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                 return CreatedAtAction(nameof(GetActiveSubjectById), new { id = createdSubject.Id }, createdSubject);
             }
+            catch (ArgumentException argEx)
+            {
+                // Handle argument exceptions such as validation errors
+                return StatusCode(400, new
+                {
+                    errorMessage = "An unexpected error occurred.",
+                    details = argEx.Message
+                });
+            }
             catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (Exception ex)
+            {
+                // Catch all other exceptions and return a generic server error
+                return StatusCode(500, new
+                {
+                    errorMessage = "An unexpected error occurred.",
+                    details = ex.Message
+                });
             }
         }
 
@@ -184,13 +213,42 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var updatedSubject = await _appSubjectServices.UpdateSubjectAsync(id, subjectDTO);
                 return Ok(updatedSubject);
             }
+            catch (ArgumentException argEx)
+            {
+                // Handle argument exceptions such as validation errors
+                return StatusCode(400, new
+                {
+                    errorMessage = "An unexpected error occurred.",
+                    details = argEx.Message
+                });
+            }
             catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (Exception ex)
+            {
+                // Catch all other exceptions and return a generic server error
+                return StatusCode(500, new
+                {
+                    errorMessage = "An unexpected error occurred.",
+                    details = ex.Message
+                });
             }
         }
 
@@ -206,6 +264,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var subject = await _appSubjectServices.ChangeSubjectStatusAsync(id);
+                if (subject == null)
+                {
+                    throw new BaseException.BadRequestException("subject_not_found", "The requested subject was not found.");
+                }
                 return Ok(subject);
             }
             catch (BaseException.CoreException coreEx)
@@ -252,12 +314,12 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
-                return BadRequest("Search term cannot be empty.");
+                throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
             }
 
             if (searchTerm.Length < 2)
             {
-                return BadRequest("Search term must be at least 2 characters long.");
+                throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
             }
 
             try

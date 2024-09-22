@@ -357,7 +357,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (chapter == null)
             {
-                throw new KeyNotFoundException($"Chapter with {chapterId} not found.");
+                throw new BaseException.BadRequestException("key_not_found", $"Chapter with {chapterId} not found.");
             }
 
             // If it's the first chapter, the student can access it without completing a quiz
@@ -373,7 +373,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (previousChapter == null)
             {
-                throw new KeyNotFoundException($"Previous chapter {chapter.Number - 1} not found for subject {chapter.SubjectId}.");
+                throw new BaseException.BadRequestException("key_not_found", $"Previous chapter {chapter.Number - 1} not found for subject {chapter.SubjectId}.");
             }
 
             // Check if the student has completed the quiz for the previous chapter

@@ -24,12 +24,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             if (string.IsNullOrWhiteSpace(subjectDTO.SubjectName))
             {
-                throw new ArgumentException("Subject name is required and cannot be empty.");
+                throw new BaseException.BadRequestException("empty_subject_name", "Subject name is required and cannot be empty.");
             }
 
             if (subjectDTO.Price <= 0)
             {
-                throw new ArgumentException("Price must be greater than zero.");
+                throw new BaseException.BadRequestException("price_range_error", "Price must be greater than zero.");
             }
         }
 
@@ -45,7 +45,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (existingSubject != null)
             {
-                throw new InvalidOperationException($"A subject with the name '{subjectDTO.SubjectName}' already exists.");
+                throw new BaseException.BadRequestException("duplicate_name", $"A subject with the name '{subjectDTO.SubjectName}' already exists.");
             }
 
             var subject = new Subject
@@ -53,8 +53,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 SubjectName = subjectDTO.SubjectName,
                 Price = subjectDTO.Price,
                 Status = subjectDTO.Status,
-                //CreatedTime = DateTime.UtcNow,
-                //LastUpdatedTime = DateTime.UtcNow // Set initial LastUpdatedTime as well
             };
 
             AuditFields(subject, isCreating: true);
@@ -147,10 +145,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get a specific subject by ID
         public async Task<object> GetSubjectByIDAsync(string id, bool isAdmin)
         {
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Cannot find product with ID '{id}'.");
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{id}'.");
             if (!isAdmin && !subject.Status)
             {
-                throw new KeyNotFoundException($"Cannot find product with ID '{id}'.");
+                throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{id}'.");
             }
 
             return isAdmin
@@ -210,7 +208,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 if (subjectDtos.Count == 0)
                 {
-                    throw new KeyNotFoundException($"No subjects found with name containing '{searchTerm}'.");
+                    throw new BaseException.BadRequestException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
                 }
 
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
@@ -227,7 +225,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (subjectDtosPaginated.Count == 0)
             {
-                throw new KeyNotFoundException($"No subjects found with name containing '{searchTerm}'.");
+                throw new BaseException.BadRequestException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
             }
 
             return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count, pageNumber, pageSize);
@@ -277,7 +275,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 if (subjectDtos.Count == 0)
                 {
-                    throw new KeyNotFoundException($"No subjects found with name containing '{searchTerm}'.");
+                    throw new BaseException.BadRequestException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
                 }
 
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
@@ -300,7 +298,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (subjectDtosPaginated.Count == 0)
             {
-                throw new KeyNotFoundException($"No subjects found with name containing '{searchTerm}'.");
+                throw new BaseException.BadRequestException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
             }
 
             return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count, pageNumber, pageSize);
@@ -309,7 +307,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Update subject and set LastUpdatedTime to current time
         public async Task<SubjectAdminViewDTO> UpdateSubjectAsync(string id, SubjectDTO subjectDTO)
         {
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Subject with ID '{id}' not found.");
 
             // Check if another subject with the same name already exists
             var existingSubject = await _unitOfWork.GetRepository<Subject>().Entities
@@ -318,7 +316,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (existingSubject != null)
             {
-                throw new InvalidOperationException($"A subject with the name '{subjectDTO.SubjectName}' already exists.");
+                throw new BaseException.BadRequestException("duplicate_name", $"A subject with the name '{subjectDTO.SubjectName}' already exists.");
             }
 
             ValidateSubject(subjectDTO);
@@ -350,8 +348,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Change subject status and set LastUpdatedTime to current time
         public async Task<SubjectAdminViewDTO> ChangeSubjectStatusAsync(string id)
         {
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
-            subject.Status = !subject.Status;
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Subject with ID '{id}' not found.");
             //subject.LastUpdatedTime = DateTime.UtcNow;
 
             AuditFields(subject);
@@ -388,7 +385,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get a specific subject by ID (For Order)
         public async Task<Subject> GetSubjectByIDAsync(string id)
         {
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Subject with ID '{id}' not found.");
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Subject with ID '{id}' not found.");
             return subject;
         }
 

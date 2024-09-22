@@ -276,7 +276,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (previousTopic == null)
             {
-                throw new KeyNotFoundException($"Previous topic {topic.Number - 1} not found for chapter {topic.ChapterId}.");
+                throw new BaseException.BadRequestException("key_not_found", $"Previous topic {topic.Number - 1} not found for chapter {topic.ChapterId}.");
             }
 
             // Retrieve the chapter that the topic belongs to
@@ -286,7 +286,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (chapter == null)
             {
-                throw new KeyNotFoundException($"Chapter with {previousTopic.ChapterId} not found.");
+                throw new BaseException.BadRequestException("key_not_found", $"Chapter with {previousTopic.ChapterId} not found.");
             }
 
             // Check if the student has completed the quiz for the previous chapter
