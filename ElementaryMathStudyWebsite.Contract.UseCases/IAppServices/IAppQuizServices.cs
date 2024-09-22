@@ -5,7 +5,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
     public interface IAppQuizServices
     {
         // Get quiz name by quiz id
-        Task<string> GetQuizNameAsync(string quizId);
+        Task<string?> GetQuizNameAsync(string quizId);
        // Task<bool> AddQuizAsync(QuizCreateDto dto);
        // Task<QuizViewDto?> GetQuizByIdAsync(string quizId);
         Task<BasePaginatedList<QuizViewDto?>> GetQuizzDtoAsync(int pageNumber, int pageSize); // get all Quiz with pagination

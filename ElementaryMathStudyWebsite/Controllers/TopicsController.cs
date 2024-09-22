@@ -21,12 +21,18 @@ namespace ElementaryMathStudyWebsite.Controllers
             _topicService = topicService ?? throw new ArgumentNullException(nameof(topicService));
         }
 
+        [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
-        public async Task<ActionResult<BasePaginatedList<Topic>>> GetTopics(int pageNumber = 1, int pageSize = 10)
+        [Route("admin-manager/all")]
+        [SwaggerOperation(
+            Summary = "Authorization: Manager & Admin",
+            Description = "Lấy danh sách Topic (Admin-Manager)"
+            )]
+        public async Task<ActionResult<BasePaginatedList<TopicAdminViewDto>>> GetTopics(int pageNumber = 1, int pageSize = 10)
         {
             try
             {
-                BasePaginatedList<Topic> topics = await _topicService.GetAllExistTopicsAsync(pageNumber, pageSize);
+                BasePaginatedList<TopicAdminViewDto> topics = await _topicService.GetAllExistTopicsAsync(pageNumber, pageSize);
                 return Ok(topics);
             }
             catch (Exception ex)
@@ -35,13 +41,18 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
-        [Route("all/{id}")]
-        public async Task<ActionResult<Topic>> GetAllTopicById([Required] string id)
+        [Route("admin-manager/{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Manager & Admin",
+            Description = "Lấy thông tin 1 Topic (Admin-Manager)"
+            )]
+        public async Task<ActionResult<TopicAdminViewDto>> GetAllTopicById([Required] string id)
         {
             try
             {
-                Topic topic = await _topicService.GetTopicAllByIdAsync(id);
+                TopicAdminViewDto? topic = await _topicService.GetTopicAllByIdAsync(id);
                 if (topic == null)
                 {
                     return BadRequest("Invalid Id");
@@ -55,12 +66,26 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         [HttpGet]
-        [Route("{id}")]
+        [Route("user/all/")]
+        public async Task<IActionResult> GetAllTopics(int pageNumber = 1, int pageSize = 10)
+        {
+            if (pageNumber < 1 || pageSize < 1)
+            {
+                return BadRequest("Page number and page size must be greater than zero.");
+            }
+
+            var result = await _topicService.GetAllTopicsAsync(pageNumber, pageSize);
+            return Ok(result);
+        }
+    
+
+        [HttpGet]
+        [Route("User/{id}")]
         public async Task<ActionResult<TopicViewDto>> GetTopicById([Required] string id)
         {
             try
             {
-                TopicViewDto topic = await _topicService.GetTopicByIdAsync(id);
+                TopicViewDto? topic = await _topicService.GetTopicByIdAsync(id);
                 if (topic == null)
                 {
                     return NotFound("Topic not found.");
@@ -73,33 +98,24 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        //[HttpGet("chapter/{chapterId}")]
-        //public async Task<ActionResult<BasePaginatedList<TopicViewDto>>> GetTopicsByChapterIdAsync(string chapterId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
-        //{
-        //    try
-        //    {
-        //        if (string.IsNullOrWhiteSpace(chapterId))
-        //        {
-        //            return BadRequest("Chapter ID cannot be empty.");
-        //        }
-
-        //        var result = await _topicService.GetTopicsByChapterIdAsync(chapterId, pageNumber, pageSize);
-
-        //        if (result == null || result.Items.Count == 0)
-        //        {
-        //            return NotFound("No topics found for the specified chapter.");
-        //        }
-
-        //        return Ok(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Log the exception (use your logging framework)
-        //        // For example: _logger.LogError(ex, "Error occurred while retrieving topics by chapter ID");
-
-        //        return StatusCode(500, "An unexpected error occurred. Please try again later.");
-        //    }
-        //}
+        [HttpGet("chapter/{chapterId}")]
+        public async Task<ActionResult<List<TopicViewDto>>> GetTopicsByChapterId(string chapterId)
+        {
+            try
+            {
+                var topics = await _topicService.GetTopicsByChapterIdAsync(chapterId);
+                return Ok(topics);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception)
+            {
+                // Log the exception (not shown here)
+                return StatusCode(500, "Internal server error");
+            }
+        }
 
         [HttpGet("search")]
         public async Task<IActionResult> SearchTopicByName([FromQuery] string searchTerm, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
@@ -152,12 +168,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Admin-Manager",
             Description = "Update Topic"
             )]
-        public async Task<ActionResult<string>> UpdateTopic(string id, [FromBody] TopicDto topicDto)
+        public async Task<ActionResult<string>> UpdateTopic(string id, [FromBody] TopicCreateDto topicCreateDto)
         {
             try
             {
                 var appService = _topicService as IAppTopicServices;
-                bool isUpdated = await appService.UpdateTopicAsync(id, topicDto);
+                bool isUpdated = await appService.UpdateTopicAsync(id, topicCreateDto);
                 if (!isUpdated)
                 {
                     return NotFound("Topic not found.");
@@ -167,6 +183,35 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
+        [HttpDelete]
+        [Route("delete/{id}")]
+        [Authorize(Policy = "Admin-Manager")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Delete Topic"
+            )]
+        public async Task<IActionResult> DeleteTopic(string id)
+        {
+            try
+            {
+                var deletedTopicDto = await _topicService.DeleteTopicAsync(id);
+                return Ok(deletedTopicDto);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
+            {
+                // Log the exception (not shown here)
+                return StatusCode(500, "An unexpected error occurred.");
             }
         }
     }
