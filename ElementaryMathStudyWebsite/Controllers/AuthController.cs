@@ -4,6 +4,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Core.Base;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -48,9 +49,24 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return Unauthorized(ex.Message);
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return BadRequest(ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -79,9 +95,24 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return Conflict(ex.Message); // Conflict for cases like existing user or invalid role
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return BadRequest(ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -130,9 +161,24 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return Conflict(ex.Message); // Conflict for cases like existing user or invalid role
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return BadRequest(ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -144,9 +190,24 @@ namespace ElementaryMathStudyWebsite.Controllers
                 await _authService.VerifyEmailAsync(token);
                 return Ok("Email verified successfully.");
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return BadRequest($"Error: {ex.Message}");
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
