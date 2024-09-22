@@ -1,6 +1,7 @@
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Services.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -58,6 +59,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                     throw new BaseException.BadRequestException("subject_not_found", "Subject not found.");
                 }
 
+                var response = BaseResponse<object>.OkResponse(subject);
                 return Ok(subject);
             }
             catch (BaseException.CoreException coreEx)
@@ -116,6 +118,8 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     throw new BaseException.BadRequestException("subject_not_found", "The requested subject was not found.");
                 }
+
+                var response = BaseResponse<object>.OkResponse(subject);
                 return Ok(subject);
             }
             catch (BaseException.BadRequestException badRequestEx)
@@ -153,7 +157,8 @@ namespace ElementaryMathStudyWebsite.Controllers
                     Status = true // Set status as active when created
                 });
 
-                return CreatedAtAction(nameof(GetActiveSubjectById), new { id = createdSubject.Id }, createdSubject);
+                var response = BaseResponse<SubjectAdminViewDTO>.OkResponse(createdSubject);
+                return CreatedAtAction(nameof(GetActiveSubjectById), new { id = createdSubject.Id }, response);
             }
             catch (ArgumentException argEx)
             {
@@ -211,7 +216,8 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var updatedSubject = await _appSubjectServices.UpdateSubjectAsync(id, subjectDTO);
-                return Ok(updatedSubject);
+                var response = BaseResponse<SubjectAdminViewDTO>.OkResponse(updatedSubject);
+                return Ok(response);
             }
             catch (ArgumentException argEx)
             {
@@ -268,7 +274,8 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     throw new BaseException.BadRequestException("subject_not_found", "The requested subject was not found.");
                 }
-                return Ok(subject);
+                var response = BaseResponse<SubjectAdminViewDTO>.OkResponse(subject);
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -291,7 +298,8 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var subjects = await _appSubjectServices.SearchSubjectAsync(searchTerm, lowestPrice, highestPrice, pageNumber, pageSize);
-                return Ok(subjects);
+                var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -340,33 +348,6 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.BadRequestException badRequestEx)
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
-        }
-
-
-        [HttpGet("check-subject-quiz")]
-        [SwaggerOperation(
-            Summary = "Authorization: Anyone",
-            Description = "Check if user have complete the course or not"
-        )]
-        public async Task<IActionResult> CheckCompleteQuizExist(string subjectId, string quizId)
-        {
-            try
-            {
-                var exists = await _appSubjectServices.CheckCompleteQuizExistAsync(subjectId, quizId);
-                if (!exists)
-                {
-                    throw new BaseException.BadRequestException("quiz_not_found", "No record found with the given SubjectId and QuizId for this user.");
-                }
-                return Ok(new { message = "Student has completed this course." });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
         }
     }
