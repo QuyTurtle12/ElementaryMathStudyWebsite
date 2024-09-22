@@ -423,9 +423,8 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 var createdChapter = await _chapterService.CreateChapterAsync(new ChapterDto
                 {
-                    Number = chapterDTO.Number,
                     ChapterName = chapterDTO.ChapterName,
-                    Status = true, // Set status as active when created
+                    //Status = true, // Set status as active when created
                     SubjectId = chapterDTO.SubjectId,
                     QuizId = chapterDTO.QuizId,
                 });

@@ -28,25 +28,42 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         private void ValidateChapter(ChapterDto chapterDTO)
         {
-            if (chapterDTO.Number == null)
-            {
-                throw new ArgumentException("Number is required and cannot be empty.");
-            }
+            //if (chapterDTO.Number == null)
+            //{
+            //    throw new ArgumentException("Number is required and cannot be empty.");
+            //}
             if (string.IsNullOrWhiteSpace(chapterDTO.ChapterName))
             {
                 throw new ArgumentException("Chapter name is required and cannot be empty.");
             }
-            if (!chapterDTO.Status)
-            {
-                throw new ArgumentException("Status is required and cannot be false.");
-            }
+            //if (!chapterDTO.Status)
+            //{
+            //    throw new ArgumentException("Status is required and cannot be false.");
+            //}
             if (string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
             {
                 throw new ArgumentException("Subject Id is required and cannot be empty.");
             }
         }
 
+        public async Task<int?> CountChaptersInSubjectAsync(string subjectId)
+        {
+            if (string.IsNullOrWhiteSpace(subjectId))
+            {
+                throw new ArgumentException("Subject ID cannot be null or empty", nameof(subjectId));
+            }
 
+            return await _unitOfWork.GetRepository<Chapter>().Entities
+                .Where(c => c.SubjectId == subjectId)
+                .CountAsync();
+        }
+        public async Task<bool> IsQuizIdInChaptersAsync(string quizId)
+        {
+            var quizExists = await _unitOfWork.GetRepository<Chapter>().Entities
+                .AnyAsync(c => c.QuizId == quizId);
+
+            return quizExists;
+        }
         public async Task<ChapterAdminViewDto> CreateChapterAsync(ChapterDto chapterDTO)
         {
             ValidateChapter(chapterDTO);
@@ -72,6 +89,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
             }
 
+
+
             if (!string.IsNullOrWhiteSpace(chapterDTO.QuizId))
             {
                 var quizExists = await _unitOfWork.GetRepository<Quiz>().Entities
@@ -81,13 +100,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     throw new ArgumentException($"Quiz with Id '{chapterDTO.QuizId}' does not exist.");
                 }
+                var isQuizId = await IsQuizIdInChaptersAsync(chapterDTO.QuizId);
+                if (isQuizId)
+                {
+                    throw new ArgumentException($"Subject with Id '{chapterDTO.SubjectId}' was used.");
+                }
             }
+
+            var chapterCount = await CountChaptersInSubjectAsync(chapterDTO.SubjectId);
 
             var chapter = new Chapter
             {
-                Number = chapterDTO.Number,
+                Number = chapterCount + 1,
                 ChapterName = chapterDTO.ChapterName,
-                Status = chapterDTO.Status,
+                Status = true,
                 SubjectId = chapterDTO.SubjectId,
                 QuizId = chapterDTO.QuizId,
                 //CreatedTime = DateTime.UtcNow,
@@ -158,13 +184,17 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     throw new ArgumentException($"Quiz with Id '{chapterDTO.QuizId}' does not exist.");
                 }
+                //var isQuizId = await IsQuizIdInChaptersAsync(chapterDTO.QuizId);
+                //if (isQuizId)
+                //{
+                //    throw new ArgumentException($"Subject with Id '{chapterDTO.SubjectId}' was used.");
+                //}
             }
 
             ValidateChapter(chapterDTO);
 
-            chapter.Number = chapterDTO.Number;
             chapter.ChapterName = chapterDTO.ChapterName;
-            chapter.Status = chapterDTO.Status;
+            //chapter.Status = chapterDTO.Status;
             chapter.SubjectId = chapterDTO.SubjectId;
             chapter.QuizId = chapterDTO.QuizId;
             //chapter.LastUpdatedTime = DateTime.UtcNow;

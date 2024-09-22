@@ -2,9 +2,8 @@
 {
     public class ChapterDto
     {
-        public int? Number { get; set; }
         public string ChapterName { get; set; } = string.Empty;
-        public bool Status { get; set; }
+        //public bool Status { get; set; }
 
         public required string SubjectId { get; set; }
 
