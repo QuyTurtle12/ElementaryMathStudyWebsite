@@ -37,6 +37,22 @@ namespace ElementaryMathStudyWebsite.Core.Base
             }
         }
 
+        public class NotFoundException : ErrorException
+        {
+            public NotFoundException(string errorCode, string message)
+                : base(404, errorCode, message)
+            {
+            }
+            public NotFoundException(ICollection<KeyValuePair<string, ICollection<string>>> errors)
+                : base(404, new ErrorDetail
+                {
+                    ErrorCode = "not_found",
+                    ErrorMessage = errors
+                })
+            {
+            }
+        }
+
         public class ErrorException : Exception
         {
             public int StatusCode { get; }
