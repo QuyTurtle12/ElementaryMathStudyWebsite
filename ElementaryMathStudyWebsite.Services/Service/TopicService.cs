@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.AspNetCore.Http;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
-using ElementaryMathStudyWebsite.Services.Service.Authentication;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
