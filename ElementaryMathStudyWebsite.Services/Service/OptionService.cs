@@ -21,8 +21,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         // Add option to database
         public async Task<OptionViewDto> AddOption(OptionCreateDto createDto)
-        {
-            var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(createDto.QuestionId) ?? throw new KeyNotFoundException("Invalid question ID");
+        { 
+            var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(createDto.QuestionId) ?? throw new BaseException.BadRequestException("bad_request", "Invalid question ID");
 
             Option option = new()
             {
@@ -54,7 +54,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (IsValidOption(optionId))
                 option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionId);
-            else throw new KeyNotFoundException("Invalid option ID");
+            else throw new BaseException.BadRequestException("bad_request", "Invalid question ID");
 
             _userService.AuditFields(option, false, true);
 
@@ -70,7 +70,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (IsValidOption(optionId))
                 option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionId);
-            else throw new KeyNotFoundException("Invalid option ID");
+            else throw new BaseException.BadRequestException("bad_request", "Invalid question ID");
 
             return option;
         }
@@ -78,7 +78,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get options of a question for general user
         public async Task<BasePaginatedList<OptionViewDto>> GetOptionDtosByQuestion(int pageNumber, int pageSize, string questionId)
         {
-            var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(questionId) ?? throw new KeyNotFoundException("Invalid question ID");
+            var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(questionId) ?? throw new BaseException.BadRequestException("bad_request", "Invalid question ID");
 
             IQueryable<Option> query = _unitOfWork.GetRepository<Option>().Entities.Where(q => q.QuestionId == questionId && q.DeletedBy == null);
             List<OptionViewDto> optionViewDtos = [];
@@ -148,7 +148,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (IsValidOption(optionId))
                 option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionId);
-            else throw new KeyNotFoundException("Invalid option ID");
+            else throw new BaseException.BadRequestException("bad_request", "Invalid question ID");
 
             option.Answer = optionUpdateDto.Answer;
             option.IsCorrect = optionUpdateDto.IsCorrect;
