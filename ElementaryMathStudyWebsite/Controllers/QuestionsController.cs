@@ -1,88 +1,120 @@
-﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+﻿using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using ElementaryMathStudyWebsite.Core.Base;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
-    public class QuestionsController : ControllerBase
+    [Route("api/[controller]")]
+    public class QuestionController : ControllerBase
     {
         private readonly IAppQuestionServices _questionService;
 
-        public QuestionsController(IAppQuestionServices questionService)
+        public QuestionController(IAppQuestionServices questionService)
         {
             _questionService = questionService;
         }
 
-        // GET api/question
-        [HttpGet]
-        public async Task<ActionResult<IList<QuestionDto>>> GetAllQuestions()
+        // GET: api/question/all
+        [HttpGet("all")]
+        [SwaggerOperation(Summary = "Get all questions", Description = "Retrieve all questions.")]
+        public async Task<ActionResult<List<QuestionViewDto>>> GetAllQuestions()
         {
-            var questions = await _questionService.GetAllQuestionsAsync();
-            return Ok(questions);
+            try
+            {
+                var questions = await _questionService.GetAllQuestionsAsync();
+                return Ok(questions);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
         }
 
-        // GET api/question/5
+        // GET: api/question/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<QuestionDto>> GetQuestionById(int id)
+        [SwaggerOperation(Summary = "Get question by ID", Description = "Retrieve a specific question by its ID.")]
+        public async Task<ActionResult<QuestionViewDto>> GetQuestionById(string id)
         {
             try
             {
                 var question = await _questionService.GetQuestionByIdAsync(id);
+                if (question == null)
+                {
+                    return NotFound(new { message = "Question not found." });
+                }
                 return Ok(question);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return NotFound();
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
-        // POST api/question
-        [HttpPost]
-        public async Task<ActionResult<QuestionDto>> CreateQuestion(CreateQuestionDto dto)
-        {
-            var question = await _questionService.CreateQuestionAsync(dto);
-            var id = question.Id;
-            return CreatedAtAction(nameof(GetQuestionById), new { id = id }, question);
-        }
-
-        // PUT api/question/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateQuestion(int id, UpdateQuestionDto dto)
-        {
-            try
-            {
-                var success = await _questionService.UpdateQuestionAsync(id, dto);
-                if (success)
-                {
-                    return NoContent();
-                }
-                return NotFound();
-            }
-            catch (Exception)
-            {
-                return BadRequest();
-            }
-        }
-
-        //// DELETE api/question/5
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteQuestion(int id)
+        // POST: api/question
+        //[HttpPost]
+        //[SwaggerOperation(Summary = "Add a new question", Description = "Create a new question.")]
+        //public async Task<ActionResult<QuestionViewDto>> AddQuestion([FromBody] QuestionCreateDto dto)
         //{
         //    try
         //    {
-        //        var success = await _questionService.DeleteQuestionAsync(id);
-        //        if (success)
-        //        {
-        //            return NoContent();
-        //        }
-        //        return NotFound();
+        //        var question = await _questionService.AddQuestionAsync(dto);
+        //        return CreatedAtAction(nameof(GetQuestionById), new { id = question.Id }, question);
         //    }
-        //    catch (Exception)
+        //    catch (Exception ex)
         //    {
-        //        return BadRequest();
+        //        return StatusCode(500, new { message = ex.Message });
         //    }
         //}
+
+        // GET: api/question/search
+        [HttpGet("search")]
+        [SwaggerOperation(Summary = "Search questions by context", Description = "Search for questions where the context contains the specified string.")]
+        public async Task<ActionResult<List<QuestionViewDto>>> SearchQuestions([FromQuery] string context)
+        {
+            try
+            {
+                var questions = await _questionService.SearchQuestionsByContextAsync(context);
+                return Ok(questions);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        // GET: api/question/quiz/{quizId}
+        [HttpGet("quiz/{quizId}")]
+        [SwaggerOperation(Summary = "Get questions by quiz ID", Description = "Retrieve questions that belong to a specific quiz.")]
+        public async Task<ActionResult<List<QuestionViewDto>>> GetQuestionsByQuizId(string quizId)
+        {
+            try
+            {
+                var questions = await _questionService.GetQuestionsByQuizIdAsync(quizId);
+                return Ok(questions);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        // GET: api/question
+        [HttpGet]
+        [SwaggerOperation(Summary = "Get questions with pagination", Description = "Retrieve all questions with pagination.")]
+        public async Task<ActionResult<BasePaginatedList<QuestionViewDto>>> GetQuestions([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var paginatedQuestions = await _questionService.GetQuestionsAsync(pageNumber, pageSize);
+                return Ok(paginatedQuestions);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 }
