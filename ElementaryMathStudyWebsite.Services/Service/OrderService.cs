@@ -35,7 +35,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == currentUser.Id && o.Status == PaymentStatusHelper.CART.ToString());
 
             if (query.Count() > 0) throw new BaseException.BadRequestException(
-                "invalid argument",
+                "invalid_argument",
                 "You already have something in your cart, please discard your current cart or proceed to checkout"
                 );
 
@@ -122,7 +122,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<Order> orderQuery = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == currentUser.Id && o.Status == PaymentStatusHelper.CART.ToString());
 
             if (orderQuery.Count() <= 0) throw new BaseException.BadRequestException(
-                "invalid argument",
+                "invalid_argument",
                 "You have no items in your cart"
             );
 
@@ -149,7 +149,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<Order> orderQuery = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == currentUser.Id && o.Status == PaymentStatusHelper.CART.ToString());
 
             if (orderQuery.Count() <= 0) throw new BaseException.BadRequestException(
-                "invalid argument",
+                "invalid_argument",
                 "You have no items in your cart"
             );
 

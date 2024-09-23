@@ -1,5 +1,8 @@
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Services.Service;
+using Humanizer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -8,7 +11,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PaymentController : Controller
+    public class PaymentController : ControllerBase
     {
         private readonly IVnPayService _vnPayService;
         private readonly IAppOrderServices _orderService;
@@ -30,7 +33,10 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                return Ok(await _vnPayService.CreatePaymentUrl(HttpContext));
+                var result = BaseResponse<string>.OkResponse(await _vnPayService.CreatePaymentUrl(HttpContext));
+
+
+                return Ok(result);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -61,14 +67,18 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var response = _vnPayService.PaymentExecute(Request.Query);
+                var vnPayResponse = _vnPayService.PaymentExecute(Request.Query);
 
-                if (response.VnPayResponseCode != "00")
+                if (vnPayResponse.VnPayResponseCode != "00")
                 {
-                    return Ok(await _orderService.HandleVnPayCallback(response.OrderId, false));
+                    var failedResponse = BaseResponse<string>.OkResponse(await _orderService.HandleVnPayCallback(vnPayResponse.OrderId, false));
+
+                    return Ok(failedResponse);
                 }
 
-                return Ok(await _orderService.HandleVnPayCallback(response.OrderId, true));
+                var successResponse = BaseResponse<string>.OkResponse(await _orderService.HandleVnPayCallback(vnPayResponse.OrderId, true));
+
+                return Ok(successResponse);
             }
             catch (BaseException.CoreException coreEx)
             {
