@@ -173,6 +173,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Count topics for each chapter
             foreach (var chapter in chapters)
             {
+
                 int topicCount = await _unitOfWork.GetRepository<Topic>().Entities
                     .Where(t => t.ChapterId.Equals(chapter.Id))
                     .CountAsync();

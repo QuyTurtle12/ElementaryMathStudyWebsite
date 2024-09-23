@@ -8,7 +8,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
     {
         Task<User> CreateUserAsync(CreateUserDto dto);
         Task<User> UpdateUserAsync(string userId, UpdateUserDto dto);
-        Task<string?> GetUserNameAsync(string userId);
+        Task<string> GetUserNameAsync(string userId);
         Task<bool> IsCustomerChildren(string parentId, string studentId);
         void AuditFields(BaseEntity entity, bool isCreating = false, bool isDisable = false);
         string GetActionUserId();

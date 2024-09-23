@@ -6,7 +6,6 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Utils;
 using ElementaryMathStudyWebsite.Core.Store;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {

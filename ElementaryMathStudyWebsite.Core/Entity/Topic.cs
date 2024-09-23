@@ -16,7 +16,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public string? QuizId { get; set; }
 
-        public string? ChapterId { get; set; }
+        public string ChapterId { get; set; } = string.Empty;
 
         // Navigation properties
         [JsonIgnore]
