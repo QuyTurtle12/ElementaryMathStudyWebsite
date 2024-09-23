@@ -14,7 +14,7 @@ namespace ElementaryMathStudyWebsite.Controllers
     [ApiController]
 
 
-    public class CartController : Controller
+    public class CartController : ControllerBase
     {
         IAppOrderServices _orderService;
 
@@ -33,7 +33,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                return Ok(await _orderService.AddItemsToCart(dto));
+                var response = BaseResponse<OrderViewDto>.OkResponse(await _orderService.AddItemsToCart(dto));
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -66,8 +68,14 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 var result = await _orderService.RemoveCart();
                 if (result)
-                    return Ok("Successfully");
-                else return Ok("Unsuccessfully");
+                {
+                    var successResponse = BaseResponse<string>.OkResponse("Successfully");
+                    return Ok(successResponse);
+
+                }
+                var failedResponse = BaseResponse<string>.OkResponse("Unsuccessfully");
+
+                return Ok(failedResponse);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -98,7 +106,10 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                return Ok(await _orderService.ViewCart());
+                var response = BaseResponse<OrderViewDto>.OkResponse(await _orderService.ViewCart());
+
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
