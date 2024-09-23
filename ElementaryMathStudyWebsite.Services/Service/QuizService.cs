@@ -74,9 +74,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 Id = quiz.Id,
                 QuizName = quiz.QuizName,
                 Criteria = quiz.Criteria,
-                Status = quiz.Status,
-                ChapterName = quiz.Chapter?.ChapterName,  
-                TopicName = quiz.Topic?.TopicName     
+                Status = quiz.Status, 
             }).ToList();
 
             return quizDtos; // Return the list of QuizViewDto
