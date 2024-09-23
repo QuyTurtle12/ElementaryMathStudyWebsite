@@ -15,16 +15,16 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class ChapterService(IGenericRepository<Chapter> detailReposiotry,
-                          IUnitOfWork unitOfWork,
-                          IHttpContextAccessor httpContextAccessor,
-                          ITokenService tokenService) : IAppChapterServices
+    public class ChapterService: IAppChapterServices
     {
-        private readonly IGenericRepository<Chapter> _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
-        private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
-        private readonly ITokenService _tokenService = tokenService;
-        //private readonly IAppUserServices _userService;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IAppUserServices _userServices;
+
+        public ChapterService(IUnitOfWork unitOfWork, IAppUserServices userServices)
+        {
+            _unitOfWork = unitOfWork;
+            _userServices = userServices;
+        }
 
         private void ValidateChapter(ChapterDto chapterDTO)
         {
@@ -120,7 +120,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 //LastUpdatedTime = DateTime.UtcNow // Set initial LastUpdatedTime as well
             };
 
-            AuditFields(chapter, isCreating: true);
+            _userServices.AuditFields(chapter, isCreating: true);
             var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
             var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
             User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
@@ -199,7 +199,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             chapter.QuizId = chapterDTO.QuizId;
             //chapter.LastUpdatedTime = DateTime.UtcNow;
 
-            AuditFields(chapter, isCreating: false);
+            _userServices.AuditFields(chapter, isCreating: false);
 
             var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
             var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
@@ -235,8 +235,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<ChapterAdminDelete> DeleteChapterAsync(string chapterId)
         {
             
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
+            //var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            //var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
+            User currentUserId = await _userServices.GetCurrentUserAsync();
             var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new BaseException.BadRequestException("Not Found", "Chapter ID not found");
             if (chapter.DeletedBy != null)
             {
@@ -246,10 +247,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 chapter.Status = false;
             }
-            chapter.DeletedBy = currentUserId.ToString().ToUpper();
+            chapter.DeletedBy = currentUserId.Id.ToString().ToUpper();
             chapter.DeletedTime = DateTime.UtcNow;
 
-            AuditFields(chapter);
+            _userServices.AuditFields(chapter);
 
             var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
             var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
@@ -298,7 +299,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             chapter.DeletedBy = null;
             chapter.DeletedTime = null;
 
-            AuditFields(chapter);
+            _userServices.AuditFields(chapter);
 
             var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
             var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
@@ -677,7 +678,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             chapter.Status = !chapter.Status;
             //subject.LastUpdatedTime = DateTime.UtcNow;
 
-            AuditFields(chapter);
+            _userServices.AuditFields(chapter);
             var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
             var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
             User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
@@ -885,27 +886,27 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         }
 
-        public void AuditFields(BaseEntity entity, bool isCreating = false)
-        {
-            // Retrieve the JWT token from the Authorization header
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
+        //public void AuditFields(BaseEntity entity, bool isCreating = false)
+        //{
+        //    // Retrieve the JWT token from the Authorization header
+        //    var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        //    var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
 
-            // If creating a new entity, set the CreatedBy field
-            if (isCreating)
-            {
-                entity.CreatedBy = currentUserId.ToString().ToUpper(); // Set the creator's ID
-            }
+        //    // If creating a new entity, set the CreatedBy field
+        //    if (isCreating)
+        //    {
+        //        entity.CreatedBy = currentUserId.ToString().ToUpper(); // Set the creator's ID
+        //    }
 
-            // Always set LastUpdatedBy and LastUpdatedTime fields
-            entity.LastUpdatedBy = currentUserId.ToString().ToUpper(); // Set the current user's ID
+        //    // Always set LastUpdatedBy and LastUpdatedTime fields
+        //    entity.LastUpdatedBy = currentUserId.ToString().ToUpper(); // Set the current user's ID
 
-            // If is not created then update LastUpdatedTime
-            if (isCreating is false)
-            {
-                entity.LastUpdatedTime = CoreHelper.SystemTimeNow;
-            }
+        //    // If is not created then update LastUpdatedTime
+        //    if (isCreating is false)
+        //    {
+        //        entity.LastUpdatedTime = CoreHelper.SystemTimeNow;
+        //    }
 
-        }
+        //}
     }
 }

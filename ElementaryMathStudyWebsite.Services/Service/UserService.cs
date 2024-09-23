@@ -338,5 +338,31 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return currentUserId.ToString().ToUpper();
         }
+
+        public async Task<User> GetCurrentUserAsync()
+        {
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+
+            if (string.IsNullOrEmpty(token))
+            {
+                throw new UnauthorizedAccessException("Authorization token is missing.");
+            }
+
+            var userId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            if (userId == Guid.Empty)
+            {
+                throw new UnauthorizedAccessException("Invalid token.");
+            }
+
+            var user = await GetUserByIdAsync(userId.ToString());
+
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found.");
+            }
+
+            return user;
+        }
     }
 }

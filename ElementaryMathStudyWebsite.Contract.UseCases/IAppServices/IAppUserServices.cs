@@ -20,6 +20,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<BasePaginatedList<User>> GetAllUsersAsync(int pageNumber, int pageSize);
 
         Task<User?> GetUserByIdAsync(string userId);
+        Task<User> GetCurrentUserAsync();
         Task<bool> DisableUserAsync(string userId);
 
         Task<List<User>> GetAllUsersWithRolesAsync();
