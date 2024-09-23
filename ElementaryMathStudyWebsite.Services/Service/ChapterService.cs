@@ -75,7 +75,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (existingChapter != null)
             {
-                throw new InvalidOperationException($"A chapter with the name '{chapterDTO.ChapterName}' already exists.");
+                throw new BaseException.BadRequestException("Value Duplicate Error", "This chapter name was used");
             }
 
             if (!string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
@@ -85,7 +85,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 if (!subjectExists)
                 {
-                    throw new ArgumentException($"Subject with Id '{chapterDTO.SubjectId}' does not exist.");
+                    throw new BaseException.BadRequestException("Not Found", "Subject with Id does not exist");
                 }
             }
 
@@ -98,12 +98,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 if (!quizExists)
                 {
-                    throw new ArgumentException($"Quiz with Id '{chapterDTO.QuizId}' does not exist.");
+                    throw new BaseException.BadRequestException("Not Found", "Quiz with Id does not exist");
                 }
                 var isQuizId = await IsQuizIdInChaptersAsync(chapterDTO.QuizId);
                 if (isQuizId)
                 {
-                    throw new ArgumentException($"Subject with Id '{chapterDTO.SubjectId}' was used.");
+                    throw new BaseException.BadRequestException("Value Duplicate Error", "This Quiz Id was used");
                 }
             }
 
@@ -161,7 +161,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (existingSubject != null)
             {
-                throw new InvalidOperationException($"A chapter with the name '{chapterDTO.ChapterName}' already exists.");
+                throw new BaseException.BadRequestException("Value Duplicate Error", "This chapter name was used");
             }
 
             if (!string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
@@ -171,7 +171,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 if (!subjectExists)
                 {
-                    throw new ArgumentException($"Subject with Id '{chapterDTO.SubjectId}' does not exist.");
+                    throw new BaseException.BadRequestException("Not Found", "Subject with Id does not exist");
                 }
             }
 
@@ -182,7 +182,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 if (!quizExists)
                 {
-                    throw new ArgumentException($"Quiz with Id '{chapterDTO.QuizId}' does not exist.");
+                    throw new BaseException.BadRequestException("Value Duplicate Error", "This Quiz Id was used");
                 }
                 //var isQuizId = await IsQuizIdInChaptersAsync(chapterDTO.QuizId);
                 //if (isQuizId)
@@ -241,7 +241,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new BaseException.BadRequestException("Not Found", "Chapter ID not found");
             if (chapter.DeletedBy != null)
             {
-                throw new InvalidOperationException("This chapter was deleted");
+                throw new BaseException.BadRequestException("announcement", "This chapter was deleted");
             }
             if (chapter.Status == true)
             {
@@ -290,7 +290,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new BaseException.BadRequestException("Not Found", "Chapter ID not found");
             if (chapter.DeletedBy == null)
             {
-                throw new InvalidOperationException("This chapter was rollback");
+                throw new BaseException.BadRequestException("announcement", "This chapter was rollback");
             }
             if (chapter.Status == false)
             {
