@@ -26,6 +26,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             _tokenService = tokenService;
         }
 
+        /// <summary>
+        /// Retrieves the profile of the logged-in user.
+        /// </summary>
+        /// <returns>Returns the profile of the logged-in user.</returns>
         [HttpGet("profile")]
         public async Task<ActionResult<BaseResponse<UserProfile>>> GetProfile()
         {
@@ -70,7 +74,11 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-
+        /// <summary>
+        /// Updates the profile of the logged-in user.
+        /// </summary>
+        /// <param name="updateUserDto">The data used to update the user's profile.</param>
+        /// <returns>Returns the updated user profile along with a new JWT token.</returns>
         [HttpPut]
         [Route("profile/update")]
         [SwaggerOperation(
@@ -121,6 +129,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        /// <summary>
+        /// Retrieves a paginated list of all children associated with the logged-in parent.
+        /// </summary>
+        /// <param name="pageNumber">The page number for pagination (default is 1).</param>
+        /// <param name="pageSize">The page size for pagination (default is 10).</param>
+        /// <returns>Returns a paginated list of children for the parent.</returns>
         [HttpGet]
         [Route("get-children")]
         [Authorize(Policy = "Parent")]
@@ -342,6 +356,16 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        /// <summary>
+        /// Searches users based on provided filters such as name, status, phone, and email with pagination.
+        /// </summary>
+        /// <param name="name">The name of the user to search for (optional).</param>
+        /// <param name="status">The status of the user (optional).</param>
+        /// <param name="phone">The phone number of the user (optional).</param>
+        /// <param name="email">The email of the user (optional).</param>
+        /// <param name="pageNumber">The page number for pagination (default is 1).</param>
+        /// <param name="pageSize">The page size for pagination (default is 10).</param>
+        /// <returns>Returns a paginated list of users based on the search criteria.</returns>
         [HttpGet]
         [Route("search")]
         [SwaggerOperation(
@@ -570,6 +594,11 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        /// <summary>
+        /// Deletes a user based on the provided user ID.
+        /// </summary>
+        /// <param name="userId">The ID of the user to be deleted.</param>
+        /// <returns>Returns a confirmation message if the user is successfully deleted.</returns>
         [HttpDelete]
         [Route("delete/{userId}")]
         [Authorize(Policy = "Admin-Manager")]

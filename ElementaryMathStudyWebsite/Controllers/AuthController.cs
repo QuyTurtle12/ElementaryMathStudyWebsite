@@ -89,7 +89,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 await _authService.RegisterAsync(registerDto);
-                return Ok("Registration successful. Please check your email for verification.");
+                var response = BaseResponse<String>.OkResponse("Registration successful. Please check your email for verification.");
+
+                return Ok(response);
             }
             catch (InvalidOperationException ex)
             {
@@ -149,13 +151,15 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             if (user == null || string.IsNullOrWhiteSpace(user.Email))
             {
-                return BadRequest("User data is corrupted.");
+                throw new BaseException.BadRequestException("not_found", "User or Email not found");
             }
 
             try
             {
                 await _authService.StudentRegisterAsync(registerDto, user.Email, user.Id);
-                return Ok("Registration successful. Please check your email for verification.");
+                var response = BaseResponse<String>.OkResponse("Registration successful. Please check your email for verification.");
+
+                return Ok(response);
             }
             catch (InvalidOperationException ex)
             {
@@ -188,7 +192,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 await _authService.VerifyEmailAsync(token);
-                return Ok("Email verified successfully.");
+                var response = BaseResponse<String>.OkResponse("Email verified successfully.");
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
