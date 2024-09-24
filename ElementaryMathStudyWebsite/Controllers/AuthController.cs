@@ -151,7 +151,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             if (user == null || string.IsNullOrWhiteSpace(user.Email))
             {
-                throw new BaseException.BadRequestException("not_found", "User or Email not found");
+                throw new BaseException.NotFoundException("not_found", "User or Email not found");
             }
 
             try
@@ -182,6 +182,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }

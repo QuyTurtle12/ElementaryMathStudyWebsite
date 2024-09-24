@@ -113,7 +113,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (user == null)
             {
-                throw new KeyNotFoundException("User not found");
+                throw new BaseException.NotFoundException("not_found", "User not found");
             }
             
 
@@ -170,7 +170,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             );
             if (user == null)
             {
-                throw new BaseException.BadRequestException("not_found", "User not found");
+                throw new BaseException.NotFoundException("not_found", "User not found");
             }
 
             return user;
@@ -182,7 +182,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var user = await _unitOfWork.GetRepository<User>().GetByIdAsync(userId);
             if (user == null)
             {
-                throw new BaseException.BadRequestException("not_found", "User not found");
+                throw new BaseException.NotFoundException("not_found", "User not found");
             }
 
             // Set the user's status to false to disable the user
@@ -204,7 +204,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var user = await _unitOfWork.GetRepository<User>().GetByIdAsync(userId);
             if (user == null)
             {
-                throw new BaseException.BadRequestException("not_found", "User not found");
+                throw new BaseException.NotFoundException("not_found", "User not found");
             }
 
             // Set the user's status to false to disable the user
@@ -402,7 +402,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (user == null)
             {
-                throw new KeyNotFoundException("User not found.");
+                throw new BaseException.NotFoundException("not_found", "User not found");
             }
 
             return user;

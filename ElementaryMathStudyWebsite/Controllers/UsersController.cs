@@ -442,10 +442,6 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 var user = await _userServices.GetUserByIdAsync(userId);
 
-                if (user == null)
-                {
-                    return NotFound("User not found.");
-                }
 
                 var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
@@ -470,6 +466,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }
@@ -536,6 +541,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
             }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
         }
 
         /// <summary>
@@ -571,7 +585,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                     return Ok(response);
                 }
-                throw new BaseException.BadRequestException("not_found", "User not found");
+                throw new BaseException.CoreException("unsuccess", "Disable unsuccessfully");
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -590,6 +604,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }
@@ -623,7 +646,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                     return Ok(response);
                 }
-                throw new BaseException.BadRequestException("not_found", "User not found");
+                throw new BaseException.CoreException("unsuccess", "Delete unsuccessfully");
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -642,6 +665,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }
