@@ -21,8 +21,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         // Add option to database
         public async Task<OptionViewDto> AddOption(OptionCreateDto createDto)
-        { 
-            var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(createDto.QuestionId) ?? throw new BaseException.BadRequestException("bad_request", "Invalid question ID");
+        {
+            _ = await _unitOfWork.GetRepository<Question>().GetByIdAsync(createDto.QuestionId)
+                ?? throw new BaseException.NotFoundException("not_found", "Question ID not found");
 
             Option option = new()
             {
@@ -50,13 +51,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
         //Delete an option
         public async Task<bool> DeleteOption(string optionId)
         {
-            Option? option = new();
+            Option? option;
 
             if (IsValidOption(optionId))
                 option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionId);
-            else throw new BaseException.BadRequestException("bad_request", "Invalid question ID");
+            else throw new BaseException.NotFoundException("not_found", "Option ID not found");
 
-            _userService.AuditFields(option, false, true);
+            _userService.AuditFields(option!, false, true);
 
             await _unitOfWork.SaveAsync();
 
@@ -64,15 +65,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Get an option with all properties
-        public async Task<Option?> GetOptionById(string optionId)
+        public async Task<Option> GetOptionById(string optionId)
         {
-            Option? option = new();
+            Option? option;
 
             if (IsValidOption(optionId))
                 option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionId);
-            else throw new BaseException.BadRequestException("bad_request", "Invalid question ID");
+            else throw new BaseException.NotFoundException("not_found", "Option ID not found");
 
-            return option;
+            return option!;
         }
 
         // Get options of a question for general user
@@ -144,13 +145,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Update an option
         public async Task<OptionViewDto> UpdateOption(string optionId, OptionUpdateDto optionUpdateDto)
         {
-            Option? option = new();
+            Option? option;
 
             if (IsValidOption(optionId))
                 option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionId);
             else throw new BaseException.BadRequestException("bad_request", "Invalid question ID");
 
-            option.Answer = optionUpdateDto.Answer;
+            option!.Answer = optionUpdateDto.Answer;
             option.IsCorrect = optionUpdateDto.IsCorrect;
 
             var userService = _userService;

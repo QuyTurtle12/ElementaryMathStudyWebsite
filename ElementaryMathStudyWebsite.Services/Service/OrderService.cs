@@ -34,19 +34,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == currentUser.Id && o.Status == PaymentStatusHelper.CART.ToString());
 
-            if (query.Count() > 0) throw new BaseException.BadRequestException(
-                "invalid_argument",
-                "You already have something in your cart, please discard your current cart or proceed to checkout"
-                );
+            if (query.Count() > 0) throw new BaseException.BadRequestException("invalid_argument", "You already have something in your cart, please discard your current cart or proceed to checkout");
 
             // General Validation for each Subject-Student pair
             foreach (var subjectStudent in cartCreateDto.SubjectStudents)
             {
                 string? error = await IsGenerallyValidatedAsync(subjectStudent.SubjectId, subjectStudent.StudentId, cartCreateDto);
-                if (!string.IsNullOrWhiteSpace(error)) throw new BaseException.BadRequestException(
-                    "invalid_argument", // Error code
-                    error // Error message
-                    );
+                if (!string.IsNullOrWhiteSpace(error)) throw new BaseException.BadRequestException("invalid_argument", error); // Error message
             }
 
             // Calculate total price
@@ -67,7 +61,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             bool result = true; // Check create order detail result
 
-            List<OrderDetailViewDto> detailDtos = new();
+            List<OrderDetailViewDto> detailDtos = [];
 
             // Add order details for each subject-student pair
             foreach (var subjectStudent in cartCreateDto.SubjectStudents)
@@ -121,10 +115,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             IQueryable<Order> orderQuery = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == currentUser.Id && o.Status == PaymentStatusHelper.CART.ToString());
 
-            if (orderQuery.Count() <= 0) throw new BaseException.BadRequestException(
-                "invalid_argument",
-                "You have no items in your cart"
-            );
+            if (!orderQuery.Any()) throw new BaseException.BadRequestException("invalid_argument", "You have no items in your cart");
 
             var cart = orderQuery.First();
 
@@ -148,14 +139,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             IQueryable<Order> orderQuery = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == currentUser.Id && o.Status == PaymentStatusHelper.CART.ToString());
 
-            if (orderQuery.Count() <= 0) throw new BaseException.BadRequestException(
-                "invalid_argument",
-                "You have no items in your cart"
-            );
+            if (!orderQuery.Any()) throw new BaseException.BadRequestException("invalid_argument", "You have no items in your cart");
 
             var cart = orderQuery.First();
             IQueryable<OrderDetail> orderDetailQuery = _unitOfWork.GetRepository<OrderDetail>().Entities.Where(o => o.OrderId == cart.Id);
-            List<OrderDetailViewDto> detailDtos = new();
+            List<OrderDetailViewDto> detailDtos = [];
 
             foreach (var orderDetail in orderDetailQuery)
             {
@@ -225,7 +213,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 return -1;
             }
-
         }
 
         // Get one order with all properties
@@ -285,7 +272,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities
                 .Where(o => o.CustomerId.Equals(currentUser.Id) && string.IsNullOrWhiteSpace(o.DeletedBy));
 
-            IList<OrderViewDto> orderDtos = new List<OrderViewDto>();
+            IList<OrderViewDto> orderDtos = [];
             var allOrders = await query.ToListAsync(); // Asynchronously fetch all orders
                                                        // Map orders to OrderViewDto
 
@@ -334,7 +321,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var allOrders = await query.ToListAsync();
 
             // list of order for admin view
-            IList<OrderAdminViewDto> adminOrders = new List<OrderAdminViewDto>();
+            IList<OrderAdminViewDto> adminOrders = [];
 
             foreach (var order in allOrders)
             {
@@ -445,8 +432,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             firstInputValue = firstInputValue?.Trim() ?? null;
             secondInputValue = secondInputValue?.Trim() ?? null;
 
-            // Create an empty list
-            BasePaginatedList<OrderViewDto>? result = null;
 
             // variable for using only one input
             string? inputValue = string.Empty;
@@ -458,6 +443,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 inputValue = firstInputValue ?? secondInputValue;
             }
 
+
+            // Create an empty list
+            BasePaginatedList<OrderViewDto>? result;
             switch (filter)
             {
                 //case "customer id": // Search orders by customer id
@@ -497,7 +485,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get order dto list by customer email
         public async Task<BasePaginatedList<OrderViewDto>> CustomerEmailFilterAsync(string? inputvalue, IEnumerable<Order> orders, int pageNumber, int pageSize)
         {
-            IList<OrderViewDto> result = new List<OrderViewDto>();
+            IList<OrderViewDto> result = [];
 
             IEnumerable<User> users = await _unitOfWork.GetRepository<User>().GetAllAsync();
 
@@ -541,7 +529,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get order dto list by customer phone
         public async Task<BasePaginatedList<OrderViewDto>> CustomerPhoneFilterAsync(string? inputvalue, IEnumerable<Order> orders, int pageNumber, int pageSize)
         {
-            IList<OrderViewDto> result = new List<OrderViewDto>();
+            IList<OrderViewDto> result = [];
 
             IEnumerable<User> users = await _unitOfWork.GetRepository<User>().GetAllAsync();
 
