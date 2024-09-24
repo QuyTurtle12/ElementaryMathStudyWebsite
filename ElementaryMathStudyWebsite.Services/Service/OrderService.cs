@@ -391,6 +391,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
                         CreatedTime = order.CreatedTime,
                         LastUpdatedTime = order.LastUpdatedTime,
+                        PurchaseDate = order.LastUpdatedTime
                     };
                     adminOrders.Add(dto);
                 }
