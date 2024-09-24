@@ -12,7 +12,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public bool Status { get; set; } = true;
 
-        public required string SubjectId { get; set; }
+        public string SubjectId { get; set; } = string.Empty;
 
         public string? QuizId { get; set; } // Quiz may not exist yet and can be created later
 

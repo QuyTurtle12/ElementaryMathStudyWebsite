@@ -2,8 +2,7 @@
 {
     public class QuizViewDto
     {
-
-        //public string QuizId { get; set; }
+        public string Id { get; set; } = string.Empty;
         public string QuizName { get; set; } = string.Empty;
         public double? Criteria { get; set; }
         public bool? Status { get; set; }

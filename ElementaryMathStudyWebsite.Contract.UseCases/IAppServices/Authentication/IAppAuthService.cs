@@ -7,5 +7,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authenticati
         Task<string> LoginAsync(LoginDto loginDto);
         Task RegisterAsync(RegisterDto registerDto);
         Task VerifyEmailAsync(string token);
+        Task StudentRegisterAsync(StudentRegisterDto registerDto, string email, string parentId);
     }
 }

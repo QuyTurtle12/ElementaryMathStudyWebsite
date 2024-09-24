@@ -2,9 +2,10 @@
 {
     public class QuestionViewDto
     {
-        public string Id { get; set; } = string.Empty; // Ensure this is a GUID
+        public string Id { get; set; } = string.Empty;
         public string QuestionContext { get; set; } = string.Empty;
-        public string QuizId { get; set; } = string.Empty;
+        public required string QuizName { get; set; }
 
+        public required string QuizId { get; set; }
     }
 }

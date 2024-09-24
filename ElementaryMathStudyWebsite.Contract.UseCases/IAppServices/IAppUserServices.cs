@@ -14,8 +14,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         string GetActionUserId();
         Task<BasePaginatedList<User>> GetAllUsersAsync(int pageNumber, int pageSize);
         Task<User?> GetUserByIdAsync(string userId);
-        Task<bool> DisableUserAsync(string userId);
         Task<User> GetCurrentUserAsync();
+        Task<bool> DisableUserAsync(string userId);
         Task<List<User>> GetAllUsersWithRolesAsync();
         Task<BasePaginatedList<User>> SearchUsersAsync(string? name, bool? status, string? phone, string? email, int pageNumber, int pageSize);
         Task<BasePaginatedList<User>> GetChildrenOfParentAsync(string parentId, int pageNumber, int pageSize);

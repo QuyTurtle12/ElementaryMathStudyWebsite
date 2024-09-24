@@ -1,6 +1,6 @@
 ﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
 {
-    public class OrderCreateDto
+    public class CartCreateDto
     {
         public IEnumerable<SubjectStudentDto> SubjectStudents { get; set; } = new List<SubjectStudentDto>();
         public string OrderId { get; set; }

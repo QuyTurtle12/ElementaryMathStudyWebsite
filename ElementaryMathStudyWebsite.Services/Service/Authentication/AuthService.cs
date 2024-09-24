@@ -2,6 +2,7 @@
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using System.Linq.Expressions;
 
 namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 {
@@ -79,9 +80,54 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             await _emailService.SendVerificationEmailAsync(registerDto.Email, newUser.VerificationToken);
         }
 
+        public async Task StudentRegisterAsync(StudentRegisterDto registerDto, string email, string parentId)
+        {
+            // Check if the user already exists
+            var existingUser = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Username == registerDto.Username);
+            if (existingUser != null)
+            {
+                throw new InvalidOperationException("User already exists.");
+            }
+
+            // Verify if the provided role name exists
+            var role = await _unitOfWork.GetRepository<Role>().FindByConditionAsync(r => r.RoleName == "Student");
+            if (role == null)
+            {
+                throw new InvalidOperationException("Invalid role name.");
+            }
+
+            // Hash the password
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
+
+            // Create new user entity
+            var newUser = new User
+            {
+                FullName = registerDto.FullName,
+                Gender = registerDto.Gender,
+                Username = registerDto.Username,
+                Password = hashedPassword,
+                Status = false, // Set status to false until email is verified
+                VerificationToken = Guid.NewGuid().ToString(), // Generate verification token
+                Role = role // Set the role
+            };
+            newUser.CreatedBy = parentId;
+            // Save user to the database
+            await _unitOfWork.GetRepository<User>().InsertAsync(newUser);
+            await _unitOfWork.SaveAsync();
+
+            // Send verification email
+            await _emailService.SendVerificationEmailAsync(email, newUser.VerificationToken);
+        }
+
         public async Task VerifyEmailAsync(string token)
         {
-            var user = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.VerificationToken == token);
+            Expression<Func<User, bool>> condition = u => u.VerificationToken == token;
+
+            var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
+                condition,
+                u => u.Role // Include the Role if needed
+                // Add other includes here if needed
+            );
 
             if (user == null)
             {
@@ -90,6 +136,11 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 
             // Activate the user account
             user.Status = true;
+            if (!user.Role.RoleName.Equals("Student"))
+            {
+                user.CreatedBy = user.Id;
+            }
+
             user.VerificationToken = null; // Clear the verification token
             await _unitOfWork.GetRepository<User>().UpdateAsync(user);
             await _unitOfWork.SaveAsync();

@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Core.Base;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -9,10 +13,14 @@ namespace ElementaryMathStudyWebsite.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAppAuthService _authService;
+        private readonly ITokenService _tokenService;
+        private readonly IAppUserServices _userServices;
 
-        public AuthController(IAppAuthService authService)
+        public AuthController(IAppAuthService authService, ITokenService tokenService, IAppUserServices userServices)
         {
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+            _tokenService = tokenService;
+            _userServices = userServices;
         }
 
         /// <summary>
@@ -41,9 +49,24 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return Unauthorized(ex.Message);
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return BadRequest(ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -72,9 +95,90 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return Conflict(ex.Message); // Conflict for cases like existing user or invalid role
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return BadRequest(ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
+        /// <summary>
+        /// Registers a new student.
+        /// </summary>
+        /// <param name="registerDto">The registration request data.</param>
+        /// <returns>A message indicating the result of the registration attempt.</returns>
+        [HttpPost("student-register")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [Authorize(Policy = "Parent")]
+        [SwaggerOperation(
+            Summary = "Authorization: Parent",
+            Description = "Registing children for parent"
+            )]
+        public async Task<IActionResult> StudentRegisterAsync([FromBody] StudentRegisterDto registerDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+
+            // Extract user ID from the token
+            var userId = _tokenService.GetUserIdFromTokenHeader(token);
+
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized();
+            }
+            var user = await _userServices.GetUserByIdAsync(userId.ToString());
+
+            if (user == null || string.IsNullOrWhiteSpace(user.Email))
+            {
+                return BadRequest("User data is corrupted.");
+            }
+
+            try
+            {
+                await _authService.StudentRegisterAsync(registerDto, user.Email, user.Id);
+                return Ok("Registration successful. Please check your email for verification.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message); // Conflict for cases like existing user or invalid role
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -86,9 +190,24 @@ namespace ElementaryMathStudyWebsite.Controllers
                 await _authService.VerifyEmailAsync(token);
                 return Ok("Email verified successfully.");
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return BadRequest($"Error: {ex.Message}");
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 

@@ -58,7 +58,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     {
                         string? studentName = await _userService.GetUserNameAsync(detail.StudentId);
                         string? subjectName = await _subjectService.GetSubjectNameAsync(detail.SubjectId);
-                        OrderDetailViewDto dto = new OrderDetailViewDto(subjectName, studentName);
+                        OrderDetailViewDto dto = new() {
+                            SubjectId = detail.SubjectId,
+                            SubjectName = subjectName,
+                            StudentId = detail.StudentId,
+                            StudentName = studentName 
+                        };
                         detailDtos.Add(dto);
                     }
                 }
@@ -86,7 +91,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Validate if the subject has been assigned before 
-        public async Task<bool> IsValidStudentSubjectBeforeCreateOrder(OrderCreateDto orderCreateDto)
+        public async Task<bool> IsValidStudentSubjectBeforeCreateOrder(CartCreateDto orderCreateDto)
         {
             // Check for duplicates in the SubjectStudents list
             var uniqueSubjectStudents = orderCreateDto.SubjectStudents

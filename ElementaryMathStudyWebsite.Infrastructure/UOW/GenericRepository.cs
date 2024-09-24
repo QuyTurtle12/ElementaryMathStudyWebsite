@@ -17,10 +17,9 @@ namespace ElementaryMathStudyWebsite.Infrastructure.UOW
         }
         public IQueryable<T> Entities => _context.Set<T>();
 
-        public void Delete(object id)
+        public void Delete(object entity)
         {
-            T entity = _dbSet.Find(id) ?? throw new Exception();
-            _dbSet.Remove(entity);
+            _dbSet.Remove((T)entity);
         }
 
         public async Task DeleteAsync(object id)

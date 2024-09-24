@@ -1,10 +1,11 @@
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Services.Service;
+using Humanizer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using System.ComponentModel.DataAnnotations;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -12,101 +13,33 @@ namespace ElementaryMathStudyWebsite.Controllers
     [ApiController]
     public class PaymentController : ControllerBase
     {
-        private readonly IPaymentService _paymentService;
+        private readonly IVnPayService _vnPayService;
+        private readonly IAppOrderServices _orderService;
 
-        public PaymentController(IPaymentService paymentService)
+        public PaymentController(IVnPayService vnPayService, IAppOrderServices orderService)
         {
-            _paymentService = paymentService;
+            _vnPayService = vnPayService;
+            _orderService = orderService;
         }
 
-        // POST: api/payments
-        [Authorize(Policy = "Parent")]
-        [HttpPost]
-        [SwaggerOperation(
-            Summary = "Authorization: Parent",
-            Description = "Purchase and assign kids' account to the subject"
-            )]
-        public async Task<IActionResult> Checkout([Required] OrderCreateDto orderCreateDto)
-        {
-            try
-            {
-                var appPaymentService = _paymentService as IAppPaymentServices;
-                return Ok(await appPaymentService.Checkout(orderCreateDto));
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-        }
-
-
-        // GET: api/payments/raw/{id}
-        [Authorize(Policy = "Admin-Manager")]
-        [HttpGet]
-        [Route("raw/{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin & Manager",
-            Description = "View an payment with properties"
-            )]
-        public async Task<IActionResult> GetPaymentById([Required] string id)
-        {
-            try
-            {
-                return Ok(await _paymentService.GetPaymentById(id));
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-        }
-
-        // GET: api/payments
         [Authorize(Policy = "Parent")]
         [HttpGet]
+        [Route("vnpay-checkout")]
         [SwaggerOperation(
             Summary = "Authorization: Parent",
-            Description = "View payment history of a Parent user"
+            Description = "Checkout the current user's cart"
             )]
-        public async Task<IActionResult> GetPaymentHistory(int pageNumber = -1, int pageSize = -1)
+        public async Task<IActionResult> VnPayCheckout()
         {
             try
             {
-                var appPaymentService = _paymentService as IAppPaymentServices;
-                return Ok(await appPaymentService.GetPaymentHistory(pageNumber, pageSize));
+                var result = BaseResponse<string>.OkResponse(await _vnPayService.CreatePaymentUrl(HttpContext));
+
+
+                return Ok(result);
             }
             catch (BaseException.CoreException coreEx)
             {
-                // Handle specific CoreException
                 return StatusCode(coreEx.StatusCode, new
                 {
                     code = coreEx.Code,
@@ -116,7 +49,6 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
-                // Handle specific BadRequestException
                 return BadRequest(new
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
@@ -125,24 +57,31 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-
-        // GET: api/payments/raw
-        [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
-        [Route("raw")]
+        [Route("vnpay-callback")]
         [SwaggerOperation(
-            Summary = "Authorization: Admin & Manager",
-            Description = "View all payments with properties"
+            Summary = "Warning: Not for test purpose",
+            Description = "This api is only for the vnpay checkout procedure use"
             )]
-        public async Task<IActionResult> GetPaymentById(int pageNumber = -1, int pageSize = -1)
+        public async Task<IActionResult> VnPayCallback()
         {
             try
             {
-                return Ok(await _paymentService.GetPayments(pageNumber, pageSize));
+                var vnPayResponse = _vnPayService.PaymentExecute(Request.Query);
+
+                if (vnPayResponse.VnPayResponseCode != "00")
+                {
+                    var failedResponse = BaseResponse<string>.OkResponse(await _orderService.HandleVnPayCallback(vnPayResponse.OrderId, false));
+
+                    return Ok(failedResponse);
+                }
+
+                var successResponse = BaseResponse<string>.OkResponse(await _orderService.HandleVnPayCallback(vnPayResponse.OrderId, true));
+
+                return Ok(successResponse);
             }
             catch (BaseException.CoreException coreEx)
             {
-                // Handle specific CoreException
                 return StatusCode(coreEx.StatusCode, new
                 {
                     code = coreEx.Code,
@@ -152,7 +91,6 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
-                // Handle specific BadRequestException
                 return BadRequest(new
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
@@ -160,6 +98,5 @@ namespace ElementaryMathStudyWebsite.Controllers
                 });
             }
         }
-
     }
 }

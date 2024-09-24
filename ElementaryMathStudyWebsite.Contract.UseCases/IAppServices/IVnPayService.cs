@@ -10,7 +10,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
     public interface IVnPayService
     {
-        string CreatePaymentUrl(HttpContext context, VnPayRequestDto dto);
+        Task<string> CreatePaymentUrl(HttpContext context);
         VnPayResponseDto PaymentExecute(IQueryCollection collections);
     }
 }

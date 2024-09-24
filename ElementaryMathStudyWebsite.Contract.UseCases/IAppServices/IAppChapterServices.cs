@@ -6,23 +6,32 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
     public interface IAppChapterServices
     {
-        Task<BasePaginatedList<object>> SearchChapterAsync(string searchTerm, int pageNumber, int pageSize);
+        Task<BasePaginatedList<ChapterViewDto>> SearchChapterAsync(string searchTerm, int pageNumber, int pageSize);
+
+        Task<BasePaginatedList<ChapterAdminViewDto>> SearchChapterForAdminAsync(string searchTerm, int pageNumber, int pageSize);
 
         Task<ChapterAdminViewDto> CreateChapterAsync(ChapterDto chapterDTO);
 
         Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterDto subjectDTO);
 
-        Task<bool> DeleteChapterAsync(string optionId);
+        Task<ChapterAdminDelete> DeleteChapterAsync(string optionId);
         Task<BasePaginatedList<ChapterViewDto?>> GetChapterDtosAsync(int pageNumber, int pageSize);
 
         Task<ChapterViewDto?> GetChapterDtoByChapterIdAsync(string Id);
 
         Task<string?> GetChapterNameAsync(string id);
 
-        Task<BasePaginatedList<Chapter?>> GetChaptersAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<ChapterAdminViewDto?>> GetChaptersAsync(int pageNumber, int pageSize);
+
+        Task<ChapterAdminViewDto?> GetChapterByChapterIdAsync(string id);
+
+        Task<ChapterAdminViewDto> ChangeChapterStatusAsync(string id);
+
+        Task<ChapterAdminDelete> rollbackChapterDeletedAsync(string chapterId);
+
+        Task<BasePaginatedList<ChapterAdminDelete?>> GetChaptersDeletedAsync(int pageNumber, int pageSize);
 
         Task<Chapter?> GetChapterByChapterIdAsync(string id);
-
         Task<bool> CanAccessChapterAsync(string chapterId);
     }
 }
