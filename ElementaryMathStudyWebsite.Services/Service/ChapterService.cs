@@ -32,17 +32,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
             //{
             //    throw new ArgumentException("Status is required and cannot be false.");
             //}
-            if (string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
-            {
-                throw new ArgumentException("Subject Id is required and cannot be empty.");
-            }
+            //if (string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
+            //{
+            //    BaseException.BadRequestException("announcement", "Subject Id is required and cannot be empty.");
+            //}
         }
 
         public async Task<int?> CountChaptersInSubjectAsync(string subjectId)
         {
             if (string.IsNullOrWhiteSpace(subjectId))
             {
-                throw new ArgumentException("Subject ID cannot be null or empty", nameof(subjectId));
+                throw new ArgumentException("Subject ID cannot be null or empty");
+               // BaseException.BadRequestException("announcement", "Subject Id is required and cannot be empty.");
             }
 
             return await _unitOfWork.GetRepository<Chapter>().Entities
@@ -70,6 +71,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("Value Duplicate Error", "This chapter name was used");
             }
 
+            var chapterCount = await CountChaptersInSubjectAsync(chapterDTO.SubjectId);
+
             if (!string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
             {
                 var subjectExists = await _unitOfWork.GetRepository<Subject>().Entities
@@ -80,8 +83,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     throw new BaseException.BadRequestException("Not Found", "Subject with Id does not exist");
                 }
             }
-
-
+            //if (string.IsNullOrWhiteSpace(chapterDTO.QuizId)) 
+            //{
+            //    chapterDTO.QuizId = null;
+            //}
 
             if (!string.IsNullOrWhiteSpace(chapterDTO.QuizId))
             {
@@ -99,7 +104,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
             }
 
-            var chapterCount = await CountChaptersInSubjectAsync(chapterDTO.SubjectId);
 
             var chapter = new Chapter
             {
@@ -223,6 +227,68 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
+        public async Task<bool> ChangeChapterOrderAsync(int currentChapterNumber, int newChapterNumber)
+        {
+
+            if (currentChapterNumber <= 0 || newChapterNumber <= 0)
+            {
+                throw new ArgumentException("Chapter numbers must be greater than zero.");
+            }
+            var currentChapter = await _unitOfWork.GetRepository<Chapter>().Entities
+           .FirstOrDefaultAsync(c => c.Number == currentChapterNumber);
+
+            if (currentChapter == null)
+            {
+                throw new InvalidOperationException($"Chapter with number {currentChapterNumber} not found.");
+            }
+
+            // Lấy chương mới
+            var newChapter = await _unitOfWork.GetRepository<Chapter>().Entities
+                .FirstOrDefaultAsync(c => c.Number == newChapterNumber);
+
+            if (newChapter == null)
+            {
+                throw new InvalidOperationException($"Chapter with number {newChapterNumber} not found.");
+            }
+
+            if (currentChapterNumber < newChapterNumber)
+            {
+                // Đổi từ nhỏ sang lớn
+                var chaptersToUpdate = await _unitOfWork.GetRepository<Chapter>().Entities
+                    .Where(c => c.Number > currentChapterNumber && c.Number <= newChapterNumber)
+                    .OrderBy(c => c.Number)
+                    .ToListAsync();
+
+                foreach (var chapter in chaptersToUpdate)
+                {
+                    chapter.Number -= 1;
+                    _unitOfWork.GetRepository<Chapter>().Update(chapter);
+                }
+            }
+            else if (currentChapterNumber > newChapterNumber)
+            {
+                // Đổi từ lớn sang nhỏ
+                var chaptersToUpdate = await _unitOfWork.GetRepository<Chapter>().Entities
+                    .Where(c => c.Number >= newChapterNumber && c.Number < currentChapterNumber)
+                    .OrderBy(c => c.Number)
+                    .ToListAsync();
+
+                foreach (var chapter in chaptersToUpdate)
+                {
+                    chapter.Number += 1;
+                    _unitOfWork.GetRepository<Chapter>().Update(chapter);
+                }
+            }
+
+            // Cập nhật số thứ tự của chương hiện tại
+            currentChapter.Number = newChapterNumber;
+            _unitOfWork.GetRepository<Chapter>().Update(currentChapter);
+
+            // Lưu các thay đổi vào cơ sở dữ liệu
+            await _unitOfWork.GetRepository<Chapter>().SaveAsync();
+
+            return true;
+        }
 
         public async Task<ChapterAdminDelete> DeleteChapterAsync(string chapterId)
         {
@@ -878,27 +944,5 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         }
 
-        //public void AuditFields(BaseEntity entity, bool isCreating = false)
-        //{
-        //    // Retrieve the JWT token from the Authorization header
-        //    var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-        //    var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
-
-        //    // If creating a new entity, set the CreatedBy field
-        //    if (isCreating)
-        //    {
-        //        entity.CreatedBy = currentUserId.ToString().ToUpper(); // Set the creator's ID
-        //    }
-
-        //    // Always set LastUpdatedBy and LastUpdatedTime fields
-        //    entity.LastUpdatedBy = currentUserId.ToString().ToUpper(); // Set the current user's ID
-
-        //    // If is not created then update LastUpdatedTime
-        //    if (isCreating is false)
-        //    {
-        //        entity.LastUpdatedTime = CoreHelper.SystemTimeNow;
-        //    }
-
-        //}
     }
 }

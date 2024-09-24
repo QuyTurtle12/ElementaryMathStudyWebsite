@@ -27,6 +27,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         Task<ChapterAdminViewDto> ChangeChapterStatusAsync(string id);
 
+        Task<bool> ChangeChapterOrderAsync(int currentChapterNumber, int newChapterNumber);
+
         Task<ChapterAdminDelete> rollbackChapterDeletedAsync(string chapterId);
 
         Task<BasePaginatedList<ChapterAdminDelete?>> GetChaptersDeletedAsync(int pageNumber, int pageSize);

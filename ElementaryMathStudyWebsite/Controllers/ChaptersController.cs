@@ -439,15 +439,16 @@ namespace ElementaryMathStudyWebsite.Controllers
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
             }
-            //catch (Exception ex)
-            //{
-            //    // Catch all other exceptions and return a generic server error
-            //    return StatusCode(500, new
-            //    {
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
+            catch (ArgumentException ex)
+            {
+                // Catch all other exceptions and return a generic server error
+                return StatusCode(500, new
+                {
+                    errorCode= "announcement",
+                    errorMessage = ex.Message
+                    //details = ex.Message
+                });
+            }
         }
 
         [Authorize(Policy = "Admin-Manager")]
@@ -501,24 +502,55 @@ namespace ElementaryMathStudyWebsite.Controllers
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
             }
-            //catch (Exception ex)
-            //{
-            //    // Catch all other exceptions and return a generic server error
-            //    return StatusCode(500, new
-            //    {
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
+            catch (ArgumentException ex)
+            {
+                // Catch all other exceptions and return a generic server error
+                return StatusCode(500, new
+                {
+                    errorCode = "announcement",
+                    errorMessage = ex.Message
+                    //details = ex.Message
+                });
+            }
+        }
+
+        [Authorize(Policy = "Admin-Content")]
+        [HttpPost("change-order-chapter")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin, Content Manager",
+            Description = "Change order number chapter."
+        )]
+        public async Task<IActionResult> ChangeChapterOrder(int currentChapterNumber, int newChapterNumber)
+        {
+            try
+            {
+                bool result = await _chapterService.ChangeChapterOrderAsync(currentChapterNumber, newChapterNumber);
+                var response = BaseResponse<bool>.OkResponse(result);
+                return Ok(response);
+            }
+            catch (ArgumentException ex)
+            {
+                // Catch all other exceptions and return a generic server error
+                return StatusCode(500, new
+                {
+                    errorCode = "announcement",
+                    errorMessage = ex.Message
+                    //details = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
 
 
         [Authorize(Policy = "Admin-Content")]
         [HttpPut("/StatusChange/{id}")]
         [SwaggerOperation(
-    Summary = "Authorization: Admin, Content Manager",
-    Description = "Change chapter status from true to false and otherwise."
-)]
+            Summary = "Authorization: Admin, Content Manager",
+            Description = "Change chapter status from true to false and otherwise."
+        )]
         public async Task<IActionResult> ChangeChapterStatus(string id)
         {
             if (!ModelState.IsValid)
