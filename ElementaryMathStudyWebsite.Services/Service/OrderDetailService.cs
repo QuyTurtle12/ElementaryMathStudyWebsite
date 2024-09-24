@@ -40,7 +40,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Get Order Detail list by order Id 
-        public async Task<BasePaginatedList<OrderDetailViewDto>?> GetOrderDetailDtoListByOrderIdAsync(int pageNumber, int pageSize, string orderId)
+        public async Task<BasePaginatedList<OrderDetailViewDto>> GetOrderDetailDtoListByOrderIdAsync(int pageNumber, int pageSize, string orderId)
         {
             // Get all order details from database
             // If null then return empty collection

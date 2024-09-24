@@ -401,7 +401,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<bool> IsValidSubjectAsync(string subjectId)
         {
-            return await _subjectRepository.GetByIdAsync(subjectId) != null;
+            Subject? subject = await _unitOfWork.GetRepository<Subject>().FindByConditionAsync(s => s.Id.Equals(subjectId) &&
+                                                                                                    string.IsNullOrWhiteSpace(s.DeletedBy)
+                                                                                                    );
+            if (subject == null) return false;
+
+            return true;
         }
 
         // Get a specific subject by ID (For Order)

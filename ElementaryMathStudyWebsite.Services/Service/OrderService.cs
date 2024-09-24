@@ -6,6 +6,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Utils;
 using ElementaryMathStudyWebsite.Core.Store;
+using System.Text.RegularExpressions;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -32,7 +33,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Get logged in User
             User currentUser = await _userService.GetCurrentUserAsync();
 
-            IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == currentUser.Id && o.Status == PaymentStatusHelper.CART.ToString());
+            IQueryable<Order> query = _unitOfWork.GetRepository<Order>().GetEntitiesWithCondition(
+                            o => o.CustomerId == currentUser.Id &&
+                            o.Status == PaymentStatusHelper.CART.ToString() &&
+                            string.IsNullOrWhiteSpace(o.DeletedBy)
+                            );
 
             if (query.Count() > 0) throw new BaseException.BadRequestException(
                 "invalid_argument",
@@ -114,47 +119,63 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }; // Show that create order process is completed
         }
 
+        // Remove the cart and items within the cart
         public async Task<bool> RemoveCart()
         {
             // Get logged in User
             User currentUser = await _userService.GetCurrentUserAsync();
 
-            IQueryable<Order> orderQuery = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == currentUser.Id && o.Status == PaymentStatusHelper.CART.ToString());
+            // Get the cart (order) from Order table 
+            IQueryable<Order> orderQuery = _unitOfWork.GetRepository<Order>().GetEntitiesWithCondition(
+                            o => o.CustomerId == currentUser.Id &&
+                            o.Status == PaymentStatusHelper.CART.ToString() && 
+                            string.IsNullOrWhiteSpace(o.DeletedBy)
+                            );
 
-            if (orderQuery.Count() <= 0) throw new BaseException.BadRequestException(
-                "invalid_argument",
+            // Check if the cart contain any item
+            if (orderQuery.Count() <= 0) throw new BaseException.NotFoundException(
+                "not_found",
                 "You have no items in your cart"
             );
 
             var cart = orderQuery.First();
 
-            IQueryable<OrderDetail> orderDetailQuery = _unitOfWork.GetRepository<OrderDetail>().Entities.Where(od => od.OrderId == cart.Id);
+            // Get cart items (order detail)
+            IQueryable<OrderDetail> orderDetailQuery = _unitOfWork.GetRepository<OrderDetail>().Entities
+                .Where(od => od.OrderId == cart.Id);
 
+            // Remove item in cart
             foreach (var orderDetail in orderDetailQuery)
             {
                 _unitOfWork.GetRepository<OrderDetail>().Delete(orderDetail);
             }
 
+            // Remove cart
             _unitOfWork.GetRepository<Order>().Delete(cart);
 
             await _unitOfWork.SaveAsync();
             return true;
         }
 
+        // Check cart inventory
         public async Task<OrderViewDto> ViewCart()
         {
             // Get logged in User
             User currentUser = await _userService.GetCurrentUserAsync();
 
-            IQueryable<Order> orderQuery = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == currentUser.Id && o.Status == PaymentStatusHelper.CART.ToString());
+            IQueryable<Order> orderQuery = _unitOfWork.GetRepository<Order>().GetEntitiesWithCondition(
+                            o => o.CustomerId == currentUser.Id &&
+                            o.Status == PaymentStatusHelper.CART.ToString() &&
+                            string.IsNullOrWhiteSpace(o.DeletedBy)
+                            );
 
-            if (orderQuery.Count() <= 0) throw new BaseException.BadRequestException(
-                "invalid_argument",
+            if (orderQuery.Count() <= 0) throw new BaseException.NotFoundException(
+                "not_found",
                 "You have no items in your cart"
             );
 
             var cart = orderQuery.First();
-            IQueryable<OrderDetail> orderDetailQuery = _unitOfWork.GetRepository<OrderDetail>().Entities.Where(o => o.OrderId == cart.Id);
+            IQueryable<OrderDetail> orderDetailQuery = _unitOfWork.GetRepository<OrderDetail>().GetEntitiesWithCondition(o => o.OrderId == cart.Id);
             List<OrderDetailViewDto> detailDtos = new();
 
             foreach (var orderDetail in orderDetailQuery)
@@ -233,9 +254,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             Order? order = await _unitOfWork.GetRepository<Order>().GetByIdAsync(orderId);
 
-            // Check if order is null
-            if (order == null) { return order; }
-
             // Check if order exists in database but being deleted 
             if (!string.IsNullOrWhiteSpace(order?.DeletedBy))
             {
@@ -251,10 +269,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             Order? order = await _unitOfWork.GetRepository<Order>().GetByIdAsync(orderId);
 
-            if (order == null) return null;
+            // check if order is null or soft deleted
+            if (order == null || !string.IsNullOrWhiteSpace(order.DeletedBy)) return null;
 
             // Get list of detail info about an order
-            BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
+            BasePaginatedList<OrderDetailViewDto> detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
 
             string customerName = await _userService.GetUserNameAsync(order.CustomerId);
 
@@ -268,7 +287,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 Status = order.Status,
                 PaymentMethod = order.PaymentMethod,
                 PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null,
-                Details = detailList?.Items
+                Details = detailList.Items
             };
 
             return dto;
@@ -287,15 +306,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             IList<OrderViewDto> orderDtos = new List<OrderViewDto>();
             var allOrders = await query.ToListAsync(); // Asynchronously fetch all orders
-                                                       // Map orders to OrderViewDto
-
+                                                       
             foreach (var order in allOrders)
             {
                 // Get list of detail info about an order
                 BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
 
                 string customerName = await _userService.GetUserNameAsync(order.CustomerId);
-
+                // Map orders to OrderViewDto
                 OrderViewDto dto = new()
                 {
                     OrderId = order.Id,
@@ -312,6 +330,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 orderDtos.Add(dto);
             }
 
+            if (orderDtos.Count == 0)
+            {
+                throw new BaseException.NotFoundException("not_found", "cannot found any orders");
+            }
 
             // If pageNumber or pageSize are 0 or negative, show all orders in 1 page
             if (pageNumber <= 0 || pageSize <= 0)
@@ -325,7 +347,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
 
         // Get orders with all properties
-        public async Task<BasePaginatedList<OrderAdminViewDto>?> GetOrderAdminDtosAsync(int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<OrderAdminViewDto>> GetOrderAdminDtosAsync(int pageNumber, int pageSize)
         {
             // Get all orders from database
             IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities
@@ -339,39 +361,48 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (var order in allOrders)
             {
                 // Get audit field info
-                User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(order?.CreatedBy ?? string.Empty);
-                User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(order?.LastUpdatedBy ?? string.Empty);
+                User? creator = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Id.Equals(order.CreatedBy) &&
+                                                                                            string.IsNullOrWhiteSpace(u.DeletedBy)
+                                                                                            );
+
+                User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Id.Equals(order.LastUpdatedBy) &&
+                                                                                                       string.IsNullOrWhiteSpace(u.DeletedBy)
+                                                                                                       );
 
                 if (order != null)
                 {
                     // Get list of detail info about an order
-                    BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
+                    BasePaginatedList<OrderDetailViewDto> detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
 
                     // Convert id to name
-                    string customerName = await _userService.GetUserNameAsync(order?.CustomerId ?? string.Empty);
+                    string customerName = await _userService.GetUserNameAsync(order.CustomerId);
 
                     OrderAdminViewDto dto = new OrderAdminViewDto
                     {
-                        OrderId = order?.Id ?? string.Empty,
-                        CustomerId = order?.CustomerId ?? string.Empty,
+                        OrderId = order.Id,
+                        CustomerId = order.CustomerId,
                         CustomerName = customerName,
-                        OrderDate = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                        Status = order?.Status ?? string.Empty,
-                        PaymentMethod = order?.PaymentMethod ?? string.Empty,
-                        TotalPrice = order?.TotalPrice ?? 0,
-                        Details = detailList?.Items,
-                        CreatedBy = order?.CreatedBy ?? string.Empty,
+                        OrderDate = order.CreatedTime,
+                        Status = order.Status,
+                        PaymentMethod = order.PaymentMethod,
+                        TotalPrice = order.TotalPrice,
+                        Details = detailList.Items,
+                        CreatedBy = order.CreatedBy ?? string.Empty,
                         CreatorName = creator?.FullName ?? string.Empty,
                         CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                        LastUpdatedBy = order?.LastUpdatedBy ?? string.Empty,
+                        LastUpdatedBy = order.LastUpdatedBy ?? string.Empty,
                         LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
                         LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
-                        CreatedTime = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                        LastUpdatedTime = order?.LastUpdatedTime ?? CoreHelper.SystemTimeNow,
+                        CreatedTime = order.CreatedTime,
+                        LastUpdatedTime = order.LastUpdatedTime,
                     };
                     adminOrders.Add(dto);
                 }
+            }
 
+            if (adminOrders.Count == 0)
+            {
+                throw new BaseException.NotFoundException("not_found", "cannot found any orders");
             }
 
             // If pageNumber or pageSize are 0 or negative, show all orders without pagination
@@ -388,7 +419,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // General Validation
         public async Task<string?> IsGenerallyValidatedAsync(string subjectId, string studentId, CartCreateDto dto)
         {
-
             // Get logged in User
             User currentUser = await _userService.GetCurrentUserAsync();
 
@@ -424,7 +454,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             Order? order = await _unitOfWork.GetRepository<Order>().GetByIdAsync(orderId);
 
             // Check order is null
-            if (order is null) return false;
+            if (order is null || order.DeletedBy is not null) return false;
 
             // Check order is not being deleted
             if (!string.IsNullOrWhiteSpace(order.DeletedBy)) return false;
@@ -433,11 +463,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Search Order by specific filter
-        public async Task<BasePaginatedList<OrderViewDto>?> searchOrderDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter)
+        public async Task<BasePaginatedList<OrderViewDto>> searchOrderDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter)
         {
 
             // Get all orders from database
-            IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities;
+            IQueryable<Order> query = _unitOfWork.GetRepository<Order>().GetEntitiesWithCondition(o => string.IsNullOrWhiteSpace(o.DeletedBy));
 
             var orders = await query.ToListAsync();
             // Modified variable
@@ -460,9 +490,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             switch (filter)
             {
-                //case "customer id": // Search orders by customer id
-                //    result = await CustomerIdFilterAsync(inputValue, orders, pageNumber, pageSize);
-                //    break;
                 case "customer email": // Search orders by customer email
                     result = await CustomerEmailFilterAsync(inputValue, orders, pageNumber, pageSize);
                     break;
@@ -490,20 +517,30 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     throw new BaseException.BadRequestException("invalid_argument", $"Invalid {nameof(filter)}: {filter}. Allowed filters are 'customer email', 'customer phone', 'order date', 'total price'.");
             }
 
+            if (result.Items.Count == 0) 
+            {
+                throw new BaseException.NotFoundException(
+                    "not_found",
+                    "cannot found the inputted item"
+                    ); 
+            }
+
             // Retrieve the paginated items from the PaginatedList.
             return result;
         }
 
         // Get order dto list by customer email
-        public async Task<BasePaginatedList<OrderViewDto>> CustomerEmailFilterAsync(string? inputvalue, IEnumerable<Order> orders, int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<OrderViewDto>> CustomerEmailFilterAsync(string? inputValue, IEnumerable<Order> orders, int pageNumber, int pageSize)
         {
             IList<OrderViewDto> result = new List<OrderViewDto>();
 
-            IEnumerable<User> users = await _unitOfWork.GetRepository<User>().GetAllAsync();
+            IQueryable<User> userQuery = _unitOfWork.GetRepository<User>().GetEntitiesWithCondition(u => string.IsNullOrWhiteSpace(u.DeletedBy));
+
+            var users = await userQuery.ToListAsync();
 
             foreach (var user in users)
             {
-                if (user.Email == inputvalue)
+                if (user.Email == inputValue)
                 {
                     // Transfer entity data to dto value that human understand
                     foreach (var order in orders)
@@ -539,15 +576,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Get order dto list by customer phone
-        public async Task<BasePaginatedList<OrderViewDto>> CustomerPhoneFilterAsync(string? inputvalue, IEnumerable<Order> orders, int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<OrderViewDto>> CustomerPhoneFilterAsync(string? inputValue, IEnumerable<Order> orders, int pageNumber, int pageSize)
         {
             IList<OrderViewDto> result = new List<OrderViewDto>();
 
+            // Define phone number regex pattern
+            string phonePattern = @"^0\d{9,10}$";
+
+            // Check if inputValue matches the phone number regex
+            if (string.IsNullOrWhiteSpace(inputValue) || !Regex.IsMatch(inputValue, phonePattern))
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "The phone number must be 10 or 11 digits, starting with '0'.");
+            }
+
+            // Get all users in database, including deleted user
             IEnumerable<User> users = await _unitOfWork.GetRepository<User>().GetAllAsync();
 
             foreach (var user in users)
             {
-                if (user.PhoneNumber == inputvalue)
+                if (user.PhoneNumber == inputValue)
                 {
                     // Transfer entity data to dto value that human understand
                     foreach (var order in orders)
