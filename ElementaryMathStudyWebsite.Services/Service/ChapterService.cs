@@ -889,46 +889,46 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Check if the student can access a specific chapter
-        public async Task<bool> CanAccessChapterAsync(string chapterId)
-        {
-            // Get the current logged-in user
-            User currentUser = await _userServices.GetCurrentUserAsync();
-            var currentUserId = currentUser.Id;
+        //public async Task<bool> CanAccessChapterAsync(string chapterId)
+        //{
+        //    // Get the current logged-in user
+        //    User currentUser = await _userServices.GetCurrentUserAsync();
+        //    var currentUserId = currentUser.Id;
 
-            // Retrieve the chapter that the student wants to access
-            var chapter = await _unitOfWork.GetRepository<Chapter>().Entities
-                .Where(c => c.Id == chapterId)
-                .FirstOrDefaultAsync();
+        //    // Retrieve the chapter that the student wants to access
+        //    var chapter = await _unitOfWork.GetRepository<Chapter>().Entities
+        //        .Where(c => c.Id == chapterId)
+        //        .FirstOrDefaultAsync();
 
-            if (chapter == null)
-            {
-                throw new BaseException.BadRequestException("key_not_found", $"Chapter with {chapterId} not found.");
-            }
+        //    if (chapter == null)
+        //    {
+        //        throw new BaseException.BadRequestException("key_not_found", $"Chapter with {chapterId} not found.");
+        //    }
 
-            // If it's the first chapter, the student can access it without completing a quiz
-            if (chapter.Number == 1)
-            {
-                return true;
-            }
+        //    // If it's the first chapter, the student can access it without completing a quiz
+        //    if (chapter.Number == 1)
+        //    {
+        //        return true;
+        //    }
 
-            // Retrieve the previous chapter
-            var previousChapter = await _unitOfWork.GetRepository<Chapter>().Entities
-                .Where(c => c.SubjectId == chapter.SubjectId && c.Number == chapter.Number - 1)
-                .FirstOrDefaultAsync();
+        //    // Retrieve the previous chapter
+        //    var previousChapter = await _unitOfWork.GetRepository<Chapter>().Entities
+        //        .Where(c => c.SubjectId == chapter.SubjectId && c.Number == chapter.Number - 1)
+        //        .FirstOrDefaultAsync();
 
-            if (previousChapter == null)
-            {
-                throw new BaseException.BadRequestException("key_not_found", $"Previous chapter {chapter.Number - 1} not found for subject {chapter.SubjectId}.");
-            }
+        //    if (previousChapter == null)
+        //    {
+        //        throw new BaseException.BadRequestException("key_not_found", $"Previous chapter {chapter.Number - 1} not found for subject {chapter.SubjectId}.");
+        //    }
 
-            // Check if the student has completed the quiz for the previous chapter
-            var completedQuiz = await _unitOfWork.GetRepository<Progress>().Entities
-                .Where(p => p.StudentId == currentUserId && p.QuizId == previousChapter.QuizId && p.SubjectId == chapter.SubjectId)
-                .FirstOrDefaultAsync();
+        //    // Check if the student has completed the quiz for the previous chapter
+        //    var completedQuiz = await _unitOfWork.GetRepository<Progress>().Entities
+        //        .Where(p => p.StudentId == currentUserId && p.QuizId == previousChapter.QuizId && p.SubjectId == chapter.SubjectId)
+        //        .FirstOrDefaultAsync();
 
-            // The student can access the chapter if they have completed the previous quiz
-            return completedQuiz != null;
-        }
+        //    // The student can access the chapter if they have completed the previous quiz
+        //    return completedQuiz != null;
+        //}
 
         //public void AuditFields(BaseEntity entity, bool isCreating = false)
         //{

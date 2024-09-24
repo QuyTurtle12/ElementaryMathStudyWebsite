@@ -1,8 +1,6 @@
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Entity;
-using ElementaryMathStudyWebsite.Services.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -206,7 +204,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Admin, Content Manager",
             Description = "Update subject"
         )]
-        public async Task<IActionResult> UpdateSubject(string id, [FromBody] SubjectDTO subjectDTO)
+        public async Task<IActionResult> UpdateSubject(string id, [FromBody] SubjectUpdateDTO subjectDTO)
         {
             if (!ModelState.IsValid)
             {
@@ -259,33 +257,33 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // PUT: api/Subjects/ChangeStatus/{id}
-        [Authorize(Policy = "Admin-Content")]
-        [HttpPut("/ChangeStatus/{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin, Content Manager",
-            Description = "Change subject status from true to false and otherwise."
-        )]
-        public async Task<IActionResult> ChangeSubjectStatus(string id)
-        {
-            try
-            {
-                var subject = await _appSubjectServices.ChangeSubjectStatusAsync(id);
-                if (subject == null)
-                {
-                    throw new BaseException.BadRequestException("subject_not_found", "The requested subject was not found.");
-                }
-                var response = BaseResponse<SubjectAdminViewDTO>.OkResponse(subject);
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
-        }
+        //[Authorize(Policy = "Admin-Content")]
+        //[HttpPut("/ChangeStatus/{id}")]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Admin, Content Manager",
+        //    Description = "Change subject status from true to false and otherwise."
+        //)]
+        //public async Task<IActionResult> ChangeSubjectStatus(string id)
+        //{
+        //    try
+        //    {
+        //        var subject = await _appSubjectServices.ChangeSubjectStatusAsync(id);
+        //        if (subject == null)
+        //        {
+        //            throw new BaseException.BadRequestException("subject_not_found", "The requested subject was not found.");
+        //        }
+        //        var response = BaseResponse<SubjectAdminViewDTO>.OkResponse(subject);
+        //        return Ok(response);
+        //    }
+        //    catch (BaseException.CoreException coreEx)
+        //    {
+        //        return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+        //    }
+        //    catch (BaseException.BadRequestException badRequestEx)
+        //    {
+        //        return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+        //    }
+        //}
 
         // Search subjects by name, price
         [HttpGet("search")]
@@ -340,6 +338,54 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                 var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
                 return Ok(response);
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+        }
+
+        // DELETE: api/Subjects/SoftDelete/{id}
+        [Authorize(Policy = "Admin-Content")]
+        [HttpDelete("SoftDelete/{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin, Content Manager",
+            Description = "Soft delete a subject by setting DeletedBy and DeletedTime."
+        )]
+        public async Task<IActionResult> SoftDeleteSubject(string id)
+        {
+            try
+            {
+                await _appSubjectServices.SoftDeleteSubjectAsync(id);
+                return Ok(BaseResponse<object>.OkResponse(new { message = "Subject has been successfully soft deleted." }));
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+        }
+
+        // PUT: api/Subjects/RestoreSoftDelete/{id}
+        [Authorize(Policy = "Admin-Content")]
+        [HttpPut("RestoreSoftDelete/{id}")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin, Content Manager",
+            Description = "Resote soft delete a subject by setting DeletedBy and DeletedTime."
+        )]
+        public async Task<IActionResult> RestoreSoftDeleteSubject(string id)
+        {
+            try
+            {
+                await _appSubjectServices.RestoreSubjectAsync(id);
+                return Ok(BaseResponse<object>.OkResponse(new { message = "Subject has been successfully restored." }));
             }
             catch (BaseException.CoreException coreEx)
             {

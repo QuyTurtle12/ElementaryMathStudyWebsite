@@ -70,8 +70,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             AuditFields(subject, isCreating: true);
 
-            _unitOfWork.GetRepository<Subject>().Insert(subject);
-            await _unitOfWork.GetRepository<Subject>().SaveAsync();
+            await _unitOfWork.GetRepository<Subject>().UpdateAsync(subject);
+            await _unitOfWork.SaveAsync();
+
+            User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
+            User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
             return new SubjectAdminViewDTO
             {
@@ -80,11 +83,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 Price = subject.Price,
                 Status = subject.Status,
                 CreatedBy = subject.CreatedBy,
+                CreaterName = createdUser?.FullName,
+                CreaterPhone = createdUser?.PhoneNumber,
                 CreatedTime = subject.CreatedTime,
                 LastUpdatedBy = subject.LastUpdatedBy,
-                LastUpdatedTime = subject.LastUpdatedTime,
-                DeletedBy = subject.DeletedBy,
-                DeletedTime = subject.DeletedTime
+                UpdaterName = createdUser?.FullName,
+                UpdaterPhone = createdUser?.PhoneNumber,
+                LastUpdatedTime = subject.LastUpdatedTime
             };
         }
 
@@ -93,6 +98,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<object>> GetAllSubjectsAsync(int pageNumber, int pageSize, bool isAdmin)
         {
             IQueryable<Subject> query = _unitOfWork.GetRepository<Subject>().Entities;
+
+            //Not get soft deleted item
+            query = query.Where(s => String.IsNullOrWhiteSpace(s.DeletedBy));
 
             if (!isAdmin)
             {
@@ -103,53 +111,81 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
                 var allSubjects = await query.ToListAsync();
-                var subjectDtos = allSubjects.Select(subject => (ISubjectBaseDTO)(isAdmin
-                    ? new SubjectAdminViewDTO
+                var subjectDtos = allSubjects.Select(subject =>
+                {
+                    if (isAdmin)
+                    {
+                        // Fetch the created and updated users
+                        User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
+                        User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
+
+                        return (ISubjectBaseDTO)new SubjectAdminViewDTO
+                        {
+                            Id = subject.Id,
+                            SubjectName = subject.SubjectName,
+                            Price = subject.Price,
+                            Status = subject.Status,
+                            CreatedBy = subject.CreatedBy,
+                            CreaterName = createdUser?.FullName,
+                            CreaterPhone = createdUser?.PhoneNumber,
+                            CreatedTime = subject.CreatedTime,
+                            LastUpdatedBy = subject.LastUpdatedBy,
+                            UpdaterName = updatedUser?.FullName,
+                            UpdaterPhone = updatedUser?.PhoneNumber,
+                            LastUpdatedTime = subject.LastUpdatedTime
+                        };
+                    }
+                    else
+                    {
+                        return (ISubjectBaseDTO)new SubjectDTO
+                        {
+                            Id = subject.Id,
+                            SubjectName = subject.SubjectName,
+                            Price = subject.Price,
+                            Status = subject.Status
+                        };
+                    }
+                }).ToList();
+
+                return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
+            }
+
+            var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
+            var subjectDtosPaginated = paginatedSubjects.Items.Select(subject =>
+            {
+                if (isAdmin)
+                {
+                    // Fetch the created and updated users
+                    User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
+                    User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
+
+                    return (ISubjectBaseDTO)new SubjectAdminViewDTO
                     {
                         Id = subject.Id,
                         SubjectName = subject.SubjectName,
                         Price = subject.Price,
                         Status = subject.Status,
                         CreatedBy = subject.CreatedBy,
+                        CreaterName = createdUser?.FullName,
+                        CreaterPhone = createdUser?.PhoneNumber,
                         CreatedTime = subject.CreatedTime,
                         LastUpdatedBy = subject.LastUpdatedBy,
-                        LastUpdatedTime = subject.LastUpdatedTime,
-                        DeletedBy = subject.DeletedBy,
-                        DeletedTime = subject.DeletedTime
-                    }
-                    : new SubjectDTO
+                        UpdaterName = updatedUser?.FullName,
+                        UpdaterPhone = updatedUser?.PhoneNumber,
+                        LastUpdatedTime = subject.LastUpdatedTime
+                    };
+                }
+                else
+                {
+                    return (ISubjectBaseDTO)new SubjectDTO
                     {
                         Id = subject.Id,
                         SubjectName = subject.SubjectName,
                         Price = subject.Price,
                         Status = subject.Status
-                    })).ToList();
-
-                return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
-            }
-
-            var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
-            var subjectDtosPaginated = paginatedSubjects.Items.Select(subject => (ISubjectBaseDTO)(isAdmin
-                ? new SubjectAdminViewDTO
-                {
-                    Id = subject.Id,
-                    SubjectName = subject.SubjectName,
-                    Price = subject.Price,
-                    Status = subject.Status,
-                    CreatedBy = subject.CreatedBy,
-                    CreatedTime = subject.CreatedTime,
-                    LastUpdatedBy = subject.LastUpdatedBy,
-                    LastUpdatedTime = subject.LastUpdatedTime,
-                    DeletedBy = subject.DeletedBy,
-                    DeletedTime = subject.DeletedTime
+                    };
                 }
-                : new SubjectDTO
-                {
-                    Id = subject.Id,
-                    SubjectName = subject.SubjectName,
-                    Price = subject.Price,
-                    Status = subject.Status
-                })).ToList();
+            }).ToList();
 
 
             return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count, pageNumber, pageSize);
@@ -159,32 +195,42 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<object> GetSubjectByIDAsync(string id, bool isAdmin)
         {
             var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{id}'.");
-            if (!isAdmin && !subject.Status)
+            if ((!isAdmin && !subject.Status) || !String.IsNullOrWhiteSpace(subject.DeletedBy))
             {
                 throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{id}'.");
             }
 
-            return isAdmin
-                ? new SubjectAdminViewDTO
+            if (isAdmin)
+            {
+                User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
+                User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
+
+                return new SubjectAdminViewDTO
                 {
                     Id = subject.Id,
                     SubjectName = subject.SubjectName,
                     Price = subject.Price,
                     Status = subject.Status,
                     CreatedBy = subject.CreatedBy,
+                    CreaterName = createdUser?.FullName,
+                    CreaterPhone = createdUser?.PhoneNumber,
                     CreatedTime = subject.CreatedTime,
                     LastUpdatedBy = subject.LastUpdatedBy,
-                    LastUpdatedTime = subject.LastUpdatedTime,
-                    DeletedBy = subject.DeletedBy,
-                    DeletedTime = subject.DeletedTime
-                }
-                : new SubjectDTO
+                    UpdaterName = createdUser?.FullName,
+                    UpdaterPhone = createdUser?.PhoneNumber,
+                    LastUpdatedTime = subject.LastUpdatedTime
+                };
+            }
+            else
+            {
+                return new SubjectDTO
                 {
                     Id = subject.Id,
                     SubjectName = subject.SubjectName,
                     Price = subject.Price,
                     Status = subject.Status
                 };
+            }
         }
 
         // Search subjects by name
@@ -192,6 +238,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     double highestPrice, int pageNumber, int pageSize)
         {
             var query = _unitOfWork.GetRepository<Subject>().Entities.Where(s => s.Status == true);
+
+            //Not get soft deleted item
+            query = query.Where(s => String.IsNullOrWhiteSpace(s.DeletedBy));
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -249,6 +298,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             var query = _unitOfWork.GetRepository<Subject>().Entities.AsQueryable();
 
+            //Not get soft deleted item
+            query = query.Where(s => String.IsNullOrWhiteSpace(s.DeletedBy));
+
             if (status.HasValue)
             {
                 query = query.Where(s => s.Status == status.Value);
@@ -272,18 +324,27 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
                 var allSubjects = await query.ToListAsync();
-                var subjectDtos = allSubjects.Select(subject => new SubjectAdminViewDTO
+                var subjectDtos = allSubjects.Select(subject =>
                 {
-                    Id = subject.Id,
-                    SubjectName = subject.SubjectName,
-                    Price = subject.Price,
-                    Status = subject.Status,
-                    CreatedBy = subject.CreatedBy,
-                    CreatedTime = subject.CreatedTime,
-                    LastUpdatedBy = subject.LastUpdatedBy,
-                    LastUpdatedTime = subject.LastUpdatedTime,
-                    DeletedBy = subject.DeletedBy,
-                    DeletedTime = subject.DeletedTime
+                    // Fetch the created and updated users
+                    User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
+                    User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
+
+                    return (ISubjectBaseDTO)new SubjectAdminViewDTO
+                    {
+                        Id = subject.Id,
+                        SubjectName = subject.SubjectName,
+                        Price = subject.Price,
+                        Status = subject.Status,
+                        CreatedBy = subject.CreatedBy,
+                        CreaterName = createdUser?.FullName,
+                        CreaterPhone = createdUser?.PhoneNumber,
+                        CreatedTime = subject.CreatedTime,
+                        LastUpdatedBy = subject.LastUpdatedBy,
+                        UpdaterName = updatedUser?.FullName,
+                        UpdaterPhone = updatedUser?.PhoneNumber,
+                        LastUpdatedTime = subject.LastUpdatedTime
+                    };
                 }).ToList();
 
                 if (subjectDtos.Count == 0)
@@ -295,18 +356,27 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
-            var subjectDtosPaginated = paginatedSubjects.Items.Select(subject => new SubjectAdminViewDTO
+            var subjectDtosPaginated = paginatedSubjects.Items.Select(subject =>
             {
-                Id = subject.Id,
-                SubjectName = subject.SubjectName,
-                Price = subject.Price,
-                Status = subject.Status,
-                CreatedBy = subject.CreatedBy,
-                CreatedTime = subject.CreatedTime,
-                LastUpdatedBy = subject.LastUpdatedBy,
-                LastUpdatedTime = subject.LastUpdatedTime,
-                DeletedBy = subject.DeletedBy,
-                DeletedTime = subject.DeletedTime
+                // Fetch the created and updated users
+                User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
+                User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
+
+                return (ISubjectBaseDTO)new SubjectAdminViewDTO
+                {
+                    Id = subject.Id,
+                    SubjectName = subject.SubjectName,
+                    Price = subject.Price,
+                    Status = subject.Status,
+                    CreatedBy = subject.CreatedBy,
+                    CreaterName = createdUser?.FullName,
+                    CreaterPhone = createdUser?.PhoneNumber,
+                    CreatedTime = subject.CreatedTime,
+                    LastUpdatedBy = subject.LastUpdatedBy,
+                    UpdaterName = updatedUser?.FullName,
+                    UpdaterPhone = updatedUser?.PhoneNumber,
+                    LastUpdatedTime = subject.LastUpdatedTime
+                }; 
             }).ToList();
 
             if (subjectDtosPaginated.Count == 0)
@@ -318,30 +388,41 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Update subject and set LastUpdatedTime to current time
-        public async Task<SubjectAdminViewDTO> UpdateSubjectAsync(string id, SubjectDTO subjectDTO)
+        public async Task<SubjectAdminViewDTO> UpdateSubjectAsync(string id, SubjectUpdateDTO subjectUpdateDTO)
         {
             var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Subject with ID '{id}' not found.");
 
             // Check if another subject with the same name already exists
             var existingSubject = await _unitOfWork.GetRepository<Subject>().Entities
-                .Where(s => s.SubjectName == subjectDTO.SubjectName) // Exclude the current subject by its ID
+                .Where(s => s.SubjectName == subjectUpdateDTO.SubjectName) // Exclude the current subject by its ID
                 .FirstOrDefaultAsync();
 
             if (existingSubject != null)
             {
-                throw new BaseException.BadRequestException("duplicate_name", $"A subject with the name '{subjectDTO.SubjectName}' already exists.");
+                throw new BaseException.BadRequestException("duplicate_name", $"A subject with the name '{subjectUpdateDTO.SubjectName}' already exists.");
             }
 
-            ValidateSubject(subjectDTO);
+            if (string.IsNullOrWhiteSpace(subjectUpdateDTO.SubjectName))
+            {
+                throw new BaseException.BadRequestException("empty_subject_name", "Subject name is required and cannot be empty.");
+            }
 
-            subject.SubjectName = subjectDTO.SubjectName;
-            subject.Price = subjectDTO.Price;
-            subject.Status = subjectDTO.Status;
+            if (subjectUpdateDTO.Price <= 0)
+            {
+                throw new BaseException.BadRequestException("price_range_error", "Price must be greater than zero.");
+            }
+
+            subject.SubjectName = subjectUpdateDTO.SubjectName;
+            subject.Price = subjectUpdateDTO.Price;
+            subject.Status = subjectUpdateDTO.Status;
 
             AuditFields(subject, isCreating: false);
 
             _unitOfWork.GetRepository<Subject>().Update(subject);
             await _unitOfWork.SaveAsync();
+
+            User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
+            User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
             return new SubjectAdminViewDTO
             {
@@ -350,11 +431,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 Price = subject.Price,
                 Status = subject.Status,
                 CreatedBy = subject.CreatedBy,
+                CreaterName = createdUser?.FullName,
+                CreaterPhone = createdUser?.PhoneNumber,
                 CreatedTime = subject.CreatedTime,
                 LastUpdatedBy = subject.LastUpdatedBy,
-                LastUpdatedTime = subject.LastUpdatedTime,
-                DeletedBy = subject.DeletedBy,
-                DeletedTime = subject.DeletedTime
+                UpdaterName = createdUser?.FullName,
+                UpdaterPhone = createdUser?.PhoneNumber,
+                LastUpdatedTime = subject.LastUpdatedTime
             };
         }
 
@@ -362,12 +445,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<SubjectAdminViewDTO> ChangeSubjectStatusAsync(string id)
         {
             var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Subject with ID '{id}' not found.");
-            //subject.LastUpdatedTime = DateTime.UtcNow;
 
+            subject.Status = !subject.Status;
             AuditFields(subject);
 
-            _unitOfWork.GetRepository<Subject>().Update(subject);
-            await _unitOfWork.GetRepository<Subject>().SaveAsync();
+            await _unitOfWork.GetRepository<Subject>().UpdateAsync(subject);
+            await _unitOfWork.SaveAsync();
+
+            User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
+            User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
             return new SubjectAdminViewDTO
             {
@@ -376,11 +462,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 Price = subject.Price,
                 Status = subject.Status,
                 CreatedBy = subject.CreatedBy,
+                CreaterName = createdUser?.FullName,
+                CreaterPhone = createdUser?.PhoneNumber,
                 CreatedTime = subject.CreatedTime,
+                UpdaterName = updatedUser?.FullName,
+                UpdaterPhone = updatedUser?.PhoneNumber,
                 LastUpdatedBy = subject.LastUpdatedBy,
-                LastUpdatedTime = subject.LastUpdatedTime,
-                DeletedBy = subject.DeletedBy,
-                DeletedTime = subject.DeletedTime
+                LastUpdatedTime = subject.LastUpdatedTime
             };
         }
 
@@ -422,7 +510,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 entity.LastUpdatedTime = CoreHelper.SystemTimeNow;
             }
-
         }
 
         public async Task<bool> CheckCompleteQuizExistAsync(string subjectId, string quizId)
@@ -438,6 +525,47 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // If the record is found, return true; otherwise, return false
             return progressRecord != null;
+        }
+
+        //soft deleted
+        public async Task SoftDeleteSubjectAsync(string id)
+        {
+            // Retrieve the subject
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id);
+
+            if (subject == null || !string.IsNullOrWhiteSpace(subject.DeletedBy))
+            {
+                throw new BaseException.BadRequestException("key_not_found", $"Cannot find subject with ID '{id}' or it is already deleted.");
+            }
+
+            User currentUser = await _userService.GetCurrentUserAsync();
+            var currentUserId = currentUser.Id;
+
+            // Mark subject as deleted
+            subject.DeletedBy = currentUserId;
+            subject.DeletedTime = DateTime.UtcNow;
+
+            // Update and save
+            await _unitOfWork.GetRepository<Subject>().UpdateAsync(subject);
+            await _unitOfWork.GetRepository<Subject>().SaveAsync();
+        }
+
+        //restore soft deleted
+        public async Task RestoreSubjectAsync(string id)
+        {
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id);
+
+            if (subject == null || string.IsNullOrWhiteSpace(subject.DeletedBy))
+            {
+                throw new BaseException.BadRequestException("key_not_found", $"Cannot find deleted subject with ID '{id}'.");
+            }
+
+            // Undo soft delete
+            subject.DeletedBy = null;
+            subject.DeletedTime = null;
+
+            await _unitOfWork.GetRepository<Subject>().UpdateAsync(subject);
+            await _unitOfWork.GetRepository<Subject>().SaveAsync();
         }
     }
 }

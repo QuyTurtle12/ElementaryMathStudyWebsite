@@ -557,56 +557,56 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         }
 
-        public async Task<bool> CanAccessTopicAsync(string topicId)
-        {
-            // Get the current logged-in user
-            User currentUser = await _userServices.GetCurrentUserAsync();
-            var currentUserId = currentUser.Id;
+        //public async Task<bool> CanAccessTopicAsync(string topicId)
+        //{
+        //    // Get the current logged-in user
+        //    User currentUser = await _userServices.GetCurrentUserAsync();
+        //    var currentUserId = currentUser.Id;
 
-            // Retrieve the topic that the student wants to access
-            var topic = await _unitOfWork.GetRepository<Topic>().Entities
-                .Where(t => t.Id == topicId)
-                .FirstOrDefaultAsync();
+        //    // Retrieve the topic that the student wants to access
+        //    var topic = await _unitOfWork.GetRepository<Topic>().Entities
+        //        .Where(t => t.Id == topicId)
+        //        .FirstOrDefaultAsync();
 
-            if (topic == null)
-            {
-                throw new KeyNotFoundException($"Topic with {topicId} not found.");
-            }
+        //    if (topic == null)
+        //    {
+        //        throw new KeyNotFoundException($"Topic with {topicId} not found.");
+        //    }
 
-            // If it's the first topic, the student can access the topic without completing a quiz
-            if (topic.Number == 1)
-            {
-                return true;
-            }
+        //    // If it's the first topic, the student can access the topic without completing a quiz
+        //    if (topic.Number == 1)
+        //    {
+        //        return true;
+        //    }
 
-            // Retrieve the previous topic
-            var previousTopic = await _unitOfWork.GetRepository<Topic>().Entities
-                .Where(t => t.Number == topic.Number - 1)
-                .FirstOrDefaultAsync();
+        //    // Retrieve the previous topic
+        //    var previousTopic = await _unitOfWork.GetRepository<Topic>().Entities
+        //        .Where(t => t.Number == topic.Number - 1)
+        //        .FirstOrDefaultAsync();
 
-            if (previousTopic == null)
-            {
-                throw new BaseException.BadRequestException("key_not_found", $"Previous topic {topic.Number - 1} not found for chapter {topic.ChapterId}.");
-            }
+        //    if (previousTopic == null)
+        //    {
+        //        throw new BaseException.BadRequestException("key_not_found", $"Previous topic {topic.Number - 1} not found for chapter {topic.ChapterId}.");
+        //    }
 
-            // Retrieve the chapter that the topic belongs to
-            var chapter = await _unitOfWork.GetRepository<Chapter>().Entities
-                .Where(c => c.Id == previousTopic.ChapterId)
-                .FirstOrDefaultAsync();
+        //    // Retrieve the chapter that the topic belongs to
+        //    var chapter = await _unitOfWork.GetRepository<Chapter>().Entities
+        //        .Where(c => c.Id == previousTopic.ChapterId)
+        //        .FirstOrDefaultAsync();
 
-            if (chapter == null)
-            {
-                throw new BaseException.BadRequestException("key_not_found", $"Chapter with {previousTopic.ChapterId} not found.");
-            }
+        //    if (chapter == null)
+        //    {
+        //        throw new BaseException.BadRequestException("key_not_found", $"Chapter with {previousTopic.ChapterId} not found.");
+        //    }
 
-            // Check if the student has completed the quiz for the previous chapter
-            var completedQuiz = await _unitOfWork.GetRepository<Progress>().Entities
-                .Where(p => p.StudentId == currentUserId && p.QuizId == previousTopic.QuizId && p.SubjectId == chapter.SubjectId)
-                .FirstOrDefaultAsync();
+        //    // Check if the student has completed the quiz for the previous chapter
+        //    var completedQuiz = await _unitOfWork.GetRepository<Progress>().Entities
+        //        .Where(p => p.StudentId == currentUserId && p.QuizId == previousTopic.QuizId && p.SubjectId == chapter.SubjectId)
+        //        .FirstOrDefaultAsync();
 
-            // The student can access the topic if they have completed the previous quiz
-            return completedQuiz != null;
-        }
+        //    // The student can access the topic if they have completed the previous quiz
+        //    return completedQuiz != null;
+        //}
 
         public async Task<string> GetTopicNameAsync(string topicId)
         {
