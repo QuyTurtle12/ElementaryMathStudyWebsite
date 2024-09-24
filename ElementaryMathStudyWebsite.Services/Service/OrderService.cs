@@ -341,6 +341,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<OrderViewDto>((IReadOnlyCollection<OrderViewDto>)orderDtos, orderDtos.Count, 1, orderDtos.Count);
             }
 
+            // validate and adjust page number
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, orderDtos.Count, pageSize);
+
             // Return the paginated DTOs without reapplying pagination
             return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(orderDtos, pageNumber, pageSize);
         }
@@ -410,6 +413,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 return new BasePaginatedList<OrderAdminViewDto>((IReadOnlyCollection<OrderAdminViewDto>)adminOrders, allOrders.Count, 1, allOrders.Count);
             }
+
+            // validate and adjust page number
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, adminOrders.Count, pageSize);
 
             // Show all orders with pagination
             return _unitOfWork.GetRepository<OrderAdminViewDto>().GetPaggingDto(adminOrders, pageNumber, pageSize);
@@ -571,6 +577,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
             }
 
+            // validate and adjust page number
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, result.Count, pageSize);
+
             // Use generic repository's GetPagging method to apply pagination
             return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
         }
@@ -624,6 +633,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     break; // Break when found the correct user
                 }
             }
+
+            // validate and adjust page number
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, result.Count, pageSize);
 
             // Use generic repository's GetPagging method to apply pagination
             return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
@@ -700,6 +712,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 orderDtos.Add(dto);
             }
 
+            // validate and adjust page number
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, orderDtos.Count, pageSize);
+
             // Paginate the result
             return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(orderDtos, pageNumber, pageSize);
         }
@@ -747,6 +762,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 orderDtos.Add(dto);
             }
 
+            // validate and adjust page number
+            pageNumber =  PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, orderDtos.Count, pageSize);
+
             // Paginate the result
             return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(orderDtos, pageNumber, pageSize);
         }
@@ -763,5 +781,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return true;
         }
+
     }
 }

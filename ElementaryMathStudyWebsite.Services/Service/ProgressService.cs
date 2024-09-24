@@ -4,6 +4,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Store;
+using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
@@ -33,6 +34,56 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         }
 
+        // Get list of finished topic and list of finished chapter of specific student
+        private async Task<(IList<FinishedTopic> finishedTopics, IList<FinishedChapter> finishedChapters)> GetFinishedTopicsAndChaptersAsync(string studentId)
+        {
+            // Get a student progress list
+            IQueryable<Progress> progressQuery = _unitOfWork.GetRepository<Progress>().GetEntitiesWithCondition(p => p.StudentId.Equals(studentId));
+
+            var studentProgressInfoList = await progressQuery.ToListAsync();
+
+            IList<FinishedTopic> finishedTopicList = new List<FinishedTopic>();
+            IList<FinishedChapter> finishedChapterList = new List<FinishedChapter>();
+
+            // Get list of finished chapters and topics
+            foreach (var progress in studentProgressInfoList)
+            {
+                var finishedTopicInfo = await _unitOfWork.GetRepository<Topic>()
+                                                        .Entities
+                                                        .Where(t => t.QuizId != null && t.QuizId.Equals(progress.QuizId))
+                                                        .Select(t => new { t.Id, t.TopicName }) // Select TopicId and TopicName
+                                                        .FirstOrDefaultAsync();
+
+                var finishedChapterInfo = await _unitOfWork.GetRepository<Chapter>()
+                                                        .Entities
+                                                        .Where(c => c.QuizId != null && c.QuizId.Equals(progress.QuizId))
+                                                        .Select(c => new { c.Id, c.ChapterName }) // Select ChapterId and ChapterName
+                                                        .FirstOrDefaultAsync();
+
+                // Add topic to finishedTopicList
+                if (finishedTopicInfo != null)
+                {
+                    finishedTopicList.Add(new FinishedTopic
+                    {
+                        Id = finishedTopicInfo.Id,
+                        name = finishedTopicInfo.TopicName
+                    });
+                }
+
+                // Add chapter to finishedChapterList
+                if (finishedChapterInfo != null)
+                {
+                    finishedChapterList.Add(new FinishedChapter
+                    {
+                        Id = finishedChapterInfo.Id,
+                        name = finishedChapterInfo.ChapterName
+                    });
+                }
+            }
+
+            return (finishedTopicList, finishedChapterList);
+        }
+
         // Get a list of subject progress that one student of one parent currently studying
         public async Task<BasePaginatedList<ProgressViewDto>> GetStudentProgressesDtoAsync(string studentId, int pageNumber, int pageSize)
         {
@@ -53,17 +104,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             foreach (var prog in studentProgresses)
             {
+                // Calculate learning progress percentage
                 double subjectPercentage = await CalculateSubjectPercentageAsync(studentId, prog.SubjectId);
+
+                // Convert Id to Name
                 string studentName = await _userService.GetUserNameAsync(studentId);
                 string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
-                ProgressViewDto dto = new ProgressViewDto
+                // Get student finished chapters and topics list
+                var (finishedTopics, finishedChapters) = await GetFinishedTopicsAndChaptersAsync(prog.StudentId);
+
+                ProgressViewDto dto = new()
                 {
                     StudentId = studentId,
                     StudentName = studentName,
                     SubjectId = prog.SubjectId,
                     SubjectName = subjectName,
-                    SubjectPercentage = subjectPercentage
+                    SubjectPercentage = subjectPercentage,
+                    FinishedTopics = finishedTopics,
+                    FinishedChapter = finishedChapters
                 };
                 studentProgressDtos.Add(dto);
             }
@@ -78,6 +137,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 return new BasePaginatedList<ProgressViewDto>((IReadOnlyCollection<ProgressViewDto>)studentProgressDtos, studentProgressDtos.Count, 1, studentProgressDtos.Count);
             }
+
+            // validate and adjust page number
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, studentProgressDtos.Count, pageSize);
 
             // Show all student progresses with pagination
             return _unitOfWork.GetRepository<ProgressViewDto>().GetPaggingDto(studentProgressDtos, pageNumber, pageSize);
@@ -113,17 +175,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 var studentProgresses = await assignedSubjects.ToListAsync();
                 foreach (var prog in studentProgresses)
                 {
+                    // Calculate learning progress percentage
                     double subjectPercentage = await CalculateSubjectPercentageAsync(student.Id, prog.SubjectId);
+
+                    // Convert Id to Name
                     string studentName = await _userService.GetUserNameAsync(prog.StudentId);
                     string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
-                    ProgressViewDto dto = new ProgressViewDto
+                    // Get student finished chapters and topics list
+                    var (finishedTopics, finishedChapters) = await GetFinishedTopicsAndChaptersAsync(prog.StudentId);
+
+                    ProgressViewDto dto = new()
                     {
                         StudentId = prog.StudentId,
                         StudentName = studentName,
                         SubjectId = prog.SubjectId,
                         SubjectName = subjectName,
-                        SubjectPercentage = subjectPercentage
+                        SubjectPercentage = subjectPercentage,
+                        FinishedTopics = finishedTopics,
+                        FinishedChapter = finishedChapters
                     };
                     studentProgressDtos.Add(dto);
                 }
@@ -139,6 +209,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 return new BasePaginatedList<ProgressViewDto>((IReadOnlyCollection<ProgressViewDto>)studentProgressDtos, studentProgressDtos.Count, 1, studentProgressDtos.Count);
             }
+
+            // validate and adjust page number
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, studentProgressDtos.Count, pageSize);
 
             // Show paginated progress for all students
             BasePaginatedList<ProgressViewDto> paginatedDtos = _unitOfWork.GetRepository<ProgressViewDto>().GetPaggingDto(studentProgressDtos, pageNumber, pageSize);
@@ -311,10 +384,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<AssignedSubjectDto>((IReadOnlyCollection<AssignedSubjectDto>)assignedSubjectDtos, assignedSubjectDtos.Count, 1, assignedSubjectDtos.Count);
             }
 
+            // validate and adjust page number
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, assignedSubjectDtos.Count, pageSize);
+
             // Show all assigned subjects with pagination
             return _unitOfWork.GetRepository<AssignedSubjectDto>().GetPaggingDto(assignedSubjectDtos, pageNumber, pageSize);
         }
 
+        // Get a list of subject progress that student currently studying
         public async Task<BasePaginatedList<ProgressViewDto>> GetStudentProgressesDtoForStudentAsync(int pageNumber, int pageSize)
         {
             // Get current logged in user info
@@ -337,9 +414,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             foreach (var prog in studentProgresses)
             {
+                // Calculate learning progress percentage
                 double subjectPercentage = await CalculateSubjectPercentageAsync(currentUser.Id, prog.SubjectId);
+
+                // Convert Id to Name
                 string studentName = await _userService.GetUserNameAsync(currentUser.Id);
                 string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
+
+                // Get student finished chapters and topics list
+                var (finishedTopics, finishedChapters) = await GetFinishedTopicsAndChaptersAsync(prog.StudentId);
 
                 ProgressViewDto dto = new ProgressViewDto
                 {
@@ -347,7 +430,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     StudentName = studentName,
                     SubjectId = prog.SubjectId,
                     SubjectName = subjectName,
-                    SubjectPercentage = subjectPercentage
+                    SubjectPercentage = subjectPercentage,
+                    FinishedTopics = finishedTopics,
+                    FinishedChapter = finishedChapters
                 };
                 studentProgressDtos.Add(dto);
             }
@@ -363,8 +448,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<ProgressViewDto>((IReadOnlyCollection<ProgressViewDto>)studentProgressDtos, studentProgressDtos.Count, 1, studentProgressDtos.Count);
             }
 
+            // validate and adjust page number
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, studentProgressDtos.Count, pageSize);
+
             // Show all student progresses with pagination
             return _unitOfWork.GetRepository<ProgressViewDto>().GetPaggingDto(studentProgressDtos, pageNumber, pageSize);
         }
+
     }
 }

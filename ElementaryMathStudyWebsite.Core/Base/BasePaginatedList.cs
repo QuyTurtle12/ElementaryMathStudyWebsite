@@ -32,5 +32,6 @@
 
         // Method to check if there is a next page
         public bool HasNextPage => CurrentPage < TotalPages;
+
     }
 }
