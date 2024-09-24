@@ -18,8 +18,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IAppChapterServices _chapterService;
         private readonly ITokenService _tokenService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IAppUserServices _userServices;
 
-        public TopicService(IUnitOfWork unitOfWork, IAppQuizServices quizService, IAppChapterServices chapterService, IHttpContextAccessor httpContextAccessor,
+        public TopicService(IUnitOfWork unitOfWork, IAppQuizServices quizService, IAppChapterServices chapterService, IHttpContextAccessor httpContextAccessor, IAppUserServices userServices,
                           ITokenService tokenService)
         {
             _unitOfWork = unitOfWork;
@@ -27,7 +28,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _chapterService = chapterService;
             _httpContextAccessor = httpContextAccessor;
             _tokenService = tokenService;
-            _userService = userServices;
+            _userServices = userServices;
         }
 
         // Lấy danh sách Topic ( Admin )
@@ -559,7 +560,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<bool> CanAccessTopicAsync(string topicId)
         {
             // Get the current logged-in user
-            User currentUser = await _userService.GetCurrentUserAsync();
+            User currentUser = await _userServices.GetCurrentUserAsync();
             var currentUserId = currentUser.Id;
 
             // Retrieve the topic that the student wants to access

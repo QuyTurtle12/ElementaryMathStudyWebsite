@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -14,7 +15,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IGenericRepository<Quiz> _quizRepository;
         private readonly IGenericRepository<Subject> _subjectRepository;
         private readonly ILogger<ChapterService> _logger;
-        private readonly IAppUserServices _userService;
+        private readonly IAppUserServices _userServices;
 
 
         // Constructor
@@ -24,7 +25,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _quizRepository = quizRepository;
             _subjectRepository = subjectRepository;
             _logger = logger;
-            _userService = userServices;
+            _userServices = userServices;
         }
 
         private void ValidateChapter(ChapterDto chapterDTO)
@@ -891,7 +892,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<bool> CanAccessChapterAsync(string chapterId)
         {
             // Get the current logged-in user
-            User currentUser = await _userService.GetCurrentUserAsync();
+            User currentUser = await _userServices.GetCurrentUserAsync();
             var currentUserId = currentUser.Id;
 
             // Retrieve the chapter that the student wants to access

@@ -30,8 +30,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<ChapterAdminDelete> rollbackChapterDeletedAsync(string chapterId);
 
         Task<BasePaginatedList<ChapterAdminDelete?>> GetChaptersDeletedAsync(int pageNumber, int pageSize);
-
-        Task<Chapter?> GetChapterByChapterIdAsync(string id);
         Task<bool> CanAccessChapterAsync(string chapterId);
     }
 }

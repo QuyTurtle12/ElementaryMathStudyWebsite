@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Core.Store;
 using ElementaryMathStudyWebsite.Core.Utils;
+using ElementaryMathStudyWebsite.Services.Service;
 
 
 namespace ElementaryMathStudyWebsite.Controllers
@@ -79,7 +80,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             var result = await _topicService.GetAllTopicsAsync(pageNumber, pageSize);
             return Ok(result);
         }
-    
+
 
         [HttpGet]
         [Route("User/{id}")]
@@ -216,7 +217,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return StatusCode(500, "An unexpected error occurred.");
             }
         }
-        }
 
         // GET: api/TopicAccess/{topicId}/CanAccess
         [HttpGet("/TopicAccess/{topicId}")]
@@ -291,7 +291,5 @@ namespace ElementaryMathStudyWebsite.Controllers
                 ));
             }
         }
-
-
     }
 }

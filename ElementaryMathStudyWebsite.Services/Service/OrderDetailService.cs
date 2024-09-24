@@ -83,7 +83,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     string? studentName = await userAppService.GetUserNameAsync(detail.StudentId);
                     string? subjectName = await subjectAppService.GetSubjectNameAsync(detail.SubjectId);
-                    detailDtos.Add(new OrderDetailViewDto(subjectName, studentName));
+                    //detailDtos.Add(new OrderDetailViewDto(subjectName, studentName));
                 }
             }
 

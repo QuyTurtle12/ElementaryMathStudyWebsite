@@ -13,11 +13,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
-    public class SubjectService(IUnitOfWork unitOfWork, IAppUserServices userServices, IGenericRepository<Subject> detailRepository) : IAppSubjectServices
+    public class SubjectService : IAppSubjectServices
     {
-        private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-        private readonly IAppUserServices _userServices = userServices ?? throw new ArgumentNullException(nameof(userServices));
-        private readonly IGenericRepository<Subject> _detailReposiotry = detailRepository;
+        private readonly IGenericRepository<Subject> _detailReposiotry;
+        private readonly IGenericRepository<Subject> _subjectRepository;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IAppUserServices _userService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ITokenService _tokenService;
+
+        public SubjectService(IGenericRepository<Subject> detailReposiotry, IGenericRepository<Subject> subjectRepository, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ITokenService tokenService, IAppUserServices userService)
+        {
+            _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
+            _subjectRepository = subjectRepository ?? throw new ArgumentNullException(nameof(subjectRepository));
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            _httpContextAccessor = httpContextAccessor;
+            _tokenService = tokenService;
+            _userService = userService;
+        }
 
         // Helper method for validation
         private static void ValidateSubject(SubjectDTO subjectDTO)
@@ -392,7 +405,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async void AuditFields(BaseEntity entity, bool isCreating = false)
         {
             // Get current logged in user info
-            User currentUser = await _userServices.GetCurrentUserAsync();
+            User currentUser = await _userService.GetCurrentUserAsync();
             var currentUserId = currentUser.Id;
 
             // If creating a new entity, set the CreatedBy field
@@ -415,7 +428,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<bool> CheckCompleteQuizExistAsync(string subjectId, string quizId)
         {
             // Get current logged in user info
-            User currentUser = await _userServices.GetCurrentUserAsync();
+            User currentUser = await _userService.GetCurrentUserAsync();
             var currentUserId = currentUser.Id;
 
             // Query the Progress table for a record with the specified SubjectId and QuizId
