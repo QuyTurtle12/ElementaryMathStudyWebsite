@@ -109,6 +109,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 TotalPrice = order.TotalPrice,
                 Status = order.Status,
                 OrderDate = order.CreatedTime,
+                PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null,
                 Details = detailDtos
             }; // Show that create order process is completed
         }
@@ -264,6 +265,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 CustomerName = customerName,
                 TotalPrice = order.TotalPrice,
                 OrderDate = order.CreatedTime,
+                Status = order.Status,
+                PaymentMethod = order.PaymentMethod,
+                PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null,
                 Details = detailList?.Items
             };
 
@@ -299,6 +303,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     CustomerName = customerName,
                     TotalPrice = order.TotalPrice,
                     OrderDate = order.CreatedTime,
+                    Status = order.Status,
+                    PaymentMethod = order.PaymentMethod,
+                    PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null,
                     Details = detailList?.Items
                 };
 
@@ -349,6 +356,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         CustomerId = order?.CustomerId ?? string.Empty,
                         CustomerName = customerName,
                         OrderDate = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
+                        Status = order?.Status ?? string.Empty,
+                        PaymentMethod = order?.PaymentMethod ?? string.Empty,
                         TotalPrice = order?.TotalPrice ?? 0,
                         Details = detailList?.Items,
                         CreatedBy = order?.CreatedBy ?? string.Empty,
@@ -512,7 +521,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                                 CustomerId = order.CustomerId,
                                 CustomerName = customerName,
                                 TotalPrice = order.TotalPrice,
+                                Status = order.Status,
+                                PaymentMethod = order.PaymentMethod,
                                 OrderDate = order.CreatedTime,
+                                PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null,
                                 Details = detailList?.Items
                             };
                             result.Add(dto);
@@ -553,7 +565,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                                 CustomerId = order.CustomerId,
                                 CustomerName = customerName,
                                 TotalPrice = order.TotalPrice,
+                                Status = order.Status,
+                                PaymentMethod = order.PaymentMethod,
                                 OrderDate = order.CreatedTime,
+                                PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null,
                                 Details = detailList?.Items
                             };
                             result.Add(dto);
@@ -629,7 +644,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     CustomerId = order.CustomerId,
                     CustomerName = customerName,
                     TotalPrice = order.TotalPrice,
+                    Status = order.Status,
+                    PaymentMethod = order.PaymentMethod,
                     OrderDate = order.CreatedTime,
+                    PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null,
                     Details = detailList?.Items
                 };
                 orderDtos.Add(dto);
@@ -673,7 +691,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     CustomerId = order.CustomerId,
                     CustomerName = customerName,
                     TotalPrice = order.TotalPrice,
+                    Status = order.Status,
+                    PaymentMethod = order.PaymentMethod,
                     OrderDate = order.CreatedTime,
+                    PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null,
                     Details = detailList?.Items
                 };
                 orderDtos.Add(dto);

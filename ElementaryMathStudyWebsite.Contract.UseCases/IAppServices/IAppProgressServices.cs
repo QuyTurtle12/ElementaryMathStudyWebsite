@@ -9,6 +9,9 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         // Get a list of subject progress that one student of one parent currently studying
         Task<BasePaginatedList<ProgressViewDto>> GetStudentProgressesDtoAsync(string studentId, int pageNumber, int pageSize);
 
+        // Get a list of subject progress that student currently studying
+        Task<BasePaginatedList<ProgressViewDto>> GetStudentProgressesDtoForStudentAsync(int pageNumber, int pageSize);
+
         // Get a list of subject progress that all students of one parent currently studying
         Task<BasePaginatedList<ProgressViewDto>> GetAllStudentProgressesDtoAsync(string parentId, int pageNumber, int pageSize);
 
