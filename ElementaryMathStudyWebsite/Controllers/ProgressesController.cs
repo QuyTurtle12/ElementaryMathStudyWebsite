@@ -1,10 +1,7 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Store;
-using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -18,43 +15,34 @@ namespace ElementaryMathStudyWebsite.Controllers
     {
         private readonly IAppProgressServices _progressService;
         private readonly IAppUserServices _userService;
-        private readonly ITokenService _tokenService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
         // Constructor
-        public ProgressesController(IAppProgressServices progressService, IAppUserServices userService, ITokenService tokenService, IHttpContextAccessor httpContextAccessor)
+        public ProgressesController(IAppProgressServices progressService, IAppUserServices userService)
         {
             _progressService = progressService;
             _userService = userService;
-            _tokenService = tokenService;
-            _httpContextAccessor = httpContextAccessor;
         }
 
-        // GET: api/progress/studentId
+        // GET: api/progress//parent/view/{studentId}
         // Get 1 child learning progress of specific parent
         [Authorize(Policy = "Parent")]
         [HttpGet]
-        [Route("{studentId}")]
+        [Route("/parent/view/{studentId}")]
         [SwaggerOperation(
             Summary = "Authorization: Parent",
-            Description = "View a child progress list. Insert -1 to get all items"
+            Description = "View a child progress list for Parent role. Insert -1 to get all items"
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ProgressViewDto>>>> GetStudentProgressByStudentId([Required] string studentId , int pageNumber = -1, int pageSize = -1)
         {
             try
             {
-                // Get logged in User Id from authorization header 
-                var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
+                // Get logged in User info
+                User currentUser = await _userService.GetCurrentUserAsync();
 
                 // Check if current logged user and the inputted student Id are parent-child relationship
-                if (!await _userService.IsCustomerChildren(currentUserId, studentId))
+                if (!await _userService.IsCustomerChildren(currentUser.Id, studentId))
                 {
-                    return BadRequest(new BaseResponse<BasePaginatedList<ProgressViewDto>>(
-                    StatusCodeHelper.BadRequest,
-                    StatusCodeHelper.BadRequest.Name(),
-                    "They are not parent and child"
-                    ));
+                    throw new BaseException.BadRequestException("invalid_argument", "They are not parent and child");
                 }
 
                 BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetStudentProgressesDtoAsync(studentId, pageNumber, pageSize);
@@ -84,10 +72,52 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // GET: api/progress
+        // GET: api/progress/student/view
+        // Get 1 child learning progress of specific parent
+        [Authorize(Policy = "Student")]
+        [HttpGet]
+        [Route("/student/view")]
+        [SwaggerOperation(
+            Summary = "Authorization: Student",
+            Description = "View a child progress list for Student role. Insert -1 to get all items"
+            )]
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<ProgressViewDto>>>> GetStudentProgressForStudent(int pageNumber = -1, int pageSize = -1)
+        {
+            try
+            {
+
+                BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetStudentProgressesDtoForStudentAsync(pageNumber, pageSize);
+
+                var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
+
+                return response;
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
+        // GET: api/progress/parent/view
         // Get 1 child learning progress of specific parent
         [Authorize(Policy = "Parent")]
         [HttpGet]
+        [Route("/parent/view")]
         [SwaggerOperation(
             Summary = "Authorization: Parent",
             Description = "View children progress list. Insert -1 to get all items"
@@ -96,11 +126,10 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                // Get logged in User Id from authorization header 
-                var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                var currentUserId = _tokenService.GetUserIdFromTokenHeader(token).ToString().ToUpper();
+                // Get logged in User info
+                User currentUser = await _userService.GetCurrentUserAsync();
 
-                BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetAllStudentProgressesDtoAsync(currentUserId, pageNumber, pageSize);
+                BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetAllStudentProgressesDtoAsync(currentUser.Id, pageNumber, pageSize);
 
                 var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
 
@@ -190,12 +219,12 @@ namespace ElementaryMathStudyWebsite.Controllers
         //    }
         //}
 
-        // GET: api/progress/assigned-subject
+        // GET: api/progress/student/view/assigned-subject
         // Get list of assigned subject of specific student
 
         [Authorize(Policy = "Student")]
         [HttpGet]
-        [Route("assigned-subject")]
+        [Route("/student/view/assigned-subject")]
         [SwaggerOperation(
             Summary = "Authorization: Student",
             Description = "View list of assigned subject. Insert -1 to get all items"

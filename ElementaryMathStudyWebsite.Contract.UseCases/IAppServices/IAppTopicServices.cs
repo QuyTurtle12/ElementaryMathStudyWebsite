@@ -7,14 +7,16 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
     public interface IAppTopicServices
     {
         Task<TopicViewDto?> GetTopicByIdAsync(string id); // Tìm kiếm Topic bằng Topic's Name ( Lấy các thông tin cần thiết )
-        Task<Topic> GetTopicAllByIdAsync(string id); // Tìm kiếm Topic bằng ID
+        Task<TopicAdminViewDto?> GetTopicAllByIdAsync(string id); // Tìm kiếm Topic bằng ID
         Task<bool> AddTopicAsync(TopicCreateDto topicCreateDto); // Tạo chủ đề
-        Task<bool> UpdateTopicAsync(string id, TopicDto topicDto); // Cập nhật chủ đề
-        Task<BasePaginatedList<TopicViewDto>> GetTopicsByChapterIdAsync(string chapterId, int pageNumber, int pageSize); // Lấy danh sách chủ đề theo ChapterId
+        Task<bool> UpdateTopicAsync(string id, TopicCreateDto topicCreateDto); // Cập nhật chủ đề
+        Task<TopicCreateDto> DeleteTopicAsync(string id);
+        Task<List<TopicViewDto>> GetTopicsByChapterIdAsync(string chapterId); // Lấy danh sách chủ đề theo ChapterId
         Task<BasePaginatedList<object>> SearchTopicByNameAsync(string searchTerm, int pageNumber, int pageSize);
 
-        Task<BasePaginatedList<Topic?>> GetAllExistTopicsAsync(int pageNumber, int pageSize); // Lấy danh sách Topic
+        Task<BasePaginatedList<TopicAdminViewDto>> GetAllExistTopicsAsync(int pageNumber, int pageSize); // Lấy danh sách Topic
 
+        Task<BasePaginatedList<TopicViewDto>> GetAllTopicsAsync(int pageNumber, int pageSize); // Lấy danh sách Topic
         //Task<IEnumerable<object>> GetTopicsAsync(int pageNumber, int pageSize);
         //Task<IEnumerable<TopicViewDTO>> SearchTopicsAsync(string searchTerm, int pageNumber, int pageSize);
         //Task<bool> TopicExistsAsync(string id);

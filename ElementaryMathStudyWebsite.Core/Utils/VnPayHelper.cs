@@ -7,10 +7,10 @@ using Microsoft.AspNetCore.Http;
 
 namespace ElementaryMathStudyWebsite.Core.Utils
 {
-    public class VnPayLibrary
+    public class VnPayHelper
     {
-        private readonly SortedList<string, string> _requestData = new SortedList<string, string>(new VnPayCompare());
-        private readonly SortedList<string, string> _responseData = new SortedList<string, string>(new VnPayCompare());
+        private readonly SortedList<string, string> _requestData = new SortedList<string, string>();
+        private readonly SortedList<string, string> _responseData = new SortedList<string, string>();
 
         public void AddRequestData(string key, string value)
         {
@@ -97,6 +97,19 @@ namespace ElementaryMathStudyWebsite.Core.Utils
 
     }
 
+    public static class VnPayConfig
+    {
+        public const string TmnCode = "NBV2FN9P";
+        public const string HashSecret = "3458PTH3433WIIT2P9EAXXELSMLJM740";
+        public const string BaseUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+        public const string Version = "2.1.0";
+        public const string Command = "pay";
+        public const string CurrCode = "VND";
+        public const string Locale = "vn";
+        public const string ReturnUrl = "https://localhost:7085/api/payment/vnpay-callback";
+    }
+
+
     public class Utils
     {
         public static string HmacSHA512(string key, string inputData)
@@ -146,17 +159,4 @@ namespace ElementaryMathStudyWebsite.Core.Utils
             return "127.0.0.1";
         }
     }
-
-    public class VnPayCompare : IComparer<string>
-    {
-        public int Compare(string x, string y)
-        {
-            if (x == y) return 0;
-            if (x == null) return -1;
-            if (y == null) return 1;
-            var vnpCompare = CompareInfo.GetCompareInfo("en-US");
-            return vnpCompare.Compare(x, y, CompareOptions.Ordinal);
-        }
-    }
-
 }
