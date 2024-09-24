@@ -39,19 +39,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                             string.IsNullOrWhiteSpace(o.DeletedBy)
                             );
 
-            if (query.Count() > 0) throw new BaseException.BadRequestException(
-                "invalid_argument",
-                "You already have something in your cart, please discard your current cart or proceed to checkout"
-                );
+            if (query.Count() > 0) throw new BaseException.BadRequestException("invalid_argument", "You already have something in your cart, please discard your current cart or proceed to checkout");
 
             // General Validation for each Subject-Student pair
             foreach (var subjectStudent in cartCreateDto.SubjectStudents)
             {
                 string? error = await IsGenerallyValidatedAsync(subjectStudent.SubjectId, subjectStudent.StudentId, cartCreateDto);
-                if (!string.IsNullOrWhiteSpace(error)) throw new BaseException.BadRequestException(
-                    "invalid_argument", // Error code
-                    error // Error message
-                    );
+                if (!string.IsNullOrWhiteSpace(error)) throw new BaseException.BadRequestException("invalid_argument", error); // Error message
             }
 
             // Calculate total price
@@ -72,7 +66,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             bool result = true; // Check create order detail result
 
-            List<OrderDetailViewDto> detailDtos = new();
+            List<OrderDetailViewDto> detailDtos = [];
 
             // Add order details for each subject-student pair
             foreach (var subjectStudent in cartCreateDto.SubjectStudents)
@@ -246,7 +240,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 return -1;
             }
-
         }
 
         // Get one order with all properties
@@ -304,7 +297,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities
                 .Where(o => o.CustomerId.Equals(currentUser.Id) && string.IsNullOrWhiteSpace(o.DeletedBy));
 
-            IList<OrderViewDto> orderDtos = new List<OrderViewDto>();
+            IList<OrderViewDto> orderDtos = [];
             var allOrders = await query.ToListAsync(); // Asynchronously fetch all orders
                                                        
             foreach (var order in allOrders)
@@ -359,7 +352,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var allOrders = await query.ToListAsync();
 
             // list of order for admin view
-            IList<OrderAdminViewDto> adminOrders = new List<OrderAdminViewDto>();
+            IList<OrderAdminViewDto> adminOrders = [];
 
             foreach (var order in allOrders)
             {
@@ -481,8 +474,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             firstInputValue = firstInputValue?.Trim() ?? null;
             secondInputValue = secondInputValue?.Trim() ?? null;
 
-            // Create an empty list
-            BasePaginatedList<OrderViewDto>? result = null;
 
             // variable for using only one input
             string? inputValue = string.Empty;
@@ -494,6 +485,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 inputValue = firstInputValue ?? secondInputValue;
             }
 
+
+            // Create an empty list
+            BasePaginatedList<OrderViewDto>? result;
             switch (filter)
             {
                 case "customer email": // Search orders by customer email
