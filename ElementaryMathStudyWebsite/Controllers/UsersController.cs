@@ -570,6 +570,53 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        [HttpDelete]
+        [Route("delete/{userId}")]
+        [Authorize(Policy = "Admin-Manager")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Deleting a user"
+            )]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return BadRequest("User ID is required.");
+            }
+
+            try
+            {
+                var result = await _userServices.DeleteUserAsync(userId);
+
+                if (result)
+                {
+                    var response = BaseResponse<String>.OkResponse("User is deleted");
+
+                    return Ok(response);
+                }
+                throw new BaseException.BadRequestException("not_found", "User not found");
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
         /// <summary>
         /// Retrieves all children of a given parent with pagination.
         /// </summary>

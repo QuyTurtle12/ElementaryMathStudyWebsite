@@ -31,7 +31,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<List<User>> GetAllUsersWithRolesAsync()
         {
             // Define the condition for retrieving users (fetch all users)
-            Expression<Func<User, bool>> condition = user => true;
+            Expression<Func<User, bool>> condition = user => true && user.DeletedBy == null;
 
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
@@ -76,7 +76,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (pageSize <= 0) pageSize = 10; // Set a default page size if invalid
 
             // Define the condition for retrieving users
-            Expression<Func<User, bool>> condition = user => true; // Retrieve all users (no specific condition)
+            Expression<Func<User, bool>> condition = user => true && user.DeletedBy == null; // Retrieve all users (no specific condition)
 
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
@@ -102,7 +102,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Define the condition to find the user by ID
-            Expression<Func<User, bool>> condition = u => u.Id == userId;
+            Expression<Func<User, bool>> condition = u => u.Id == userId && u.DeletedBy == null;
 
             var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
                 condition,
@@ -115,6 +115,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 throw new KeyNotFoundException("User not found");
             }
+            
 
             // Only update properties if they are not null
             if (dto.FullName != null)
@@ -159,7 +160,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<User?> GetUserByIdAsync(string userId)
         {
             // Define the condition to find the user by ID
-            Expression<Func<User, bool>> condition = u => u.Id == userId;
+            Expression<Func<User, bool>> condition = u => u.Id == userId && u.DeletedBy == null;
 
             // Optionally include related entities, if needed
             var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
@@ -167,6 +168,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 u => u.Role // Include the Role if needed
                 // Add other includes here if needed
             );
+            if (user == null)
+            {
+                throw new BaseException.BadRequestException("not_found", "User not found");
+            }
 
             return user;
         }
@@ -177,7 +182,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var user = await _unitOfWork.GetRepository<User>().GetByIdAsync(userId);
             if (user == null)
             {
-                throw new KeyNotFoundException("User not found");
+                throw new BaseException.BadRequestException("not_found", "User not found");
             }
 
             // Set the user's status to false to disable the user
@@ -185,6 +190,28 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Set audit fields
             AuditFields(user);
+
+            // Update the user in the repository
+            _unitOfWork.GetRepository<User>().Update(user);
+            await _unitOfWork.SaveAsync();
+
+            return true; // Return true if the user was successfully disabled
+        }
+
+        public async Task<bool> DeleteUserAsync(string userId)
+        {
+            // Fetch the user by ID
+            var user = await _unitOfWork.GetRepository<User>().GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new BaseException.BadRequestException("not_found", "User not found");
+            }
+
+            // Set the user's status to false to disable the user
+            user.Status = false;
+
+            // Set audit fields
+            AuditFields(user, false, true);
 
             // Update the user in the repository
             _unitOfWork.GetRepository<User>().Update(user);
@@ -239,7 +266,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<User>> SearchUsersAsync(string? name, bool? status, string? phone, string? email, int pageNumber, int pageSize)
         {
             // Define the condition for retrieving users
-            Expression<Func<User, bool>> condition = user => true; // Retrieve all users (no specific condition)
+            Expression<Func<User, bool>> condition = user => true && user.DeletedBy == null; // Retrieve all users (no specific condition)
 
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
@@ -327,7 +354,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (pageSize <= 0) pageSize = 10; // Set a default page size if invalid
 
             // Define the condition to find children of the given parent
-            Expression<Func<User, bool>> condition = user => user.CreatedBy == parentId && user.Id != parentId;
+            Expression<Func<User, bool>> condition = user => user.CreatedBy == parentId && user.Id != parentId && user.DeletedBy == null;
 
 
             // Define includes to eagerly load the Role navigation property, if needed
