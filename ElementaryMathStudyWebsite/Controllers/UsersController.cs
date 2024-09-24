@@ -77,7 +77,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: logged in user",
             Description = "Updating a user profile"
             )]
-        public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserDto updateUserDto)
+        public async Task<ActionResult<BaseResponse<UpdateProfileDto>>> UpdateProfile([FromBody] UpdateUserDto updateUserDto)
         {
             // Get the token from the Authorization header
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
@@ -95,9 +95,10 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var user = await _userServices.UpdateUserAsync(userId.ToString(), updateUserDto);
                 var UpdateProfileDto = _mapper.Map<UpdateProfileDto>(user);
                 UpdateProfileDto.Token = _tokenService.GenerateJwtToken(user);
-                
 
-                return Ok(UpdateProfileDto);
+                var response = BaseResponse<UpdateProfileDto>.OkResponse(UpdateProfileDto);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -155,7 +156,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                     paginatedUsers.PageSize
                 );
 
-                return Ok(paginatedUserDtos);
+                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -208,13 +211,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var user = await _userServices.CreateUserAsync(createUserDto);
-                var userResponseDto = _mapper.Map<UserResponseDto>(user); 
+                var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
-                return CreatedAtAction(nameof(CreateUser), new { id = userResponseDto.Id }, userResponseDto);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
+                var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
+
+                return Ok(response);
+
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -258,7 +260,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                 // Map the users to UserResponseDto
                 var userResponseDtos = _mapper.Map<IEnumerable<UserResponseDto>>(users);
 
-                return Ok(userResponseDtos);
+                var response = BaseResponse<IEnumerable<UserResponseDto>>.OkResponse(userResponseDtos);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -313,7 +317,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                     paginatedUsers.PageSize
                 );
 
-                return Ok(paginatedUserDtos);
+                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -359,7 +365,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                     paginatedUsers.PageSize
                 );
 
-                return Ok(paginatedUserDtos);
+                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -416,7 +424,10 @@ namespace ElementaryMathStudyWebsite.Controllers
                 }
 
                 var userResponseDto = _mapper.Map<UserResponseDto>(user);
-                return Ok(userResponseDto);
+
+                var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -478,11 +489,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var user = await _userServices.UpdateUserAsync(userId, updateUserDto);
                 var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
-                return Ok(userResponseDto);
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(ex.Message);
+                var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -534,9 +543,11 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                 if (result)
                 {
-                    return Ok("User has been successfully disabled.");
+                    var response = BaseResponse<String>.OkResponse("User is disabled");
+
+                    return Ok(response);
                 }
-                return NotFound("User not found.");
+                throw new BaseException.BadRequestException("not_found", "User not found");
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -597,7 +608,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                     paginatedUsers.PageSize
                 );
 
-                return Ok(paginatedUserDtos);
+                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
