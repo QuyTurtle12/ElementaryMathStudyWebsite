@@ -143,9 +143,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 user.RoleId = dto.RoleId;
             }
 
-            if (dto.Username != null)
+            if (dto.Username != null && dto.Username != user.Username)
             {
-                user.Username = dto.Username;
+                if (!await CheckExistingUserName(dto.Username))
+                {
+                    user.Username = dto.Username;
+                }
             }
 
             AuditFields(user);
@@ -155,6 +158,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
             await _unitOfWork.SaveAsync();
 
             return user;
+        }
+
+        public async Task<bool> CheckExistingUserName(string username)
+        {
+            var existingUser = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Username == username);
+            if (existingUser != null)
+            {
+                return true;
+            }
+            return false;
         }
 
         public async Task<User?> GetUserByIdAsync(string userId)

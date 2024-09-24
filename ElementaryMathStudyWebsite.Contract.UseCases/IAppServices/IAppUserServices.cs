@@ -75,5 +75,10 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         /// Retrieves a paginated list of children associated with a specific parent.
         /// </summary>
         Task<BasePaginatedList<User>> GetChildrenOfParentAsync(string parentId, int pageNumber, int pageSize);
+
+        /// <summary>
+        /// Checks if the username is already used.
+        /// </summary>
+        Task<bool> CheckExistingUserName(string username);
     }
 }
