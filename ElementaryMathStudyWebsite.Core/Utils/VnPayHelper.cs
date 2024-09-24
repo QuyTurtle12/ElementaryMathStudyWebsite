@@ -106,7 +106,7 @@ namespace ElementaryMathStudyWebsite.Core.Utils
         public const string Command = "pay";
         public const string CurrCode = "VND";
         public const string Locale = "vn";
-        public const string ReturnUrl = "https://localhost:7085/api/payment/vnpay-callback";
+        public const string ReturnUrl = "https://localhost:7134/api/payment/vnpay-callback";
     }
 
 
