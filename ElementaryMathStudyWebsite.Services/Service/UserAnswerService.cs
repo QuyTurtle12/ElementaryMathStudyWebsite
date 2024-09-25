@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Entity;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -12,13 +13,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userService;
+        private readonly IAppResultService _resultService;
 
         public UserAnswerService(
             IUnitOfWork unitOfWork,
-            IAppUserServices userService)
+            IAppUserServices userService,
+            IAppResultService resultService)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _resultService = resultService;
         }
 
         public async Task<BasePaginatedList<object>> GetAllUserAnswersAsync(int pageNumber, int pageSize)
@@ -96,11 +100,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
         //    return userAnswerDTO;
         //}
 
-        public async Task<List<UserAnswerWithDetailsDTO>> CreateUserAnswersAsync(UserAnswerCreateDTO userAnswerCreateDTO)
+        public async Task<ResultProgressDto> CreateUserAnswersAsync(UserAnswerCreateDTO userAnswerCreateDTO)
         {
             User currentUser = await _userService.GetCurrentUserAsync();
             var currentUserId = currentUser.Id;
+            
 
+
+            string? questionId = userAnswerCreateDTO.UserAnswerList.FirstOrDefault()?.QuestionId;
+
+            string? quizId = _unitOfWork.GetRepository<Question>().Entities
+                .Where(q => q.Id.Equals(questionId))
+                .Select(q => q.QuizId)
+                .FirstOrDefault();
+            
             // Check for duplicate QuestionId entries in the user answer list
             var duplicateQuestionIds = userAnswerCreateDTO.UserAnswerList
                 .GroupBy(ua => ua.QuestionId)
@@ -156,26 +169,32 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Save all changes after the loop
             await _unitOfWork.GetRepository<UserAnswer>().SaveAsync();
 
-            var result = new List<UserAnswerWithDetailsDTO>();
-            foreach (var userAnswer in userAnswerCreateDTO.UserAnswerList)
+            //var result = new List<UserAnswerWithDetailsDTO>();
+            //foreach (var userAnswer in userAnswerCreateDTO.UserAnswerList)
+            //{
+            //    var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(userAnswer.QuestionId);
+            //    var option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(userAnswer.OptionId);
+
+            //    var userAnswerWithDetails = new UserAnswerWithDetailsDTO
+            //    {
+            //        QuestionId = userAnswer.QuestionId,
+            //        QuestionContent = question?.QuestionContext ?? "Unknown Question",
+            //        UserId = currentUserId,
+            //        UserFullName = currentUser.FullName ?? "Unknown User",
+            //        OptionId = userAnswer.OptionId,
+            //        OptionAnswer = option?.Answer ?? "Unknown Answer",
+            //        AttemptNumber = tempAttempNumber,
+            //    };
+            //    result.Add(userAnswerWithDetails);
+            //}
+
+            ResultCreateDto resultCreateDto = new ResultCreateDto()
             {
-                var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(userAnswer.QuestionId);
-                var option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(userAnswer.OptionId);
+                QuizId = quizId ?? string.Empty
+            };
 
-                var userAnswerWithDetails = new UserAnswerWithDetailsDTO
-                {
-                    QuestionId = userAnswer.QuestionId,
-                    QuestionContent = question?.QuestionContext ?? "Unknown Question",
-                    UserId = currentUserId,
-                    UserFullName = currentUser.FullName ?? "Unknown User",
-                    OptionId = userAnswer.OptionId,
-                    OptionAnswer = option?.Answer ?? "Unknown Answer",
-                    AttemptNumber = tempAttempNumber,
-                };
-                result.Add(userAnswerWithDetails);
-            }
+            return await _resultService.AddStudentResultAsync(resultCreateDto);
 
-            return result;
         }
 
 
