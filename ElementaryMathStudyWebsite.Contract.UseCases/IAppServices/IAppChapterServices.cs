@@ -10,9 +10,9 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         Task<BasePaginatedList<ChapterAdminViewDto>> SearchChapterForAdminAsync(string searchTerm, int pageNumber, int pageSize);
 
-        Task<ChapterAdminViewDto> CreateChapterAsync(ChapterDto chapterDTO);
+        Task<ChapterViewDto> CreateChapterAsync(ChapterDto chapterDTO);
 
-        Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterDto subjectDTO);
+        Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterUpdateDto subjectDTO);
 
         Task<ChapterAdminDelete> DeleteChapterAsync(string optionId);
         Task<BasePaginatedList<ChapterViewDto?>> GetChapterDtosAsync(int pageNumber, int pageSize);
@@ -27,12 +27,13 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         Task<ChapterAdminViewDto> ChangeChapterStatusAsync(string id);
 
-        Task<bool> ChangeChapterOrderAsync(int currentChapterNumber, int newChapterNumber);
+        //Task<bool> ChangeChapterOrderAsync(int currentChapterNumber, int newChapterNumber);
 
         Task<ChapterAdminDelete> rollbackChapterDeletedAsync(string chapterId);
 
         Task<BasePaginatedList<ChapterAdminDelete?>> GetChaptersDeletedAsync(int pageNumber, int pageSize);
 
         Task<BasePaginatedList<ChapterViewDto>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId);
+        Task<bool> UpdateChapterNumbersAsync(string subjectId, ChapterNumberDto chapterNumberDto);
     }
 }

@@ -156,50 +156,51 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        
         // GET: api/chapter
         // Get chapters for general user
-        [HttpGet]
-        [SwaggerOperation(
-            Summary = "Authorization: N/A",
-            Description = "View chapter list for General User. Insert -1 to get all items"
-            )]
-        public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterViewDto?>>>> GetChaptersForGeneralUser(int pageNumber = -1, int pageSize = -1)
-        {
-            try
-            {
-                BasePaginatedList<ChapterViewDto?> chapters = await _chapterService.GetChapterDtosAsync(pageNumber, pageSize);
-                var response = BaseResponse<BasePaginatedList<ChapterViewDto?>>.OkResponse(chapters);
-                return response;
-            }
-            //catch (BaseException.CoreException coreEx)
-            //{
-            //    // Handle specific CoreException
-            //    return StatusCode(coreEx.StatusCode, new
-            //    {
-            //        code = coreEx.Code,
-            //        message = coreEx.Message,
-            //        additionalData = coreEx.AdditionalData
-            //    });
-            //}
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        error = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
-        }
+        //[HttpGet]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: N/A",
+        //    Description = "View chapter list for General User. Insert -1 to get all items"
+        //    )]
+        //public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterViewDto?>>>> GetChaptersForGeneralUser(int pageNumber = -1, int pageSize = -1)
+        //{
+        //    try
+        //    {
+        //        BasePaginatedList<ChapterViewDto?> chapters = await _chapterService.GetChapterDtosAsync(pageNumber, pageSize);
+        //        var response = BaseResponse<BasePaginatedList<ChapterViewDto?>>.OkResponse(chapters);
+        //        return response;
+        //    }
+        //    //catch (BaseException.CoreException coreEx)
+        //    //{
+        //    //    // Handle specific CoreException
+        //    //    return StatusCode(coreEx.StatusCode, new
+        //    //    {
+        //    //        code = coreEx.Code,
+        //    //        message = coreEx.Message,
+        //    //        additionalData = coreEx.AdditionalData
+        //    //    });
+        //    //}
+        //    catch (BaseException.BadRequestException badRequestEx)
+        //    {
+        //        // Handle specific BadRequestException
+        //        return BadRequest(new
+        //        {
+        //            errorCode = badRequestEx.ErrorDetail.ErrorCode,
+        //            errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+        //        });
+        //    }
+        //    //catch (Exception ex)
+        //    //{
+        //    //    // Handle any other exceptions
+        //    //    return StatusCode(500, new
+        //    //    {
+        //    //        error = "An unexpected error occurred.",
+        //    //        details = ex.Message
+        //    //    });
+        //    //}
+        //}
 
         [HttpGet]
         [Route("subject")]
@@ -407,7 +408,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                     SubjectId = chapterDTO.SubjectId,
                     QuizId = chapterDTO.QuizId,
                 });
-                var response = BaseResponse<ChapterAdminViewDto>.OkResponse(createdChapter);
+                var response = BaseResponse<ChapterViewDto>.OkResponse(createdChapter);
 
                 return CreatedAtAction(nameof(GetChapterForGeneralUser), new { id = createdChapter.Id }, response);
             }
@@ -457,7 +458,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Admin, Content Manager",
             Description = "Update chapter"
         )]
-        public async Task<IActionResult> UpdateChapter(string id, [FromBody] ChapterDto chapterDTO)
+        public async Task<IActionResult> UpdateChapter(string id, [FromBody] ChapterUpdateDto chapterDTO)
         {
             if (!ModelState.IsValid)
             {
@@ -514,36 +515,85 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        [Authorize(Policy = "Admin-Content")]
-        [HttpPost("change-order-chapter")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin, Content Manager",
-            Description = "Change order number chapter."
-        )]
-        public async Task<IActionResult> ChangeChapterOrder(int currentChapterNumber, int newChapterNumber)
+        //[Authorize(Policy = "Admin-Content")]
+        //[HttpPost("change-order-chapter")]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Admin, Content Manager",
+        //    Description = "Change order number chapter."
+        //)]
+        //public async Task<IActionResult> ChangeChapterOrder(int currentChapterNumber, int newChapterNumber)
+        //{
+        //    try
+        //    {
+        //        bool result = await _chapterService.ChangeChapterOrderAsync(currentChapterNumber, newChapterNumber);
+        //        var response = BaseResponse<bool>.OkResponse(result);
+        //        return Ok(response);
+        //    }
+        //    catch (ArgumentException ex)
+        //    {
+        //        // Catch all other exceptions and return a generic server error
+        //        return StatusCode(500, new
+        //        {
+        //            errorCode = "announcement",
+        //            errorMessage = ex.Message
+        //            //details = ex.Message
+        //        });
+        //    }
+        //    catch (InvalidOperationException ex)
+        //    {
+        //        return NotFound(new { message = ex.Message });
+        //    }
+        //}
+
+        [HttpPut("update-numbers")]
+        public async Task<IActionResult> UpdateChapterNumbers(string subjectId, [FromBody] ChapterNumberDto chapterNumberDto)
         {
+            if (string.IsNullOrEmpty(subjectId) || chapterNumberDto == null || !chapterNumberDto.ChapterNumbersOrder.Any())
+            {
+                return BadRequest(new { message = "Invalid input data." });
+            }
+
             try
             {
-                bool result = await _chapterService.ChangeChapterOrderAsync(currentChapterNumber, newChapterNumber);
-                var response = BaseResponse<bool>.OkResponse(result);
-                return Ok(response);
-            }
-            catch (ArgumentException ex)
-            {
-                // Catch all other exceptions and return a generic server error
-                return StatusCode(500, new
+                bool result = await _chapterService.UpdateChapterNumbersAsync(subjectId, chapterNumberDto);
+                if (result)
                 {
-                    errorCode = "announcement",
-                    errorMessage = ex.Message
-                    //details = ex.Message
+                    return Ok(new { message = "Chapter numbers updated successfully." });
+                }
+                else
+                {
+                    return BadRequest(new { message = "Failed to update chapter numbers." });
+                }
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
                 });
             }
-            catch (InvalidOperationException ex)
+            catch (BaseException.BadRequestException badRequestEx)
             {
-                return NotFound(new { message = ex.Message });
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
             }
         }
-
 
         [Authorize(Policy = "Admin-Content")]
         [HttpPut("/StatusChange/{id}")]

@@ -3,6 +3,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Store;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
@@ -57,7 +58,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return quizExists;
         }
-        public async Task<ChapterAdminViewDto> CreateChapterAsync(ChapterDto chapterDTO)
+        public async Task<ChapterViewDto> CreateChapterAsync(ChapterDto chapterDTO)
         {
             ValidateChapter(chapterDTO);
 
@@ -123,7 +124,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
             _unitOfWork.GetRepository<Chapter>().Insert(chapter);
             await _unitOfWork.GetRepository<Chapter>().SaveAsync();
-            return new ChapterAdminViewDto
+            return new ChapterViewDto
             {
                 Id = chapter.Id,
                 Number = chapter.Number,
@@ -133,23 +134,26 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 SubjectName = subject?.SubjectName ?? string.Empty,
                 QuizId = chapter.QuizId,
                 QuizName = quiz?.QuizName ?? string.Empty,
-                CreatedBy = chapter.CreatedBy,
-                CreatedTime = chapter.CreatedTime,
-                CreatorName = creator?.FullName ?? string.Empty,
-                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                LastUpdatedBy = chapter.LastUpdatedBy,
-                LastUpdatedTime = chapter.LastUpdatedTime,
-                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
-                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                //CreatedBy = chapter.CreatedBy,
+                //CreatedTime = chapter.CreatedTime,
+                //CreatorName = creator?.FullName ?? string.Empty,
+                //CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                //LastUpdatedBy = chapter.LastUpdatedBy,
+                //LastUpdatedTime = chapter.LastUpdatedTime,
+                //LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                //LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
                 //DeletedBy = chapter.DeletedBy,
                 //DeletedTime = chapter.DeletedTime
             };
         }
 
-        public async Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterDto chapterDTO)
+        public async Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterUpdateDto chapterDTO)
         {
             var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("Not Found", "Chapter with ID not found");
-
+            if (string.IsNullOrWhiteSpace(chapterDTO.ChapterName))
+            {
+                throw new ArgumentException("Chapter name is required and cannot be empty.");
+            }
             // Check if another subject with the same name already exists
             var existingSubject = await _unitOfWork.GetRepository<Chapter>().Entities
                 .Where(c => c.ChapterName == chapterDTO.ChapterName) // Exclude the current subject by its ID
@@ -160,39 +164,39 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("Value Duplicate Error", "This chapter name was used");
             }
 
-            if (!string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
-            {
-                var subjectExists = await _unitOfWork.GetRepository<Subject>().Entities
-                    .AnyAsync(s => s.Id == chapterDTO.SubjectId);
+            //if (!string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
+            //{
+            //    var subjectExists = await _unitOfWork.GetRepository<Subject>().Entities
+            //        .AnyAsync(s => s.Id == chapterDTO.SubjectId);
 
-                if (!subjectExists)
-                {
-                    throw new BaseException.BadRequestException("Not Found", "Subject with Id does not exist");
-                }
-            }
+            //    if (!subjectExists)
+            //    {
+            //        throw new BaseException.BadRequestException("Not Found", "Subject with Id does not exist");
+            //    }
+            //}
 
-            if (!string.IsNullOrWhiteSpace(chapterDTO.QuizId))
-            {
-                var quizExists = await _unitOfWork.GetRepository<Quiz>().Entities
-                    .AnyAsync(q => q.Id == chapterDTO.QuizId);
+            //if (!string.IsNullOrWhiteSpace(chapterDTO.QuizId))
+            //{
+            //    var quizExists = await _unitOfWork.GetRepository<Quiz>().Entities
+            //        .AnyAsync(q => q.Id == chapterDTO.QuizId);
 
-                if (!quizExists)
-                {
-                    throw new BaseException.BadRequestException("Value Duplicate Error", "This Quiz Id was used");
-                }
-                //var isQuizId = await IsQuizIdInChaptersAsync(chapterDTO.QuizId);
-                //if (isQuizId)
-                //{
-                //    throw new ArgumentException($"Subject with Id '{chapterDTO.SubjectId}' was used.");
-                //}
-            }
+            //    if (!quizExists)
+            //    {
+            //        throw new BaseException.BadRequestException("Value Duplicate Error", "This Quiz Id was used");
+            //    }
+            //    //var isQuizId = await IsQuizIdInChaptersAsync(chapterDTO.QuizId);
+            //    //if (isQuizId)
+            //    //{
+            //    //    throw new ArgumentException($"Subject with Id '{chapterDTO.SubjectId}' was used.");
+            //    //}
+            //}
 
-            ValidateChapter(chapterDTO);
+            //ValidateChapter(chapterDTO);
 
             chapter.ChapterName = chapterDTO.ChapterName;
             //chapter.Status = chapterDTO.Status;
-            chapter.SubjectId = chapterDTO.SubjectId;
-            chapter.QuizId = chapterDTO.QuizId;
+            //chapter.SubjectId = chapterDTO.SubjectId;
+            //chapter.QuizId = chapterDTO.QuizId;
             //chapter.LastUpdatedTime = DateTime.UtcNow;
 
             _userServices.AuditFields(chapter, isCreating: false);
@@ -227,68 +231,68 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
-        public async Task<bool> ChangeChapterOrderAsync(int currentChapterNumber, int newChapterNumber)
-        {
+        //public async Task<bool> ChangeChapterOrderAsync(int currentChapterNumber, int newChapterNumber)
+        //{
 
-            if (currentChapterNumber <= 0 || newChapterNumber <= 0)
-            {
-                throw new ArgumentException("Chapter numbers must be greater than zero.");
-            }
-            var currentChapter = await _unitOfWork.GetRepository<Chapter>().Entities
-           .FirstOrDefaultAsync(c => c.Number == currentChapterNumber);
+        //    if (currentChapterNumber <= 0 || newChapterNumber <= 0)
+        //    {
+        //        throw new ArgumentException("Chapter numbers must be greater than zero.");
+        //    }
+        //    var currentChapter = await _unitOfWork.GetRepository<Chapter>().Entities
+        //   .FirstOrDefaultAsync(c => c.Number == currentChapterNumber);
 
-            if (currentChapter == null)
-            {
-                throw new InvalidOperationException($"Chapter with number {currentChapterNumber} not found.");
-            }
+        //    if (currentChapter == null)
+        //    {
+        //        throw new InvalidOperationException($"Chapter with number {currentChapterNumber} not found.");
+        //    }
 
-            // Lấy chương mới
-            var newChapter = await _unitOfWork.GetRepository<Chapter>().Entities
-                .FirstOrDefaultAsync(c => c.Number == newChapterNumber);
+        //    // Lấy chương mới
+        //    var newChapter = await _unitOfWork.GetRepository<Chapter>().Entities
+        //        .FirstOrDefaultAsync(c => c.Number == newChapterNumber);
 
-            if (newChapter == null)
-            {
-                throw new InvalidOperationException($"Chapter with number {newChapterNumber} not found.");
-            }
+        //    if (newChapter == null)
+        //    {
+        //        throw new InvalidOperationException($"Chapter with number {newChapterNumber} not found.");
+        //    }
 
-            if (currentChapterNumber < newChapterNumber)
-            {
-                // Đổi từ nhỏ sang lớn
-                var chaptersToUpdate = await _unitOfWork.GetRepository<Chapter>().Entities
-                    .Where(c => c.Number > currentChapterNumber && c.Number <= newChapterNumber)
-                    .OrderBy(c => c.Number)
-                    .ToListAsync();
+        //    if (currentChapterNumber < newChapterNumber)
+        //    {
+        //        // Đổi từ nhỏ sang lớn
+        //        var chaptersToUpdate = await _unitOfWork.GetRepository<Chapter>().Entities
+        //            .Where(c => c.Number > currentChapterNumber && c.Number <= newChapterNumber)
+        //            .OrderBy(c => c.Number)
+        //            .ToListAsync();
 
-                foreach (var chapter in chaptersToUpdate)
-                {
-                    chapter.Number -= 1;
-                    _unitOfWork.GetRepository<Chapter>().Update(chapter);
-                }
-            }
-            else if (currentChapterNumber > newChapterNumber)
-            {
-                // Đổi từ lớn sang nhỏ
-                var chaptersToUpdate = await _unitOfWork.GetRepository<Chapter>().Entities
-                    .Where(c => c.Number >= newChapterNumber && c.Number < currentChapterNumber)
-                    .OrderBy(c => c.Number)
-                    .ToListAsync();
+        //        foreach (var chapter in chaptersToUpdate)
+        //        {
+        //            chapter.Number -= 1;
+        //            _unitOfWork.GetRepository<Chapter>().Update(chapter);
+        //        }
+        //    }
+        //    else if (currentChapterNumber > newChapterNumber)
+        //    {
+        //        // Đổi từ lớn sang nhỏ
+        //        var chaptersToUpdate = await _unitOfWork.GetRepository<Chapter>().Entities
+        //            .Where(c => c.Number >= newChapterNumber && c.Number < currentChapterNumber)
+        //            .OrderBy(c => c.Number)
+        //            .ToListAsync();
 
-                foreach (var chapter in chaptersToUpdate)
-                {
-                    chapter.Number += 1;
-                    _unitOfWork.GetRepository<Chapter>().Update(chapter);
-                }
-            }
+        //        foreach (var chapter in chaptersToUpdate)
+        //        {
+        //            chapter.Number += 1;
+        //            _unitOfWork.GetRepository<Chapter>().Update(chapter);
+        //        }
+        //    }
 
-            // Cập nhật số thứ tự của chương hiện tại
-            currentChapter.Number = newChapterNumber;
-            _unitOfWork.GetRepository<Chapter>().Update(currentChapter);
+        //    // Cập nhật số thứ tự của chương hiện tại
+        //    currentChapter.Number = newChapterNumber;
+        //    _unitOfWork.GetRepository<Chapter>().Update(currentChapter);
 
-            // Lưu các thay đổi vào cơ sở dữ liệu
-            await _unitOfWork.GetRepository<Chapter>().SaveAsync();
+        //    // Lưu các thay đổi vào cơ sở dữ liệu
+        //    await _unitOfWork.GetRepository<Chapter>().SaveAsync();
 
-            return true;
-        }
+        //    return true;
+        //}
 
         public async Task<ChapterAdminDelete> DeleteChapterAsync(string chapterId)
         {
@@ -391,6 +395,61 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
+
+
+
+        public async Task<bool> UpdateChapterNumbersAsync(string subjectId, ChapterNumberDto chapterNumberDto)
+        {
+            if (string.IsNullOrEmpty(subjectId))
+            {
+                throw new BaseException.NotFoundException("not_found", "Subject ID not found");
+            }
+
+            var chaptersToUpdate = chapterNumberDto.ChapterNumbersOrder.ToList();
+            var chapterIds = chaptersToUpdate.Select(c => c.Id).ToList();
+
+            var chapters = await _unitOfWork.GetRepository<Chapter>().Entities
+                .Where(c => c.SubjectId == subjectId && chapterIds.Contains(c.Id))
+                .ToListAsync();
+
+            if (!chapters.Any())
+            {
+                throw new BaseException.BadRequestException("invalid", "Invalid Subject Id");
+            }
+
+            var existingNumbers = new HashSet<int>();
+
+            foreach (var chapter in chapters)
+            {
+                var dto = chaptersToUpdate.FirstOrDefault(c => c.Id == chapter.Id);
+                if (dto != null && dto.Number.HasValue)
+                {
+                    if (existingNumbers.Contains(dto.Number.Value))
+                    {
+                        throw new BaseException.BadRequestException("duplicate_number", $"Duplicate chapter number: {dto.Number.Value}");
+                    }
+
+                    existingNumbers.Add(dto.Number.Value);
+                    chapter.Number = dto.Number.Value;
+                    _unitOfWork.GetRepository<Chapter>().Update(chapter);
+                }
+            }
+
+            await _unitOfWork.GetRepository<Chapter>().SaveAsync();
+
+            return true;
+        }
+
+
+
+
+
+
+
+
+
+
+
         // Get one order with all properties
         public async Task<ChapterAdminViewDto?> GetChapterByChapterIdAsync(string Id)
         {
@@ -423,6 +482,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return dto;
         }
+
 
         public async Task<ChapterViewDto?> GetChapterDtoByChapterIdAsync(string Id)
         {
