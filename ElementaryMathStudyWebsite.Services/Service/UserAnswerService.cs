@@ -118,8 +118,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 // Check if a user answer already exists for this question and user
                 var existingUserAnswer = await _unitOfWork.GetRepository<UserAnswer>()
-                    .Entities
-                    .FirstOrDefaultAsync(ua => ua.QuestionId == userAnswerDTO.QuestionId && ua.UserId == currentUserId);
+                                                .Entities
+                                                .Where(ua => ua.QuestionId == userAnswerDTO.QuestionId && ua.UserId == currentUserId)
+                                                .OrderByDescending(ua => ua.AttemptNumber)
+                                                .FirstOrDefaultAsync();
 
                 var attemptNumber = existingUserAnswer != null ? existingUserAnswer.AttemptNumber + 1 : 1;
 
@@ -173,19 +175,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return userAnswerDTO;
         }
 
-        public async Task<List<UserAnswerWithDetailsDTO>> GetUserAnswersByQuizIdAsync(string quizId)
+        public async Task<BasePaginatedList<UserAnswerWithDetailsDTO>> GetUserAnswersByQuizIdAsync(string quizId)
         {
             User currentUser = await _userService.GetCurrentUserAsync();
             var currentUserId = currentUser.Id;
 
             // Fetch user answers for the given quizId and current user
             var userAnswers = await _unitOfWork.GetRepository<UserAnswer>().Entities
-            .Where(ua => ua.Question != null &&
-                         ua.Question.QuizId != null &&
-                         ua.Question.QuizId.Equals(quizId.ToString(), StringComparison.OrdinalIgnoreCase) &&
-                         ua.UserId != null &&
-                         ua.UserId.Equals(currentUserId.ToString(), StringComparison.OrdinalIgnoreCase))
-            .ToListAsync();
+                                .Where(ua => ua.Question != null &&
+                                             ua.Question.QuizId != null &&
+                                             ua.Question.QuizId.ToLower() == quizId.ToLower() && // Use ToLower for case-insensitive comparison
+                                             ua.UserId != null &&
+                                             ua.UserId.ToLower() == currentUserId.ToLower()) // Use ToLower for case-insensitive comparison
+                                .ToListAsync();
 
             // Return a list of user answers with contextual information
             var result = new List<UserAnswerWithDetailsDTO>();
@@ -208,7 +210,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 result.Add(userAnswerWithDetails);
             }
 
-            return result;
+            if(result.Count == 0)
+            {
+                throw new BaseException.NotFoundException("answer_not_found", "There is no answer in the user answer");
+            }
+
+            return new BasePaginatedList<UserAnswerWithDetailsDTO>(result, result.Count, 1, result.Count);
         }
     }
 }

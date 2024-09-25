@@ -119,8 +119,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var userAnswers = await _userAnswerService.GetUserAnswersByQuizIdAsync(quizId);
-                var response = BaseResponse<object>.OkResponse(userAnswers);
+                var response = BaseResponse<BasePaginatedList<UserAnswerWithDetailsDTO>>.OkResponse(userAnswers);
                 return Ok(response);
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
             catch (Exception ex)
             {
