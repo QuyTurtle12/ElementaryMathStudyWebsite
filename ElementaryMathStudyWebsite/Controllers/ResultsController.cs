@@ -40,7 +40,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                     throw new BaseException.CoreException("error", "Failed to add student result");
                 }
 
-                if (result.IsAddedProgress)
+                if (result.IsPassedTheQuiz)
                 {
                     // Return only a success message
                     var passedQuizResponse = BaseResponse<Result>.OkResponse("Congratulations, you passed the quiz.Keep it up!");
