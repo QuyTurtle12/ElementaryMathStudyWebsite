@@ -34,44 +34,80 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         }
 
-        // Get list of finished topic and list of finished chapter of specific student
-        private async Task<(IList<FinishedTopic> finishedTopics, IList<FinishedChapter> finishedChapters)> GetFinishedTopicsAndChaptersAsync(string studentId)
+        private async Task<bool> IsTopicBelongingToSubjectAsync(string topicId, string subjectId)
         {
-            // Get a student progress list
-            IQueryable<Progress> progressQuery = _unitOfWork.GetRepository<Progress>().GetEntitiesWithCondition(p => p.StudentId.Equals(studentId));
+            // Get the ChapterId from the Topic and then check if that Chapter belongs to the specified Subject
+            var chapterIdOfTopic = await _unitOfWork.GetRepository<Topic>()
+                .Entities
+                .Where(t => t.Id.Equals(topicId))
+                .Select(t => t.ChapterId)
+                .FirstOrDefaultAsync();
 
+            var chapter = await _unitOfWork.GetRepository<Chapter>()
+                .Entities
+                .Where( c => c.Id.Equals(chapterIdOfTopic))
+                .FirstOrDefaultAsync();
+
+            // Check if the Chapter exists and if it belongs to the correct Subject
+            return chapter != null && chapter.SubjectId == subjectId;
+        }
+
+        private async Task<bool> IsChapterBelongingToSubjectAsync(string chapterId, string subjectId)
+        {
+            // Check if the Chapter exists and belongs to the correct Subject
+            var chapter = await _unitOfWork.GetRepository<Chapter>()
+                .Entities
+                .Where(c => c.Id.Equals(chapterId))
+                .FirstOrDefaultAsync();
+
+            return chapter != null && chapter.SubjectId == subjectId;
+        }
+
+
+
+        // Get list of finished topic and list of finished chapter of specific student
+        private async Task<(IList<FinishedTopic>, IList<FinishedChapter>)> GetFinishedTopicsAndChaptersAsync(string studentId, string subjectId)
+        {
+            // Get the list of progress records for the student
+            IQueryable<Progress> progressQuery = _unitOfWork.GetRepository<Progress>().GetEntitiesWithCondition(p => p.StudentId.Equals(studentId));
             var studentProgressInfoList = await progressQuery.ToListAsync();
 
             IList<FinishedTopic> finishedTopicList = new List<FinishedTopic>();
             IList<FinishedChapter> finishedChapterList = new List<FinishedChapter>();
 
-            // Get list of finished chapters and topics
+            // Loop through the student's progress
             foreach (var progress in studentProgressInfoList)
             {
+                // Check if the finished topic belongs to the subject
                 var finishedTopicInfo = await _unitOfWork.GetRepository<Topic>()
-                                                        .Entities
-                                                        .Where(t => t.QuizId != null && t.QuizId.Equals(progress.QuizId))
-                                                        .Select(t => new { t.Id, t.TopicName }) // Select TopicId and TopicName
-                                                        .FirstOrDefaultAsync();
+                    .Entities
+                    .Where(t => t.QuizId != null && t.QuizId.Equals(progress.QuizId))
+                    .Select(t => new { t.Id, t.TopicName, t.ChapterId }) // Include ChapterId to validate if the topic belongs to the subject
+                    .FirstOrDefaultAsync();
 
-                var finishedChapterInfo = await _unitOfWork.GetRepository<Chapter>()
-                                                        .Entities
-                                                        .Where(c => c.QuizId != null && c.QuizId.Equals(progress.QuizId))
-                                                        .Select(c => new { c.Id, c.ChapterName }) // Select ChapterId and ChapterName
-                                                        .FirstOrDefaultAsync();
-
-                // Add topic to finishedTopicList
                 if (finishedTopicInfo != null)
                 {
-                    finishedTopicList.Add(new FinishedTopic
+                    // Validate if the topic belongs to the subject via its associated chapter
+                    bool isTopicBelongToSubject = await IsChapterBelongingToSubjectAsync(finishedTopicInfo.ChapterId, subjectId);
+
+                    if (isTopicBelongToSubject)
                     {
-                        Id = finishedTopicInfo.Id,
-                        name = finishedTopicInfo.TopicName
-                    });
+                        finishedTopicList.Add(new FinishedTopic
+                        {
+                            Id = finishedTopicInfo.Id,
+                            name = finishedTopicInfo.TopicName
+                        });
+                    }
                 }
 
-                // Add chapter to finishedChapterList
-                if (finishedChapterInfo != null)
+                // Check if the finished chapter belongs to the subject
+                var finishedChapterInfo = await _unitOfWork.GetRepository<Chapter>()
+                    .Entities
+                    .Where(c => c.QuizId != null && c.QuizId.Equals(progress.QuizId))
+                    .Select(c => new { c.Id, c.ChapterName, c.SubjectId }) // Ensure we get the SubjectId to validate
+                    .FirstOrDefaultAsync();
+
+                if (finishedChapterInfo != null && finishedChapterInfo.SubjectId == subjectId)
                 {
                     finishedChapterList.Add(new FinishedChapter
                     {
@@ -83,6 +119,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return (finishedTopicList, finishedChapterList);
         }
+
 
         // Get a list of subject progress that one student of one parent currently studying
         public async Task<BasePaginatedList<ProgressViewDto>> GetStudentProgressesDtoAsync(string studentId, int pageNumber, int pageSize)
@@ -112,8 +149,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
                 // Get student finished chapters and topics list
-                var (finishedTopics, finishedChapters) = await GetFinishedTopicsAndChaptersAsync(prog.StudentId);
-
+                var (finishedTopics, finishedChapters) = await GetFinishedTopicsAndChaptersAsync(prog.StudentId, prog.SubjectId);
+        
                 ProgressViewDto dto = new()
                 {
                     StudentId = studentId,
@@ -127,6 +164,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 studentProgressDtos.Add(dto);
             }
 
+            // Check if the list contain any data
             if (studentProgressDtos.Count == 0)
             {
                 throw new BaseException.NotFoundException("not_found", "cannot found children learning progresses");
@@ -183,7 +221,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
                     // Get student finished chapters and topics list
-                    var (finishedTopics, finishedChapters) = await GetFinishedTopicsAndChaptersAsync(prog.StudentId);
+                    var (finishedTopics, finishedChapters) = await GetFinishedTopicsAndChaptersAsync(prog.StudentId, prog.SubjectId);
 
                     ProgressViewDto dto = new()
                     {
@@ -422,7 +460,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 string subjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
                 // Get student finished chapters and topics list
-                var (finishedTopics, finishedChapters) = await GetFinishedTopicsAndChaptersAsync(prog.StudentId);
+                var (finishedTopics, finishedChapters) = await GetFinishedTopicsAndChaptersAsync(prog.StudentId, prog.SubjectId);
 
                 ProgressViewDto dto = new ProgressViewDto
                 {
