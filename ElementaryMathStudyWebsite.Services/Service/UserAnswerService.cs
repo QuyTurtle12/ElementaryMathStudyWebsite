@@ -64,38 +64,83 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
-        public async Task<UserAnswerDTO> CreateUserAnswerAsync(UserAnswerDTO userAnswerDTO)
+        //public async Task<UserAnswerDTO> CreateUserAnswerAsync(UserAnswerDTO userAnswerDTO)
+        //{
+        //    // Check if QuestionId exists
+        //    if (!await _unitOfWork.GetRepository<Question>().Entities.AnyAsync(q => q.Id == userAnswerDTO.QuestionId))
+        //    {
+        //        throw new BaseException.NotFoundException("question_not_found",$"Question with ID '{userAnswerDTO.QuestionId}' not found.");
+        //    }
+
+        //    // Check if UserId exists
+        //    if (!await _unitOfWork.GetRepository<User>().Entities.AnyAsync(u => u.Id == userAnswerDTO.UserId))
+        //    {
+        //        throw new BaseException.NotFoundException("user_not_found",$"User with ID '{userAnswerDTO.UserId}' not found.");
+        //    }
+
+        //    // Check if OptionId exists
+        //    if (!await _unitOfWork.GetRepository<Option>().Entities.AnyAsync(o => o.Id == userAnswerDTO.OptionId))
+        //    {
+        //        throw new BaseException.NotFoundException("option_not_found",$"Option with ID '{userAnswerDTO.OptionId}' not found.");
+        //    }
+
+        //    var userAnswer = new UserAnswer
+        //    {
+        //        QuestionId = userAnswerDTO.QuestionId,
+        //        UserId = userAnswerDTO.UserId,
+        //        OptionId = userAnswerDTO.OptionId,
+        //        AttemptNumber = userAnswerDTO.AttemptNumber,
+        //    };
+
+        //    await _unitOfWork.GetRepository<UserAnswer>().InsertAsync(userAnswer);
+        //    await _unitOfWork.GetRepository<UserAnswer>().SaveAsync();
+        //    return userAnswerDTO;
+        //}
+
+        public async Task<UserAnswerCreateDTO> CreateUserAnswersAsync(UserAnswerCreateDTO userAnswerCreateDTO)
         {
-            // Check if QuestionId exists
-            if (!await _unitOfWork.GetRepository<Question>().Entities.AnyAsync(q => q.Id == userAnswerDTO.QuestionId))
+            User currentUser = await _userService.GetCurrentUserAsync();
+            var currentUserId = currentUser.Id;
+
+            foreach (var userAnswerDTO in userAnswerCreateDTO.UserAnswerList)
             {
-                throw new BaseException.NotFoundException("question_not_found",$"Question with ID '{userAnswerDTO.QuestionId}' not found.");
+                // Check if QuestionId exists
+                if (!await _unitOfWork.GetRepository<Question>().Entities.AnyAsync(q => q.Id == userAnswerDTO.QuestionId))
+                {
+                    throw new BaseException.NotFoundException("question_not_found", $"Question with ID '{userAnswerDTO.QuestionId}' not found.");
+                }
+
+                // Check if OptionId exists
+                if (!await _unitOfWork.GetRepository<Option>().Entities.AnyAsync(o => o.Id == userAnswerDTO.OptionId))
+                {
+                    throw new BaseException.NotFoundException("option_not_found", $"Option with ID '{userAnswerDTO.OptionId}' not found.");
+                }
+
+                // Check if a user answer already exists for this question and user
+                var existingUserAnswer = await _unitOfWork.GetRepository<UserAnswer>()
+                    .Entities
+                    .FirstOrDefaultAsync(ua => ua.QuestionId == userAnswerDTO.QuestionId && ua.UserId == currentUserId);
+
+                var attemptNumber = existingUserAnswer != null ? existingUserAnswer.AttemptNumber + 1 : 1;
+
+                var userAnswer = new UserAnswer
+                {
+                    QuestionId = userAnswerDTO.QuestionId,
+                    OptionId = userAnswerDTO.OptionId,
+                    UserId = currentUserId,
+                    AttemptNumber = attemptNumber
+                };
+
+                await _unitOfWork.GetRepository<UserAnswer>().InsertAsync(userAnswer);
             }
 
-            // Check if UserId exists
-            if (!await _unitOfWork.GetRepository<User>().Entities.AnyAsync(u => u.Id == userAnswerDTO.UserId))
-            {
-                throw new BaseException.NotFoundException("user_not_found",$"User with ID '{userAnswerDTO.UserId}' not found.");
-            }
-
-            // Check if OptionId exists
-            if (!await _unitOfWork.GetRepository<Option>().Entities.AnyAsync(o => o.Id == userAnswerDTO.OptionId))
-            {
-                throw new BaseException.NotFoundException("option_not_found",$"Option with ID '{userAnswerDTO.OptionId}' not found.");
-            }
-
-            var userAnswer = new UserAnswer
-            {
-                QuestionId = userAnswerDTO.QuestionId,
-                UserId = userAnswerDTO.UserId,
-                OptionId = userAnswerDTO.OptionId,
-                AttemptNumber = userAnswerDTO.AttemptNumber,
-            };
-
-            await _unitOfWork.GetRepository<UserAnswer>().InsertAsync(userAnswer);
+            // Save all changes after the loop
             await _unitOfWork.GetRepository<UserAnswer>().SaveAsync();
-            return userAnswerDTO;
+
+            return userAnswerCreateDTO;
         }
+
+
 
         public async Task<UserAnswerDTO> UpdateUserAnswerAsync(string id, UserAnswerDTO userAnswerDTO)
         {

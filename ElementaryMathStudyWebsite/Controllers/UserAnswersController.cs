@@ -2,6 +2,7 @@
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Entity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -48,34 +49,37 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        [Authorize(Policy = "Student")]
         [SwaggerOperation(
-            Summary = "Authorization: Anyone",
+            Summary = "Authorization: Student",
             Description = "When user answers create an instance of it"
         )]
         [HttpPost]
         [Route("create")]
-        public async Task<IActionResult> CreateUserAnswer([FromBody] UserAnswerDTO userAnswerDTO)
+        [HttpPost]
+        public async Task<IActionResult> CreateUserAnswers([FromBody] UserAnswerCreateDTO userAnswerCreateDTO)
         {
-            if (userAnswerDTO == null)
+            if (userAnswerCreateDTO == null || !userAnswerCreateDTO.UserAnswerList.Any())
             {
-                return BadRequest(new BaseException.BadRequestException("input_error", "Invalid input." ));
+                return BadRequest(new BaseException.BadRequestException("input_error", "Invalid input. The user answer list is empty or null."));
             }
 
             try
             {
-                var createdUserAnswer = await _userAnswerService.CreateUserAnswerAsync(userAnswerDTO);
-                var response = BaseResponse<object>.OkResponse(createdUserAnswer);
+                var createdUserAnswers = await _userAnswerService.CreateUserAnswersAsync(userAnswerCreateDTO);
+                var response = BaseResponse<object>.OkResponse(createdUserAnswers);
                 return Ok(response);
             }
             catch (BaseException.NotFoundException notFoundEx)
             {
                 return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while creating the user answer." });
+                return StatusCode(500, new { message = $"An error occurred while creating the user answers: {ex.Message}" });
             }
         }
+
 
         // PUT: api/UserAnswers/{id}
         //[Authorize(Policy = "Admin-Content")]
