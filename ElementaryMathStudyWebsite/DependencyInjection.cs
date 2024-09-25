@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Services;
 using ElementaryMathStudyWebsite.Services.Service;
-using ElementaryMathStudyWebsite.Services.Service;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
@@ -11,7 +10,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 
 namespace ElementaryMathStudyWebsite

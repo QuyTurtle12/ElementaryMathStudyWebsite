@@ -34,7 +34,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                BasePaginatedList<OrderAdminViewDto>? orders = await _orderService.GetOrderAdminDtosAsync(pageNumber, pageSize);
+                BasePaginatedList<OrderAdminViewDto> orders = await _orderService.GetOrderAdminDtosAsync(pageNumber, pageSize);
                 var response = BaseResponse<BasePaginatedList<OrderAdminViewDto>>.OkResponse(orders);
                 return response;
             }
@@ -55,6 +55,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }
@@ -143,6 +152,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }
@@ -234,7 +252,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                BasePaginatedList<OrderViewDto>? viewDtos = await _orderService.searchOrderDtosAsync(pageNumber, pageSize, firstInputValue, secondInputValue, filter);
+                BasePaginatedList<OrderViewDto> viewDtos = await _orderService.searchOrderDtosAsync(pageNumber, pageSize, firstInputValue, secondInputValue, filter);
                 var response = BaseResponse<BasePaginatedList<OrderViewDto>>.OkResponse(viewDtos);
                 return response;
             }
@@ -257,13 +275,13 @@ namespace ElementaryMathStudyWebsite.Controllers
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
             }
-            catch (ArgumentException argEx)
+            catch (BaseException.NotFoundException notFoundEx)
             {
                 // Handle general ArgumentException
-                return BadRequest(new
+                return NotFound(new
                 {
-                    errorCode = "invalid_argument",
-                    errorMessage = argEx.Message
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }

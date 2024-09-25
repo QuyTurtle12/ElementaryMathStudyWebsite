@@ -26,6 +26,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             _tokenService = tokenService;
         }
 
+        /// <summary>
+        /// Retrieves the profile of the logged-in user.
+        /// </summary>
+        /// <returns>Returns the profile of the logged-in user.</returns>
         [HttpGet("profile")]
         public async Task<ActionResult<BaseResponse<UserProfile>>> GetProfile()
         {
@@ -70,14 +74,18 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-
+        /// <summary>
+        /// Updates the profile of the logged-in user.
+        /// </summary>
+        /// <param name="updateUserDto">The data used to update the user's profile.</param>
+        /// <returns>Returns the updated user profile along with a new JWT token.</returns>
         [HttpPut]
         [Route("profile/update")]
         [SwaggerOperation(
             Summary = "Authorization: logged in user",
             Description = "Updating a user profile"
             )]
-        public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserDto updateUserDto)
+        public async Task<ActionResult<BaseResponse<UpdateProfileDto>>> UpdateProfile([FromBody] UpdateUserDto updateUserDto)
         {
             // Get the token from the Authorization header
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
@@ -95,9 +103,10 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var user = await _userServices.UpdateUserAsync(userId.ToString(), updateUserDto);
                 var UpdateProfileDto = _mapper.Map<UpdateProfileDto>(user);
                 UpdateProfileDto.Token = _tokenService.GenerateJwtToken(user);
-                
 
-                return Ok(UpdateProfileDto);
+                var response = BaseResponse<UpdateProfileDto>.OkResponse(UpdateProfileDto);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -120,6 +129,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        /// <summary>
+        /// Retrieves a paginated list of all children associated with the logged-in parent.
+        /// </summary>
+        /// <param name="pageNumber">The page number for pagination (default is 1).</param>
+        /// <param name="pageSize">The page size for pagination (default is 10).</param>
+        /// <returns>Returns a paginated list of children for the parent.</returns>
         [HttpGet]
         [Route("get-children")]
         [Authorize(Policy = "Parent")]
@@ -155,7 +170,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                     paginatedUsers.PageSize
                 );
 
-                return Ok(paginatedUserDtos);
+                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -208,13 +225,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var user = await _userServices.CreateUserAsync(createUserDto);
-                var userResponseDto = _mapper.Map<UserResponseDto>(user); 
+                var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
-                return CreatedAtAction(nameof(CreateUser), new { id = userResponseDto.Id }, userResponseDto);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
+                var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
+
+                return Ok(response);
+
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -258,7 +274,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                 // Map the users to UserResponseDto
                 var userResponseDtos = _mapper.Map<IEnumerable<UserResponseDto>>(users);
 
-                return Ok(userResponseDtos);
+                var response = BaseResponse<IEnumerable<UserResponseDto>>.OkResponse(userResponseDtos);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -313,7 +331,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                     paginatedUsers.PageSize
                 );
 
-                return Ok(paginatedUserDtos);
+                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -336,6 +356,16 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        /// <summary>
+        /// Searches users based on provided filters such as name, status, phone, and email with pagination.
+        /// </summary>
+        /// <param name="name">The name of the user to search for (optional).</param>
+        /// <param name="status">The status of the user (optional).</param>
+        /// <param name="phone">The phone number of the user (optional).</param>
+        /// <param name="email">The email of the user (optional).</param>
+        /// <param name="pageNumber">The page number for pagination (default is 1).</param>
+        /// <param name="pageSize">The page size for pagination (default is 10).</param>
+        /// <returns>Returns a paginated list of users based on the search criteria.</returns>
         [HttpGet]
         [Route("search")]
         [SwaggerOperation(
@@ -359,7 +389,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                     paginatedUsers.PageSize
                 );
 
-                return Ok(paginatedUserDtos);
+                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -410,13 +442,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 var user = await _userServices.GetUserByIdAsync(userId);
 
-                if (user == null)
-                {
-                    return NotFound("User not found.");
-                }
 
                 var userResponseDto = _mapper.Map<UserResponseDto>(user);
-                return Ok(userResponseDto);
+
+                var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -435,6 +466,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }
@@ -478,11 +518,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var user = await _userServices.UpdateUserAsync(userId, updateUserDto);
                 var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
-                return Ok(userResponseDto);
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(ex.Message);
+                var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -501,6 +539,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }
@@ -534,9 +581,11 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                 if (result)
                 {
-                    return Ok("User has been successfully disabled.");
+                    var response = BaseResponse<String>.OkResponse("User is disabled");
+
+                    return Ok(response);
                 }
-                return NotFound("User not found.");
+                throw new BaseException.CoreException("unsuccess", "Disable unsuccessfully");
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -555,6 +604,76 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
+        /// <summary>
+        /// Deletes a user based on the provided user ID.
+        /// </summary>
+        /// <param name="userId">The ID of the user to be deleted.</param>
+        /// <returns>Returns a confirmation message if the user is successfully deleted.</returns>
+        [HttpDelete]
+        [Route("delete/{userId}")]
+        [Authorize(Policy = "Admin-Manager")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Deleting a user"
+            )]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return BadRequest("User ID is required.");
+            }
+
+            try
+            {
+                var result = await _userServices.DeleteUserAsync(userId);
+
+                if (result)
+                {
+                    var response = BaseResponse<String>.OkResponse("User is deleted");
+
+                    return Ok(response);
+                }
+                throw new BaseException.CoreException("unsuccess", "Delete unsuccessfully");
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }
@@ -597,7 +716,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                     paginatedUsers.PageSize
                 );
 
-                return Ok(paginatedUserDtos);
+                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+
+                return Ok(response);
             }
             catch (BaseException.CoreException coreEx)
             {

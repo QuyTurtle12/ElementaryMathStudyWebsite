@@ -71,6 +71,8 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
                 VerificationToken = Guid.NewGuid().ToString(), // Generate verification token
                 Role = role // Set the role
             };
+            newUser.CreatedBy = newUser.Id;
+            
 
             // Save user to the database
             await _unitOfWork.GetRepository<User>().InsertAsync(newUser);

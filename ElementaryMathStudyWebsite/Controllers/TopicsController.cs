@@ -3,13 +3,9 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Annotations;
-using ElementaryMathStudyWebsite.Core.Store;
-using ElementaryMathStudyWebsite.Core.Utils;
-using ElementaryMathStudyWebsite.Services.Service;
 
 
 namespace ElementaryMathStudyWebsite.Controllers

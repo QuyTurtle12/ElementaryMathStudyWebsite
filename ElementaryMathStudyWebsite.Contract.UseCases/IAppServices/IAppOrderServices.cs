@@ -7,7 +7,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
     public interface IAppOrderServices
     {
         // Search Order
-        Task<BasePaginatedList<OrderViewDto>?> searchOrderDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter);
+        Task<BasePaginatedList<OrderViewDto>> searchOrderDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter);
 
         // Add the cart to database
         Task<OrderViewDto> AddItemsToCart(CartCreateDto dto);
@@ -33,7 +33,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         // General Validation
         Task<string?> IsGenerallyValidatedAsync(string subjectId, string studentId, CartCreateDto dto);
 
-        Task<BasePaginatedList<OrderAdminViewDto>?> GetOrderAdminDtosAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<OrderAdminViewDto>> GetOrderAdminDtosAsync(int pageNumber, int pageSize);
 
         Task<Order?> GetOrderByOrderIdAsync(string orderId);
     }

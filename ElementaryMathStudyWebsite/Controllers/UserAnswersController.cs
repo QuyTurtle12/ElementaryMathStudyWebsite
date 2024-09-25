@@ -1,10 +1,7 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using System;
-using System.Threading.Tasks;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
