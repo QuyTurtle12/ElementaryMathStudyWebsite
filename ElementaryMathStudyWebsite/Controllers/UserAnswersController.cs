@@ -1,5 +1,7 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Entity;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -21,7 +23,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         public async Task<IActionResult> GetAllUserAnswers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _userAnswerService.GetAllUserAnswersAsync(pageNumber, pageSize);
-            return Ok(result);
+            var response = BaseResponse<BasePaginatedList<object>>.OkResponse(result);
+            return Ok(response);
         }
 
         // GET: api/UserAnswers/{id}
@@ -36,7 +39,8 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var userAnswer = await _userAnswerService.GetUserAnswerByIdAsync(id);
-                return Ok(userAnswer);
+                var response = BaseResponse<object>.OkResponse(userAnswer);
+                return Ok(response);
             }
             catch (KeyNotFoundException ex)
             {
@@ -54,17 +58,18 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (userAnswerDTO == null)
             {
-                return BadRequest(new { message = "Invalid data." });
+                return BadRequest(new BaseException.BadRequestException("input_error", "Invalid input." ));
             }
 
             try
             {
                 var createdUserAnswer = await _userAnswerService.CreateUserAnswerAsync(userAnswerDTO);
-                return Ok(createdUserAnswer); // Return the created UserAnswerDTO if successful
+                var response = BaseResponse<object>.OkResponse(createdUserAnswer);
+                return Ok(response);
             }
-            catch (KeyNotFoundException ex)
+            catch (BaseException.NotFoundException notFoundEx)
             {
-                return BadRequest(new { message = ex.Message });
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
             catch (Exception)
             {
@@ -83,17 +88,18 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (userAnswerDTO == null)
             {
-                return BadRequest(new { message = "Invalid user answer data." });
+                return BadRequest(new BaseException.BadRequestException("input_error", "Invalid input."));
             }
 
             try
             {
                 var userAnswer = await _userAnswerService.UpdateUserAnswerAsync(id, userAnswerDTO);
-                return Ok(userAnswer);
+                var response = BaseResponse<object>.OkResponse(userAnswer);
+                return Ok(response);
             }
-            catch (KeyNotFoundException ex)
+            catch (BaseException.NotFoundException notFoundEx)
             {
-                return NotFound(new { message = ex.Message });
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
         }
 
@@ -109,20 +115,13 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var userAnswers = await _userAnswerService.GetUserAnswersByQuizIdAsync(quizId);
-                return Ok(userAnswers);
+                var response = BaseResponse<object>.OkResponse(userAnswers);
+                return Ok(response);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = ex.Message });
             }
         }
-
-        // DELETE: api/UserAnswers/{id}
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteUserAnswer(string id)
-        //{
-        //    await _userAnswerService.DeleteUserAnswerAsync(id);
-        //    return NoContent();
-        //}
     }
 }

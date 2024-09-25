@@ -1,19 +1,10 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using Microsoft.Extensions.Options;
-using ElementaryMathStudyWebsite.Infrastructure.UOW;
 using ElementaryMathStudyWebsite.Core.Entity;
-using Microsoft.AspNetCore.Http;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
-using ElementaryMathStudyWebsite.Services.Service.Authentication;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -78,19 +69,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Check if QuestionId exists
             if (!await _unitOfWork.GetRepository<Question>().Entities.AnyAsync(q => q.Id == userAnswerDTO.QuestionId))
             {
-                throw new KeyNotFoundException($"Question with ID '{userAnswerDTO.QuestionId}' not found.");
+                throw new BaseException.NotFoundException("question_not_found",$"Question with ID '{userAnswerDTO.QuestionId}' not found.");
             }
 
             // Check if UserId exists
             if (!await _unitOfWork.GetRepository<User>().Entities.AnyAsync(u => u.Id == userAnswerDTO.UserId))
             {
-                throw new KeyNotFoundException($"User with ID '{userAnswerDTO.UserId}' not found.");
+                throw new BaseException.NotFoundException("user_not_found",$"User with ID '{userAnswerDTO.UserId}' not found.");
             }
 
             // Check if OptionId exists
             if (!await _unitOfWork.GetRepository<Option>().Entities.AnyAsync(o => o.Id == userAnswerDTO.OptionId))
             {
-                throw new KeyNotFoundException($"Option with ID '{userAnswerDTO.OptionId}' not found.");
+                throw new BaseException.NotFoundException("option_not_found",$"Option with ID '{userAnswerDTO.OptionId}' not found.");
             }
 
             var userAnswer = new UserAnswer
@@ -113,19 +104,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Check if QuestionId exists
             if (!await _unitOfWork.GetRepository<Question>().Entities.AnyAsync(q => q.Id == userAnswerDTO.QuestionId))
             {
-                throw new KeyNotFoundException($"Question with ID '{userAnswerDTO.QuestionId}' not found.");
+                throw new BaseException.NotFoundException("question_not_found", $"Question with ID '{userAnswerDTO.QuestionId}' not found.");
             }
 
             // Check if UserId exists
             if (!await _unitOfWork.GetRepository<User>().Entities.AnyAsync(u => u.Id == userAnswerDTO.UserId))
             {
-                throw new KeyNotFoundException($"User with ID '{userAnswerDTO.UserId}' not found.");
+                throw new BaseException.NotFoundException("user_not_found", $"User with ID '{userAnswerDTO.UserId}' not found.");
             }
 
             // Check if OptionId exists
             if (!await _unitOfWork.GetRepository<Option>().Entities.AnyAsync(o => o.Id == userAnswerDTO.OptionId))
             {
-                throw new KeyNotFoundException($"Option with ID '{userAnswerDTO.OptionId}' not found.");
+                throw new BaseException.NotFoundException("option_not_found", $"Option with ID '{userAnswerDTO.OptionId}' not found.");
             }
 
             userAnswer.QuestionId = userAnswerDTO.QuestionId;
