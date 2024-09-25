@@ -394,15 +394,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         LastUpdatedBy = order.LastUpdatedBy ?? string.Empty,
                         LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
                         LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
-<<<<<<< HEAD
                         CreatedTime = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
                         LastUpdatedTime = order?.LastUpdatedTime ?? CoreHelper.SystemTimeNow,
                         PurchaseDate = (order?.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null,
-=======
-                        CreatedTime = order.CreatedTime,
-                        LastUpdatedTime = order.LastUpdatedTime,
-                        PurchaseDate = order.LastUpdatedTime
->>>>>>> 979c02fba4e0b01837805fe6c340895673dad8b9
                     };
                     adminOrders.Add(dto);
                 }

@@ -8,15 +8,9 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos
 {
     public class SubjectAdminViewDTO : ISubjectBaseDTO
     {
-<<<<<<< HEAD
         public string Id { get; set; } = string.Empty;
         public string SubjectName { get; set; } = string.Empty;
         public double Price { get; set; } = 0;
-=======
-        public required string Id { get; set; }
-        public required string SubjectName { get; set; }
-        public double? Price { get; set; }
->>>>>>> 979c02fba4e0b01837805fe6c340895673dad8b9
         public bool Status { get; set; }
         public string? CreatedBy { get; set; }
         public string? CreaterName { get; set; }
