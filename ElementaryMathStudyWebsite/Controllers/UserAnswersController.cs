@@ -67,8 +67,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var createdUserAnswers = await _userAnswerService.CreateUserAnswersAsync(userAnswerCreateDTO);
-                var response = BaseResponse<object>.OkResponse(createdUserAnswers);
+                var response = BaseResponse<List<UserAnswerWithDetailsDTO>>.OkResponse(createdUserAnswers);
                 return Ok(response);
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
             catch (BaseException.NotFoundException notFoundEx)
             {
