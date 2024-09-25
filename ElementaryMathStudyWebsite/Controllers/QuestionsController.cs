@@ -3,6 +3,8 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Core.Base;
+using Humanizer;
+using System.ComponentModel.DataAnnotations;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -24,11 +26,16 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var questions = await _questionService.GetAllQuestionsMainViewDtoAsync();
+                // Fetch all questions from the service
+                var questions = await _questionService.GetAllQuestionsMainViewDtoAsync()
+                      ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
+
+                // Return success response with the fetched questions
                 return BaseResponse<List<QuestionMainViewDto>>.OkResponse(questions);
             }
             catch (BaseException.CoreException coreEx)
             {
+                // Handle and return CoreException with its status code
                 return StatusCode(coreEx.StatusCode, new
                 {
                     code = coreEx.Code,
@@ -38,18 +45,14 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
+                // Handle and return BadRequestException with detailed error code and message
                 return BadRequest(new
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
         }
-
 
         // GET: api/question/{id}
         [HttpGet("{id}")]
@@ -58,15 +61,16 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var question = await _questionService.GetQuestionByIdAsync(id);
-                if (question == null)
-                {
-                    return NotFound(new { message = "Question not found." });
-                }
+                // Fetch a question by its ID
+                var question = await _questionService.GetQuestionByIdAsync(id)
+                      ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
+
+                // Return success response with the question details
                 return BaseResponse<QuestionMainViewDto>.OkResponse(question);
             }
             catch (BaseException.CoreException coreEx)
             {
+                // Handle and return CoreException with its status code
                 return StatusCode(coreEx.StatusCode, new
                 {
                     code = coreEx.Code,
@@ -76,15 +80,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
+                // Handle and return BadRequestException with detailed error code and message
                 return BadRequest(new
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
             }
         }
 
@@ -96,11 +97,16 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var questions = await _questionService.SearchQuestionsByContextAsync(context);
+                // Search questions by the provided context string
+                var questions = await _questionService.SearchQuestionsByContextAsync(context)
+                    ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
+
+                // Return success response with the search results
                 return BaseResponse<List<QuestionViewDto>>.OkResponse(questions);
             }
             catch (BaseException.CoreException coreEx)
             {
+                // Handle and return CoreException with its status code
                 return StatusCode(coreEx.StatusCode, new
                 {
                     code = coreEx.Code,
@@ -110,15 +116,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
+                // Handle and return BadRequestException with detailed error code and message
                 return BadRequest(new
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
             }
         }
 
@@ -129,11 +132,16 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var questions = await _questionService.GetQuestionsByQuizIdAsync(quizId);
+                // Fetch all questions that belong to the specified quiz
+                var questions = await _questionService.GetQuestionsByQuizIdAsync(quizId)
+                    ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
+
+                // Return success response with the list of questions
                 return BaseResponse<List<QuestionViewDto>>.OkResponse(questions);
             }
             catch (BaseException.CoreException coreEx)
             {
+                // Handle and return CoreException with its status code
                 return StatusCode(coreEx.StatusCode, new
                 {
                     code = coreEx.Code,
@@ -143,15 +151,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
+                // Handle and return BadRequestException with detailed error code and message
                 return BadRequest(new
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
             }
         }
 
@@ -162,15 +167,16 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                // Call the service method to get paginated questions
-                var paginatedQuestions = await _questionService.GetQuestionsAsync(pageNumber, pageSize);
+                // Fetch paginated list of questions
+                var paginatedQuestions = await _questionService.GetQuestionsAsync(pageNumber, pageSize)
+                    ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
 
-                // Return the successful response with the paginated data
+                // Return success response with paginated data
                 return BaseResponse<BasePaginatedList<QuestionMainViewDto>>.OkResponse(paginatedQuestions);
             }
             catch (BaseException.CoreException coreEx)
             {
-                // Handle CoreException with custom status code and message
+                // Handle and return CoreException with its status code
                 return StatusCode(coreEx.StatusCode, new
                 {
                     code = coreEx.Code,
@@ -180,17 +186,81 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
-                // Handle BadRequestException with specific error details
+                // Handle and return BadRequestException with detailed error code and message
                 return BadRequest(new
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
             }
-            catch (Exception ex)
+        }
+
+        // POST: api/question
+        [HttpPost]
+        [SwaggerOperation(Summary = "Create a new question.", Description = "Creates a new question and returns the created question.")]
+        public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> AddQuestionAsync([FromBody] QuestionCreateDto dto)
+        {
+            try
             {
-                // Handle generic exception and return status code 500 with the exception message
-                return StatusCode(500, new { message = ex.Message });
+                var createdQuestion = await _questionService.AddQuestionAsync(dto)
+                    ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
+                return BaseResponse<QuestionMainViewDto>.OkResponse("Question created successfully.");
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+        }
+
+        // PUT: api/question/{id}
+        [HttpPut("{id}")]
+        [SwaggerOperation(Summary = "Update an existing question.", Description = "Updates an existing question based on the provided data.")]
+        public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> UpdateQuestionAsync([Required] string id, [FromBody] QuestionUpdateDto dto)
+        {
+            try
+            {
+                // Update the question and get the updated data
+                var updatedQuestionDto = await _questionService.UpdateQuestionAsync(id, dto)
+                    ?? throw new BaseException.NotFoundException("not_found", "question not found.");
+                return BaseResponse<QuestionMainViewDto>.OkResponse("Question updated successfully.");
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle core exceptions
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle bad request exceptions
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+        }
+
+        // DELETE: api/question/{id}
+        [HttpDelete("{id}")]
+        [SwaggerOperation(Summary = "Delete an existing question.", Description = "Deletes a question by its unique identifier.")]
+        public async Task<ActionResult<BaseResponse<QuestionDeleteDto>>> DeleteQuestionAsync(string id)
+        {
+            try
+            {
+                // Delete the question and get the deleted question data
+                var deletedQuestionDto = await _questionService.DeleteQuestionAsync(id)
+                    ?? throw new BaseException.NotFoundException("not_found", "question not found.");
+                return BaseResponse<QuestionDeleteDto>.OkResponse("Question deleted successfully.");
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle core exceptions
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle bad request exceptions
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
         }
     }
