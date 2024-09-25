@@ -30,24 +30,24 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/UserAnswers/{id}
         //[Authorize(Policy = "Admin-Content")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin, Content Manager",
-            Description = "Get the user answer by id"
-        )]
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetUserAnswerById(string id)
-        {
-            try
-            {
-                var userAnswer = await _userAnswerService.GetUserAnswerByIdAsync(id);
-                var response = BaseResponse<object>.OkResponse(userAnswer);
-                return Ok(response);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-        }
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Admin, Content Manager",
+        //    Description = "Get the user answer by id"
+        //)]
+        //[HttpGet("{id}")]
+        //public async Task<IActionResult> GetUserAnswerById(string id)
+        //{
+        //    try
+        //    {
+        //        var userAnswer = await _userAnswerService.GetUserAnswerByIdAsync(id);
+        //        var response = BaseResponse<object>.OkResponse(userAnswer);
+        //        return Ok(response);
+        //    }
+        //    catch (KeyNotFoundException ex)
+        //    {
+        //        return NotFound(new { message = ex.Message });
+        //    }
+        //}
 
         [Authorize(Policy = "Student")]
         [SwaggerOperation(
@@ -83,35 +83,35 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // PUT: api/UserAnswers/{id}
         //[Authorize(Policy = "Admin-Content")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin, Content Manager",
-            Description = "Update user answer"
-        )]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUserAnswer(string id, [FromBody] UserAnswerDTO userAnswerDTO)
-        {
-            if (userAnswerDTO == null)
-            {
-                return BadRequest(new BaseException.BadRequestException("input_error", "Invalid input."));
-            }
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Admin, Content Manager",
+        //    Description = "Update user answer"
+        //)]
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> UpdateUserAnswer(string id, [FromBody] UserAnswerDTO userAnswerDTO)
+        //{
+        //    if (userAnswerDTO == null)
+        //    {
+        //        return BadRequest(new BaseException.BadRequestException("input_error", "Invalid input."));
+        //    }
 
-            try
-            {
-                var userAnswer = await _userAnswerService.UpdateUserAnswerAsync(id, userAnswerDTO);
-                var response = BaseResponse<object>.OkResponse(userAnswer);
-                return Ok(response);
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
-        }
+        //    try
+        //    {
+        //        var userAnswer = await _userAnswerService.UpdateUserAnswerAsync(id, userAnswerDTO);
+        //        var response = BaseResponse<object>.OkResponse(userAnswer);
+        //        return Ok(response);
+        //    }
+        //    catch (BaseException.NotFoundException notFoundEx)
+        //    {
+        //        return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
+        //    }
+        //}
 
         // GET: api/QuizAnswers/quiz/{quizId}
-        //[Authorize]
+        [Authorize(Policy = "Student")]
         [SwaggerOperation(
-            Summary = "Authorization: User",
-            Description = "Get all answers from the current user for the given quiz"
+            Summary = "Authorization: Student",
+            Description = "Get all answers from the current student for the given quiz"
         )]
         [HttpGet("quiz/{quizId}")]
         public async Task<IActionResult> GetUserAnswersByQuizId(string quizId)
