@@ -17,6 +17,11 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<User> UpdateUserAsync(string userId, UpdateUserDto dto);
 
         /// <summary>
+        /// Updates an existing user's details using the provided data.
+        /// </summary>
+        Task<User> UpdateProfileAsync(string userId, RequestUpdateProfileDto dto);
+
+        /// <summary>
         /// Retrieves the username for the given user ID.
         /// </summary>
         Task<string> GetUserNameAsync(string userId);
