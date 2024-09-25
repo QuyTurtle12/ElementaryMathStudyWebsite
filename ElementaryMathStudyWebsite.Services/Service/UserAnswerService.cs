@@ -146,7 +146,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Fetch user answers for the given quizId and current user
             var userAnswers = await _userAnswerRepository.Entities
-                .Where(ua => ua.Question.QuizId == quizId.ToString().ToUpper() && ua.UserId == currentUserId.ToString().ToUpper())
+                .Where(ua => ua.Question.QuizId.Equals(quizId.ToString(), StringComparison.OrdinalIgnoreCase) && ua.UserId.Equals(currentUserId.ToString(), StringComparison.OrdinalIgnoreCase))
                 .ToListAsync();
 
             // Return a list of user answers with contextual information

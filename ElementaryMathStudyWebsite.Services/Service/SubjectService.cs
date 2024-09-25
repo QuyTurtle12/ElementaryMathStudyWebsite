@@ -15,20 +15,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
 {
     public class SubjectService : IAppSubjectServices
     {
-        private readonly IGenericRepository<Subject> _detailReposiotry;
-        private readonly IGenericRepository<Subject> _subjectRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ITokenService _tokenService;
 
-        public SubjectService(IGenericRepository<Subject> detailReposiotry, IGenericRepository<Subject> subjectRepository, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ITokenService tokenService, IAppUserServices userService)
+        public SubjectService(IUnitOfWork unitOfWork, IAppUserServices userService)
         {
-            _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
-            _subjectRepository = subjectRepository ?? throw new ArgumentNullException(nameof(subjectRepository));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _httpContextAccessor = httpContextAccessor;
-            _tokenService = tokenService;
             _userService = userService;
         }
 
@@ -150,7 +142,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
 
-            var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
+            var paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
             var subjectDtosPaginated = paginatedSubjects.Items.Select(subject =>
             {
                 if (isAdmin)
@@ -276,7 +268,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
 
-            var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
+            var paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
             var subjectDtosPaginated = paginatedSubjects.Items.Select(s => new SubjectDTO
             {
                 Id = s.Id,
@@ -355,7 +347,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
 
-            var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
+            var paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
             var subjectDtosPaginated = paginatedSubjects.Items.Select(subject =>
             {
                 // Fetch the created and updated users
