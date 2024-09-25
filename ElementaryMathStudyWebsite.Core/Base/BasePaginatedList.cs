@@ -1,4 +1,6 @@
-﻿namespace ElementaryMathStudyWebsite.Core.Base
+﻿using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+
+namespace ElementaryMathStudyWebsite.Core.Base
 {
     public class BasePaginatedList<T>
     {
@@ -33,5 +35,9 @@
         // Method to check if there is a next page
         public bool HasNextPage => CurrentPage < TotalPages;
 
+        public static implicit operator BasePaginatedList<T>(BasePaginatedList<Topic?> v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

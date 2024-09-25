@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Services;
 using ElementaryMathStudyWebsite.Services.Service;
-
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Services.Service.Authentication;
@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 
 namespace ElementaryMathStudyWebsite
@@ -54,6 +53,7 @@ namespace ElementaryMathStudyWebsite
             services.AddScoped<IAppOrderServices, OrderService>();
             services.AddScoped<IAppOrderDetailServices, OrderDetailService>();
             services.AddScoped<IAppProgressServices, ProgressService>();
+
             services.AddScoped<IAppQuizServices, QuizService>();
             services.AddScoped<IAppQuestionServices, QuestionService>();
             services.AddScoped<IAppSubjectServices, SubjectService>();
