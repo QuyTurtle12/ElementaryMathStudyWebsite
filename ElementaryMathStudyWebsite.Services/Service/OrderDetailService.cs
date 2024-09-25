@@ -3,7 +3,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-
+using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
@@ -40,54 +40,44 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Get Order Detail list by order Id 
-        public async Task<BasePaginatedList<OrderDetailViewDto>?> GetOrderDetailDtoListByOrderIdAsync(int pageNumber, int pageSize, string orderId)
+        public async Task<BasePaginatedList<OrderDetailViewDto>> GetOrderDetailDtoListByOrderIdAsync(int pageNumber, int pageSize, string orderId)
         {
             // Get all order details from database
             // If null then return empty collection
             IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>().Entities;
             IList<OrderDetailViewDto> detailDtos = new List<OrderDetailViewDto>();
 
-            // If pageNumber or pageSize are 0 or negative, show all order details without pagination
-            if (pageNumber <= 0 || pageSize <= 0)
+            var allDetails = query.ToList();
+
+            // Map orders to OrderViewDto
+            foreach (var detail in allDetails)
             {
-                var allDetails = query.ToList();
-
-                // Map orders to OrderViewDto
-                foreach (var detail in allDetails)
-                {
-                    if (detail.OrderId == orderId)
-                    {
-                        string? studentName = await _userService.GetUserNameAsync(detail.StudentId);
-                        string? subjectName = await _subjectService.GetSubjectNameAsync(detail.SubjectId);
-                        OrderDetailViewDto dto = new() {
-                            SubjectId = detail.SubjectId,
-                            SubjectName = subjectName,
-                            StudentId = detail.StudentId,
-                            StudentName = studentName 
-                        };
-                        detailDtos.Add(dto);
-                    }
-                }
-                return new BasePaginatedList<OrderDetailViewDto>((IReadOnlyCollection<OrderDetailViewDto>)detailDtos, detailDtos.Count, 1, detailDtos.Count);
-            }
-
-            // Show all order details with pagination
-            // Map order detail to OrderDetailViewDto
-            BasePaginatedList<OrderDetail>? paginatedOrders = await _unitOfWork.GetRepository<OrderDetail>().GetPagging(query, pageNumber, pageSize);
-            foreach (var detail in paginatedOrders.Items)
-            {
-
-
                 if (detail.OrderId == orderId)
                 {
                     string? studentName = await _userService.GetUserNameAsync(detail.StudentId);
                     string? subjectName = await _subjectService.GetSubjectNameAsync(detail.SubjectId);
-                    OrderDetailViewDto dto = new OrderDetailViewDto { SubjectName = subjectName, StudentName = studentName };
+                    OrderDetailViewDto dto = new()
+                    {
+                        SubjectId = detail.SubjectId,
+                        SubjectName = subjectName,
+                        StudentId = detail.StudentId,
+                        StudentName = studentName
+                    };
                     detailDtos.Add(dto);
                 }
             }
 
-            return new BasePaginatedList<OrderDetailViewDto>((IReadOnlyCollection<OrderDetailViewDto>)detailDtos, detailDtos.Count, pageNumber, pageSize);
+            // If pageNumber or pageSize are 0 or negative, show all order details without pagination
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                return new BasePaginatedList<OrderDetailViewDto>((IReadOnlyCollection<OrderDetailViewDto>)detailDtos, detailDtos.Count, 1, detailDtos.Count);
+            }
+
+            // validate and adjust page number
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, detailDtos.Count, pageSize);
+
+            // Return the paginated DTOs without reapplying pagination
+            return _unitOfWork.GetRepository<OrderDetailViewDto>().GetPaggingDto(detailDtos, pageNumber, pageSize);
         }
 
         // Validate if the subject has been assigned before 

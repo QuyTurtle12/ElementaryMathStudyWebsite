@@ -70,6 +70,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
             }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
         }
 
         // GET: api/progress/student/view
@@ -109,6 +118,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }
@@ -152,6 +170,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }
@@ -222,46 +249,55 @@ namespace ElementaryMathStudyWebsite.Controllers
         // GET: api/progress/student/view/assigned-subject
         // Get list of assigned subject of specific student
 
-        [Authorize(Policy = "Student")]
-        [HttpGet]
-        [Route("/student/view/assigned-subject")]
-        [SwaggerOperation(
-            Summary = "Authorization: Student",
-            Description = "View list of assigned subject. Insert -1 to get all items"
-            )]
-        public async Task<ActionResult<BaseResponse<BasePaginatedList<AssignedSubjectDto>?>>> GetStudentAssignedSubjects(int pageNumber = -1, int pageSize = -1)
-        {
-            try
-            {
-                BasePaginatedList<AssignedSubjectDto>? assignedSubjectList = await _progressService.GetAssignedSubjectListAsync(pageNumber, pageSize);
+        //[Authorize(Policy = "Student")]
+        //[HttpGet]
+        //[Route("/student/view/assigned-subject")]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Student",
+        //    Description = "View list of assigned subject. Insert -1 to get all items"
+        //    )]
+        //public async Task<ActionResult<BaseResponse<BasePaginatedList<AssignedSubjectDto>?>>> GetStudentAssignedSubjects(int pageNumber = -1, int pageSize = -1)
+        //{
+        //    try
+        //    {
+        //        BasePaginatedList<AssignedSubjectDto>? assignedSubjectList = await _progressService.GetAssignedSubjectListAsync(pageNumber, pageSize);
 
-                if (assignedSubjectList?.Items.Count == 0 || assignedSubjectList == null)
-                {
-                    throw new BaseException.BadRequestException("bad_request", "You don't have any assigned subject");
-                }
+        //        if (assignedSubjectList?.Items.Count == 0 || assignedSubjectList == null)
+        //        {
+        //            throw new BaseException.BadRequestException("bad_request", "You don't have any assigned subject");
+        //        }
 
-                var haveAssignedSubjectResponse = BaseResponse<BasePaginatedList<AssignedSubjectDto>?>.OkResponse(assignedSubjectList);
-                return haveAssignedSubjectResponse;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-        }
+        //        var haveAssignedSubjectResponse = BaseResponse<BasePaginatedList<AssignedSubjectDto>?>.OkResponse(assignedSubjectList);
+        //        return haveAssignedSubjectResponse;
+        //    }
+        //    catch (BaseException.CoreException coreEx)
+        //    {
+        //        // Handle specific CoreException
+        //        return StatusCode(coreEx.StatusCode, new
+        //        {
+        //            code = coreEx.Code,
+        //            message = coreEx.Message,
+        //            additionalData = coreEx.AdditionalData
+        //        });
+        //    }
+        //    catch (BaseException.BadRequestException badRequestEx)
+        //    {
+        //        // Handle specific BadRequestException
+        //        return BadRequest(new
+        //        {
+        //            errorCode = badRequestEx.ErrorDetail.ErrorCode,
+        //            errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+        //        });
+        //    }
+        //    catch (BaseException.NotFoundException notFoundEx)
+        //    {
+        //        // Handle general ArgumentException
+        //        return NotFound(new
+        //        {
+        //            errorCode = notFoundEx.ErrorDetail.ErrorCode,
+        //            errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+        //        });
+        //    }
+        //}
     }
 }

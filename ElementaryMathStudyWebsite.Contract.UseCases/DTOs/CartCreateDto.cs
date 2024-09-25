@@ -3,7 +3,6 @@
     public class CartCreateDto
     {
         public IEnumerable<SubjectStudentDto> SubjectStudents { get; set; } = new List<SubjectStudentDto>();
-
     }
 
     public class SubjectStudentDto

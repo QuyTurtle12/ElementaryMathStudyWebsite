@@ -1,14 +1,10 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
-using System.Drawing.Printing;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -201,49 +197,49 @@ namespace ElementaryMathStudyWebsite.Controllers
             //}
         }
 
-        [HttpGet]
-        [Route("subject")]
-        [SwaggerOperation(
-           Summary = "Authorization: N/A",
-           Description = "View all chapters of 1 subject"
-           )]
-        public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterViewDto>>>> GetChapterBySubjectId([Required] string subjectId, int pageNumber = -1, int pageSize = -1)
-        {
-            try
-            {
-                BasePaginatedList<ChapterViewDto> chapters = await _chapterService.GetChaptersBySubjectIdAsync(pageNumber, pageSize, subjectId);
-                var response = BaseResponse<BasePaginatedList<ChapterViewDto>>.OkResponse(chapters);
-                return response;
-            }
-            //catch (BaseException.CoreException coreEx)
-            //{
-            //    // Handle specific CoreException
-            //    return StatusCode(coreEx.StatusCode, new
-            //    {
-            //        code = coreEx.Code,
-            //        message = coreEx.Message,
-            //        additionalData = coreEx.AdditionalData
-            //    });
-            //}
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        error = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
-        }
+        //[HttpGet]
+        //[Route("subject")]
+        //[SwaggerOperation(
+        //   Summary = "Authorization: N/A",
+        //   Description = "View all chapters of 1 subject"
+        //   )]
+        //public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterViewDto>>>> GetChapterBySubjectId([Required] string subjectId, int pageNumber = -1, int pageSize = -1)
+        //{
+        //    try
+        //    {
+        //        BasePaginatedList<ChapterViewDto> chapters = await _chapterService.GetChaptersBySubjectIdAsync(pageNumber, pageSize, subjectId);
+        //        var response = BaseResponse<BasePaginatedList<ChapterViewDto>>.OkResponse(chapters);
+        //        return response;
+        //    }
+        //    //catch (BaseException.CoreException coreEx)
+        //    //{
+        //    //    // Handle specific CoreException
+        //    //    return StatusCode(coreEx.StatusCode, new
+        //    //    {
+        //    //        code = coreEx.Code,
+        //    //        message = coreEx.Message,
+        //    //        additionalData = coreEx.AdditionalData
+        //    //    });
+        //    //}
+        //    catch (BaseException.BadRequestException badRequestEx)
+        //    {
+        //        // Handle specific BadRequestException
+        //        return BadRequest(new
+        //        {
+        //            errorCode = badRequestEx.ErrorDetail.ErrorCode,
+        //            errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+        //        });
+        //    }
+        //    //catch (Exception ex)
+        //    //{
+        //    //    // Handle any other exceptions
+        //    //    return StatusCode(500, new
+        //    //    {
+        //    //        error = "An unexpected error occurred.",
+        //    //        details = ex.Message
+        //    //    });
+        //    //}
+        //}
 
 
         [HttpGet("search")]
@@ -699,6 +695,79 @@ namespace ElementaryMathStudyWebsite.Controllers
             //}
         }
 
+        //// GET: api/ChapterAccess/{chapterId}
+        //[HttpGet("/ChapterAccess/{chapterId}")]
+        //public async Task<ActionResult<BaseResponse<object>>> CanAccessChapter(string chapterId)
+        //{
+        //    try
+        //    {
+        //        // Call the service method to check if the student can access the chapter
+        //        bool canAccess = await _chapterService.CanAccessChapterAsync(chapterId);
+        //        string chapterName = await _chapterService.GetChapterNameAsync(chapterId);
+
+        //        if (canAccess)
+        //        {
+        //            // Return a successful response using BaseResponse
+        //            return Ok(BaseResponse<object>.OkResponse($"You can access chapter '{chapterName}'."));
+        //        }
+        //        else
+        //        {
+        //            // Return a forbidden response using BaseResponse
+        //            return StatusCode(StatusCodes.Status403Forbidden, new BaseResponse<object>(
+        //                StatusCodeHelper.BadRequest,
+        //                "Forbbiden",
+        //                $"You cannot access chapter '{chapterName}' until the required quiz for the previous chapter is completed."
+        //            ));
+        //        }
+        //    }
+        //    catch (KeyNotFoundException ex)
+        //    {
+        //        // Handle KeyNotFoundException by returning a 404 response using BaseResponse
+        //        return NotFound(new BaseResponse<object>(
+        //            StatusCodeHelper.BadRequest,
+        //            "Not Found",
+        //            ex.Message
+        //        ));
+        //    }
+        //    catch (BaseException.CoreException coreEx)
+        //    {
+        //        // Handle specific CoreException
+        //        var errorResponse = new
+        //        {
+        //            code = coreEx.Code,
+        //            message = coreEx.Message,
+        //            additionalData = coreEx.AdditionalData
+        //        };
+        //        return StatusCode(coreEx.StatusCode, new BaseResponse<object>(
+        //            StatusCodeHelper.BadRequest,
+        //            coreEx.Code,
+        //            errorResponse
+        //        ));
+        //    }
+        //    catch (BaseException.BadRequestException badRequestEx)
+        //    {
+        //        // Handle specific BadRequestException
+        //        return BadRequest(new BaseResponse<object>(
+        //            StatusCodeHelper.BadRequest,
+        //            badRequestEx.ErrorDetail.ErrorCode,
+        //            badRequestEx.ErrorDetail.ErrorMessage
+        //        ));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // Handle any other exceptions with a 500 response using BaseResponse
+        //        var errorResponse = new
+        //        {
+        //            Message = "An error occurred.",
+        //            Details = ex.Message
+        //        };
+        //        return StatusCode(StatusCodes.Status500InternalServerError, new BaseResponse<object>(
+        //            StatusCodeHelper.ServerError,
+        //            "Server Error",
+        //            errorResponse
+        //        ));
+        //    }
+        //}
 
     }
 }
