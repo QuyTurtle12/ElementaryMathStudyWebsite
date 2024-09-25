@@ -6,7 +6,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
     public interface IAppUserAnswerServices
     {
-        Task<UserAnswerDTO> CreateUserAnswerAsync(UserAnswerDTO userAnswerDTO);
+        Task<UserAnswerCreateDTO> CreateUserAnswersAsync(UserAnswerCreateDTO userAnswerCreateDTO);
         Task<UserAnswerDTO> UpdateUserAnswerAsync(string id, UserAnswerDTO userAnswerDTO);
         Task<BasePaginatedList<object>> GetAllUserAnswersAsync(int pageNumber, int pageSize);
         Task<UserAnswerDTO> GetUserAnswerByIdAsync(string id);

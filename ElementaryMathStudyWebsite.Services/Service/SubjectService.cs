@@ -15,20 +15,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
 {
     public class SubjectService : IAppSubjectServices
     {
-        private readonly IGenericRepository<Subject> _detailReposiotry;
-        private readonly IGenericRepository<Subject> _subjectRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ITokenService _tokenService;
 
-        public SubjectService(IGenericRepository<Subject> detailReposiotry, IGenericRepository<Subject> subjectRepository, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ITokenService tokenService, IAppUserServices userService)
+        public SubjectService(IUnitOfWork unitOfWork, IAppUserServices userService)
         {
-            _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
-            _subjectRepository = subjectRepository ?? throw new ArgumentNullException(nameof(subjectRepository));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _httpContextAccessor = httpContextAccessor;
-            _tokenService = tokenService;
             _userService = userService;
         }
 
@@ -150,7 +142,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
 
-            var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
+            var paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
             var subjectDtosPaginated = paginatedSubjects.Items.Select(subject =>
             {
                 if (isAdmin)
@@ -197,7 +189,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{id}'.");
             if ((!isAdmin && !subject.Status) || !String.IsNullOrWhiteSpace(subject.DeletedBy))
             {
-                throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{id}'.");
+                throw new BaseException.NotFoundException("key_not_found", $"Cannot find product with ID '{id}'.");
             }
 
             if (isAdmin)
@@ -270,13 +262,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 if (subjectDtos.Count == 0)
                 {
-                    throw new BaseException.BadRequestException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
+                    throw new BaseException.NotFoundException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
                 }
 
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
 
-            var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
+            var paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
             var subjectDtosPaginated = paginatedSubjects.Items.Select(s => new SubjectDTO
             {
                 Id = s.Id,
@@ -287,7 +279,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (subjectDtosPaginated.Count == 0)
             {
-                throw new BaseException.BadRequestException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
+                throw new BaseException.NotFoundException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
             }
 
             return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count, pageNumber, pageSize);
@@ -349,13 +341,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 if (subjectDtos.Count == 0)
                 {
-                    throw new BaseException.BadRequestException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
+                    throw new BaseException.NotFoundException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
                 }
 
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
 
-            var paginatedSubjects = await _detailReposiotry.GetPagging(query, pageNumber, pageSize);
+            var paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
             var subjectDtosPaginated = paginatedSubjects.Items.Select(subject =>
             {
                 // Fetch the created and updated users
@@ -381,7 +373,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (subjectDtosPaginated.Count == 0)
             {
-                throw new BaseException.BadRequestException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
+                throw new BaseException.NotFoundException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
             }
 
             return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count, pageNumber, pageSize);
@@ -390,7 +382,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Update subject and set LastUpdatedTime to current time
         public async Task<SubjectAdminViewDTO> UpdateSubjectAsync(string id, SubjectUpdateDTO subjectUpdateDTO)
         {
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Subject with ID '{id}' not found.");
+            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.NotFoundException("key_not_found", $"Subject with ID '{id}' not found.");
 
             // Check if another subject with the same name already exists
             var existingSubject = await _unitOfWork.GetRepository<Subject>().Entities
@@ -535,7 +527,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (subject == null || !string.IsNullOrWhiteSpace(subject.DeletedBy))
             {
-                throw new BaseException.BadRequestException("key_not_found", $"Cannot find subject with ID '{id}' or it is already deleted.");
+                throw new BaseException.NotFoundException("key_not_found", $"Cannot find subject with ID '{id}' or it is already deleted.");
             }
 
             User currentUser = await _userService.GetCurrentUserAsync();
@@ -557,7 +549,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (subject == null || string.IsNullOrWhiteSpace(subject.DeletedBy))
             {
-                throw new BaseException.BadRequestException("key_not_found", $"Cannot find deleted subject with ID '{id}'.");
+                throw new BaseException.NotFoundException("key_not_found", $"Cannot find deleted subject with ID '{id}'.");
             }
 
             // Undo soft delete

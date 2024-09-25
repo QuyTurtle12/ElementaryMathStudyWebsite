@@ -1,5 +1,8 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Entity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -21,7 +24,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         public async Task<IActionResult> GetAllUserAnswers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _userAnswerService.GetAllUserAnswersAsync(pageNumber, pageSize);
-            return Ok(result);
+            var response = BaseResponse<BasePaginatedList<object>>.OkResponse(result);
+            return Ok(response);
         }
 
         // GET: api/UserAnswers/{id}
@@ -36,7 +40,8 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var userAnswer = await _userAnswerService.GetUserAnswerByIdAsync(id);
-                return Ok(userAnswer);
+                var response = BaseResponse<object>.OkResponse(userAnswer);
+                return Ok(response);
             }
             catch (KeyNotFoundException ex)
             {
@@ -44,33 +49,37 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        [Authorize(Policy = "Student")]
         [SwaggerOperation(
-            Summary = "Authorization: Anyone",
+            Summary = "Authorization: Student",
             Description = "When user answers create an instance of it"
         )]
         [HttpPost]
         [Route("create")]
-        public async Task<IActionResult> CreateUserAnswer([FromBody] UserAnswerDTO userAnswerDTO)
+        [HttpPost]
+        public async Task<IActionResult> CreateUserAnswers([FromBody] UserAnswerCreateDTO userAnswerCreateDTO)
         {
-            if (userAnswerDTO == null)
+            if (userAnswerCreateDTO == null || !userAnswerCreateDTO.UserAnswerList.Any())
             {
-                return BadRequest(new { message = "Invalid data." });
+                return BadRequest(new BaseException.BadRequestException("input_error", "Invalid input. The user answer list is empty or null."));
             }
 
             try
             {
-                var createdUserAnswer = await _userAnswerService.CreateUserAnswerAsync(userAnswerDTO);
-                return Ok(createdUserAnswer); // Return the created UserAnswerDTO if successful
+                var createdUserAnswers = await _userAnswerService.CreateUserAnswersAsync(userAnswerCreateDTO);
+                var response = BaseResponse<object>.OkResponse(createdUserAnswers);
+                return Ok(response);
             }
-            catch (KeyNotFoundException ex)
+            catch (BaseException.NotFoundException notFoundEx)
             {
-                return BadRequest(new { message = ex.Message });
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while creating the user answer." });
+                return StatusCode(500, new { message = $"An error occurred while creating the user answers: {ex.Message}" });
             }
         }
+
 
         // PUT: api/UserAnswers/{id}
         //[Authorize(Policy = "Admin-Content")]
@@ -83,17 +92,18 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (userAnswerDTO == null)
             {
-                return BadRequest(new { message = "Invalid user answer data." });
+                return BadRequest(new BaseException.BadRequestException("input_error", "Invalid input."));
             }
 
             try
             {
                 var userAnswer = await _userAnswerService.UpdateUserAnswerAsync(id, userAnswerDTO);
-                return Ok(userAnswer);
+                var response = BaseResponse<object>.OkResponse(userAnswer);
+                return Ok(response);
             }
-            catch (KeyNotFoundException ex)
+            catch (BaseException.NotFoundException notFoundEx)
             {
-                return NotFound(new { message = ex.Message });
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
         }
 
@@ -109,20 +119,13 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var userAnswers = await _userAnswerService.GetUserAnswersByQuizIdAsync(quizId);
-                return Ok(userAnswers);
+                var response = BaseResponse<object>.OkResponse(userAnswers);
+                return Ok(response);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = ex.Message });
             }
         }
-
-        // DELETE: api/UserAnswers/{id}
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteUserAnswer(string id)
-        //{
-        //    await _userAnswerService.DeleteUserAnswerAsync(id);
-        //    return NoContent();
-        //}
     }
 }
