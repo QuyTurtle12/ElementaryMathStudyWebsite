@@ -8,7 +8,7 @@
         public string? PhoneNumber { get; set; }  // Optional: User's phone number
         public string? Gender { get; set; }  // Optional: User's gender
         public string? Email { get; set; }  // Optional: User's email address
-        public RoleDto? Role { get; set; }
+        public required RoleDto Role { get; set; }
         public string Username { get; set; } = string.Empty;  // User's username
         public bool Status { get; set; }
     }
