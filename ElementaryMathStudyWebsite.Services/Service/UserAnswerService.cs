@@ -48,7 +48,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 AttemptNumber = userAnswer.AttemptNumber,
             }).ToList();
 
-
             return new BasePaginatedList<object>(userAnswerDtosPaginated, userAnswerDtosPaginated.Count, pageNumber, pageSize);
         }
 
@@ -97,11 +96,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
         //    return userAnswerDTO;
         //}
 
-        public async Task<UserAnswerCreateDTO> CreateUserAnswersAsync(UserAnswerCreateDTO userAnswerCreateDTO)
+        public async Task<List<UserAnswerWithDetailsDTO>> CreateUserAnswersAsync(UserAnswerCreateDTO userAnswerCreateDTO)
         {
             User currentUser = await _userService.GetCurrentUserAsync();
             var currentUserId = currentUser.Id;
 
+            // Check for duplicate QuestionId entries in the user answer list
+            var duplicateQuestionIds = userAnswerCreateDTO.UserAnswerList
+                .GroupBy(ua => ua.QuestionId)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+
+            if (duplicateQuestionIds.Any())
+            {
+                var duplicateIds = string.Join(", ", duplicateQuestionIds);
+                throw new BaseException.BadRequestException("duplicate_questions", $"Duplicate Question IDs found: {duplicateIds}");
+            }
+
+            var tempAttempNumber = 1;
             foreach (var userAnswerDTO in userAnswerCreateDTO.UserAnswerList)
             {
                 // Check if QuestionId exists
@@ -124,6 +137,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                                                 .FirstOrDefaultAsync();
 
                 var attemptNumber = existingUserAnswer != null ? existingUserAnswer.AttemptNumber + 1 : 1;
+                if(tempAttempNumber < attemptNumber)
+                {
+                    tempAttempNumber = attemptNumber;
+                }
 
                 var userAnswer = new UserAnswer
                 {
@@ -139,7 +156,26 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Save all changes after the loop
             await _unitOfWork.GetRepository<UserAnswer>().SaveAsync();
 
-            return userAnswerCreateDTO;
+            var result = new List<UserAnswerWithDetailsDTO>();
+            foreach (var userAnswer in userAnswerCreateDTO.UserAnswerList)
+            {
+                var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(userAnswer.QuestionId);
+                var option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(userAnswer.OptionId);
+
+                var userAnswerWithDetails = new UserAnswerWithDetailsDTO
+                {
+                    QuestionId = userAnswer.QuestionId,
+                    QuestionContent = question?.QuestionContext ?? "Unknown Question",
+                    UserId = currentUserId,
+                    UserFullName = currentUser.FullName ?? "Unknown User",
+                    OptionId = userAnswer.OptionId,
+                    OptionAnswer = option?.Answer ?? "Unknown Answer",
+                    AttemptNumber = tempAttempNumber,
+                };
+                result.Add(userAnswerWithDetails);
+            }
+
+            return result;
         }
 
 
