@@ -3,7 +3,6 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Annotations;
@@ -77,7 +76,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             var result = await _topicService.GetAllTopicsAsync(pageNumber, pageSize);
             return Ok(result);
         }
-    
+
 
         [HttpGet]
         [Route("User/{id}")]
@@ -214,5 +213,79 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return StatusCode(500, "An unexpected error occurred.");
             }
         }
+
+        //// GET: api/TopicAccess/{topicId}/CanAccess
+        //[HttpGet("/TopicAccess/{topicId}")]
+        //public async Task<ActionResult<BaseResponse<object>>> CanAccessTopic(string topicId)
+        //{
+        //    try
+        //    {
+        //        // Call the service method to check if the student can access the topic
+        //        bool canAccess = await _topicService.CanAccessTopicAsync(topicId);
+        //        string topicName = await _topicService.GetTopicNameAsync(topicId);
+
+        //        if (canAccess)
+        //        {
+        //            // Return a successful response using BaseResponse
+        //            return Ok(BaseResponse<object>.OkResponse($"You can access topic '{topicName}'."));
+        //        }
+        //        else
+        //        {
+        //            // Return a forbidden response using BaseResponse
+        //            return StatusCode(StatusCodes.Status403Forbidden, new BaseResponse<object>(
+        //                StatusCodeHelper.BadRequest,
+        //                "Forbbiden",
+        //                $"You cannot access topic '{topicName}' until the required quiz for the previous topic is completed."
+        //            ));
+        //        }
+        //    }
+        //    catch (KeyNotFoundException ex)
+        //    {
+        //        // Handle KeyNotFoundException by returning a 404 response using BaseResponse
+        //        return NotFound(new BaseResponse<object>(
+        //            StatusCodeHelper.BadRequest,
+        //            "Not Found",
+        //            ex.Message
+        //        ));
+        //    }
+        //    catch (BaseException.CoreException coreEx)
+        //    {
+        //        // Handle specific CoreException
+        //        var errorResponse = new
+        //        {
+        //            code = coreEx.Code,
+        //            message = coreEx.Message,
+        //            additionalData = coreEx.AdditionalData
+        //        };
+        //        return StatusCode(coreEx.StatusCode, new BaseResponse<object>(
+        //            StatusCodeHelper.BadRequest,
+        //            coreEx.Code,
+        //            errorResponse
+        //        ));
+        //    }
+        //    catch (BaseException.BadRequestException badRequestEx)
+        //    {
+        //        // Handle specific BadRequestException
+        //        return BadRequest(new BaseResponse<object>(
+        //            StatusCodeHelper.BadRequest,
+        //            badRequestEx.ErrorDetail.ErrorCode,
+        //            badRequestEx.ErrorDetail.ErrorMessage
+        //        ));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // Handle any other exceptions with a 500 response using BaseResponse
+        //        var errorResponse = new
+        //        {
+        //            Message = "An error occurred.",
+        //            Details = ex.Message
+        //        };
+        //        return StatusCode(StatusCodes.Status500InternalServerError, new BaseResponse<object>(
+        //            StatusCodeHelper.ServerError,
+        //            "Server Error",
+        //            errorResponse
+        //        ));
+        //    }
+        //}
     }
 }

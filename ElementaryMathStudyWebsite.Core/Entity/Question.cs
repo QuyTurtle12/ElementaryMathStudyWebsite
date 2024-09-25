@@ -1,4 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Entity;
 
 namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 {
