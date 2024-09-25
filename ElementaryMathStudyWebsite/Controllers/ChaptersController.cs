@@ -152,7 +152,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        
+
         // GET: api/chapter
         // Get chapters for general user
         //[HttpGet]
@@ -198,49 +198,49 @@ namespace ElementaryMathStudyWebsite.Controllers
         //    //}
         //}
 
-        //[HttpGet]
-        //[Route("subject")]
-        //[SwaggerOperation(
-        //   Summary = "Authorization: N/A",
-        //   Description = "View all chapters of 1 subject"
-        //   )]
-        //public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterViewDto>>>> GetChapterBySubjectId([Required] string subjectId, int pageNumber = -1, int pageSize = -1)
-        //{
-        //    try
-        //    {
-        //        BasePaginatedList<ChapterViewDto> chapters = await _chapterService.GetChaptersBySubjectIdAsync(pageNumber, pageSize, subjectId);
-        //        var response = BaseResponse<BasePaginatedList<ChapterViewDto>>.OkResponse(chapters);
-        //        return response;
-        //    }
-        //    //catch (BaseException.CoreException coreEx)
-        //    //{
-        //    //    // Handle specific CoreException
-        //    //    return StatusCode(coreEx.StatusCode, new
-        //    //    {
-        //    //        code = coreEx.Code,
-        //    //        message = coreEx.Message,
-        //    //        additionalData = coreEx.AdditionalData
-        //    //    });
-        //    //}
-        //    catch (BaseException.BadRequestException badRequestEx)
-        //    {
-        //        // Handle specific BadRequestException
-        //        return BadRequest(new
-        //        {
-        //            errorCode = badRequestEx.ErrorDetail.ErrorCode,
-        //            errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-        //        });
-        //    }
-        //    //catch (Exception ex)
-        //    //{
-        //    //    // Handle any other exceptions
-        //    //    return StatusCode(500, new
-        //    //    {
-        //    //        error = "An unexpected error occurred.",
-        //    //        details = ex.Message
-        //    //    });
-        //    //}
-        //}
+        [HttpGet]
+        [Route("subject")]
+        [SwaggerOperation(
+           Summary = "Authorization: N/A",
+           Description = "View all chapters of 1 subject"
+           )]
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterViewDto>>>> GetChapterBySubjectId([Required] string subjectId, int pageNumber = -1, int pageSize = -1)
+        {
+            try
+            {
+                BasePaginatedList<ChapterViewDto> chapters = await _chapterService.GetChaptersBySubjectIdAsync(pageNumber, pageSize, subjectId);
+                var response = BaseResponse<BasePaginatedList<ChapterViewDto>>.OkResponse(chapters);
+                return response;
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            //catch (Exception ex)
+            //{
+            //    // Handle any other exceptions
+            //    return StatusCode(500, new
+            //    {
+            //        error = "An unexpected error occurred.",
+            //        details = ex.Message
+            //    });
+            //}
+        }
 
 
         [HttpGet("search")]
