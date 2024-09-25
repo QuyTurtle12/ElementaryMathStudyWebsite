@@ -1,6 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
@@ -17,10 +17,10 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
                 double highestPrice, bool? status, int pageNumber, int pageSize);
 
         // Update a subject by ID
-        Task<SubjectAdminViewDTO> UpdateSubjectAsync(string id, SubjectDTO subjectDTO);
+        Task<SubjectAdminViewDTO> UpdateSubjectAsync(string id, SubjectUpdateDTO subjectUpdateDTO);
 
         // Change subject status by ID
-        Task<SubjectAdminViewDTO> ChangeSubjectStatusAsync(string id);
+        //Task<SubjectAdminViewDTO> ChangeSubjectStatusAsync(string id);
 
         // Check if subject is existed
         Task<bool> IsValidSubjectAsync(string subjectId);
@@ -36,6 +36,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         // Get a subject by ID uu
         Task<Subject> GetSubjectByIDAsync(string id);
-
+        Task<bool> CheckCompleteQuizExistAsync(string subjectId, string quizId);
+        Task SoftDeleteSubjectAsync(string id);
+        Task RestoreSubjectAsync(string id);
     }
 }

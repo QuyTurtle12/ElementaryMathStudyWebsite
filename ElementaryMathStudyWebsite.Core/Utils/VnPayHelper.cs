@@ -4,6 +4,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using ElementaryMathStudyWebsite.Core.Base;
 
 namespace ElementaryMathStudyWebsite.Core.Utils
 {
@@ -12,9 +13,9 @@ namespace ElementaryMathStudyWebsite.Core.Utils
         private readonly SortedList<string, string> _requestData = new SortedList<string, string>();
         private readonly SortedList<string, string> _responseData = new SortedList<string, string>();
 
-        public void AddRequestData(string key, string value)
+        public void AddRequestData(string key, string? value)
         {
-            if (!string.IsNullOrEmpty(value))
+            if (!string.IsNullOrWhiteSpace(value))
             {
                 _requestData.Add(key, value);
             }
@@ -22,7 +23,7 @@ namespace ElementaryMathStudyWebsite.Core.Utils
 
         public void AddResponseData(string key, string value)
         {
-            if (!string.IsNullOrEmpty(value))
+            if (!string.IsNullOrWhiteSpace(value))
             {
                 _responseData.Add(key, value);
             }
@@ -34,11 +35,15 @@ namespace ElementaryMathStudyWebsite.Core.Utils
         }
 
         #region Request
-        public string CreateRequestUrl(string baseUrl, string vnpHashSecret)
+        public string CreateRequestUrl(string? baseUrl, string? vnpHashSecret)
         {
+            if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(vnpHashSecret))
+            {
+                throw new BaseException.BadRequestException("vnpay_error", "VnPay failed to implement");
+            }
             var data = new StringBuilder();
 
-            foreach (var (key, value) in _requestData.Where(kv => !string.IsNullOrEmpty(kv.Value)))
+            foreach (var (key, value) in _requestData.Where(kv => !string.IsNullOrWhiteSpace(kv.Value)))
             {
                 data.Append(WebUtility.UrlEncode(key) + "=" + WebUtility.UrlEncode(value) + "&");
             }
@@ -60,8 +65,10 @@ namespace ElementaryMathStudyWebsite.Core.Utils
         #endregion
 
         #region Response process
-        public bool ValidateSignature(string inputHash, string secretKey)
+        public bool ValidateSignature(string inputHash, string? secretKey)
         {
+            if(string.IsNullOrWhiteSpace(secretKey)) throw new BaseException.BadRequestException("vnpay_error", "VnPay failed to implement");
+
             var rspRaw = GetResponseData();
             var myChecksum = Utils.HmacSHA512(secretKey, rspRaw);
             return myChecksum.Equals(inputHash, StringComparison.InvariantCultureIgnoreCase);
@@ -80,7 +87,7 @@ namespace ElementaryMathStudyWebsite.Core.Utils
                 _responseData.Remove("vnp_SecureHash");
             }
 
-            foreach (var (key, value) in _responseData.Where(kv => !string.IsNullOrEmpty(kv.Value)))
+            foreach (var (key, value) in _responseData.Where(kv => !string.IsNullOrWhiteSpace(kv.Value)))
             {
                 data.Append(WebUtility.UrlEncode(key) + "=" + WebUtility.UrlEncode(value) + "&");
             }
@@ -96,19 +103,6 @@ namespace ElementaryMathStudyWebsite.Core.Utils
         #endregion
 
     }
-
-    public static class VnPayConfig
-    {
-        public const string TmnCode = "NBV2FN9P";
-        public const string HashSecret = "3458PTH3433WIIT2P9EAXXELSMLJM740";
-        public const string BaseUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-        public const string Version = "2.1.0";
-        public const string Command = "pay";
-        public const string CurrCode = "VND";
-        public const string Locale = "vn";
-        public const string ReturnUrl = "https://localhost:7134/api/payment/vnpay-callback";
-    }
-
 
     public class Utils
     {
