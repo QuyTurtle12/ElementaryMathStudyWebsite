@@ -1,10 +1,10 @@
 ﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
 {
-    public class DeleteQuizDto
+    public class QuestionDeleteDto
     {
         public required string Id { get; set; }
-        public string QuizName { get; set; } = string.Empty;
-
+        public string QuestionContext { get; set; } = string.Empty;
+        public string QuizId { get; set; } = string.Empty;
         public string CreatorName { get; set; } = string.Empty;
         public required string DeletedBy { get; set; }
         public string DeletedName { get; set; } = string.Empty;

@@ -66,7 +66,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return quizDtos;
         }
 
-
         // Get Quiz with quizId
         public async Task<QuizMainViewDto?> GetQuizByQuizIdAsync(string quizId)
         {
@@ -98,8 +97,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return dto; // Return the QuizMainViewDto
         }
-
-        //==================================================================================
 
         // Search for quizzes where the quiz name contains a specified string
         public async Task<List<QuizViewDto>> SearchQuizzesByNameAsync(string quizName)
@@ -199,8 +196,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return new BasePaginatedList<QuizMainViewDto>(paginatedQuizzesDto, quizDtos.Count, pageNumber, pageSize);
         }
 
-        //==================================================================================
-
         // Get the name of a quiz by its Id
         public async Task<string> GetQuizNameAsync(string quizId)
         {
@@ -217,8 +212,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Return the quiz name
             return quiz.QuizName;
         }
-
-        //==================================================================================
 
         // Create a new quiz
         public async Task<QuizMainViewDto> AddQuizAsync(QuizCreateDto dto)
@@ -271,15 +264,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
-
-
         // Update an existing quiz
-        public async Task<QuizUpdateDto> UpdateQuizAsync(QuizUpdateDto dto)
+        public async Task<QuizMainViewDto> UpdateQuizAsync(string quizid, QuizUpdateDto dto)
         {
             // Fetch the existing quiz by its ID
-            var quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(dto.Id)
-                        ?? throw new BaseException.NotFoundException("not_found", $"Quiz with Id '{dto.Id}' not found.");
-
+            Quiz quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizid)
+                        ?? throw new BaseException.NotFoundException("not_found", $"Quiz with Id '{quizid}' not found.");
 
             // Update quiz information with values from the DTO
             quiz.QuizName = dto.QuizName;
@@ -287,6 +277,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             quiz.Status = dto.Status;
 
             // Update Chapter reference if ChapterId is provided
+            string chapterName = string.Empty;
             if (!string.IsNullOrWhiteSpace(dto.ChapterId))
             {
                 var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(dto.ChapterId);
@@ -295,9 +286,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     throw new BaseException.BadRequestException("invalid_arguments", $"Chapter with Id '{dto.ChapterId}' not found.");
                 }
                 quiz.Chapter = chapter; // Set the Chapter reference
+                chapterName = chapter.ChapterName; // get the chapter name from dto
             }
 
             // Update Topic reference if TopicId is provided
+            string topicName = string.Empty;
             if (!string.IsNullOrWhiteSpace(dto.TopicId))
             {
                 var topic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(dto.TopicId);
@@ -306,31 +299,42 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     throw new BaseException.BadRequestException("invalid_arguments", $"Topic with Id '{dto.TopicId}' not found.");
                 }
                 quiz.Topic = topic; // Set the Topic reference
+                topicName = topic.TopicName; // get the topic name from dto
             }
 
             // Get the current user for auditing purposes
             User currentUser = await _userService.GetCurrentUserAsync();
-            quiz.LastUpdatedBy = currentUser.Id.ToUpper(); // Update LastUpdatedBy
+            quiz.LastUpdatedBy = currentUser.Id ?? string.Empty; // Update LastUpdatedBy
+
+            // Fetch creator and last updated person information
+            var creator = await _unitOfWork.GetRepository<User>().FindByConditionAsync(c => c.Id != null && c.Id.Equals(quiz.CreatedBy));
+            var lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(quiz.LastUpdatedBy);
 
             // Save changes to the database
             await _unitOfWork.SaveAsync();
 
             // Return the updated quiz information in a DTO
-            return new QuizUpdateDto
+            return new QuizMainViewDto
             {
                 Id = quiz.Id,
                 QuizName = quiz.QuizName,
                 Criteria = quiz.Criteria,
-                Status = quiz.Status ?? true,
-                ChapterId = quiz.Chapter?.Id ?? string.Empty,
-                TopicId = quiz.Topic?.Id ?? string.Empty,
-                LastUpdatedBy = currentUser.FullName,
+                Status = quiz.Status,
+                ChapterName = chapterName,
+                TopicName = topicName,    
+                CreatedBy = quiz.CreatedBy ?? string.Empty,
+                CreatorName = creator?.FullName ?? string.Empty,        
+                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                LastUpdatedBy = quiz.LastUpdatedBy,
+                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty, 
+                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                CreatedTime = quiz.CreatedTime,
                 LastUpdatedTime = CoreHelper.SystemTimeNow
             };
         }
 
         // Delete a quiz
-        public async Task<DeleteQuizDto> DeleteQuizAsync(string quizId)
+        public async Task<QuizDeleteDto> DeleteQuizAsync(string quizId)
         {
             // Check if the provided quizId is null or whitespace
             if (string.IsNullOrWhiteSpace(quizId))
@@ -364,7 +368,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             await _unitOfWork.SaveAsync();
 
             // Return the details of the deleted quiz in a DeleteQuizDto
-            return new DeleteQuizDto
+            return new QuizDeleteDto
             {
                 Id = quiz.Id,
                 QuizName = quiz.QuizName,

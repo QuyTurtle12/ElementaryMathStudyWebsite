@@ -2,14 +2,10 @@
 {
     public class QuizUpdateDto
     {
-        public string Id { get; set; } = string.Empty;
         public string QuizName { get; set; } = string.Empty; 
-        public double? Criteria { get; set; }
+        public double Criteria { get; set; }
         public bool Status { get; set; } 
         public string ChapterId { get; set; } = string.Empty; 
         public string TopicId { get; set; } = string.Empty; 
-
-        public string LastUpdatedBy { get; set; } = string.Empty; 
-        public DateTimeOffset LastUpdatedTime { get; set; } 
     }
 }

@@ -3,9 +3,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Core.Base;
-using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -27,8 +25,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var quizzes = await _quizService.GetAllQuizzesAsync();
-                if (quizzes == null) return NotFound(new { message = "Quizzes not found" });
+                var quizzes = await _quizService.GetAllQuizzesAsync()
+                    ?? throw new BaseException.NotFoundException("not_found", "quizzes not found.");
                 return BaseResponse<List<QuizMainViewDto>>.OkResponse(quizzes);
             }
             catch (BaseException.CoreException coreEx)
@@ -42,15 +40,14 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/quiz/{id}
-        [Authorize(Policy = "Admin-Manager")]
         [HttpGet("{id}")]
         [SwaggerOperation(Summary = "Authorization: Admin & Manager", Description = "Retrieve a quiz by its unique identifier.")]
         public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> GetQuizById(string id)
         {
             try
             {
-                var quiz = await _quizService.GetQuizByQuizIdAsync(id);
-                if (quiz == null) return NotFound(new { message = "Quiz not found" });
+                var quiz = await _quizService.GetQuizByQuizIdAsync(id)
+                    ?? throw new BaseException.NotFoundException("not_found", "quiz not found.");
                 return BaseResponse<QuizMainViewDto>.OkResponse(quiz);
             }
             catch (BaseException.CoreException coreEx)
@@ -70,7 +67,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var quizzes = await _quizService.GetQuizzesByChapterOrTopicIdAsync(chapterId, null);
+                var quizzes = await _quizService.GetQuizzesByChapterOrTopicIdAsync(chapterId, null)
+                    ?? throw new BaseException.NotFoundException("not_found", "quizzes not found.");
                 return BaseResponse<List<QuizViewDto>>.OkResponse(quizzes);
             }
             catch (BaseException.CoreException coreEx)
@@ -90,7 +88,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var quizzes = await _quizService.GetQuizzesByChapterOrTopicIdAsync(null, topicId);
+                var quizzes = await _quizService.GetQuizzesByChapterOrTopicIdAsync(null, topicId)
+                    ?? throw new BaseException.NotFoundException("not_found", "quizzes not found.");
                 return BaseResponse<List<QuizViewDto>>.OkResponse(quizzes);
             }
             catch (BaseException.CoreException coreEx)
@@ -110,7 +109,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var quizzes = await _quizService.SearchQuizzesByNameAsync(quizName);
+                var quizzes = await _quizService.SearchQuizzesByNameAsync(quizName)
+                    ?? throw new BaseException.NotFoundException("not_found", "quiz not found.");
                 return BaseResponse<List<QuizViewDto>>.OkResponse(quizzes);
             }
             catch (BaseException.CoreException coreEx)
@@ -130,7 +130,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var quizzes = await _quizService.GetQuizzesAsync(pageNumber, pageSize);
+                var quizzes = await _quizService.GetQuizzesAsync(pageNumber, pageSize)
+                    ?? throw new BaseException.NotFoundException("not_found", "quizzes not found.");
                 return BaseResponse<BasePaginatedList<QuizMainViewDto>>.OkResponse(quizzes);
             }
             catch (BaseException.CoreException coreEx)
@@ -150,8 +151,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var createdQuiz = await _quizService.AddQuizAsync(dto);
-                return BaseResponse<QuizMainViewDto>.OkResponse(createdQuiz, "Quiz created successfully.");
+                var createdQuiz = await _quizService.AddQuizAsync(dto)
+                    ?? throw new BaseException.NotFoundException("not_found", "quizzes not found.");
+                return BaseResponse<QuizMainViewDto>.OkResponse("Quiz created successfully.");
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -166,13 +168,14 @@ namespace ElementaryMathStudyWebsite.Controllers
         // PUT: api/quiz
         [HttpPut]
         [SwaggerOperation(Summary = "Update an existing quiz.", Description = "Updates an existing quiz based on the provided data.")]
-        public async Task<ActionResult<BaseResponse<QuizUpdateDto>>> UpdateQuizAsync([FromBody] QuizUpdateDto dto)
+        public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> UpdateQuizAsync([Required] string id, [FromBody] QuizUpdateDto dto)
         {
             try
             {
                 // Update the quiz and get the updated data
-                var updatedQuizDto = await _quizService.UpdateQuizAsync(dto);
-                return BaseResponse<QuizUpdateDto>.OkResponse(updatedQuizDto, "Quiz updated successfully.");
+                var updatedQuizDto = await _quizService.UpdateQuizAsync(id, dto)
+                    ?? throw new BaseException.NotFoundException("not_found", "quiz not found.");
+                return BaseResponse<QuizMainViewDto>.OkResponse("Quiz updated successfully.");
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -189,13 +192,14 @@ namespace ElementaryMathStudyWebsite.Controllers
         // DELETE: api/quiz/{id}
         [HttpDelete("{id}")]
         [SwaggerOperation(Summary = "Delete an existing quiz.", Description = "Deletes a quiz by its unique identifier.")]
-        public async Task<ActionResult<BaseResponse<DeleteQuizDto>>> DeleteQuizAsync(string id)
+        public async Task<ActionResult<BaseResponse<QuizDeleteDto>>> DeleteQuizAsync(string id)
         {
             try
             {
                 // Delete the quiz and get the deleted quiz data
-                var deletedQuizDto = await _quizService.DeleteQuizAsync(id);
-                return BaseResponse<DeleteQuizDto>.OkResponse(deletedQuizDto, "Quiz deleted successfully.");
+                var deletedQuizDto = await _quizService.DeleteQuizAsync(id)
+                    ?? throw new BaseException.NotFoundException("not_found", "quiz not found.");
+                return BaseResponse<QuizDeleteDto>.OkResponse("Quiz deleted successfully.");
             }
             catch (BaseException.CoreException coreEx)
             {
