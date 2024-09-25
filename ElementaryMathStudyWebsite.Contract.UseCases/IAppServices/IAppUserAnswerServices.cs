@@ -10,6 +10,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<UserAnswerDTO> UpdateUserAnswerAsync(string id, UserAnswerDTO userAnswerDTO);
         Task<BasePaginatedList<object>> GetAllUserAnswersAsync(int pageNumber, int pageSize);
         Task<UserAnswerDTO> GetUserAnswerByIdAsync(string id);
-        Task<List<UserAnswerWithDetailsDTO>> GetUserAnswersByQuizIdAsync(string quizId);
+        Task<BasePaginatedList<UserAnswerWithDetailsDTO>> GetUserAnswersByQuizIdAsync(string quizId);
     }
 }
