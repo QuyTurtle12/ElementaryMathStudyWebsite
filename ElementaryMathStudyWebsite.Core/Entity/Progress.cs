@@ -1,4 +1,6 @@
-﻿namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
+﻿using ElementaryMathStudyWebsite.Core.Entity;
+
+namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 {
     public class Progress
     {

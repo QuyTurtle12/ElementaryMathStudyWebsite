@@ -24,6 +24,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<BasePaginatedList<Option>> GetOptions(int pageNumber, int pageSize);
 
         // Get option with all properties
-        Task<Option?> GetOptionById(string optionId);
+        Task<Option> GetOptionById(string optionId);
     }
 }
