@@ -85,7 +85,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: logged in user",
             Description = "Updating a user profile"
             )]
-        public async Task<ActionResult<BaseResponse<UpdateProfileDto>>> UpdateProfile([FromBody] UpdateUserDto updateUserDto)
+        public async Task<ActionResult<BaseResponse<UpdateProfileDto>>> UpdateProfile([FromBody] RequestUpdateProfileDto updateUserDto)
         {
             // Get the token from the Authorization header
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
@@ -100,7 +100,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             try
             {
-                var user = await _userServices.UpdateUserAsync(userId.ToString(), updateUserDto);
+                var user = await _userServices.UpdateProfileAsync(userId.ToString(), updateUserDto);
                 var UpdateProfileDto = _mapper.Map<UpdateProfileDto>(user);
                 UpdateProfileDto.Token = _tokenService.GenerateJwtToken(user);
 

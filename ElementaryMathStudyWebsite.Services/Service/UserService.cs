@@ -143,9 +143,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 user.RoleId = dto.RoleId;
             }
 
-            if (dto.Username != null)
+            if (dto.Username != null && dto.Username != user.Username)
             {
-                user.Username = dto.Username;
+                if (!await CheckExistingUserName(dto.Username))
+                {
+                    user.Username = dto.Username;
+                }
             }
 
             AuditFields(user);
@@ -155,6 +158,72 @@ namespace ElementaryMathStudyWebsite.Services.Service
             await _unitOfWork.SaveAsync();
 
             return user;
+        }
+
+        public async Task<User> UpdateProfileAsync(string userId, RequestUpdateProfileDto dto)
+        {
+            if (dto == null)
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "Input data not found");
+            }
+
+            // Define the condition to find the user by ID
+            Expression<Func<User, bool>> condition = u => u.Id == userId && u.DeletedBy == null;
+
+            var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
+                condition,
+                u => u.Role // Include the Role if needed
+                // Add other includes here if needed
+            );
+
+
+            if (user == null)
+            {
+                throw new BaseException.NotFoundException("not_found", "User not found");
+            }
+
+
+            // Only update properties if they are not null
+            if (dto.FullName != null)
+            {
+                user.FullName = dto.FullName;
+            }
+
+            if (dto.PhoneNumber != null)
+            {
+                user.PhoneNumber = dto.PhoneNumber;
+            }
+
+            if (dto.Gender != null)
+            {
+                user.Gender = dto.Gender;
+            }
+
+            if (dto.Username != null && dto.Username != user.Username)
+            {
+                if (!await CheckExistingUserName(dto.Username))
+                {
+                    user.Username = dto.Username;
+                }
+            }
+
+            AuditFields(user);
+
+            // Save changes
+            _unitOfWork.GetRepository<User>().Update(user);
+            await _unitOfWork.SaveAsync();
+
+            return user;
+        }
+
+        public async Task<bool> CheckExistingUserName(string username)
+        {
+            var existingUser = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Username == username && u.DeletedBy != null);
+            if (existingUser != null)
+            {
+                return true;
+            }
+            return false;
         }
 
         public async Task<User?> GetUserByIdAsync(string userId)
