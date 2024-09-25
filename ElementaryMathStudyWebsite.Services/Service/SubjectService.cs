@@ -29,14 +29,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Helper method for validation
-        private void ValidateSubject(SubjectDTO subjectDTO)
+        private static void ValidateSubject(SubjectDTO subjectDTO)
         {
             if (string.IsNullOrWhiteSpace(subjectDTO.SubjectName))
             {
                 throw new ArgumentException("Subject name is required and cannot be empty.");
             }
 
-            if (subjectDTO.Price == null || subjectDTO.Price <= 0)
+            if (subjectDTO.Price <= 0)
             {
                 throw new ArgumentException("Price must be greater than zero.");
             }

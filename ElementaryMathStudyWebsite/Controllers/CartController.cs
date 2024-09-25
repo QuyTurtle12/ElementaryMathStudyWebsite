@@ -1,9 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Utils;
-using ElementaryMathStudyWebsite.Services.Service;
-using Humanizer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -16,7 +13,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
     public class CartController : ControllerBase
     {
-        IAppOrderServices _orderService;
+        private readonly IAppOrderServices _orderService;
 
         public CartController(IAppOrderServices orderService)
         {

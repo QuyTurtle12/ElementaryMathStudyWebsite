@@ -18,7 +18,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _userServices = userServices;
         }
 
-        private void ValidateChapter(ChapterDto chapterDTO)
+        private static void ValidateChapter(ChapterDto chapterDTO)
         {
             //if (chapterDTO.Number == null)
             //{

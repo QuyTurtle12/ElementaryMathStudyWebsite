@@ -355,6 +355,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
                         CreatedTime = order?.CreatedTime ?? CoreHelper.SystemTimeNow,
                         LastUpdatedTime = order?.LastUpdatedTime ?? CoreHelper.SystemTimeNow,
+                        PurchaseDate = (order?.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null,
                     };
                     adminOrders.Add(dto);
                 }

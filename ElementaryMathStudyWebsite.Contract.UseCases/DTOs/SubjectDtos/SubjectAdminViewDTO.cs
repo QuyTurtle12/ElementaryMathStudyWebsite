@@ -2,8 +2,8 @@
 {
     public class SubjectAdminViewDTO : ISubjectBaseDTO
     {
-        public string Id { get; set; }
-        public string SubjectName { get; set; }
+        public string Id { get; set; } = string.Empty;
+        public string SubjectName { get; set; } = string.Empty;
         public double Price { get; set; } = 0;
         public bool Status { get; set; }
         public string? CreatedBy { get; set; }

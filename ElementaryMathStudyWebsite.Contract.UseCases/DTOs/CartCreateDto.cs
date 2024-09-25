@@ -2,7 +2,7 @@
 {
     public class CartCreateDto
     {
-        public IEnumerable<SubjectStudentDto> SubjectStudents { get; set; } = new List<SubjectStudentDto>();
+        public IEnumerable<SubjectStudentDto> SubjectStudents { get; set; } = [];
 
     }
 
