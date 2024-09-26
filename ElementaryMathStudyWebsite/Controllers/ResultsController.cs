@@ -23,55 +23,55 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // POST: api/results
         // Add Result
-        [Authorize(Policy = "Student")]
-        [HttpPost]
-        [SwaggerOperation(
-            Summary = "Authorization: Student",
-            Description = "Save student quiz's result"
-            )]
-        public async Task<ActionResult<BaseResponse<Result>>>AddResult(ResultCreateDto studentResult)
-        {
-            try
-            {
-                ResultProgressDto result = await _resultService.AddStudentResultAsync(studentResult);
+        //[Authorize(Policy = "Student")]
+        //[HttpPost]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Student",
+        //    Description = "Save student quiz's result"
+        //    )]
+        //public async Task<ActionResult<BaseResponse<Result>>>AddResult(ResultCreateDto studentResult)
+        //{
+        //    try
+        //    {
+        //        ResultProgressDto result = await _resultService.AddStudentResultAsync(studentResult);
 
-                if (!result.IsAddedResult)
-                {
-                    throw new BaseException.CoreException("error", "Failed to add student result");
-                }
+        //        if (!result.IsAddedResult)
+        //        {
+        //            throw new BaseException.CoreException("error", "Failed to add student result");
+        //        }
 
-                if (result.IsAddedProgress)
-                {
-                    // Return only a success message
-                    var passedQuizResponse = BaseResponse<Result>.OkResponse("Congratulations, you passed the quiz.Keep it up!");
-                    return passedQuizResponse;
-                }
+        //        if (result.IsPassedTheQuiz)
+        //        {
+        //            // Return only a success message
+        //            var passedQuizResponse = BaseResponse<Result>.OkResponse("Congratulations, you passed the quiz.Keep it up!");
+        //            return passedQuizResponse;
+        //        }
 
-                // Return only a failure message
-                var failedQuizResponse = BaseResponse<Result>.OkResponse("You worked hard, but hard is not enough, try again next time");
-                return failedQuizResponse;
+        //        // Return only a failure message
+        //        var failedQuizResponse = BaseResponse<Result>.OkResponse("You worked hard, but hard is not enough, try again next time");
+        //        return failedQuizResponse;
   
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-        }
+        //    }
+        //    catch (BaseException.CoreException coreEx)
+        //    {
+        //        // Handle specific CoreException
+        //        return StatusCode(coreEx.StatusCode, new
+        //        {
+        //            code = coreEx.Code,
+        //            message = coreEx.Message,
+        //            additionalData = coreEx.AdditionalData
+        //        });
+        //    }
+        //    catch (BaseException.BadRequestException badRequestEx)
+        //    {
+        //        // Handle specific BadRequestException
+        //        return BadRequest(new
+        //        {
+        //            errorCode = badRequestEx.ErrorDetail.ErrorCode,
+        //            errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+        //        });
+        //    }
+        //}
 
         // GET: api/results
         // Get student result of specific quiz

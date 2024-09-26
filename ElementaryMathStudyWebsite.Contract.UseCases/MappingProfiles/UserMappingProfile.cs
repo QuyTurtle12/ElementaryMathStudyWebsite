@@ -12,6 +12,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles
         {
             // Define the mapping configuration
             CreateMap<User, UserResponseDto>();
+            CreateMap<Role, RoleDto>();
             CreateMap<CreateUserDto, User>();
             CreateMap<User, UserProfile>();
             CreateMap<User, UpdateProfileDto>();

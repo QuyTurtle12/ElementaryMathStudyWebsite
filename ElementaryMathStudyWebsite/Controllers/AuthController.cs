@@ -5,6 +5,8 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
+using AutoMapper;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -15,12 +17,16 @@ namespace ElementaryMathStudyWebsite.Controllers
         private readonly IAppAuthService _authService;
         private readonly ITokenService _tokenService;
         private readonly IAppUserServices _userServices;
+        private readonly IRoleService _roleService;
+        private readonly IMapper _mapper;
 
-        public AuthController(IAppAuthService authService, ITokenService tokenService, IAppUserServices userServices)
+        public AuthController(IAppAuthService authService, ITokenService tokenService, IAppUserServices userServices, IRoleService roleService, IMapper mapper)
         {
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
             _tokenService = tokenService;
             _userServices = userServices;
+            _roleService = roleService;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -202,6 +208,54 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 await _authService.VerifyEmailAsync(token);
                 var response = BaseResponse<String>.OkResponse("Email verified successfully.");
+
+                return Ok(response);
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
+        [HttpGet]
+        [Route("role-pagination")]
+        [SwaggerOperation(
+            Summary = "Authorization: N/A",
+            Description = "Get page with all roles "
+            )]
+        public async Task<IActionResult> GetAllRoles([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var paginatedRoles = await _roleService.GetAllRolesAsync(pageNumber, pageSize);
+
+                // Map users to UserResponseDto
+                var roleDtos = _mapper.Map<IEnumerable<RoleDto>>(paginatedRoles.Items);
+
+                // Create a new paginated list of UserResponseDto
+                var paginatedRoleDtos = new BasePaginatedList<RoleDto>(
+                    roleDtos.ToList(),
+                    paginatedRoles.TotalItems,
+                    paginatedRoles.CurrentPage,
+                    paginatedRoles.PageSize
+                );
+
+                var response = BaseResponse<BasePaginatedList<RoleDto>>.OkResponse(paginatedRoleDtos);
 
                 return Ok(response);
             }
