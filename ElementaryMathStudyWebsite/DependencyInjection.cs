@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ProgressMappings;
+using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.OrderMappings;
 
 
 namespace ElementaryMathStudyWebsite
@@ -77,6 +78,7 @@ namespace ElementaryMathStudyWebsite
             // Register AutoMapper with all profiles
             services.AddAutoMapper(typeof(UserMappingProfile)); // Add any mapping profiles here
             services.AddAutoMapper(typeof(ProgressMappingProfile));
+            services.AddAutoMapper(typeof(OrderMappingProfile));
         }
 
         public static void AddAuthentication(this IServiceCollection services, IConfiguration configuration)

@@ -111,11 +111,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 // Check if the finished topic belongs to the subject
                 var finishedTopicInfo = await _unitOfWork.GetRepository<Topic>()
                     .Entities
-                    .Include(t => t.Chapter) // Include the Chapter entity for eager loading
                     .Where(t => t.QuizId != null &&
                                 t.QuizId.Equals(progress.QuizId) &&
                                 t.Chapter != null &&
                                 t.Chapter.SubjectId.Equals(subjectId))
+                    .Include(t => t.Chapter) // Include the Chapter entity for eager loading
                     .Select(t => new { t.Id, t.TopicName })
                     .FirstOrDefaultAsync(); // Retrieve the first matching record
 

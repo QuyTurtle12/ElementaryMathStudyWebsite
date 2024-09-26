@@ -1,4 +1,5 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+﻿using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
@@ -11,15 +12,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
     public class OrderDetailService : IAppOrderDetailServices
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IAppUserServices _userService;
-        private readonly IAppSubjectServices _subjectService;
+        private readonly IMapper _mapper;
 
         // Constructor
-        public OrderDetailService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppSubjectServices subjectService)
+        public OrderDetailService(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
-            _userService = userService;
-            _subjectService = subjectService;
+            _mapper = mapper;
         }
 
         // Add Order Detail to database
@@ -44,27 +43,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             // Get all order details from database
             // If null then return empty collection
-            IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>().Entities;
+            IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>()
+                .Entities
+                .Where(od => od.OrderId.Equals(orderId))
+                .Include(od => od.Subject)
+                .Include(od => od.User);
+
             IList<OrderDetailViewDto> detailDtos = new List<OrderDetailViewDto>();
 
-            var allDetails = query.ToList();
+            var allDetails = await query.ToListAsync();
 
             // Map orders to OrderViewDto
             foreach (var detail in allDetails)
             {
-                if (detail.OrderId == orderId)
-                {
-                    string? studentName = await _userService.GetUserNameAsync(detail.StudentId);
-                    string? subjectName = await _subjectService.GetSubjectNameAsync(detail.SubjectId);
-                    OrderDetailViewDto dto = new()
-                    {
-                        SubjectId = detail.SubjectId,
-                        SubjectName = subjectName,
-                        StudentId = detail.StudentId,
-                        StudentName = studentName
-                    };
-                    detailDtos.Add(dto);
-                }
+                var dto = _mapper.Map<OrderDetailViewDto>(detail);
+
+                detailDtos.Add(dto);
             }
 
             // If pageNumber or pageSize are 0 or negative, show all order details without pagination
