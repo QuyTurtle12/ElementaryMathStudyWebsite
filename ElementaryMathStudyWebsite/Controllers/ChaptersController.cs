@@ -21,14 +21,14 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             _chapterService = chapterServices; 
         }
-        // GET: api/chapters/manager
-        // Get chapters for Manager & Admin
-        [Authorize(Policy = "Admin-Manager")]
+        // GET: api/chapters/Content
+        // Get chapters for Content & Admin
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet]
-        [Route("manager")]
+        [Route("Content")]
         [SwaggerOperation(
-            Summary = "Authorization: Manager & Admin",
-            Description = "View chapter list for Manager and Admin Role. Insert -1 to get all items"
+            Summary = "Authorization: Content & Admin",
+            Description = "View chapter list for Content and Admin Role. Insert -1 to get all items"
         )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterAdminViewDto?>>>> GetChapters(int pageNumber = -1, int pageSize = -1)
         {
@@ -59,14 +59,14 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // GET: api/chapters/manager/{id}
-        // Get chapters for Manager & Admin
-        [Authorize(Policy = "Admin-Manager")]
+        // GET: api/chapters/Content/{id}
+        // Get chapters for Content & Admin
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet]
-        [Route("manager/{id}")]
+        [Route("Content/{id}")]
         [SwaggerOperation(
-            Summary = "Authorization: Manager & Admin",
-            Description = "View chapter for Manager and Admin Role."
+            Summary = "Authorization: Content & Admin",
+            Description = "View chapter for Content and Admin Role."
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterAdminViewDto?>>>> GetChapter(string id)
         {
@@ -259,10 +259,10 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         }
 
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("search/admin")]
         [SwaggerOperation(
-            Summary = "Authorization: Admin-Manager",
+            Summary = "Authorization: Admin-Content",
             Description = "Search chapter by name for admin, pageSize = -1 to have it show all."
         )]
         public async Task<IActionResult> SearchChapterForAdmin([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)
@@ -295,10 +295,10 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // POST: api/chapters/
         // Add chapters
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpPost]
         [SwaggerOperation(
-            Summary = "Authorization: Admin, Content Manager",
+            Summary = "Authorization: Admin, Content",
             Description = "Create new chapter"
         )]
         public async Task<IActionResult> CreateChapter([FromBody] ChapterDto chapterDTO)
@@ -365,10 +365,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut("{id}")]
         [SwaggerOperation(
-            Summary = "Authorization: Admin, Content Manager",
+            Summary = "Authorization: Admin, Content",
             Description = "Update chapter"
         )]
         public async Task<IActionResult> UpdateChapter(string id, [FromBody] ChapterUpdateDto chapterDTO)
@@ -405,7 +405,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         //[Authorize(Policy = "Admin-Content")]
         //[HttpPost("change-order-chapter")]
         //[SwaggerOperation(
-        //    Summary = "Authorization: Admin, Content Manager",
+        //    Summary = "Authorization: Admin, Content",
         //    Description = "Change order number chapter."
         //)]
         //public async Task<IActionResult> ChangeChapterOrder(int currentChapterNumber, int newChapterNumber)
@@ -472,7 +472,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         [Authorize(Policy = "Admin-Content")]
         [HttpPut("/StatusChange/{id}")]
         [SwaggerOperation(
-            Summary = "Authorization: Admin, Content Manager",
+            Summary = "Authorization: Admin, Content",
             Description = "Change chapter status from true to false and otherwise."
         )]
         public async Task<IActionResult> ChangeChapterStatus(string id)
@@ -511,10 +511,10 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
 
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut("/rollbackChapter/{id}")]
         [SwaggerOperation(
-            Summary = "Authorization: Admin & Content Manager",
+            Summary = "Authorization: Admin & Content",
             Description = "Rollback chapter was deleted"
         )]
         public async Task<IActionResult> rollbackChapterDeleted([Required] string id)
@@ -553,11 +553,11 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
 
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpDelete]
         [Route("{id}")]
         [SwaggerOperation(
-            Summary = "Authorization: Admin & Content Manager",
+            Summary = "Authorization: Admin & Content",
             Description = "Delete a chapter"
         )]
         public async Task<IActionResult> DeleteChapter([Required] string id)
@@ -596,12 +596,12 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
 
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet]
-        [Route("manager/deleted")]
+        [Route("Content/deleted")]
         [SwaggerOperation(
-            Summary = "Authorization: Manager & Admin",
-            Description = "View list chapter was deleted for Manager and Admin Role. Insert -1 to get all items"
+            Summary = "Authorization: Content & Admin",
+            Description = "View list chapter was deleted for Content and Admin Role. Insert -1 to get all items"
         )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterAdminDelete?>>>> GetChaptersDeleted(int pageNumber = -1, int pageSize = -1)
         {

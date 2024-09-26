@@ -453,18 +453,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             var existingNumbers = new HashSet<int>();
 
+            var currentNumbers = await _unitOfWork.GetRepository<Chapter>().Entities
+                .Where(c => c.SubjectId == subjectId && !chapterIds.Contains(c.Id))
+                .Select(c => c.Number)
+                .ToListAsync();
+
             foreach (var chapter in chapters)
             {
                 var dto = chaptersToUpdate.FirstOrDefault(c => c.Id == chapter.Id);
                 if (dto != null && dto.Number.HasValue)
                 {
-                    // Check for duplicate numbers in the database
-                    var duplicateNumber = await _unitOfWork.GetRepository<Chapter>().Entities
-                        .AnyAsync(c => c.SubjectId == subjectId && c.Number == dto.Number.Value && c.Id != chapter.Id);
-
-                    if (duplicateNumber)
+                    if (chapter.Number != dto.Number.Value)
                     {
-                        throw new BaseException.BadRequestException("duplicate_number", $"Duplicate chapter number: {dto.Number.Value}");
+                        var duplicateNumber = await _unitOfWork.GetRepository<Chapter>().Entities
+                            .AnyAsync(c => c.SubjectId == subjectId && c.Number == dto.Number.Value && !chapterIds.Contains(c.Id));
+
+                        if (duplicateNumber)
+                        {
+                            throw new BaseException.BadRequestException("duplicate_number", $"Duplicate chapter number: {dto.Number.Value}");
+                        }
                     }
 
                     if (existingNumbers.Contains(dto.Number.Value))
@@ -475,6 +482,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     existingNumbers.Add(dto.Number.Value);
                     chapter.Number = dto.Number.Value;
                     _unitOfWork.GetRepository<Chapter>().Update(chapter);
+                }
+            }
+
+            foreach (var number in existingNumbers)
+            {
+                if (currentNumbers.Contains(number))
+                {
+                    throw new BaseException.BadRequestException("duplicate_number", $"Duplicate chapter number: {number}");
                 }
             }
 
