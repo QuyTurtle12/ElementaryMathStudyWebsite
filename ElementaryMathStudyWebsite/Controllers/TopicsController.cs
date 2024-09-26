@@ -137,9 +137,9 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         [HttpPost]
         [Route("create")]
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [SwaggerOperation(
-            Summary = "Authorization: Admin-Manager",
+            Summary = "Authorization: Admin & Content Manager",
             Description = "Create Topic"
             )]
         public async Task<ActionResult<string>> AddTopic(TopicCreateDto topicCreateDto)
@@ -162,9 +162,9 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         [HttpPut]
         [Route("update/{id}")]
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [SwaggerOperation(
-            Summary = "Authorization: Admin-Manager",
+            Summary = "Authorization: Admin & Content Manager",
             Description = "Update Topic"
             )]
         public async Task<ActionResult<string>> UpdateTopic(string id, [FromBody] TopicCreateDto topicCreateDto)
@@ -187,9 +187,9 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         [HttpDelete]
         [Route("delete/{id}")]
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [SwaggerOperation(
-            Summary = "Authorization: Admin-Manager",
+            Summary = "Authorization: Admin & Content Manager",
             Description = "Delete Topic"
             )]
         public async Task<IActionResult> DeleteTopic(string id)

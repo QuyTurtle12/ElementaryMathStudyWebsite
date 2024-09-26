@@ -19,7 +19,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             _optionService = optionService;
         }
 
-        // POST: api/options/{id}
+        // POST: api/options
         [Authorize(Policy = "Admin-Content")]
         [HttpPost]
         [SwaggerOperation(

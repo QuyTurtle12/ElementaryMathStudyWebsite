@@ -299,6 +299,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Calculate percentage and round to 2 decimal places
             double subjectPercentage = totalQuizzes > 0 ? Math.Round((double)completedQuizzes / totalQuizzes * 100, 2) : 0;
 
+            if (completedQuizzes == totalQuizzes)
+            {
+                //  Round up values like 99.99
+                subjectPercentage = Math.Ceiling(subjectPercentage);
+            }
+
+            // Ensure it doesn't exceed 100
+            subjectPercentage = Math.Min(subjectPercentage, 100); 
+
             return subjectPercentage;
         }
 
