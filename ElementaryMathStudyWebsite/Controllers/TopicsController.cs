@@ -6,6 +6,7 @@ using ElementaryMathStudyWebsite.Core.Base;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Annotations;
+using ElementaryMathStudyWebsite.Services.Service;
 
 
 namespace ElementaryMathStudyWebsite.Controllers
@@ -187,7 +188,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         [HttpDelete]
         [Route("delete/{id}")]
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [SwaggerOperation(
             Summary = "Authorization: Admin-Manager",
             Description = "Delete Topic"
@@ -196,21 +197,45 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                var deletedTopicDto = await _topicService.DeleteTopicAsync(id);
-                return Ok(deletedTopicDto);
+                var result = await _topicService.DeleteTopicAsync(id);
+
+                if (result)
+                {
+                    var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
+                    return Ok(successResponse);
+
+                }
+                var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
+
+                return Ok(failedResponse);
             }
-            catch (KeyNotFoundException ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return NotFound(ex.Message);
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
             }
-            catch (InvalidOperationException ex)
+            catch (BaseException.BadRequestException badRequestEx)
             {
-                return BadRequest(ex.Message);
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
-            catch (Exception)
+            catch (BaseException.NotFoundException notFoundEx)
             {
-                // Log the exception (not shown here)
-                return StatusCode(500, "An unexpected error occurred.");
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 

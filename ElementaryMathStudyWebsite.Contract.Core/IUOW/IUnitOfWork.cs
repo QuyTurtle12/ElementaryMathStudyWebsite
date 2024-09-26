@@ -1,4 +1,6 @@
-﻿namespace ElementaryMathStudyWebsite.Contract.Core.IUOW
+﻿using ElementaryMathStudyWebsite.Core.Base;
+
+namespace ElementaryMathStudyWebsite.Contract.Core.IUOW
 {
     public interface IUnitOfWork : IDisposable
     {
@@ -8,5 +10,6 @@
         void BeginTransaction();
         void CommitTransaction();
         void RollBack();
+        bool IsValid<T>(string id) where T : BaseEntity;
     }
 }

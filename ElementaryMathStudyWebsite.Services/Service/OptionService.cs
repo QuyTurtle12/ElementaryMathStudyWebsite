@@ -22,8 +22,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Add option to database
         public async Task<OptionViewDto> AddOption(OptionCreateDto createDto)
         {
-            _ = await _unitOfWork.GetRepository<Question>().GetByIdAsync(createDto.QuestionId)
-                ?? throw new BaseException.NotFoundException("not_found", "Question ID not found");
+            if (!_unitOfWork.IsValid<Question>(createDto.QuestionId)) throw new BaseException.NotFoundException("not_found", "Question ID not found");
 
             Option option = new()
             {
@@ -53,7 +52,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             Option? option;
 
-            if (IsValidOption(optionId))
+            if (_unitOfWork.IsValid<Option>(optionId))
                 option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionId);
             else throw new BaseException.NotFoundException("not_found", "Option ID not found");
 
@@ -69,7 +68,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             Option? option;
 
-            if (IsValidOption(optionId))
+            if (_unitOfWork.IsValid<Option>(optionId))
                 option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionId);
             else throw new BaseException.NotFoundException("not_found", "Option ID not found");
 
@@ -79,7 +78,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get options of a question for general user
         public async Task<BasePaginatedList<OptionViewDto>> GetOptionDtosByQuestion(int pageNumber, int pageSize, string questionId)
         {
-            var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(questionId) ?? throw new BaseException.BadRequestException("bad_request", "Invalid question ID");
+
+            if (!_unitOfWork.IsValid<Question>(questionId)) throw new BaseException.NotFoundException("not_found", "Question ID not found");
 
             IQueryable<Option> query = _unitOfWork.GetRepository<Option>().Entities.Where(q => q.QuestionId == questionId && q.DeletedBy == null);
             List<OptionViewDto> optionViewDtos = [];
@@ -135,21 +135,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return await _unitOfWork.GetRepository<Option>().GetPagging(query, pageNumber, pageSize);
         }
 
-        public bool IsValidOption(string optionId)
-        {
-            Option? option = _unitOfWork.GetRepository<Option>().GetById(optionId);
-
-            return (option is not null && option.DeletedBy is null);
-        }
-
         // Update an option
         public async Task<OptionViewDto> UpdateOption(string optionId, OptionUpdateDto optionUpdateDto)
         {
             Option? option;
 
-            if (IsValidOption(optionId))
+            if (_unitOfWork.IsValid<Option>(optionId))
                 option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionId);
-            else throw new BaseException.BadRequestException("bad_request", "Invalid question ID");
+            else throw new BaseException.NotFoundException("not_found", "Option ID not found");
 
             option!.Answer = optionUpdateDto.Answer;
             option.IsCorrect = optionUpdateDto.IsCorrect;

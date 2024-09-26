@@ -190,26 +190,52 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // DELETE: api/quiz/{id}
+        [Authorize(Policy = "Admin-Content")]
         [HttpDelete("{id}")]
-        [SwaggerOperation(Summary = "Delete an existing quiz.", Description = "Deletes a quiz by its unique identifier.")]
-        public async Task<ActionResult<BaseResponse<QuizDeleteDto>>> DeleteQuizAsync(string id)
+        [SwaggerOperation(Summary = "Delete a quiz.", Description = "Marks a quiz as deleted.")]
+        public async Task<IActionResult> DeleteQuizAsync(string id)
         {
             try
             {
-                // Delete the quiz and get the deleted quiz data
-                var deletedQuizDto = await _quizService.DeleteQuizAsync(id)
-                    ?? throw new BaseException.NotFoundException("not_found", "quiz not found.");
-                return BaseResponse<QuizDeleteDto>.OkResponse("Quiz deleted successfully.");
+                var result = await _quizService.DeleteQuizAsync(id);
+
+                if (result)
+                {
+                    var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
+                    return Ok(successResponse);
+
+                }
+                var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
+
+                return Ok(failedResponse);
             }
             catch (BaseException.CoreException coreEx)
             {
-                // Handle core exceptions
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
-                // Handle bad request exceptions
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
             }
         }
     }

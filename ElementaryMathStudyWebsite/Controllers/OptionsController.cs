@@ -52,6 +52,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
             }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
         }
 
 
@@ -98,6 +107,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
             }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
         }
 
 
@@ -108,7 +126,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: N/A",
             Description = "View all options of 1 question"
             )]
-        public async Task<IActionResult> GetOptionDtosByQuestion([Required] string questionId,int pageNumber = -1, int pageSize = -1)
+        public async Task<IActionResult> GetOptionDtosByQuestion([Required] string questionId, int pageNumber = -1, int pageSize = -1)
         {
             try
             {
@@ -134,6 +152,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
             }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
         }
 
 
@@ -145,7 +172,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Admin & Content Manager",
             Description = "Edit an option (of a question)"
             )]
-        public async Task<IActionResult> UpdateOption([Required]string id, [Required] OptionUpdateDto dto)
+        public async Task<IActionResult> UpdateOption([Required] string id, [Required] OptionUpdateDto dto)
         {
             try
             {
@@ -170,6 +197,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }
