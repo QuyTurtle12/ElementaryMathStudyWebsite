@@ -1,4 +1,5 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+﻿using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
@@ -7,6 +8,7 @@ using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Store;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -14,11 +16,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userServices;
+        private readonly IMapper _mapper;
 
-        public ChapterService(IUnitOfWork unitOfWork, IAppUserServices userServices)
+        public ChapterService(IUnitOfWork unitOfWork, IAppUserServices userServices, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _userServices = userServices;
+            _mapper = mapper;
         }
 
         private void ValidateChapter(ChapterDto chapterDTO)
@@ -397,8 +401,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
 
-
-
         public async Task<bool> UpdateChapterNumbersAsync(string subjectId, ChapterNumberDto chapterNumberDto)
         {
             if (string.IsNullOrWhiteSpace(subjectId))
@@ -408,7 +410,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (chapterNumberDto == null)
             {
-                throw new BaseException.BadRequestException("invalid","The chapterNumberDto field is required.");
+                throw new BaseException.BadRequestException("invalid", "The chapterNumberDto field is required.");
             }
 
             var chaptersToUpdate = chapterNumberDto.ChapterNumbersOrder.ToList();
@@ -451,6 +453,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.NotFoundException("not_found", $"Chapter ID(s) not found: {string.Join(", ", missingIds)}");
             }
 
+            // Get the total number of chapters in the subject
+            var totalChaptersInSubject = await _unitOfWork.GetRepository<Chapter>().Entities
+                .CountAsync(c => c.SubjectId == subjectId);
+
             var existingNumbers = new HashSet<int>();
 
             var currentNumbers = await _unitOfWork.GetRepository<Chapter>().Entities
@@ -463,6 +469,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 var dto = chaptersToUpdate.FirstOrDefault(c => c.Id == chapter.Id);
                 if (dto != null && dto.Number.HasValue)
                 {
+                    // Check if the new number is within the valid range
+                    if (dto.Number.Value > totalChaptersInSubject)
+                    {
+                        throw new BaseException.BadRequestException("invalid_number", $"Chapter Number must be less than or equal to the total number of chapters in the subject ({totalChaptersInSubject}).");
+                    }
+
                     if (chapter.Number != dto.Number.Value)
                     {
                         var duplicateNumber = await _unitOfWork.GetRepository<Chapter>().Entities
@@ -510,7 +522,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
             var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
             var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
-            ChapterAdminViewDto dto = new ChapterAdminViewDto {
+            ChapterAdminViewDto dto = new ChapterAdminViewDto
+            {
                 Id = chapter.Id,
                 Number = chapter.Number,
                 ChapterName = chapter.ChapterName,
@@ -530,6 +543,55 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
 
             return dto;
+            //var chapterInfo = await _unitOfWork.GetRepository<Chapter>()
+            //    .Entities
+            //    .Where(c => c.Id.Equals(Id))
+            //    .Include(c=>c.Subject)
+            //    .Include(c=>c.Quiz)
+            //    .Select(c => new
+            //    {
+            //        c.Id,
+            //        c.Number,
+            //        c.ChapterName,
+            //        c.Status,
+            //        c.SubjectId,
+            //        SubjectName = c.Subject.SubjectName,
+            //        c.QuizId,
+            //        QuizName = c.Quiz.QuizName,
+            //        c.CreatedBy,
+            //        c.CreatedTime,
+            //        CreatorName = c.User.FullName,
+            //        CreatorPhone = c.User.PhoneNumber,
+            //        c.LastUpdatedBy,
+            //        c.LastUpdatedTime,
+            //        LastUpdatedPersonName = c.User.LastUpdatedByUser.FullName,
+            //        LastUpdatedPersonPhone = c.User.LastUpdatedByUser.PhoneNumber,
+            //    })
+            //    .FirstOrDefaultAsync();
+
+            //if (chapterInfo == null || chapterInfo.Status == false) return null;
+
+            //ChapterAdminViewDto dto = new ChapterAdminViewDto
+            //{
+            //    Id = chapterInfo.Id,
+            //    Number = chapterInfo.Number,
+            //    ChapterName = chapterInfo.ChapterName,
+            //    Status = chapterInfo.Status,
+            //    SubjectId = chapterInfo.SubjectId,
+            //    SubjectName = chapterInfo.SubjectName ?? string.Empty,
+            //    QuizId = chapterInfo.QuizId,
+            //    QuizName = chapterInfo.QuizName ?? string.Empty,
+            //    CreatedBy = chapterInfo.CreatedBy,
+            //    CreatedTime = chapterInfo.CreatedTime,
+            //    CreatorName = chapterInfo.CreatorName ?? string.Empty,
+            //    CreatorPhone = chapterInfo.CreatorPhone ?? string.Empty,
+            //    LastUpdatedBy = chapterInfo.LastUpdatedBy,
+            //    LastUpdatedTime = chapterInfo.LastUpdatedTime,
+            //    LastUpdatedPersonName = chapterInfo.LastUpdatedPersonName ?? string.Empty,
+            //    LastUpdatedPersonPhone = chapterInfo.LastUpdatedPersonPhone ?? string.Empty
+            //};
+
+            //return dto;
         }
 
 
@@ -541,18 +603,52 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
             var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
-            ChapterViewDto dto = new ChapterViewDto { 
-                Id = chapter.Id, 
-                Number = chapter.Number, 
-                ChapterName = chapter.ChapterName, 
-                Status = chapter.Status, 
-                SubjectId = chapter.SubjectId, 
-                SubjectName = subject?.SubjectName ?? string.Empty, 
-                QuizId = chapter.QuizId, 
-                QuizName = quiz?.QuizName ?? string.Empty 
+            ChapterViewDto dto = new ChapterViewDto
+            {
+                Id = chapter.Id,
+                Number = chapter.Number,
+                ChapterName = chapter.ChapterName,
+                Status = chapter.Status,
+                SubjectId = chapter.SubjectId,
+                SubjectName = subject?.SubjectName ?? string.Empty,
+                QuizId = chapter.QuizId,
+                QuizName = quiz?.QuizName ?? string.Empty
             };
 
             return dto;
+            //var chapterInfo = await _unitOfWork.GetRepository<Chapter>()
+            //    .Entities
+            //    .Where(c => c.Id.Equals(Id))
+            //    .Include(c => c.Subject)
+            //    //.Include(c => c.Quiz)
+            //    .Select(c => new
+            //    {
+            //        c.Id,
+            //        c.Number,
+            //        c.ChapterName,
+            //        c.Status,
+            //        c.SubjectId,
+            //        SubjectName = c.Subject.SubjectName,
+            //        c.QuizId,
+            //        QuizName = c.Quiz.QuizName
+            //    })
+            //    .FirstOrDefaultAsync();
+
+            //if (chapterInfo == null || chapterInfo.Status == false) return null;
+
+            //ChapterViewDto dto = new ChapterViewDto
+            //{
+            //    Id = chapterInfo.Id,
+            //    Number = chapterInfo.Number,
+            //    ChapterName = chapterInfo.ChapterName,
+            //    Status = chapterInfo.Status,
+            //    SubjectId = chapterInfo.SubjectId,
+            //    SubjectName = chapterInfo.SubjectName ?? string.Empty,
+            //    QuizId = chapterInfo.QuizId,
+            //    QuizName = chapterInfo.QuizName ?? string.Empty
+            //};
+
+            //return dto;
         }
         public async Task<BasePaginatedList<ChapterViewDto>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId)
         {

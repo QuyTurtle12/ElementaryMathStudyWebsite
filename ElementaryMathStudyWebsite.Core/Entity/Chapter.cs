@@ -1,4 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Base;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
@@ -28,6 +29,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public virtual ICollection<Topic>? Topics { get; set; } // Navigation property, one chapter has many topics
         [JsonIgnore]
         public virtual Quiz? Quiz { get; set; } // Navigation property, one chapter can only has one quiz
-
+        //[JsonIgnore]
+        //public virtual User? User { get; set; }
     }
 }
