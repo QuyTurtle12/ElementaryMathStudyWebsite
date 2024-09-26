@@ -9,6 +9,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ProgressM
         public ProgressMappingProfile()
         {
             // Define the mapping configuration
+
+            // Mapping Progress to ProgressViewDto
             CreateMap<Progress, ProgressViewDto>()
            .ForMember(dest => dest.SubjectName, opt => opt.MapFrom(src => src.Subject.SubjectName)); // Adjust according to your Subject entity
         }

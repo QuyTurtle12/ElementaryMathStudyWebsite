@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ProgressMappings;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.OrderMappings;
+using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ResultMappings;
 
 
 namespace ElementaryMathStudyWebsite
@@ -79,6 +80,8 @@ namespace ElementaryMathStudyWebsite
             services.AddAutoMapper(typeof(UserMappingProfile)); // Add any mapping profiles here
             services.AddAutoMapper(typeof(ProgressMappingProfile));
             services.AddAutoMapper(typeof(OrderMappingProfile));
+            services.AddAutoMapper(typeof(ResultMappingProfile));
+
         }
 
         public static void AddAuthentication(this IServiceCollection services, IConfiguration configuration)
