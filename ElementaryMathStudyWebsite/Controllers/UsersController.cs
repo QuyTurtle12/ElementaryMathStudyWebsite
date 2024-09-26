@@ -214,7 +214,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (createUserDto == null)
             {
-                return BadRequest("User data is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User data is required.");
             }
 
             if (!ModelState.IsValid)
@@ -435,7 +435,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
             try
@@ -500,17 +500,18 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
             if (updateUserDto == null)
             {
-                return BadRequest("User data is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User data is required.");
             }
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+
             }
 
             try
@@ -572,7 +573,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
             try
@@ -633,7 +634,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
             try
@@ -698,7 +699,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(parentId))
             {
-                return BadRequest("Parent ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "Parent ID is required.");
             }
 
             try

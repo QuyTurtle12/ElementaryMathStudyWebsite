@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -280,5 +281,54 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("role/create")]
+        [Authorize(Policy = "Admin-Manager")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Creating new role"
+            )]
+        public async Task<IActionResult> CreateRole([FromBody] CreateRoleDto createRoleDto)
+        {
+            if (createRoleDto == null)
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "Role data is required.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var role = await _roleService.CreateRoleAsync(createRoleDto);
+                var roleResponseDto = _mapper.Map<RoleDto>(role);
+
+                var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
+
+                return Ok(response);
+
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
     }
 }
