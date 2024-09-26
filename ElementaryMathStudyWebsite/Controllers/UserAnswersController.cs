@@ -24,7 +24,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         public async Task<IActionResult> GetAllUserAnswers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _userAnswerService.GetAllUserAnswersAsync(pageNumber, pageSize);
-            var response = BaseResponse<BasePaginatedList<object>>.OkResponse(result);
+            var response = BaseResponse<BasePaginatedList<UserAnswerWithDetailsDTO>>.OkResponse(result);
             return Ok(response);
         }
 

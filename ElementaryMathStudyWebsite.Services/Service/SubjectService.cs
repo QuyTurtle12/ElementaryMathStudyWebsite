@@ -1,4 +1,5 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+﻿using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
@@ -17,11 +18,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userService;
+        private readonly IMapper _mapper;
 
-        public SubjectService(IUnitOfWork unitOfWork, IAppUserServices userService)
+        public SubjectService(IUnitOfWork unitOfWork, IAppUserServices userService, IMapper mapper)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _userService = userService;
+            _mapper = mapper;
         }
 
         // Helper method for validation
@@ -53,6 +56,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("duplicate_name", $"A subject with the name '{subjectDTO.SubjectName}' already exists.");
             }
 
+            //var subject = _mapper.Map<Subject>(subjectDTO);
             var subject = new Subject
             {
                 SubjectName = subjectDTO.SubjectName,
@@ -62,7 +66,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             AuditFields(subject, isCreating: true);
 
-            await _unitOfWork.GetRepository<Subject>().UpdateAsync(subject);
+            await _unitOfWork.GetRepository<Subject>().InsertAsync(subject);
             await _unitOfWork.SaveAsync();
 
             User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
@@ -129,13 +133,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     }
                     else
                     {
-                        return (ISubjectBaseDTO)new SubjectDTO
-                        {
-                            Id = subject.Id,
-                            SubjectName = subject.SubjectName,
-                            Price = subject.Price,
-                            Status = subject.Status
-                        };
+                        var subjectDTO = _mapper.Map<SubjectDTO>(subject);
+
+                        return subjectDTO;
+                        //return (ISubjectBaseDTO)new SubjectDTO
+                        //{
+                        //    Id = subject.Id,
+                        //    SubjectName = subject.SubjectName,
+                        //    Price = subject.Price,
+                        //    Status = subject.Status
+                        //};
                     }
                 }).ToList();
 
@@ -169,13 +176,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
                 else
                 {
-                    return (ISubjectBaseDTO)new SubjectDTO
-                    {
-                        Id = subject.Id,
-                        SubjectName = subject.SubjectName,
-                        Price = subject.Price,
-                        Status = subject.Status
-                    };
+                    var subjectDTO = _mapper.Map<SubjectDTO>(subject);
+
+                    return subjectDTO;
+                    //return (ISubjectBaseDTO)new SubjectDTO
+                    //{
+                    //    Id = subject.Id,
+                    //    SubjectName = subject.SubjectName,
+                    //    Price = subject.Price,
+                    //    Status = subject.Status
+                    //};
                 }
             }).ToList();
 
@@ -215,13 +225,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
             else
             {
-                return new SubjectDTO
-                {
-                    Id = subject.Id,
-                    SubjectName = subject.SubjectName,
-                    Price = subject.Price,
-                    Status = subject.Status
-                };
+                var subjectDTO = _mapper.Map<SubjectDTO>(subject);
+
+                return subjectDTO;
+                //return new SubjectDTO
+                //{
+                //    Id = subject.Id,
+                //    SubjectName = subject.SubjectName,
+                //    Price = subject.Price,
+                //    Status = subject.Status
+                //};
             }
         }
 
@@ -252,13 +265,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
                 var allSubjects = await query.ToListAsync();
-                var subjectDtos = allSubjects.Select(s => new SubjectDTO
-                {
-                    Id = s.Id,
-                    SubjectName = s.SubjectName,
-                    Price = s.Price,
-                    Status = s.Status
-                }).ToList();
+                var subjectDtos = _mapper.Map<List<SubjectDTO>>(allSubjects);
+                //var subjectDtos = allSubjects.Select(s => new SubjectDTO
+                //{
+                //    Id = s.Id,
+                //    SubjectName = s.SubjectName,
+                //    Price = s.Price,
+                //    Status = s.Status
+                //}).ToList();
 
                 if (subjectDtos.Count == 0)
                 {
@@ -269,13 +283,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             var paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
-            var subjectDtosPaginated = paginatedSubjects.Items.Select(s => new SubjectDTO
-            {
-                Id = s.Id,
-                SubjectName = s.SubjectName,
-                Price = s.Price,
-                Status = s.Status
-            }).ToList();
+            var subjectDtosPaginated = _mapper.Map<List<SubjectDTO>>(paginatedSubjects.Items);
+            //var subjectDtosPaginated = paginatedSubjects.Items.Select(s => new SubjectDTO
+            //{
+            //    Id = s.Id,
+            //    SubjectName = s.SubjectName,
+            //    Price = s.Price,
+            //    Status = s.Status
+            //}).ToList();
 
             if (subjectDtosPaginated.Count == 0)
             {

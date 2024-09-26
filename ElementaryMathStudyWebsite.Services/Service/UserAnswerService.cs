@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Entity;
+using AutoMapper;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -12,55 +13,50 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userService;
+        private readonly IMapper _mapper;
 
         public UserAnswerService(
             IUnitOfWork unitOfWork,
-            IAppUserServices userService)
+            IAppUserServices userService,
+            IMapper mapper)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<BasePaginatedList<object>> GetAllUserAnswersAsync(int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<UserAnswerWithDetailsDTO>> GetAllUserAnswersAsync(int pageNumber, int pageSize)
         {
-            IQueryable<UserAnswer> query = _unitOfWork.GetRepository<UserAnswer>().Entities;
+            // Get the queryable for UserAnswer
+            IQueryable<UserAnswer> query = _unitOfWork.GetRepository<UserAnswer>().Entities
+                .Include(u => u.Question) // Include related Question entity
+                .Include(u => u.Option)   // Include related Option entity
+                .Include(u => u.User);    // Include related User entity
 
+            // If page size is -1 or pagination parameters are invalid, fetch all data without pagination
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
                 var allUserAnswers = await query.ToListAsync();
-                var userAnswerDtos = allUserAnswers.Select(userAnswer => new UserAnswerDTO
-                {
-                    QuestionId = userAnswer.QuestionId,
-                    UserId = userAnswer.UserId,
-                    OptionId = userAnswer.OptionId,
-                    AttemptNumber = userAnswer.AttemptNumber,
-                }).ToList();
 
-                return new BasePaginatedList<object>(userAnswerDtos, userAnswerDtos.Count, 1, userAnswerDtos.Count);
+                // Map to the detailed DTO using AutoMapper
+                var result = _mapper.Map<List<UserAnswerWithDetailsDTO>>(allUserAnswers);
+                return new BasePaginatedList<UserAnswerWithDetailsDTO>(result, result.Count, 1, result.Count);
             }
 
+            // Fetch paginated data
             var paginatedUserAnswers = await _unitOfWork.GetRepository<UserAnswer>().GetPagging(query, pageNumber, pageSize);
-            var userAnswerDtosPaginated = paginatedUserAnswers.Items.Select(userAnswer => new UserAnswerDTO
-            {
-                QuestionId = userAnswer.QuestionId,
-                UserId = userAnswer.UserId,
-                OptionId = userAnswer.OptionId,
-                AttemptNumber = userAnswer.AttemptNumber,
-            }).ToList();
 
-            return new BasePaginatedList<object>(userAnswerDtosPaginated, userAnswerDtosPaginated.Count, pageNumber, pageSize);
+            // Map paginated items to UserAnswerWithDetailsDTO using AutoMapper
+            var userAnswerDtosPaginated = _mapper.Map<List<UserAnswerWithDetailsDTO>>(paginatedUserAnswers.Items);
+
+            // Return paginated results with DTOs
+            return new BasePaginatedList<UserAnswerWithDetailsDTO>(userAnswerDtosPaginated, userAnswerDtosPaginated.Count, pageNumber, pageSize);
         }
 
         public async Task<UserAnswerDTO> GetUserAnswerByIdAsync(string id)
         {
             var userAnswer = await _unitOfWork.GetRepository<UserAnswer>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Cannot find user answer with ID '{id}'.");
-            return new UserAnswerDTO
-            {
-                QuestionId = userAnswer.QuestionId,
-                UserId = userAnswer.UserId,
-                OptionId = userAnswer.OptionId,
-                AttemptNumber = userAnswer.AttemptNumber,
-            };
+            return _mapper.Map<UserAnswerDTO>(userAnswer);
         }
 
         //public async Task<UserAnswerDTO> CreateUserAnswerAsync(UserAnswerDTO userAnswerDTO)
@@ -142,6 +138,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     tempAttempNumber = attemptNumber;
                 }
 
+                //var userAnswer = _mapper.Map<UserAnswer>(userAnswerDTO);
                 var userAnswer = new UserAnswer
                 {
                     QuestionId = userAnswerDTO.QuestionId,
@@ -172,6 +169,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     OptionAnswer = option?.Answer ?? "Unknown Answer",
                     AttemptNumber = tempAttempNumber,
                 };
+
                 result.Add(userAnswerWithDetails);
             }
 
@@ -233,16 +231,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 var user = await _unitOfWork.GetRepository<User>().GetByIdAsync(userAnswer.UserId);
                 var option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(userAnswer.OptionId);
 
-                var userAnswerWithDetails = new UserAnswerWithDetailsDTO
-                {
-                    QuestionId = userAnswer.QuestionId,
-                    QuestionContent = question?.QuestionContext ?? "Unknown Question",
-                    UserId = userAnswer.UserId,
-                    UserFullName = user?.FullName ?? "Unknown User",
-                    OptionId = userAnswer.OptionId,
-                    OptionAnswer = option?.Answer ?? "Unknown Answer",
-                    AttemptNumber = userAnswer.AttemptNumber
-                };
+                var userAnswerWithDetails = _mapper.Map<UserAnswerWithDetailsDTO>(userAnswer);
+                userAnswerWithDetails.QuestionContent = question?.QuestionContext ?? "Unknown Question";
+                userAnswerWithDetails.UserFullName = currentUser.FullName ?? "Unknown User";
+                userAnswerWithDetails.OptionAnswer = option?.Answer ?? "Unknown Answer";
+                userAnswerWithDetails.AttemptNumber = userAnswer.AttemptNumber;
+
                 result.Add(userAnswerWithDetails);
             }
 

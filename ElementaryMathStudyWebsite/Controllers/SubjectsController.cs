@@ -1,3 +1,4 @@
+using AutoMapper;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
@@ -9,8 +10,9 @@ namespace ElementaryMathStudyWebsite.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SubjectsController(IAppSubjectServices appSubjectServices) : ControllerBase
+    public class SubjectsController(IAppSubjectServices appSubjectServices, IMapper mapper) : ControllerBase
     {
+        private readonly IMapper _mapper = mapper;
         private readonly IAppSubjectServices _appSubjectServices = appSubjectServices;
 
         // GET: api/Subjects
@@ -31,10 +33,6 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                 return Ok(BaseResponse<BasePaginatedList<object>>.OkResponse(activeSubjects));
             }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
             catch (BaseException.NotFoundException notFoundEx)
             {
                 return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
@@ -42,6 +40,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.BadRequestException badRequestEx)
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
         }
 
@@ -60,10 +62,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var response = BaseResponse<object>.OkResponse(subject);
                 return Ok(subject);
             }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
             catch (BaseException.NotFoundException notFoundEx)
             {
                 return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
@@ -71,6 +69,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.BadRequestException badRequestEx)
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
         }
 
@@ -94,10 +96,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
                 return Ok(response);
             }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
             catch (BaseException.NotFoundException notFoundEx)
             {
                 return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
@@ -105,6 +103,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.BadRequestException badRequestEx)
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
         }
 
@@ -155,6 +157,8 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             try
             {
+                var newSubject = _mapper.Map<SubjectDTO>(subjectDTO);
+                //var createdSubject = await _appSubjectServices.CreateSubjectAsync(newSubject);
                 var createdSubject = await _appSubjectServices.CreateSubjectAsync(new SubjectDTO
                 {
                     Id = "",
@@ -165,6 +169,19 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                 var response = BaseResponse<SubjectAdminViewDTO>.OkResponse(createdSubject);
                 return CreatedAtAction(nameof(GetActiveSubjectById), new { id = createdSubject.Id }, response);
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
             catch (ArgumentException argEx)
             {
@@ -184,19 +201,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                     message = coreEx.Message,
                     additionalData = coreEx.AdditionalData
                 });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
             catch (Exception ex)
             {
@@ -325,10 +329,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
                 return Ok(response);
             }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
             catch (BaseException.NotFoundException notFoundEx)
             {
                 return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
@@ -336,6 +336,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.BadRequestException badRequestEx)
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
         }
 
@@ -397,10 +401,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                 await _appSubjectServices.SoftDeleteSubjectAsync(id);
                 return Ok(BaseResponse<object>.OkResponse(new { message = "Subject has been successfully soft deleted." }));
             }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
             catch (BaseException.BadRequestException badRequestEx)
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
@@ -408,6 +408,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.NotFoundException notFoundEx)
             {
                 return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
         }
 
@@ -425,10 +429,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                 await _appSubjectServices.RestoreSubjectAsync(id);
                 return Ok(BaseResponse<object>.OkResponse(new { message = "Subject has been successfully restored." }));
             }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
             catch (BaseException.BadRequestException badRequestEx)
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
@@ -436,6 +436,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.NotFoundException notFoundEx)
             {
                 return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
         }
     }
