@@ -21,8 +21,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IAppUserServices _userService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ITokenService _tokenService;
+        private readonly IAppChapterServices _chapterService;
 
-        public SubjectService(IGenericRepository<Subject> detailReposiotry, IGenericRepository<Subject> subjectRepository, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ITokenService tokenService, IAppUserServices userService)
+        public SubjectService(IGenericRepository<Subject> detailReposiotry, IGenericRepository<Subject> subjectRepository, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ITokenService tokenService, IAppUserServices userService, IAppChapterServices chapterService)
         {
             _detailReposiotry = detailReposiotry ?? throw new ArgumentNullException(nameof(detailReposiotry));
             _subjectRepository = subjectRepository ?? throw new ArgumentNullException(nameof(subjectRepository));
@@ -30,6 +31,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _httpContextAccessor = httpContextAccessor;
             _tokenService = tokenService;
             _userService = userService;
+            _chapterService = chapterService;
         }
 
         // Helper method for validation
@@ -528,26 +530,27 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         //soft deleted
-        public async Task SoftDeleteSubjectAsync(string id)
+        public async Task SoftDeleteSubjectAsync(string subjectId)
         {
-            // Retrieve the subject
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id);
+            Subject? subject;
 
-            if (subject == null || !string.IsNullOrWhiteSpace(subject.DeletedBy))
+            if (_unitOfWork.IsValid<Subject>(subjectId))
+                subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(subjectId);
+            else throw new BaseException.NotFoundException("not_found", "Subject ID not found");
+
+            _userService.AuditFields(subject!, false, true);
+
+            await _unitOfWork.SaveAsync();
+
+            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().GetEntitiesWithCondition(
+                            c => c.SubjectId == subjectId &&
+                            string.IsNullOrWhiteSpace(c.DeletedBy)
+                            );
+
+            foreach (var chapter in query)
             {
-                throw new BaseException.BadRequestException("key_not_found", $"Cannot find subject with ID '{id}' or it is already deleted.");
+                await _chapterService.DeleteChapterAsync(chapter.Id);
             }
-
-            User currentUser = await _userService.GetCurrentUserAsync();
-            var currentUserId = currentUser.Id;
-
-            // Mark subject as deleted
-            subject.DeletedBy = currentUserId;
-            subject.DeletedTime = DateTime.UtcNow;
-
-            // Update and save
-            await _unitOfWork.GetRepository<Subject>().UpdateAsync(subject);
-            await _unitOfWork.GetRepository<Subject>().SaveAsync();
         }
 
         //restore soft deleted

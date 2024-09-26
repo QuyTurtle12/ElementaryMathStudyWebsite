@@ -160,22 +160,52 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // DELETE: api/quiz/{id}
+        [Authorize(Policy = "Admin-Content")]
         [HttpDelete("{id}")]
         [SwaggerOperation(Summary = "Delete a quiz.", Description = "Marks a quiz as deleted.")]
-        public async Task<ActionResult> DeleteQuizAsync(string id)
+        public async Task<IActionResult> DeleteQuizAsync(string id)
         {
             try
             {
-                var success = await _quizService.DeleteQuizAsync(id);
-                if (!success)
+                var result = await _quizService.DeleteQuizAsync(id);
+
+                if (result)
                 {
-                    return NotFound(new { message = "Quiz not found" });
+                    var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
+                    return Ok(successResponse);
+
                 }
-                return NoContent();
+                var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
+
+                return Ok(failedResponse);
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, new { message = ex.Message });
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
             }
         }
     }

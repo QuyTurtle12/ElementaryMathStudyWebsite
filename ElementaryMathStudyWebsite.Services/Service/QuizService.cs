@@ -11,11 +11,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
     public class QuizService : IAppQuizServices
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAppUserServices _userService;
+        private readonly IAppQuestionServices _questionService;
 
         // constructor
-        public QuizService(IUnitOfWork unitOfWork)
+        public QuizService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppQuestionServices questionService)
         {
             _unitOfWork = unitOfWork;
+            _userService = userService;
+            _questionService = questionService;
         }
 
         //Get all quiz by default properties
@@ -256,19 +260,27 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Delete a quiz
         public async Task<bool> DeleteQuizAsync(string quizId)
         {
-            // Fetch the existing quiz
-            var quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizId);
+            Quiz? quiz;
 
-            if (quiz == null)
+            if (_unitOfWork.IsValid<Quiz>(quizId))
+                quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizId);
+            else throw new BaseException.NotFoundException("not_found", "Quiz ID not found");
+
+            _userService.AuditFields(quiz!, false, true);
+
+            await _unitOfWork.SaveAsync();
+
+            IQueryable<Question> query = _unitOfWork.GetRepository<Question>().GetEntitiesWithCondition(
+                            q => q.QuizId == quizId &&
+                            string.IsNullOrWhiteSpace(q.DeletedBy)
+                            );
+
+            foreach (var question in query)
             {
-                throw new KeyNotFoundException($"Quiz with Id '{quizId}' not found.");
+                await _questionService.DeleteQuestion(question.Id);
             }
 
-            // Mark quiz as deleted
-            quiz.DeletedBy = "system"; // Or set to the user who deleted it
-            await _unitOfWork.SaveAsync(); // Save changes
-
-            return true; // Indicate success
+            return true;
         }
     }
 }

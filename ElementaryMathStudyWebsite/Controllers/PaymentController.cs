@@ -40,6 +40,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.CoreException coreEx)
             {
+                // Handle specific CoreException
                 return StatusCode(coreEx.StatusCode, new
                 {
                     code = coreEx.Code,
@@ -49,10 +50,20 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
+                // Handle specific BadRequestException
                 return BadRequest(new
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }
@@ -82,6 +93,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.CoreException coreEx)
             {
+                // Handle specific CoreException
                 return StatusCode(coreEx.StatusCode, new
                 {
                     code = coreEx.Code,
@@ -91,10 +103,20 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
+                // Handle specific BadRequestException
                 return BadRequest(new
                 {
                     errorCode = badRequestEx.ErrorDetail.ErrorCode,
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
         }

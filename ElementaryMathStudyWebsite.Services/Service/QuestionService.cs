@@ -3,8 +3,6 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Utils;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -13,10 +11,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
     public class QuestionService : IAppQuestionServices
     {
         private readonly IUnitOfWork _unitOfWork;
-
-        public QuestionService(IUnitOfWork unitOfWork)
+        private readonly IAppUserServices _userService;
+        private readonly IAppOptionServices _optionService;
+        public QuestionService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppOptionServices optionService)
         {
             _unitOfWork = unitOfWork;
+            _userService = userService;
+            _userService = userService;
+            _optionService = optionService;
         }
 
         // Get questions with all properties
@@ -109,8 +111,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 Id = q.Id,
                 QuestionContext = q.QuestionContext,
-                QuizName = q.Quiz?.QuizName ?? string.Empty, 
-                QuizId = q.Quiz?.Id ?? string.Empty 
+                QuizName = q.Quiz?.QuizName ?? string.Empty,
+                QuizId = q.Quiz?.Id ?? string.Empty
             }).ToList();
 
             return questionDtos;
@@ -181,6 +183,30 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return new BasePaginatedList<QuestionMainViewDto>(questionDtos, totalCount, pageNumber, pageSize);
         }
 
+        public async Task<bool> DeleteQuestion(string questionId)
+        {
+            Question? question;
 
+            if (_unitOfWork.IsValid<Question>(questionId))
+                question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(questionId);
+            else throw new BaseException.NotFoundException("not_found", "Question ID not found");
+
+            _userService.AuditFields(question!, false, true);
+
+            await _unitOfWork.SaveAsync();
+
+            IQueryable<Option> query = _unitOfWork.GetRepository<Option>().GetEntitiesWithCondition(
+                            o => o.QuestionId == questionId &&
+                            string.IsNullOrWhiteSpace(o.DeletedBy)
+                            );
+
+            foreach (var option in query)
+            {
+                await _optionService.DeleteOption(option.Id);
+            }
+
+
+            return true;
+        }
     }
 }
