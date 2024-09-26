@@ -1,4 +1,5 @@
-﻿using ElementaryMathStudyWebsite.Core.Base;
+﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
+using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication
@@ -6,5 +7,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authenticati
     public interface IRoleService
     {
         Task<BasePaginatedList<Role>> GetAllRolesAsync(int pageNumber, int pageSize);
+        Task<Role> CreateRoleAsync(CreateRoleDto dto);
     }
 }
