@@ -3,7 +3,6 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Core.Base;
-using Humanizer;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 
