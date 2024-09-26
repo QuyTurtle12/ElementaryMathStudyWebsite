@@ -447,5 +447,63 @@ namespace ElementaryMathStudyWebsite.Controllers
                 });
             }
         }
+
+        [HttpDelete]
+        [Route("role/delete/{roleId}")]
+        [Authorize(Policy = "Admin-Manager")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Deleting a Role"
+            )]
+        public async Task<IActionResult> DeleteRole(string roleId)
+        {
+            if (string.IsNullOrWhiteSpace(roleId))
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "Role ID is required.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+
+            }
+
+            try
+            {
+                var role = await _roleService.DeleteRoleAsync(roleId);
+
+                var response = BaseResponse<string>.OkResponse("Delete successfully");
+
+                return Ok(response);
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
     }
 }

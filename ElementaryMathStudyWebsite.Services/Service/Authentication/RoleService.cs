@@ -28,9 +28,11 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             if (pageNumber <= 0) pageNumber = 1;
             if (pageSize <= 0) pageSize = 10; // Set a default page size if invalid
 
+            Expression<Func<Role, bool>> condition = role => true && role.DeletedBy == null;
+
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
-            IQueryable<Role> query = _unitOfWork.GetRepository<Role>().Entities;
+            IQueryable<Role> query = _unitOfWork.GetRepository<Role>().GetEntitiesWithCondition(condition);
 
             // Retrieve paginated users from the repository
             var paginatedRoles = await _unitOfWork.GetRepository<Role>().GetPagging(query, pageNumber, pageSize);
@@ -66,7 +68,9 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
                 throw new ArgumentNullException(nameof(dto));
             }
 
-            var role = await _unitOfWork.GetRepository<Role>().GetByIdAsync(roleId);
+            Expression<Func<Role, bool>> condition = role => true && role.DeletedBy == null && role.Id.Equals(roleId);
+
+            var role = await _unitOfWork.GetRepository<Role>().FindByConditionAsync(condition);
 
             if (role == null)
             {
@@ -91,7 +95,9 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
         public async Task<Role> GetRoleByIdAsync(string roleId)
         {
 
-            var role = await _unitOfWork.GetRepository<Role>().GetByIdAsync(roleId);
+            Expression<Func<Role, bool>> condition = role => true && role.DeletedBy == null && role.Id.Equals(roleId);
+
+            var role = await _unitOfWork.GetRepository<Role>().FindByConditionAsync(condition);
 
             if (role == null)
             {
@@ -99,6 +105,28 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             }
 
             return role;
+        }
+
+        public async Task<bool> DeleteRoleAsync(string roleId)
+        {
+            // Fetch the role by ID
+            Expression<Func<Role, bool>> condition = role => true && role.DeletedBy == null && role.Id.Equals(roleId);
+
+            var role = await _unitOfWork.GetRepository<Role>().FindByConditionAsync(condition);
+
+            if (role == null)
+            {
+                throw new BaseException.NotFoundException("not_found", "Role not found");
+            }
+
+            // Set audit fields
+            _appUserServices.AuditFields(role, false, true);
+
+            // Update the role in the repository
+            await _unitOfWork.GetRepository<Role>().UpdateAsync(role);
+            await _unitOfWork.SaveAsync();
+
+            return true; // Return true if the role was successfully disabled
         }
     }
 }

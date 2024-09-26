@@ -10,5 +10,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authenticati
         Task<Role> CreateRoleAsync(RequestRole dto);
         Task<Role> UpdateRoleAsync(string roleId, RequestRole dto);
         Task<Role> GetRoleByIdAsync(string roleId);
+        Task<bool> DeleteRoleAsync(string roleId);
     }
 }
