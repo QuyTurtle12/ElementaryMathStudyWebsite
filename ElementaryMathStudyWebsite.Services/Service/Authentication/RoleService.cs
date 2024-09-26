@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
@@ -39,7 +38,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             return new BasePaginatedList<Role>(paginatedRoles.Items, paginatedRoles.TotalItems, paginatedRoles.CurrentPage, paginatedRoles.PageSize);
         }
 
-        public async Task<Role> CreateRoleAsync(CreateRoleDto dto)
+        public async Task<Role> CreateRoleAsync(RequestRole dto)
         {
             if (dto == null)
             {
@@ -54,6 +53,35 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 
             // Add role to the repository
             await _unitOfWork.GetRepository<Role>().InsertAsync(role);
+            await _unitOfWork.SaveAsync();
+
+            return role;
+        }
+
+        public async Task<Role> UpdateRoleAsync(string roleId, RequestRole dto)
+        {
+            if (dto == null)
+            {
+                throw new ArgumentNullException(nameof(dto));
+            }
+
+            var role = await _unitOfWork.GetRepository<Role>().GetByIdAsync(roleId);
+
+            if (role == null)
+            {
+                throw new BaseException.NotFoundException("not_found", "Role not found");
+            }
+
+            if (dto.RoleName != null)
+            {
+                role.RoleName = dto.RoleName;
+            }
+
+
+            _appUserServices.AuditFields(role);
+
+            // Add role to the repository
+            await _unitOfWork.GetRepository<Role>().UpdateAsync(role);
             await _unitOfWork.SaveAsync();
 
             return role;
