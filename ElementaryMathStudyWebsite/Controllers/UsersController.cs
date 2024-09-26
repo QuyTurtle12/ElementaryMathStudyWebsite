@@ -261,8 +261,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("all-list")]
+        [Authorize(Policy = "Admin-Manager")]
         [SwaggerOperation(
-            Summary = "Authorization: N/A",
+            Summary = "Authorization: Admin & Manager",
             Description = "Get a list with all users"
             )]
         public async Task<IActionResult> GetAllUsersWithRoles()
@@ -310,8 +311,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("all-pagination")]
+        [Authorize(Policy = "Admin-Manager")]
         [SwaggerOperation(
-            Summary = "Authorization: N/A",
+            Summary = "Authorization: Admin & Manager",
             Description = "Get page with all users "
             )]
         public async Task<IActionResult> GetAllUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
@@ -368,8 +370,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <returns>Returns a paginated list of users based on the search criteria.</returns>
         [HttpGet]
         [Route("search")]
+        [Authorize(Policy = "Admin-Manager")]
         [SwaggerOperation(
-            Summary = "Authorization: N/A",
+            Summary = "Authorization: Admin & Manager",
             Description = "Search users based on name, status, phone, and email with pagination."
         )]
         public async Task<IActionResult> SearchUsers([FromQuery] string? name, [FromQuery] bool? status, [FromQuery] string? phone, [FromQuery] string? email, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
@@ -413,9 +416,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                 });
             }
         }
+        
 
-
-
+        
         /// <summary>
         /// Retrieves a user by their ID.
         /// </summary>

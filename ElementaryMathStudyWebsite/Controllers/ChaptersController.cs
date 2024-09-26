@@ -18,13 +18,13 @@ namespace ElementaryMathStudyWebsite.Controllers
             _chapterService = chapterServices; 
         }
         // GET: api/chapters/manager
-        // Get chapters for Manager & Admin
-        [Authorize(Policy = "Admin-Manager")]
+        // Get chapters for Content Manager & Admin
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet]
         [Route("manager")]
         [SwaggerOperation(
-            Summary = "Authorization: Manager & Admin",
-            Description = "View chapter list for Manager and Admin Role. Insert -1 to get all items"
+            Summary = "Authorization: Content Manager & Admin",
+            Description = "View chapter list for Content Manager and Admin Role. Insert -1 to get all items"
         )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterAdminViewDto?>>>> GetChapters(int pageNumber = -1, int pageSize = -1)
         {
@@ -57,12 +57,12 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/chapters/manager/{id}
         // Get chapters for Manager & Admin
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet]
         [Route("manager/{id}")]
         [SwaggerOperation(
-            Summary = "Authorization: Manager & Admin",
-            Description = "View chapter for Manager and Admin Role."
+            Summary = "Authorization: Content Manager & Admin",
+            Description = "View chapter for Content Manager and Admin Role."
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterAdminViewDto?>>>> GetChapter(string id)
         {
@@ -309,11 +309,11 @@ namespace ElementaryMathStudyWebsite.Controllers
             //}
         }
 
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("search/admin")]
         [SwaggerOperation(
-            Summary = "Authorization: Admin-Manager",
-            Description = "Search chapter by name for admin, pageSize = -1 to have it show all."
+            Summary = "Authorization: Admin-Content",
+            Description = "Search chapter by name for admin & content manager, pageSize = -1 to have it show all."
         )]
         public async Task<IActionResult> SearchChapterForAdmin([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)
         {
@@ -378,7 +378,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // POST: api/chapters/
         // Add chapters
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpPost]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -448,7 +448,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut("{id}")]
         [SwaggerOperation(
             Summary = "Authorization: Admin, Content Manager",
@@ -541,7 +541,12 @@ namespace ElementaryMathStudyWebsite.Controllers
         //    }
         //}
 
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut("update-numbers")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin, Content Manager",
+            Description = "Update chapter number"
+        )]
         public async Task<IActionResult> UpdateChapterNumbers(string subjectId, [FromBody] ChapterNumberDto chapterNumberDto)
         {
             if (string.IsNullOrEmpty(subjectId) || chapterNumberDto == null || !chapterNumberDto.ChapterNumbersOrder.Any())
@@ -629,7 +634,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
 
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut("/rollbakChapter/{id}")]
         [SwaggerOperation(
             Summary = "Authorization: Admin & Content Manager",
@@ -685,7 +690,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
 
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpDelete]
         [Route("{id}")]
         [SwaggerOperation(
@@ -742,7 +747,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
 
-        [Authorize(Policy = "Admin-Manager")]
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet]
         [Route("manager/deleted")]
         [SwaggerOperation(
