@@ -11,6 +11,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<List<QuestionViewDto>> SearchQuestionsByContextAsync(string questionContext);
         Task<List<QuestionViewDto>> GetQuestionsByQuizIdAsync(string quizId);
         Task<BasePaginatedList<QuestionMainViewDto>?> GetQuestionsAsync(int pageNumber, int pageSize);
-        //Task<BasePaginatedList<QuestionViewDto>> GetQuestionsPagedAsync(int pageNumber, int pageSize);
+        Task<QuestionMainViewDto> AddQuestionAsync(QuestionCreateDto dto);
+        Task<QuestionMainViewDto> UpdateQuestionAsync(string id, QuestionUpdateDto dto);
+        Task<QuestionDeleteDto> DeleteQuestionAsync(string id);
     }
 }

@@ -1,13 +1,11 @@
 ﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
 {
-    public class UpdateQuizDto
+    public class QuizUpdateDto
     {
-        public string Id { get; set; } = string.Empty; 
-        public string QuizName { get; set; } = string.Empty;
-        public double? Criteria { get; set; } 
-        public bool? Status { get; set; } 
-        public required string ChapterId { get; set; }
-        public required string TopicId { get; set; } 
+        public string QuizName { get; set; } = string.Empty; 
+        public double Criteria { get; set; }
+        public bool Status { get; set; } 
+        public string ChapterId { get; set; } = string.Empty; 
+        public string TopicId { get; set; } = string.Empty; 
     }
-
 }

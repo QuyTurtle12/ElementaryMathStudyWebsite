@@ -10,7 +10,7 @@ namespace ElementaryMathStudyWebsite.Core.Entity
 
         public required string OptionId;
 
-        public required int AttemptNumber = 0; 
+        public int AttemptNumber = 0; 
 
         public virtual Question? Question { get; set; } // Navigation property, one answer belong to question
         public virtual User? User { get; set; } // Navigation property, one answer belong to one user

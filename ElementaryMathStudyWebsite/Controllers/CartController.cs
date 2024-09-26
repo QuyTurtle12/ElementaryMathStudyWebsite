@@ -13,7 +13,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
     public class CartController : ControllerBase
     {
-        IAppOrderServices _orderService;
+        private readonly IAppOrderServices _orderService;
 
         public CartController(IAppOrderServices orderService)
         {

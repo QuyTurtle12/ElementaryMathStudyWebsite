@@ -77,7 +77,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Calculate student grade
             // Max grade is 10
-            return correctAnswer / totalQuestion * 10;
+            double mark = ((double)correctAnswer / totalQuestion) * 10;
+            return mark;
         }
 
         // Check if the student passed the quiz
@@ -199,10 +200,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     SubjectId = subjectId,
                 };
 
-                if (await IsPassedTheQuizAsync(newStudentProgress.QuizId, newStudentProgress.StudentId))
+                result.IsPassedTheQuiz = await IsPassedTheQuizAsync(newStudentProgress.QuizId, newStudentProgress.StudentId);
+
+                if ( result.IsPassedTheQuiz &&
+                    await IsAlreadyAddedProgress(newStudentProgress.QuizId, newStudentProgress.StudentId) == false)
                 {
                     // Check if progress is added to database successfully
-                    result.IsAddedProgress = await _progressServices.AddSubjectProgressAsync(newStudentProgress);
+                    await _progressServices.AddSubjectProgressAsync(newStudentProgress);
                 }
 
                 return result;
@@ -213,6 +217,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
             else if (latestAttemptNumber == 0) { throw new BaseException.BadRequestException("invalid_latest_attempt_number", "This student hasn't done the quiz yet"); }
 
             return result;
+        }
+
+        private async Task<bool> IsAlreadyAddedProgress(string quizId, string studentId) 
+        {
+            Progress? studentProgress = await _unitOfWork.GetRepository<Progress>().FindByConditionAsync(p => p.QuizId.Equals(quizId) && p.StudentId.Equals(studentId));
+
+            if (studentProgress != null)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         // Get latest attempt number
