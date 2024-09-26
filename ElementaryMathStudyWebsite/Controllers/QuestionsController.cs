@@ -5,6 +5,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Core.Base;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Services.Service;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -240,29 +241,6 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
-        // DELETE: api/question/{id}
-        [HttpDelete("{id}")]
-        [SwaggerOperation(Summary = "Delete an existing question.", Description = "Deletes a question by its unique identifier.")]
-        public async Task<ActionResult<BaseResponse<QuestionDeleteDto>>> DeleteQuestionAsync(string id)
-        {
-            try
-            {
-                // Delete the question and get the deleted question data
-                var deletedQuestionDto = await _questionService.DeleteQuestionAsync(id)
-                    ?? throw new BaseException.NotFoundException("not_found", "question not found.");
-                return BaseResponse<QuestionDeleteDto>.OkResponse("Question deleted successfully.");
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle core exceptions
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle bad request exceptions
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
-        }
 
         // DELETE: api/question/{id}
         [Authorize(Policy = "Admin-Content")]

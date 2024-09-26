@@ -315,19 +315,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             await _unitOfWork.SaveAsync();
 
-            //// Delete the corresponding topics
-            //IQueryable<Topic> query = _unitOfWork.GetRepository<Topic>().GetEntitiesWithCondition(
-            //                t => t.ChapterId == chapterId &&
-            //                string.IsNullOrWhiteSpace(t.DeletedBy)
-            //                );
+            // Delete the corresponding topics
+            IQueryable<Topic> query = _unitOfWork.GetRepository<Topic>().GetEntitiesWithCondition(
+                            t => t.ChapterId == chapterId &&
+                            string.IsNullOrWhiteSpace(t.DeletedBy)
+                            );
 
-            //foreach (var topic in query)
-            //{
-            //    await _topicService.DeleteTopicAsync(topic.Id);
-            //}
+            foreach (var topic in query)
+            {
+                await _topicService.DeleteTopicAsync(topic.Id);
+            }
 
-            //// Delete the corresponding quiz
-            //await _quizService.DeleteQuizAsync(chapter!.QuizId!);
+            // Delete the corresponding quiz
+            await _quizService.DeleteQuizAsync(chapter!.QuizId!);
 
 
             return true;

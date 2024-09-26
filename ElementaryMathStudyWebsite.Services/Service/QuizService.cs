@@ -336,7 +336,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Delete a quiz
-        public async Task<QuizDeleteDto> DeleteQuizAsync(string quizId)
+        public async Task<bool> DeleteQuizAsync(string quizId)
         {
             Quiz? quiz;
 
