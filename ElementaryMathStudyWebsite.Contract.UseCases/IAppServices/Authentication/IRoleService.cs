@@ -9,5 +9,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authenticati
         Task<BasePaginatedList<Role>> GetAllRolesAsync(int pageNumber, int pageSize);
         Task<Role> CreateRoleAsync(RequestRole dto);
         Task<Role> UpdateRoleAsync(string roleId, RequestRole dto);
+        Task<Role> GetRoleByIdAsync(string roleId);
     }
 }

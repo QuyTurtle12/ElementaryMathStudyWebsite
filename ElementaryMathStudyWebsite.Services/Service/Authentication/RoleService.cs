@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using System.Linq.Expressions;
 
 namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 {
@@ -83,6 +84,19 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             // Add role to the repository
             await _unitOfWork.GetRepository<Role>().UpdateAsync(role);
             await _unitOfWork.SaveAsync();
+
+            return role;
+        }
+
+        public async Task<Role> GetRoleByIdAsync(string roleId)
+        {
+
+            var role = await _unitOfWork.GetRepository<Role>().GetByIdAsync(roleId);
+
+            if (role == null)
+            {
+                throw new BaseException.NotFoundException("not_found", "Role not found");
+            }
 
             return role;
         }
