@@ -1,10 +1,10 @@
-using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
+using ElementaryMathStudyWebsite.Core.Utils;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -22,13 +22,50 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _questionService = questionService;
         }
 
-        //Get all quiz by default properties
-        public async Task<List<Quiz>> GetAllQuizzesAsync()
+        // Get all quizzes with properties mapped to QuizMainViewDto
+        public async Task<List<QuizMainViewDto>> GetAllQuizzesAsync()
         {
-            // Get all quizzes excluding deleted ones
-            return await _unitOfWork.GetRepository<Quiz>().Entities
+            // Query all quizzes excluding deleted ones
+            var quizzes = await _unitOfWork.GetRepository<Quiz>().Entities
                 .Where(q => string.IsNullOrWhiteSpace(q.DeletedBy))
+                .Include(q => q.Chapter)
+                .Include(q => q.Topic)
                 .ToListAsync();
+
+            // List to hold QuizMainViewDto
+            List<QuizMainViewDto> quizDtos = new List<QuizMainViewDto>();
+
+            foreach (var quiz in quizzes)
+            {
+                // Get creator and last updater information
+                var creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(quiz.CreatedBy ?? string.Empty);
+                var lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(quiz.LastUpdatedBy ?? string.Empty);
+
+                // Create QuizMainViewDto
+                QuizMainViewDto dto = new QuizMainViewDto
+                {
+                    Id = quiz.Id,
+                    QuizName = quiz.QuizName,
+                    Criteria = quiz.Criteria,
+                    Status = quiz.Status,
+                    ChapterName = quiz.Chapter?.ChapterName ?? string.Empty,  // Assuming Chapter has ChapterName
+                    TopicName = quiz.Topic?.TopicName ?? string.Empty,        // Assuming Topic has TopicName
+
+                    CreatedBy = quiz.CreatedBy ?? string.Empty,
+                    CreatorName = creator?.FullName ?? string.Empty,
+                    CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                    LastUpdatedBy = quiz.LastUpdatedBy ?? string.Empty,
+                    LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                    LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+
+                    CreatedTime = quiz.CreatedTime, // Assuming CreatedTime has a value
+                    LastUpdatedTime = quiz.LastUpdatedTime // Assuming LastUpdatedTime has a value
+                };
+
+                quizDtos.Add(dto);
+            }
+
+            return quizDtos;
         }
 
         // Get Quiz with quizId
@@ -54,16 +91,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 QuizName = quiz.QuizName,
                 Criteria = quiz.Criteria,
                 Status = quiz.Status,
-                ChapterName = quiz.Chapter?.ChapterName,
-                TopicName = quiz.Topic?.TopicName,
+                ChapterName = quiz.Chapter?.ChapterName ?? string.Empty,
+                TopicName = quiz.Topic?.TopicName ?? string.Empty,
                 CreatedBy = creator?.FullName ?? string.Empty,
                 LastUpdatedBy = lastUpdatedPerson?.FullName ?? string.Empty,
             };
 
             return dto; // Return the QuizMainViewDto
         }
-
-        //==================================================================================
 
         // Search for quizzes where the quiz name contains a specified string
         public async Task<List<QuizViewDto>> SearchQuizzesByNameAsync(string quizName)
@@ -78,7 +113,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 Id = quiz.Id,
                 QuizName = quiz.QuizName,
                 Criteria = quiz.Criteria,
-                Status = quiz.Status, 
+                Status = quiz.Status,
             }).ToList();
 
             return quizDtos; // Return the list of QuizViewDto
@@ -143,9 +178,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     QuizName = quiz.QuizName,
                     Criteria = quiz.Criteria,
                     Status = quiz.Status,
-                    ChapterName = quiz.Chapter?.ChapterName,
-                    TopicName = quiz.Topic?.TopicName,      
-                    CreatedBy = creator?.FullName ?? string.Empty, 
+                    ChapterName = quiz.Chapter?.ChapterName ?? string.Empty,
+                    TopicName = quiz.Topic?.TopicName ?? string.Empty,
+                    CreatedBy = creator?.FullName ?? string.Empty,
                     LastUpdatedBy = lastUpdatedPerson?.FullName ?? string.Empty
                 };
                 quizDtos.Add(dto); // Add the DTO to the list
@@ -162,8 +197,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return new BasePaginatedList<QuizMainViewDto>(paginatedQuizzesDto, quizDtos.Count, pageNumber, pageSize);
         }
-
-        //==================================================================================
 
         // Get the name of a quiz by its Id
         public async Task<string> GetQuizNameAsync(string quizId)
@@ -182,15 +215,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return quiz.QuizName;
         }
 
-        //==================================================================================
-
         // Create a new quiz
-        public async Task<QuizViewDto> AddQuizAsync(CreateQuizDto dto)
+        public async Task<QuizMainViewDto> AddQuizAsync(QuizCreateDto dto)
         {
             // Validate input DTO
             if (dto == null)
             {
-                throw new ArgumentNullException(nameof(dto), "Quiz data cannot be null.");
+                throw new BaseException.BadRequestException("invalid_arguments", "Quiz data cannot be null");
             }
 
             // Create a new Quiz entity
@@ -198,67 +229,114 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 Id = Guid.NewGuid().ToString(),
                 QuizName = dto.QuizName,
-                Criteria = dto.Criteria
+                Criteria = dto.Criteria,
+                CreatedTime = CoreHelper.SystemTimeNow,
+                LastUpdatedTime = CoreHelper.SystemTimeNow
             };
 
             // Insert the new quiz into the repository
             await _unitOfWork.GetRepository<Quiz>().InsertAsync(quiz);
             await _unitOfWork.SaveAsync();
 
-            // Return the created quiz as DTO
-            return new QuizViewDto
+            // Get the current user for auditing purposes
+            User currentUser = await _userService.GetCurrentUserAsync();
+            quiz.LastUpdatedBy = currentUser.Id.ToUpper(); // Update LastUpdatedBy
+
+            // Fetch creator and last updated person information
+            var creator = await _unitOfWork.GetRepository<User>().FindByConditionAsync(c => c.Id != null && c.Id.Equals(quiz.CreatedBy));
+            var lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(quiz.LastUpdatedBy);
+
+            // Return the created quiz as DTO including audit fields
+            return new QuizMainViewDto
             {
                 Id = quiz.Id,
                 QuizName = quiz.QuizName,
                 Criteria = quiz.Criteria,
-                Status = quiz.Status
+                Status = quiz.Status,
+                ChapterName = dto.ChapterName,
+                TopicName = dto.TopicName,
+                CreatedBy = quiz.CreatedBy ?? string.Empty,
+                CreatorName = creator?.FullName ?? string.Empty,
+                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                LastUpdatedBy = quiz.LastUpdatedBy,
+                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                CreatedTime = quiz.CreatedTime,
+                LastUpdatedTime = CoreHelper.SystemTimeNow
             };
         }
 
-
         // Update an existing quiz
-        public async Task<bool> UpdateQuizAsync(UpdateQuizDto dto)
+        public async Task<QuizMainViewDto> UpdateQuizAsync(string quizid, QuizUpdateDto dto)
         {
             // Fetch the existing quiz by its ID
-            var quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(dto.Id);
+            Quiz quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizid)
+                        ?? throw new BaseException.NotFoundException("not_found", $"Quiz with Id '{quizid}' not found.");
 
-            // Check if the quiz exists
-            if (quiz == null)
-            {
-                throw new KeyNotFoundException($"Quiz with Id '{dto.Id}' not found.");
-            }
+            // Update quiz information with values from the DTO
+            quiz.QuizName = dto.QuizName;
+            quiz.Criteria = dto.Criteria;
+            quiz.Status = dto.Status;
 
-            // Update quiz information
-            quiz.QuizName = dto.QuizName; 
-            quiz.Criteria = dto.Criteria; 
-            quiz.Status = dto.Status; 
-
-            // Update Chapter and Topic references if provided
+            // Update Chapter reference if ChapterId is provided
+            string chapterName = string.Empty;
             if (!string.IsNullOrWhiteSpace(dto.ChapterId))
             {
                 var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(dto.ChapterId);
-                if (chapter != null)
+                if (chapter == null)
                 {
-                    quiz.Chapter = chapter; // Set the Chapter reference
+                    throw new BaseException.BadRequestException("invalid_arguments", $"Chapter with Id '{dto.ChapterId}' not found.");
                 }
+                quiz.Chapter = chapter; // Set the Chapter reference
+                chapterName = chapter.ChapterName; // get the chapter name from dto
             }
 
+            // Update Topic reference if TopicId is provided
+            string topicName = string.Empty;
             if (!string.IsNullOrWhiteSpace(dto.TopicId))
             {
                 var topic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(dto.TopicId);
-                if (topic != null)
+                if (topic == null)
                 {
-                    quiz.Topic = topic; // Set the Topic reference
+                    throw new BaseException.BadRequestException("invalid_arguments", $"Topic with Id '{dto.TopicId}' not found.");
                 }
+                quiz.Topic = topic; // Set the Topic reference
+                topicName = topic.TopicName; // get the topic name from dto
             }
 
+            // Get the current user for auditing purposes
+            User currentUser = await _userService.GetCurrentUserAsync();
+            quiz.LastUpdatedBy = currentUser.Id ?? string.Empty; // Update LastUpdatedBy
+
+            // Fetch creator and last updated person information
+            var creator = await _unitOfWork.GetRepository<User>().FindByConditionAsync(c => c.Id != null && c.Id.Equals(quiz.CreatedBy));
+            var lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(quiz.LastUpdatedBy);
+
+            // Save changes to the database
             await _unitOfWork.SaveAsync();
 
-            return true; // Indicate success
+            // Return the updated quiz information in a DTO
+            return new QuizMainViewDto
+            {
+                Id = quiz.Id,
+                QuizName = quiz.QuizName,
+                Criteria = quiz.Criteria,
+                Status = quiz.Status,
+                ChapterName = chapterName,
+                TopicName = topicName,    
+                CreatedBy = quiz.CreatedBy ?? string.Empty,
+                CreatorName = creator?.FullName ?? string.Empty,        
+                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                LastUpdatedBy = quiz.LastUpdatedBy,
+                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty, 
+                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+                CreatedTime = quiz.CreatedTime,
+                LastUpdatedTime = CoreHelper.SystemTimeNow
+            };
         }
 
         // Delete a quiz
-        public async Task<bool> DeleteQuizAsync(string quizId)
+        public async Task<QuizDeleteDto> DeleteQuizAsync(string quizId)
         {
             Quiz? quiz;
 
@@ -284,3 +362,4 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
     }
 }
+// 10Đ

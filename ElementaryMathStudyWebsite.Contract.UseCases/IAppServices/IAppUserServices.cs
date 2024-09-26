@@ -17,6 +17,11 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<User> UpdateUserAsync(string userId, UpdateUserDto dto);
 
         /// <summary>
+        /// Updates an existing user's details using the provided data.
+        /// </summary>
+        Task<User> UpdateProfileAsync(string userId, RequestUpdateProfileDto dto);
+
+        /// <summary>
         /// Retrieves the username for the given user ID.
         /// </summary>
         Task<string> GetUserNameAsync(string userId);
@@ -75,5 +80,10 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         /// Retrieves a paginated list of children associated with a specific parent.
         /// </summary>
         Task<BasePaginatedList<User>> GetChildrenOfParentAsync(string parentId, int pageNumber, int pageSize);
+
+        /// <summary>
+        /// Checks if the username is already used.
+        /// </summary>
+        Task<bool> CheckExistingUserName(string username);
     }
 }
