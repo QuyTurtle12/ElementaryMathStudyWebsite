@@ -30,7 +30,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         /// <summary>
-        /// Logs in a user and returns a JWT token.
+        /// Logs in a role and returns a JWT token.
         /// </summary>
         /// <param name="loginDto">The login request data.</param>
         /// <returns>A JWT token if successful.</returns>
@@ -77,7 +77,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         /// <summary>
-        /// Registers a new user.
+        /// Registers a new role.
         /// </summary>
         /// <param name="registerDto">The registration request data.</param>
         /// <returns>A message indicating the result of the registration attempt.</returns>
@@ -101,7 +101,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return Conflict(ex.Message); // Conflict for cases like existing user or invalid role
+                return Conflict(ex.Message); // Conflict for cases like existing role or invalid role
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -146,7 +146,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
-            // Extract user ID from the token
+            // Extract role ID from the token
             var userId = _tokenService.GetUserIdFromTokenHeader(token);
 
             if (userId == Guid.Empty)
@@ -169,7 +169,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return Conflict(ex.Message); // Conflict for cases like existing user or invalid role
+                return Conflict(ex.Message); // Conflict for cases like existing role or invalid role
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -233,7 +233,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         [HttpGet]
-        [Route("role-pagination")]
+        [Route("role")]
         [SwaggerOperation(
             Summary = "Authorization: N/A",
             Description = "Get page with all roles "
@@ -280,5 +280,230 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("role/create")]
+        [Authorize(Policy = "Admin-Manager")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Creating new role"
+            )]
+        public async Task<IActionResult> CreateRole([FromBody] RequestRole createRoleDto)
+        {
+            if (createRoleDto == null)
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "Role data is required.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var role = await _roleService.CreateRoleAsync(createRoleDto);
+                var roleResponseDto = _mapper.Map<RoleDto>(role);
+
+                var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
+
+                return Ok(response);
+
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
+        [HttpPut]
+        [Route("role/update/{roleId}")]
+        [Authorize(Policy = "Admin-Manager")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Updating a Role"
+            )]
+        public async Task<IActionResult> UpdateRole(string roleId, [FromBody] RequestRole roleDto)
+        {
+            if (string.IsNullOrWhiteSpace(roleId))
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "Role ID is required.");
+            }
+
+            if (roleDto == null)
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "Role data is required.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+
+            }
+
+            try
+            {
+                var role = await _roleService.UpdateRoleAsync(roleId, roleDto);
+                var roleResponseDto = _mapper.Map<RoleDto>(role);
+
+                var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
+
+                return Ok(response);
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
+        [HttpGet]
+        [Route("role/{roleId}")]
+        [SwaggerOperation(
+            Summary = "Authorization: N/A",
+            Description = "Get a role by id"
+            )]
+        public async Task<IActionResult> GetRoleById(string roleId)
+        {
+            if (string.IsNullOrWhiteSpace(roleId))
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "Role ID is required.");
+            }
+
+            try
+            {
+                var role = await _roleService.GetRoleByIdAsync(roleId);
+
+
+                var roleResponseDto = _mapper.Map<RoleDto>(role);
+
+                var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
+
+                return Ok(response);
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
+        [HttpDelete]
+        [Route("role/delete/{roleId}")]
+        [Authorize(Policy = "Admin-Manager")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Deleting a Role"
+            )]
+        public async Task<IActionResult> DeleteRole(string roleId)
+        {
+            if (string.IsNullOrWhiteSpace(roleId))
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "Role ID is required.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+
+            }
+
+            try
+            {
+                var role = await _roleService.DeleteRoleAsync(roleId);
+
+                var response = BaseResponse<string>.OkResponse("Delete successfully");
+
+                return Ok(response);
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
     }
 }

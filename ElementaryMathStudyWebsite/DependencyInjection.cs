@@ -10,6 +10,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ChapterMappings;
+using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ProgressMappings;
+using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.OrderMappings;
+using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ResultMappings;
 
 
 namespace ElementaryMathStudyWebsite
@@ -75,6 +79,11 @@ namespace ElementaryMathStudyWebsite
         {
             // Register AutoMapper with all profiles
             services.AddAutoMapper(typeof(UserMappingProfile)); // Add any mapping profiles here
+            services.AddAutoMapper(typeof(ProgressMappingProfile));
+            services.AddAutoMapper(typeof(OrderMappingProfile));
+            services.AddAutoMapper(typeof(ResultMappingProfile));
+
+            services.AddAutoMapper(typeof(ChapterMappingProfile));
         }
 
         public static void AddAuthentication(this IServiceCollection services, IConfiguration configuration)

@@ -1,7 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Entity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -89,7 +88,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                 if (!results.Items.Any())
                 {
-                    throw new BaseException.BadRequestException("empty_list","This student hasn't done any test in this quiz yet");
+                    throw new BaseException.BadRequestException("invalid_argument","This student hasn't done any test in this quiz yet");
                 }
 
                 var response = BaseResponse<BasePaginatedList<ResultViewDto>>.OkResponse(results);

@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
@@ -214,7 +213,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (createUserDto == null)
             {
-                return BadRequest("User data is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User data is required.");
             }
 
             if (!ModelState.IsValid)
@@ -261,8 +260,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("all-list")]
+        [Authorize(Policy = "Admin-Manager")]
         [SwaggerOperation(
-            Summary = "Authorization: N/A",
+            Summary = "Authorization: Admin & Manager",
             Description = "Get a list with all users"
             )]
         public async Task<IActionResult> GetAllUsersWithRoles()
@@ -310,8 +310,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("all-pagination")]
+        [Authorize(Policy = "Admin-Manager")]
         [SwaggerOperation(
-            Summary = "Authorization: N/A",
+            Summary = "Authorization: Admin & Manager",
             Description = "Get page with all users "
             )]
         public async Task<IActionResult> GetAllUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
@@ -368,8 +369,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <returns>Returns a paginated list of users based on the search criteria.</returns>
         [HttpGet]
         [Route("search")]
+        [Authorize(Policy = "Admin-Manager")]
         [SwaggerOperation(
-            Summary = "Authorization: N/A",
+            Summary = "Authorization: Admin & Manager",
             Description = "Search users based on name, status, phone, and email with pagination."
         )]
         public async Task<IActionResult> SearchUsers([FromQuery] string? name, [FromQuery] bool? status, [FromQuery] string? phone, [FromQuery] string? email, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
@@ -413,9 +415,9 @@ namespace ElementaryMathStudyWebsite.Controllers
                 });
             }
         }
+        
 
-
-
+        
         /// <summary>
         /// Retrieves a user by their ID.
         /// </summary>
@@ -435,7 +437,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
             try
@@ -500,17 +502,18 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
             if (updateUserDto == null)
             {
-                return BadRequest("User data is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User data is required.");
             }
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+
             }
 
             try
@@ -572,7 +575,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
             try
@@ -633,7 +636,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
             try
@@ -698,7 +701,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(parentId))
             {
-                return BadRequest("Parent ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "Parent ID is required.");
             }
 
             try

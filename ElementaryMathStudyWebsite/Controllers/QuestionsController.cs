@@ -5,7 +5,6 @@ using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Core.Base;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
-using ElementaryMathStudyWebsite.Services.Service;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -21,8 +20,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/question/all
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("all")]
-        [SwaggerOperation(Summary = "Get all questions", Description = "Retrieve all questions.")]
+        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Retrieve all questions.")]
         public async Task<ActionResult<BaseResponse<List<QuestionMainViewDto>>>> GetAllQuestions()
         {
             try
@@ -57,7 +57,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/question/{id}
         [HttpGet("{id}")]
-        [SwaggerOperation(Summary = "Get question by ID", Description = "Retrieve a specific question by its ID.")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Retrieve a specific question by its ID.")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> GetQuestionById(string id)
         {
             try
@@ -92,14 +92,15 @@ namespace ElementaryMathStudyWebsite.Controllers
 
 
         // GET: api/question/search
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("search")]
-        [SwaggerOperation(Summary = "Search questions by context", Description = "Search for questions where the context contains the specified string.")]
-        public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions([FromQuery] string context)
+        [SwaggerOperation(Summary = "Search questions by Content, Authorization: Manager & Admin", Description = "Search for questions where the Content contains the specified string.")]
+        public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions([FromQuery] string Content)
         {
             try
             {
-                // Search questions by the provided context string
-                var questions = await _questionService.SearchQuestionsByContextAsync(context)
+                // Search questions by the provided Content string
+                var questions = await _questionService.SearchQuestionsByContextAsync(Content)
                     ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
 
                 // Return success response with the search results
@@ -128,7 +129,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/question/quiz/{quizId}
         [HttpGet("quiz/{quizId}")]
-        [SwaggerOperation(Summary = "Get questions by quiz Id", Description = "Retrieve all questions for a specific quiz.")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Retrieve all questions for a specific quiz.")]
         public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> GetQuestionsByQuizId(string quizId)
         {
             try
@@ -162,8 +163,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/question
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet]
-        [SwaggerOperation(Summary = "Get questions with pagination", Description = "Retrieve all questions with pagination.")]
+        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Retrieve all questions with pagination.")]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<QuestionMainViewDto>>>> GetQuestions([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             try
@@ -197,8 +199,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // POST: api/question
+        [Authorize(Policy = "Admin-Content")]
         [HttpPost]
-        [SwaggerOperation(Summary = "Create a new question.", Description = "Creates a new question and returns the created question.")]
+        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Creates a new question and returns the created question.")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> AddQuestionAsync([FromBody] QuestionCreateDto dto)
         {
             try
@@ -218,8 +221,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // PUT: api/question/{id}
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut("{id}")]
-        [SwaggerOperation(Summary = "Update an existing question.", Description = "Updates an existing question based on the provided data.")]
+        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Updates an existing question based on the provided data.")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> UpdateQuestionAsync([Required] string id, [FromBody] QuestionUpdateDto dto)
         {
             try

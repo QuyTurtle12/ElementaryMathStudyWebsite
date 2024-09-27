@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
@@ -13,6 +14,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles
             // Define the mapping configuration
             CreateMap<User, UserResponseDto>();
             CreateMap<Role, RoleDto>();
+            CreateMap<RequestRole, Role>();
             CreateMap<CreateUserDto, User>();
             CreateMap<User, UserProfile>();
             CreateMap<User, UpdateProfileDto>();
