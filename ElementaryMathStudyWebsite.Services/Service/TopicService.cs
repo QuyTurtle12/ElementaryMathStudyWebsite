@@ -45,9 +45,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         }
 
                         string chapterName = string.Empty;
-                        if (!string.IsNullOrWhiteSpace(topic.ChapterId))
+                        if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
                         {
-                            chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
+                            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
+
+                            chapterName = chapter!.ChapterName;
                         }
 
                         User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
@@ -157,9 +159,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         }
 
                         string chapterName = string.Empty;
-                        if (!string.IsNullOrWhiteSpace(topic.ChapterId))
+                        if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
                         {
-                            chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
+                            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
+
+                            chapterName = chapter!.ChapterName;
                         }
 
                         User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
@@ -274,9 +278,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         }
 
                         string chapterName = string.Empty;
-                        if (!string.IsNullOrWhiteSpace(topic.ChapterId))
+                        if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
                         {
-                            chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
+                            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
+
+                            chapterName = chapter!.ChapterName;
                         }
 
                         topicViewDtos.Add(new TopicViewDto
@@ -372,14 +378,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("Quiz ID cannot be empty.", nameof(topic.QuizId));
             }
 
-            string chapterName = string.Empty;
-            if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
-            {
-                Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
-
-                chapterName = chapter!.ChapterName;
-            }
-
             string quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
             User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
             User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
@@ -470,9 +468,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 foreach (var topic in allTopics)
                 {
                     string chapterName = string.Empty;
-                    if (_unitOfWork.IsValid<Chapter>(t.ChapterId))
+                    if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
                     {
-                        Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(t.ChapterId);
+                        Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
 
                         chapterName = chapter!.ChapterName;
                     }
@@ -509,9 +507,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (var topic in paginatedTopics.Items)
             {
                 string chapterName = string.Empty;
-                if (_unitOfWork.IsValid<Chapter>(t.ChapterId))
+                if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
                 {
-                    Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(t.ChapterId);
+                    Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
 
                     chapterName = chapter!.ChapterName;
                 }
@@ -652,7 +650,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("Chapter ID cannot be empty.", nameof(newTopic.ChapterId));
             }
 
-            string chapterName = await _chapterService.GetChapterNameAsync(newTopic.ChapterId) ?? string.Empty;
 
             if (string.IsNullOrWhiteSpace(newTopic.QuizId))
             {
@@ -782,7 +779,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("Quiz ID cannot be empty.", nameof(existingTopic.QuizId));
             }
 
-            string chapterName = await _chapterService.GetChapterNameAsync(existingTopic.ChapterId) ?? string.Empty;
             string quizName = await _quizService.GetQuizNameAsync(existingTopic.QuizId) ?? string.Empty;
             User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(existingTopic?.CreatedBy ?? string.Empty);
             User currentUser = await _userService.GetCurrentUserAsync();
@@ -854,7 +850,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("Quiz ID cannot be empty.", nameof(topic.QuizId));
             }
 
-            string chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
             string quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
             User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
             User currentUser = await _userService.GetCurrentUserAsync();
