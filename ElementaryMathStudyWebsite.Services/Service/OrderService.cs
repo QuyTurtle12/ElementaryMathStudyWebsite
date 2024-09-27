@@ -47,7 +47,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                             string.IsNullOrWhiteSpace(o.DeletedBy)
                             );
 
-            if (query.Count() > 0) throw new BaseException.BadRequestException("invalid_argument", "You already have something in your cart, please discard your current cart or proceed to checkout");
+            if (query.Any()) throw new BaseException.BadRequestException("invalid_argument", "You already have something in your cart, please discard your current cart or proceed to checkout");
 
             // General Validation for each Subject-Student pair
             foreach (var subjectStudent in cartCreateDto.SubjectStudents)
@@ -135,7 +135,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                             );
 
             // Check if the cart contain any item
-            if (orderQuery.Count() <= 0) throw new BaseException.NotFoundException(
+            if (!orderQuery.Any()) throw new BaseException.NotFoundException(
                 "not_found",
                 "You have no items in your cart"
             );
@@ -171,14 +171,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                             string.IsNullOrWhiteSpace(o.DeletedBy)
                             );
 
-            if (orderQuery.Count() <= 0) throw new BaseException.NotFoundException(
+            if (!orderQuery.Any()) throw new BaseException.NotFoundException(
                 "not_found",
                 "You have no items in your cart"
             );
 
             var cart = orderQuery.First();
             IQueryable<OrderDetail> orderDetailQuery = _unitOfWork.GetRepository<OrderDetail>().GetEntitiesWithCondition(o => o.OrderId == cart.Id);
-            List<OrderDetailViewDto> detailDtos = new();
+            List<OrderDetailViewDto> detailDtos = [];
 
             foreach (var orderDetail in orderDetailQuery)
             {

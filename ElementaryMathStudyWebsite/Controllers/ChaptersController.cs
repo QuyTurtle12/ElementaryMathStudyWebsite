@@ -1,6 +1,7 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Services.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -15,7 +16,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         private readonly IAppChapterServices _chapterService;
         public ChaptersController(IAppChapterServices chapterServices)
         {
-            _chapterService = chapterServices; 
+            _chapterService = chapterServices;
         }
         // GET: api/chapters/Content
         // Get chapters for Content & Admin
@@ -68,24 +69,24 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
-                    var chapter = await _chapterService.GetChapterByChapterIdAsync(id);
-                    if (chapter == null)
-                    {
-                        throw new BaseException.BadRequestException("chapter_not_found", "The requested chapter was not found.");
-                    }
+                var chapter = await _chapterService.GetChapterByChapterIdAsync(id);
+                if (chapter == null)
+                {
+                    throw new BaseException.BadRequestException("chapter_not_found", "The requested chapter was not found.");
+                }
 
-                    var response = BaseResponse<object>.OkResponse(chapter);
-                    return Ok(response);
-                    //var chapter = await _chapterService.GetChapterByChapterIdAsync(id);
-                    //if (chapter == null)
-                    //{
-                    //    return NotFound(new
-                    //    {
-                    //        error = "Invalid Chapter Id",
-                    //        message = "The chapter with the specified ID was not found."
-                    //    });
-                    //}
-                    //return Ok(chapter);
+                var response = BaseResponse<object>.OkResponse(chapter);
+                return Ok(response);
+                //var chapter = await _chapterService.GetChapterByChapterIdAsync(id);
+                //if (chapter == null)
+                //{
+                //    return NotFound(new
+                //    {
+                //        error = "Invalid Chapter Id",
+                //        message = "The chapter with the specified ID was not found."
+                //    });
+                //}
+                //return Ok(chapter);
             }
             //catch (BaseException.CoreException coreEx)
             //{
@@ -571,28 +572,42 @@ namespace ElementaryMathStudyWebsite.Controllers
                     details = ModelState
                 });
             }
-
             try
             {
-                var chapter = await _chapterService.DeleteChapterAsync(id);
-                if (chapter == null)
+                var result = await _chapterService.DeleteChapterAsync(id);
+
+                if (result)
                 {
-                    throw new BaseException.BadRequestException("chapter_not_found", "The requested chapter was not found.");
+                    var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
+                    return Ok(successResponse);
+
                 }
-                var response = BaseResponse<ChapterAdminViewDto>.OkResponse(chapter);
-                return Ok(response);
+                var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
+
+                return Ok(failedResponse);
             }
             catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 

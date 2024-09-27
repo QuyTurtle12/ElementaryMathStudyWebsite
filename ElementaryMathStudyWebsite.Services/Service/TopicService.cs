@@ -13,14 +13,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppQuizServices _quizService;
-        private readonly IAppChapterServices _chapterService;
         private readonly IAppUserServices _userService;
+        
 
-        public TopicService(IUnitOfWork unitOfWork, IAppQuizServices quizService, IAppChapterServices chapterService, IAppUserServices userService)
+        public TopicService(IUnitOfWork unitOfWork, IAppQuizServices quizService, IAppUserServices userService)
         {
             _unitOfWork = unitOfWork;
             _quizService = quizService;
-            _chapterService = chapterService;
             _userService = userService;
         }
 
@@ -101,9 +100,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     }
 
                     string chapterName = string.Empty;
-                    if (!string.IsNullOrWhiteSpace(topic.ChapterId))
+                    if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
                     {
-                        chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
+                        Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
+
+                        chapterName = chapter!.ChapterName;
                     }
 
                     User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
@@ -211,10 +212,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     }
 
                     string chapterName = string.Empty;
-                    if (!string.IsNullOrWhiteSpace(topic.ChapterId))
+                    if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
                     {
-                        chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
+                        Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
+
+                        chapterName = chapter!.ChapterName;
                     }
+                    string createdById = topic?.CreatedBy ?? string.Empty;
+                    User? createdBy = await _unitOfWork.GetRepository<User>().GetByIdAsync(createdById);
 
                     User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
                     User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
@@ -313,10 +318,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     }
 
                     string chapterName = string.Empty;
-                    if (!string.IsNullOrWhiteSpace(topic.ChapterId))
+                    if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
                     {
-                        chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
+                        Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
+
+                        chapterName = chapter!.ChapterName;
                     }
+                    else chapterName = string.Empty;
 
                     topicViewDtosPaginated.Add(new TopicViewDto
                     {
@@ -364,7 +372,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("Quiz ID cannot be empty.", nameof(topic.QuizId));
             }
 
-            string chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
+            string chapterName = string.Empty;
+            if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
+            {
+                Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
+
+                chapterName = chapter!.ChapterName;
+            }
+
             string quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
             User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
             User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
@@ -414,7 +429,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("Quiz ID cannot be empty.", nameof(topic.QuizId));
             }
 
-            string chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
+            string chapterName = string.Empty;
+            if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
+            {
+                Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
+
+                chapterName = chapter!.ChapterName;
+            }
+
             string quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
 
             return new TopicViewDto
@@ -448,9 +470,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 foreach (var topic in allTopics)
                 {
                     string chapterName = string.Empty;
-                    if (!string.IsNullOrWhiteSpace(topic.ChapterId))
+                    if (_unitOfWork.IsValid<Chapter>(t.ChapterId))
                     {
-                        chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
+                        Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(t.ChapterId);
+
+                        chapterName = chapter!.ChapterName;
                     }
                     string quizName = string.Empty;
                     if (!string.IsNullOrWhiteSpace(topic.QuizId))
@@ -485,9 +509,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (var topic in paginatedTopics.Items)
             {
                 string chapterName = string.Empty;
-                if (!string.IsNullOrWhiteSpace(topic.ChapterId))
+                if (_unitOfWork.IsValid<Chapter>(t.ChapterId))
                 {
-                    chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
+                    Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(t.ChapterId);
+
+                    chapterName = chapter!.ChapterName;
                 }
                 string quizName = string.Empty;
                 if (!string.IsNullOrWhiteSpace(topic.QuizId))
@@ -540,7 +566,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
                 }
 
-                var chapterName = await _chapterService.GetChapterNameAsync(chapterId) ?? string.Empty;
+                string chapterName = string.Empty;
+                if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
+                {
+                    Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
+
+                    chapterName = chapter!.ChapterName;
+                }
 
                 topicViewDtos.Add(new TopicViewDto
                 {
@@ -775,76 +807,23 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
-        // Xóa 1 Topic 
-        public async Task<TopicDeleteDto> DeleteTopicAsync(string id)
+        public async Task<bool> DeleteTopicAsync(string topicId)
         {
-            // Lấy token
-            User currentUser = await _userService.GetCurrentUserAsync();
+            //Delete the topic
+            Topic? topic;
 
-            // Tìm topic theo ID
-            var topic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(id) ?? throw new BaseException.NotFoundException("Not Found!", $"Topic with ID '{id}' not found.");
+            if (_unitOfWork.IsValid<Topic>(topicId))
+                topic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(topicId);
+            else throw new BaseException.NotFoundException("not_found", "Topic ID not found");
 
-            // Kiểm tra xem topic đã bị xóa chưa
-            if (topic.DeletedBy != null)
-            {
-                throw new BaseException.BadRequestException("Invalid!", "This topic was already deleted.");
-            }
+            _userService.AuditFields(topic!, false, true);
 
-            // Đánh dấu topic là đã xóa
-            if (topic.Status == true)
-            {
-                topic.Status = false;// Đặt trạng thái là không hoạt động
-            }
+            await _unitOfWork.SaveAsync();
 
-            topic.DeletedBy = currentUser.Id; // Lưu ID người đã xóa
-            topic.DeletedTime = DateTime.UtcNow; // Ghi lại thời gian xóa
+            // Delete the corresponding quiz
+            await _quizService.DeleteQuizAsync(topic!.QuizId!);
 
-            // Ghi lại thông tin audit nếu cần thiết
-            _userService.AuditFields(topic, true);
-
-            // Cập nhật topic trong cơ sở dữ liệu
-            _unitOfWork.GetRepository<Topic>().Update(topic);
-            await _unitOfWork.GetRepository<Topic>().SaveAsync();
-
-            // Trả về DTO cho topic đã xóa
-            if (string.IsNullOrWhiteSpace(topic.ChapterId))
-            {
-                throw new BaseException.BadRequestException("Chapter ID cannot be empty.", nameof(topic.ChapterId));
-            }
-
-            if (string.IsNullOrWhiteSpace(topic.QuizId))
-            {
-                throw new BaseException.BadRequestException("Quiz ID cannot be empty.", nameof(topic.QuizId));
-            }
-
-            string chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
-            string quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-            User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
-            User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
-
-            return new TopicDeleteDto
-            {
-                Id = topic!.Id,
-                Number = topic.Number,
-                TopicName = topic.TopicName,
-                TopicContext = topic.TopicContext,
-                Status = topic.Status,
-                QuizId = topic.QuizId,
-                QuizName = quizName,
-                ChapterId = topic.ChapterId,
-                CreatedBy = topic?.CreatedBy ?? string.Empty,
-                CreatorName = creator?.FullName ?? string.Empty,
-                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                LastUpdatedBy = topic?.LastUpdatedBy ?? string.Empty,
-                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
-                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
-                CreatedTime = topic?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                LastUpdatedTime = topic?.LastUpdatedTime ?? CoreHelper.SystemTimeNow,
-                DeletedBy = currentUser.Id,
-                DeleteName = currentUser.FullName ?? string.Empty,
-                DeletePhone = currentUser.PhoneNumber ?? string.Empty,
-                DeletedTime = topic?.DeletedTime ?? CoreHelper.SystemTimeNow
-            };
+            return true;
         }
 
         // Rollback Topic đã xóa
@@ -951,6 +930,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("Invalid!", "Topic ID cannot be empty.");
             }
         }
+        
         private void ValidateTopicDto(TopicCreateDto topicCreateDto)
         {
             if (string.IsNullOrWhiteSpace(topicCreateDto.TopicName))

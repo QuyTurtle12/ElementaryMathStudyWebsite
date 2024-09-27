@@ -14,9 +14,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         // Edit an option by id
         Task<OptionViewDto> UpdateOption(string optionId, OptionUpdateDto optionUpdateDto);
-
-        //Check if the question is valid
-        bool IsValidOption(string optionId);
         
         //Delete an option
         Task<bool> DeleteOption(string optionId);

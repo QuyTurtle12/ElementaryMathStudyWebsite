@@ -17,12 +17,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userServices;
-        private readonly IMapper _mapper;
+        private readonly IAppTopicServices _topicService;
+        private readonly IAppQuizServices _quizService;
+        private readonly IMapper _mapper;        
 
-        public ChapterService(IUnitOfWork unitOfWork, IAppUserServices userServices, IMapper mapper)
+
+        // Constructor
+        public ChapterService(IUnitOfWork unitOfWork, IAppUserServices userServices, IAppTopicServices topicService, IAppQuizServices quizService, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _userServices = userServices;
+            _topicService = topicService;
+            _quizService = quizService;
             _mapper = mapper;
         }
 
@@ -300,57 +306,35 @@ namespace ElementaryMathStudyWebsite.Services.Service
         //    return true;
         //}
 
-        public async Task<ChapterAdminDelete> DeleteChapterAsync(string chapterId)
+        public async Task<bool> DeleteChapterAsync(string chapterId)
         {
+            // Delete the chapter
+            Chapter? chapter;
 
-            //var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            //var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
-            //User currentUserId = await _userServices.GetCurrentUserAsync();
-            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new BaseException.NotFoundException("not_found", "Chapter ID not found");
-            if (chapter.DeletedBy != null)
+            if (_unitOfWork.IsValid<Chapter>(chapterId))
+                chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId);
+            else throw new BaseException.NotFoundException("not_found", "Chapter ID not found");
+
+            _userServices.AuditFields(chapter!, false, true);
+
+            await _unitOfWork.SaveAsync();
+
+            // Delete the corresponding topics
+            IQueryable<Topic> query = _unitOfWork.GetRepository<Topic>().GetEntitiesWithCondition(
+                            t => t.ChapterId == chapterId &&
+                            string.IsNullOrWhiteSpace(t.DeletedBy)
+                            );
+
+            foreach (var topic in query)
             {
-                throw new BaseException.BadRequestException("invalid", "This chapter was deleted");
+                await _topicService.DeleteTopicAsync(topic.Id);
             }
-            if (chapter.Status == true)
-            {
-                chapter.Status = false;
-            }
-            //chapter.DeletedBy = currentUserId.Id.ToString().ToUpper();
-            //chapter.DeletedTime = DateTime.UtcNow;
 
-            _userServices.AuditFields(chapter, false, true);
+            // Delete the corresponding quiz
+            await _quizService.DeleteQuizAsync(chapter!.QuizId!);
 
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
-            var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
-            User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
-            User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
-            User? deleteBy = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.DeletedBy ?? string.Empty);
+            return true;
 
-            _unitOfWork.GetRepository<Chapter>().Update(chapter);
-            await _unitOfWork.GetRepository<Chapter>().SaveAsync();
-
-            return new ChapterAdminDelete
-            {
-                Id = chapter.Id,
-                Number = chapter.Number,
-                ChapterName = chapter.ChapterName,
-                Status = chapter.Status,
-                SubjectId = chapter.SubjectId,
-                SubjectName = subject?.SubjectName ?? string.Empty,
-                QuizId = chapter.QuizId,
-                QuizName = quiz?.QuizName ?? string.Empty,
-                CreatedBy = chapter.CreatedBy,
-                CreatedTime = chapter.CreatedTime,
-                CreatorName = creator?.FullName ?? string.Empty,
-                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                LastUpdatedBy = chapter.LastUpdatedBy,
-                LastUpdatedTime = chapter.LastUpdatedTime,
-                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
-                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
-                DeletedBy = chapter.DeletedBy,
-                DeleteChapterBy = deleteBy?.FullName ?? string.Empty,
-                DeletedTime = chapter.DeletedTime,
-            };
         }
 
         public async Task<ChapterAdminDelete> rollbackChapterDeletedAsync(string chapterId)
