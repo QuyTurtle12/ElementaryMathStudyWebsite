@@ -6,9 +6,9 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
     public interface IAppChapterServices
     {
-        Task<BasePaginatedList<ChapterViewDto>> SearchChapterAsync(string searchTerm, int pageNumber, int pageSize);
+        Task<BasePaginatedList<object>> SearchChapterAsync(string searchTerm, int pageNumber, int pageSize);
 
-        Task<BasePaginatedList<ChapterAdminViewDto>> SearchChapterForAdminAsync(string searchTerm, int pageNumber, int pageSize);
+        Task<BasePaginatedList<object>> SearchChapterForAdminAsync(string searchTerm, int pageNumber, int pageSize);
 
         Task<ChapterViewDto> CreateChapterAsync(ChapterDto chapterDTO);
 
