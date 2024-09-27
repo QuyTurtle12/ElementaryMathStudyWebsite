@@ -3,7 +3,6 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Core.Base;
-using Humanizer;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 
@@ -95,13 +94,13 @@ namespace ElementaryMathStudyWebsite.Controllers
         // GET: api/question/search
         [Authorize(Policy = "Admin-Content")]
         [HttpGet("search")]
-        [SwaggerOperation(Summary = "Search questions by context, Authorization: Manager & Admin", Description = "Search for questions where the context contains the specified string.")]
-        public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions([FromQuery] string context)
+        [SwaggerOperation(Summary = "Search questions by Content, Authorization: Manager & Admin", Description = "Search for questions where the Content contains the specified string.")]
+        public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions([FromQuery] string Content)
         {
             try
             {
-                // Search questions by the provided context string
-                var questions = await _questionService.SearchQuestionsByContextAsync(context)
+                // Search questions by the provided Content string
+                var questions = await _questionService.SearchQuestionsByContextAsync(Content)
                     ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
 
                 // Return success response with the search results
@@ -246,29 +245,56 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+
         // DELETE: api/question/{id}
         [Authorize(Policy = "Admin-Content")]
         [HttpDelete("{id}")]
-        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Deletes a question by its unique identifier.")]
-        public async Task<ActionResult<BaseResponse<QuestionDeleteDto>>> DeleteQuestionAsync(string id)
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Delete a question")]
+        public async Task<IActionResult> DeleteQuestion([Required] string id)
         {
             try
             {
-                // Delete the question and get the deleted question data
-                var deletedQuestionDto = await _questionService.DeleteQuestionAsync(id)
-                    ?? throw new BaseException.NotFoundException("not_found", "question not found.");
-                return BaseResponse<QuestionDeleteDto>.OkResponse("Question deleted successfully.");
+                var result = await _questionService.DeleteQuestion(id);
+
+                if (result)
+                {
+                    var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
+                    return Ok(successResponse);
+
+                }
+                var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
+
+                return Ok(failedResponse);
             }
             catch (BaseException.CoreException coreEx)
             {
-                // Handle core exceptions
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
-                // Handle bad request exceptions
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
             }
         }
+
     }
 }

@@ -1,4 +1,5 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+﻿using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
@@ -15,14 +16,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IAppUserServices _userServices;
         private readonly IAppProgressServices _progressServices;
         private readonly IAppSubjectServices _subjectServices;
+        private readonly IMapper _mapper;
 
         // Constructor
-        public ResultService(IUnitOfWork unitOfWork, IAppUserServices userServices, IAppProgressServices progressServices, IAppSubjectServices subjectServices)
+        public ResultService(IUnitOfWork unitOfWork, IAppUserServices userServices, IAppProgressServices progressServices, IAppSubjectServices subjectServices, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _userServices = userServices;
             _progressServices = progressServices;
             _subjectServices = subjectServices;
+            _mapper = mapper;
         }
 
         // Calculate the latest student score
@@ -131,16 +134,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Map result data to view dto
             foreach (var result in studentResultList)
             {
-                ResultViewDto dto = new()
-                {
-                    StudentId = result.StudentId,
-                    StudentName = result.Student.FullName,
-                    QuizId = result.QuizId,
-                    QuizName = result.Quiz.QuizName,
-                    Score = result.Score,
-                    Attempt = result.AttemptNumber,
-                    DateTaken = result.DateTaken
-                };
+                var dto = _mapper.Map<ResultViewDto>(result);
+
+                //ResultViewDto dto = new()
+                //{
+                //    StudentId = result.StudentId,
+                //    StudentName = result.Student.FullName,
+                //    QuizId = result.QuizId,
+                //    QuizName = result.Quiz.QuizName,
+                //    Score = result.Score,
+                //    Attempt = result.AttemptNumber,
+                //    DateTaken = result.DateTaken
+                //};
 
                 resultViewDtos.Add(dto);
             }
@@ -171,6 +176,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (quiz != null && user != null && latestAttemptNumber != 0)
             {
+
                 Result studentResult = new Result
                 {
                     QuizId = dto.QuizId,
@@ -311,5 +317,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return resultParentViewDto;
         }
+
     }
 }

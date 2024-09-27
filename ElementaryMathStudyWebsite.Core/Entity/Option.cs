@@ -14,15 +14,9 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         // Navigation properties
         [JsonIgnore]
-        public virtual User? CreatedByUser { get; set; }
-        [JsonIgnore]
-        public virtual User? LastUpdatedByUser { get; set; }
-        [JsonIgnore]
-        public virtual User? DeletedByUser { get; set; }
-        [JsonIgnore]
         public virtual ICollection<UserAnswer>? Answers { get; set; } // Navigation property, one option can be in many user's answer
         [JsonIgnore]
-        public virtual Question? Question { get; set; } // Navigation property, one option belong to one question
+        public virtual Question Question { get; set; } = new(); // Navigation property, one option belong to one question
 
 
     }

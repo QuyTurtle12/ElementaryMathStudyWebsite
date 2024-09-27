@@ -1,9 +1,7 @@
-﻿
-namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
+﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
 {
-    public class TopicCreateDto
+    public class TopicUpdateDto
     {
-        public int Number { get; set; }
         public string TopicName { get; set; } = string.Empty;
         public string? TopicContext { get; set; }
         public string? QuizId { get; set; }

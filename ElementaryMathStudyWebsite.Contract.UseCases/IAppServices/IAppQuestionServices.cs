@@ -1,6 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
@@ -13,6 +12,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<BasePaginatedList<QuestionMainViewDto>?> GetQuestionsAsync(int pageNumber, int pageSize);
         Task<QuestionMainViewDto> AddQuestionAsync(QuestionCreateDto dto);
         Task<QuestionMainViewDto> UpdateQuestionAsync(string id, QuestionUpdateDto dto);
-        Task<QuestionDeleteDto> DeleteQuestionAsync(string id);
+        Task<bool> DeleteQuestion(string questionId);
     }
 }
