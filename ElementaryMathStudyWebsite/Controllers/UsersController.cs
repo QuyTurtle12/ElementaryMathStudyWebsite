@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
@@ -33,8 +32,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         [HttpGet("profile")]
         public async Task<ActionResult<BaseResponse<UserProfile>>> GetProfile()
         {
-            try
-            {
+
                 // Get the token from the Authorization header
                 var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
@@ -52,26 +50,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                 var response = BaseResponse<UserProfile>.OkResponse(userProfile);
                 return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+
         }
 
         /// <summary>
@@ -85,7 +64,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: logged in user",
             Description = "Updating a user profile"
             )]
-        public async Task<ActionResult<BaseResponse<UpdateProfileDto>>> UpdateProfile([FromBody] UpdateUserDto updateUserDto)
+        public async Task<ActionResult<BaseResponse<UpdateProfileDto>>> UpdateProfile([FromBody] RequestUpdateProfileDto updateUserDto)
         {
             // Get the token from the Authorization header
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
@@ -98,35 +77,14 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return Unauthorized();
             }
 
-            try
-            {
-                var user = await _userServices.UpdateUserAsync(userId.ToString(), updateUserDto);
+                var user = await _userServices.UpdateProfileAsync(userId.ToString(), updateUserDto);
                 var UpdateProfileDto = _mapper.Map<UpdateProfileDto>(user);
                 UpdateProfileDto.Token = _tokenService.GenerateJwtToken(user);
 
                 var response = BaseResponse<UpdateProfileDto>.OkResponse(UpdateProfileDto);
 
                 return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+
         }
 
         /// <summary>
@@ -155,8 +113,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return Unauthorized();
             }
 
-            try
-            {
                 var paginatedUsers = await _userServices.GetChildrenOfParentAsync(userId.ToString(), pageNumber, pageSize);
 
                 // Map users to UserResponseDto
@@ -173,26 +129,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
 
                 return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
         }
 
         /// <summary>
@@ -214,7 +150,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (createUserDto == null)
             {
-                return BadRequest("User data is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User data is required.");
             }
 
             if (!ModelState.IsValid)
@@ -222,35 +158,13 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return BadRequest(ModelState);
             }
 
-            try
-            {
                 var user = await _userServices.CreateUserAsync(createUserDto);
                 var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
                 var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
 
                 return Ok(response);
-
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            
         }
 
         /// <summary>
@@ -261,14 +175,14 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("all-list")]
+        [Authorize(Policy = "Admin-Manager")]
         [SwaggerOperation(
-            Summary = "Authorization: N/A",
+            Summary = "Authorization: Admin & Manager",
             Description = "Get a list with all users"
             )]
         public async Task<IActionResult> GetAllUsersWithRoles()
         {
-            try
-            {
+
                 var users = await _userServices.GetAllUsersWithRolesAsync();
 
                 // Map the users to UserResponseDto
@@ -277,26 +191,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var response = BaseResponse<IEnumerable<UserResponseDto>>.OkResponse(userResponseDtos);
 
                 return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            
         }
 
 
@@ -310,14 +205,14 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("all-pagination")]
+        [Authorize(Policy = "Admin-Manager")]
         [SwaggerOperation(
-            Summary = "Authorization: N/A",
+            Summary = "Authorization: Admin & Manager",
             Description = "Get page with all users "
             )]
         public async Task<IActionResult> GetAllUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            try
-            {
+
                 var paginatedUsers = await _userServices.GetAllUsersAsync(pageNumber, pageSize);
 
                 // Map users to UserResponseDto
@@ -334,26 +229,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
 
                 return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+
         }
 
         /// <summary>
@@ -368,14 +244,14 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <returns>Returns a paginated list of users based on the search criteria.</returns>
         [HttpGet]
         [Route("search")]
+        [Authorize(Policy = "Admin-Manager")]
         [SwaggerOperation(
-            Summary = "Authorization: N/A",
+            Summary = "Authorization: Admin & Manager",
             Description = "Search users based on name, status, phone, and email with pagination."
         )]
         public async Task<IActionResult> SearchUsers([FromQuery] string? name, [FromQuery] bool? status, [FromQuery] string? phone, [FromQuery] string? email, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            try
-            {
+
                 var paginatedUsers = await _userServices.SearchUsersAsync(name, status, phone, email, pageNumber, pageSize);
 
                 // Map users to UserResponseDto
@@ -392,30 +268,11 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
 
                 return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+
         }
+        
 
-
-
+        
         /// <summary>
         /// Retrieves a user by their ID.
         /// </summary>
@@ -435,48 +292,17 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
-            try
-            {
-                var user = await _userServices.GetUserByIdAsync(userId);
+            var user = await _userServices.GetUserByIdAsync(userId);
 
 
-                var userResponseDto = _mapper.Map<UserResponseDto>(user);
+            var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
-                var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
+            var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific BadRequestException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
         }
 
         /// <summary>
@@ -500,56 +326,26 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
             if (updateUserDto == null)
             {
-                return BadRequest("User data is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User data is required.");
             }
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
-            }
 
-            try
-            {
+            }
                 var user = await _userServices.UpdateUserAsync(userId, updateUserDto);
                 var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
                 var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
 
                 return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific BadRequestException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+
         }
 
         /// <summary>
@@ -572,11 +368,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
-            try
-            {
                 var result = await _userServices.DisableUserAsync(userId);
 
                 if (result)
@@ -586,35 +380,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                     return Ok(response);
                 }
                 throw new BaseException.CoreException("unsuccess", "Disable unsuccessfully");
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific BadRequestException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
         }
 
         /// <summary>
@@ -633,11 +398,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
-            try
-            {
                 var result = await _userServices.DeleteUserAsync(userId);
 
                 if (result)
@@ -647,35 +410,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                     return Ok(response);
                 }
                 throw new BaseException.CoreException("unsuccess", "Delete unsuccessfully");
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific BadRequestException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
         }
 
         /// <summary>
@@ -698,11 +432,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             if (string.IsNullOrWhiteSpace(parentId))
             {
-                return BadRequest("Parent ID is required.");
+                throw new BaseException.BadRequestException("invalid_argument", "Parent ID is required.");
             }
 
-            try
-            {
                 var paginatedUsers = await _userServices.GetChildrenOfParentAsync(parentId, pageNumber, pageSize);
 
                 // Map users to UserResponseDto
@@ -719,26 +451,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
 
                 return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+
         }
 
 

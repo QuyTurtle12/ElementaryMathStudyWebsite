@@ -4,7 +4,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 {
     public class Progress
     {
-        public required string StudentId { get; set; } = string.Empty;
+        public string StudentId { get; set; } = string.Empty;
         public string QuizId { get; set; } = string.Empty;
         public string SubjectId { get; set; } = string.Empty;
 

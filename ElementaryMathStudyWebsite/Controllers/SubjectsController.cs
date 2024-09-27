@@ -26,7 +26,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var activeSubjects = await _appSubjectServices.GetAllSubjectsAsync(pageNumber, pageSize, false);
                 if (activeSubjects?.Items.Count == 0 || activeSubjects == null)
                 {
-                    throw new BaseException.BadRequestException("no_subjects_found", "No active subjects found.");
+                    throw new BaseException.NotFoundException("subjects_not_found", "No active subjects found.");
                 }
 
                 return Ok(BaseResponse<BasePaginatedList<object>>.OkResponse(activeSubjects));
@@ -34,6 +34,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.CoreException coreEx)
             {
                 return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
@@ -52,10 +56,6 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var subject = await _appSubjectServices.GetSubjectByIDAsync(id, false);
-                if (subject == null)
-                {
-                    throw new BaseException.BadRequestException("subject_not_found", "Subject not found.");
-                }
 
                 var response = BaseResponse<object>.OkResponse(subject);
                 return Ok(subject);
@@ -63,6 +63,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.CoreException coreEx)
             {
                 return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
@@ -84,7 +88,7 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var subjects = await _appSubjectServices.GetAllSubjectsAsync(pageNumber, pageSize, true); // true for admin access
                 if (subjects?.Items.Count == 0 || subjects == null)
                 {
-                    throw new BaseException.BadRequestException("no_subjects_found", "No subjects found.");
+                    throw new BaseException.NotFoundException("no_subjects_found", "No subjects found.");
                 }
 
                 var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
@@ -93,6 +97,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.CoreException coreEx)
             {
                 return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
@@ -112,10 +120,6 @@ namespace ElementaryMathStudyWebsite.Controllers
             try
             {
                 var subject = await _appSubjectServices.GetSubjectByIDAsync(id, true); // isAdmin = true
-                if (subject == null)
-                {
-                    throw new BaseException.BadRequestException("subject_not_found", "The requested subject was not found.");
-                }
 
                 var response = BaseResponse<object>.OkResponse(subject);
                 return Ok(subject);
@@ -123,6 +127,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.BadRequestException badRequestEx)
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -186,6 +194,10 @@ namespace ElementaryMathStudyWebsite.Controllers
                     errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
             }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
+            }
             catch (Exception ex)
             {
                 // Catch all other exceptions and return a generic server error
@@ -216,6 +228,10 @@ namespace ElementaryMathStudyWebsite.Controllers
                 var updatedSubject = await _appSubjectServices.UpdateSubjectAsync(id, subjectDTO);
                 var response = BaseResponse<SubjectAdminViewDTO>.OkResponse(updatedSubject);
                 return Ok(response);
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
             catch (ArgumentException argEx)
             {
@@ -295,6 +311,16 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
+                }
+
+                if (searchTerm.Length < 2)
+                {
+                    throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
+                }
+
                 var subjects = await _appSubjectServices.SearchSubjectAsync(searchTerm, lowestPrice, highestPrice, pageNumber, pageSize);
                 var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
                 return Ok(response);
@@ -302,6 +328,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.CoreException coreEx)
             {
                 return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
@@ -318,34 +348,38 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> SearchSubjectAdmin([FromQuery] string searchTerm, double lowestPrice = -1, double highestPrice = -1, bool? status = null, int pageNumber = 1, int pageSize = 10)
         {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-            {
-                throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
-            }
-
-            if (searchTerm.Length < 2)
-            {
-                throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
-            }
-
             try
             {
+                if (string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
+                }
+
+                if (searchTerm.Length < 2)
+                {
+                    throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
+                }
+
                 var subjects = await _appSubjectServices.SearchSubjectAdminAsync(searchTerm, lowestPrice, highestPrice, status, pageNumber, pageSize);
                 if (subjects?.Items.Count == 0 || subjects == null)
                 {
-                    throw new BaseException.BadRequestException("no_subjects_found", "No subjects match the search criteria.");
+                    throw new BaseException.NotFoundException("no_subjects_found", "No subjects match the search criteria.");
                 }
 
                 var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
                 return Ok(response);
             }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
             catch (BaseException.BadRequestException badRequestEx)
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
             }
         }
 
@@ -365,11 +399,31 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
             catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
             }
         }
 
@@ -394,6 +448,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             catch (BaseException.BadRequestException badRequestEx)
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
         }
     }

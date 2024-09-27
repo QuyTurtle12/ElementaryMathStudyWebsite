@@ -3,8 +3,8 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Core.Base;
-using Humanizer;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -20,8 +20,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/question/all
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("all")]
-        [SwaggerOperation(Summary = "Get all questions", Description = "Retrieve all questions.")]
+        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Retrieve all questions.")]
         public async Task<ActionResult<BaseResponse<List<QuestionMainViewDto>>>> GetAllQuestions()
         {
             try
@@ -65,7 +66,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/question/{id}
         [HttpGet("{id}")]
-        [SwaggerOperation(Summary = "Get question by ID", Description = "Retrieve a specific question by its ID.")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Retrieve a specific question by its ID.")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> GetQuestionById(string id)
         {
             try
@@ -109,14 +110,15 @@ namespace ElementaryMathStudyWebsite.Controllers
 
 
         // GET: api/question/search
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("search")]
-        [SwaggerOperation(Summary = "Search questions by context", Description = "Search for questions where the context contains the specified string.")]
-        public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions([FromQuery] string context)
+        [SwaggerOperation(Summary = "Search questions by Content, Authorization: Manager & Admin", Description = "Search for questions where the Content contains the specified string.")]
+        public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions([FromQuery] string Content)
         {
             try
             {
-                // Search questions by the provided context string
-                var questions = await _questionService.SearchQuestionsByContextAsync(context)
+                // Search questions by the provided Content string
+                var questions = await _questionService.SearchQuestionsByContextAsync(Content)
                     ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
 
                 // Return success response with the search results
@@ -154,7 +156,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/question/quiz/{quizId}
         [HttpGet("quiz/{quizId}")]
-        [SwaggerOperation(Summary = "Get questions by quiz Id", Description = "Retrieve all questions for a specific quiz.")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Retrieve all questions for a specific quiz.")]
         public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> GetQuestionsByQuizId(string quizId)
         {
             try
@@ -197,8 +199,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/question
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet]
-        [SwaggerOperation(Summary = "Get questions with pagination", Description = "Retrieve all questions with pagination.")]
+        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Retrieve all questions with pagination.")]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<QuestionMainViewDto>>>> GetQuestions([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             try
@@ -241,8 +244,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // POST: api/question
+        [Authorize(Policy = "Admin-Content")]
         [HttpPost]
-        [SwaggerOperation(Summary = "Create a new question.", Description = "Creates a new question and returns the created question.")]
+        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Creates a new question and returns the created question.")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> AddQuestionAsync([FromBody] QuestionCreateDto dto)
         {
             try
@@ -266,8 +270,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // PUT: api/question/{id}
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut("{id}")]
-        [SwaggerOperation(Summary = "Update an existing question.", Description = "Updates an existing question based on the provided data.")]
+        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Updates an existing question based on the provided data.")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> UpdateQuestionAsync([Required] string id, [FromBody] QuestionUpdateDto dto)
         {
             try
@@ -293,32 +298,60 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+
         // DELETE: api/question/{id}
+        [Authorize(Policy = "Admin-Content")]
         [HttpDelete("{id}")]
-        [SwaggerOperation(Summary = "Delete an existing question.", Description = "Deletes a question by its unique identifier.")]
-        public async Task<ActionResult<BaseResponse<QuestionDeleteDto>>> DeleteQuestionAsync(string id)
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Delete a question")]
+        public async Task<IActionResult> DeleteQuestion([Required] string id)
         {
             try
             {
-                // Delete the question and get the deleted question data
-                var deletedQuestionDto = await _questionService.DeleteQuestionAsync(id)
-                    ?? throw new BaseException.NotFoundException("not_found", "question not found.");
-                return BaseResponse<QuestionDeleteDto>.OkResponse("Question deleted successfully.");
+                var result = await _questionService.DeleteQuestion(id);
+
+                if (result)
+                {
+                    var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
+                    return Ok(successResponse);
+
+                }
+                var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
+
+                return Ok(failedResponse);
             }
             catch (BaseException.CoreException coreEx)
             {
-                // Handle core exceptions
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
-                // Handle bad request exceptions
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
             }
             catch (BaseException.NotFoundException notFoundEx)
             {
                 return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
         }
+
     }
 }

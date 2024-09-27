@@ -12,12 +12,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userService;
+        private readonly IAppQuestionServices _questionService;
 
         // constructor
-        public QuizService(IUnitOfWork unitOfWork, IAppUserServices userService)
+        public QuizService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppQuestionServices questionService)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
+            _questionService = questionService;
         }
 
         // Get all quizzes with properties mapped to QuizMainViewDto
@@ -347,50 +349,29 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Delete a quiz
-        public async Task<QuizDeleteDto> DeleteQuizAsync(string quizId)
+        public async Task<bool> DeleteQuizAsync(string quizId)
         {
-            // Check if the provided quizId is null or whitespace
-            if (string.IsNullOrWhiteSpace(quizId))
-            {
-                throw new BaseException.BadRequestException("invalid_arguments", $"Deleted quiz {quizId}");
-            }
+            Quiz? quiz;
 
-            // Fetch the quiz by ID
-            var quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizId)
-                        ?? throw new BaseException.NotFoundException("not_found", $"{quizId} not found");
+            if (_unitOfWork.IsValid<Quiz>(quizId))
+                quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizId);
+            else throw new BaseException.NotFoundException("not_found", "Quiz ID not found");
 
-            // Check if the quiz has already been deleted
-            if (quiz.DeletedBy != null)
-            {
-                throw new BaseException.BadRequestException("invalid_arguments", "This quiz has already been deleted.");
-            }
+            _userService.AuditFields(quiz!, false, true);
 
-            // Get the current user information
-            User currentUser = await _userService.GetCurrentUserAsync();
-
-            // Mark the quiz as deleted by setting DeletedBy and DeletedTime
-            quiz.DeletedBy = currentUser.Id.ToUpper();
-            quiz.DeletedTime = CoreHelper.SystemTimeNow;
-
-            // Fetch the creator and last updated person information
-            var creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(quiz.CreatedBy ?? string.Empty);
-            var lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(quiz.LastUpdatedBy ?? string.Empty);
-
-            // Update the quiz entity and save changes
-            await _unitOfWork.GetRepository<Quiz>().UpdateAsync(quiz);
             await _unitOfWork.SaveAsync();
 
-            // Return the details of the deleted quiz in a DeleteQuizDto
-            return new QuizDeleteDto
+            IQueryable<Question> query = _unitOfWork.GetRepository<Question>().GetEntitiesWithCondition(
+                            q => q.QuizId == quizId &&
+                            string.IsNullOrWhiteSpace(q.DeletedBy)
+                            );
+
+            foreach (var question in query)
             {
-                Id = quiz.Id,
-                QuizName = quiz.QuizName,
-                DeletedBy = quiz.DeletedBy,
-                DeletedTime = CoreHelper.SystemTimeNow,
-                DeletedName = currentUser.FullName,
-                CreatorName = creator?.FullName ?? string.Empty,
-                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
-            };
+                await _questionService.DeleteQuestion(question.Id);
+            }
+
+            return true;
         }
     }
 }

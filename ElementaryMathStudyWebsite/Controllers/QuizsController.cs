@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Core.Base;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -18,9 +19,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             _quizService = quizService;
         }
 
-        // GET: api/quiz/all || DONE
+        // GET: api/quiz/all
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("all")]
-        [SwaggerOperation(Summary = "Authorization: Admin", Description = "Retrieve all quizzes. Admin access required.")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Retrieve all quizzes. Admin access required.")]
         public async Task<ActionResult<BaseResponse<List<QuizMainViewDto>>>> GetAllQuizzes()
         {
             try
@@ -37,15 +39,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
         }
 
         // GET: api/quiz/{id}
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("{id}")]
-        [SwaggerOperation(Summary = "Authorization: Admin & Manager", Description = "Retrieve a quiz by its unique identifier.")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Retrieve a quiz by its unique identifier.")]
         public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> GetQuizById(string id)
         {
             try
@@ -62,15 +61,11 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
         }
 
         // GET: api/quiz/chapter/{chapterId}
         [HttpGet("chapter/{chapterId}")]
-        [SwaggerOperation(Summary = "Authorization: Admin", Description = "Retrieve all quizzes belonging to a specific chapter.")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Retrieve all quizzes belonging to a specific chapter.")]
         public async Task<ActionResult<BaseResponse<List<QuizViewDto>>>> GetQuizzesByChapterId(string chapterId)
         {
             try
@@ -87,15 +82,11 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
         }
 
         // GET: api/quiz/topic/{topicId}
         [HttpGet("topic/{topicId}")]
-        [SwaggerOperation(Summary = "Authorization: Admin", Description = "Retrieve all quizzes belonging to a specific topic.")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Retrieve all quizzes belonging to a specific topic.")]
         public async Task<ActionResult<BaseResponse<List<QuizViewDto>>>> GetQuizzesByTopicId(string topicId)
         {
             try
@@ -112,15 +103,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
         }
 
-        // GET: api/quiz/search // test lại
+        // GET: api/quiz/search
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("search")]
-        [SwaggerOperation(Summary = "Authorization: Admin & Manager", Description = "Search for quizzes by name.")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Search for quizzes by name.")]
         public async Task<ActionResult<BaseResponse<List<QuizViewDto>>>> SearchQuizzesByName([FromQuery, Required] string quizName)
         {
             try
@@ -137,15 +125,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
         }
 
-        // GET: api/quiz/paged // test lại
+        // GET: api/quiz/paged
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("paged")]
-        [SwaggerOperation(Summary = "Authorization: Admin & Manager", Description = "Retrieve quizzes with pagination.")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Retrieve quizzes with pagination.")]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<QuizMainViewDto>>>> GetQuizzesPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             try
@@ -162,15 +147,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
         }
 
         // POST: api/quiz
+        [Authorize(Policy = "Admin-Content")]
         [HttpPost]
-        [SwaggerOperation(Summary = "Create a new quiz.", Description = "Creates a new quiz and returns the created quiz.")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Creates a new quiz and returns the created quiz.")]
         public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> AddQuizAsync([FromBody] QuizCreateDto dto)
         {
             try
@@ -187,15 +169,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
         }
 
         // PUT: api/quiz
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut]
-        [SwaggerOperation(Summary = "Update an existing quiz.", Description = "Updates an existing quiz based on the provided data.")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Updates an existing quiz based on the provided data.")]
         public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> UpdateQuizAsync([Required] string id, [FromBody] QuizUpdateDto dto)
         {
             try
@@ -215,37 +194,55 @@ namespace ElementaryMathStudyWebsite.Controllers
                 // Handle bad request exceptions
                 return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
             }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
         }
 
         // DELETE: api/quiz/{id}
+        [Authorize(Policy = "Admin-Content")]
         [HttpDelete("{id}")]
-        [SwaggerOperation(Summary = "Delete an existing quiz.", Description = "Deletes a quiz by its unique identifier.")]
-        public async Task<ActionResult<BaseResponse<QuizDeleteDto>>> DeleteQuizAsync(string id)
+        [SwaggerOperation(Summary = "Delete a quiz.", Description = "Marks a quiz as deleted.")]
+        public async Task<IActionResult> DeleteQuizAsync(string id)
         {
             try
             {
-                // Delete the quiz and get the deleted quiz data
-                var deletedQuizDto = await _quizService.DeleteQuizAsync(id)
-                    ?? throw new BaseException.NotFoundException("not_found", "quiz not found.");
-                return BaseResponse<QuizDeleteDto>.OkResponse("Quiz deleted successfully.");
+                var result = await _quizService.DeleteQuizAsync(id);
+
+                if (result)
+                {
+                    var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
+                    return Ok(successResponse);
+
+                }
+                var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
+
+                return Ok(failedResponse);
             }
             catch (BaseException.CoreException coreEx)
             {
-                // Handle core exceptions
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
-                // Handle bad request exceptions
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
             }
             catch (BaseException.NotFoundException notFoundEx)
             {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
+                // Handle general ArgumentException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
             }
         }
     }

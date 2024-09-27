@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
@@ -12,12 +13,14 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles
         {
             // Define the mapping configuration
             CreateMap<User, UserResponseDto>();
+            CreateMap<Role, RoleDto>();
+            CreateMap<RequestRole, Role>();
             CreateMap<CreateUserDto, User>();
             CreateMap<User, UserProfile>();
             CreateMap<User, UpdateProfileDto>();
             CreateMap<User, UserResponseDto>()
-            .ForPath(dest => dest.Role.RoleId, opt => opt.MapFrom(src => src.Role.Id))
-            .ForPath(dest => dest.Role.RoleName, opt => opt.MapFrom(src => src.Role.RoleName));
+            .ForPath(dest => dest.Role.RoleId, opt => opt.MapFrom(src => src.Role!.Id))
+            .ForPath(dest => dest.Role.RoleName, opt => opt.MapFrom(src => src.Role!.RoleName));
 
             CreateMap<Role, RoleDto>()
                 .ForMember(dest => dest.RoleId, opt => opt.MapFrom(src => src.Id))
