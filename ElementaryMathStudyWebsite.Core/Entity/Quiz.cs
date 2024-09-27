@@ -7,17 +7,11 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
     public class Quiz : BaseEntity
     {
         public string QuizName { get; set; } = string.Empty;
-        public double? Criteria { get; set; } // Mark that need to be achieved to passed
+        public double Criteria { get; set; } = 0; // Mark that need to be achieved to passed
         [JsonIgnore]
-        public bool? Status { get; set; } = true;
+        public bool Status { get; set; } = true;
 
         // Navigation properties
-        [JsonIgnore]
-        public virtual User? CreatedByUser { get; set; }
-        [JsonIgnore]
-        public virtual User? LastUpdatedByUser { get; set; }
-        [JsonIgnore]
-        public virtual User? DeletedByUser { get; set; }
         [JsonIgnore]
         public virtual Chapter? Chapter { get; set; } // Navigation property, one quiz belong to chapter
         [JsonIgnore]

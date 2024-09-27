@@ -4,15 +4,15 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 {
     public class OrderDetail
     {
-        public required string OrderId { get; set; }
+        public string OrderId { get; set; } = string.Empty;
 
-        public required string SubjectId { get; set; }
+        public string SubjectId { get; set; } = string.Empty;
 
-        public required string StudentId { get; set; }
+        public string StudentId { get; set; } = string.Empty;
 
-        public virtual Order? Order { get; set; } // Navigation property, one order detail belong to one order
-        public virtual User? User { get; set; } // Navigation property, one order detail assigned to one student
-        public virtual Subject? Subject { get; set; } // Navigation property, one order detail contain one subject
+        public virtual Order Order { get; set; } = new(); // Navigation property, one order detail belong to one order
+        public virtual User User { get; set; } = new(); // Navigation property, one order detail assigned to one student
+        public virtual Subject Subject { get; set; } = new(); // Navigation property, one order detail contain one subject
 
     }
 }
