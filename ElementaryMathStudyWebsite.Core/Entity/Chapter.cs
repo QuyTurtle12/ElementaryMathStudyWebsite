@@ -18,7 +18,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         // Navigation properties
         [JsonIgnore]
-        public virtual Subject Subject { get; set; } = new(); // Navigation property, one chapter belong to one subject
+        public virtual Subject? Subject { get; set; } // Navigation property, one chapter belong to one subject
         [JsonIgnore]
         public virtual ICollection<Topic>? Topics { get; set; } // Navigation property, one chapter has many topics
         [JsonIgnore]

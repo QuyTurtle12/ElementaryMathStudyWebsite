@@ -15,7 +15,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         // Navigation properties
         [JsonIgnore]
-        public virtual User User { get; set; } = new(); // Navigation property, one order has one user
+        public virtual User? User { get; set; } // Navigation property, one order has one user
         [JsonIgnore]
         public virtual ICollection<OrderDetail>? OrderDetails { get; set; } // Navigation property, one order has many order detail
 

@@ -28,7 +28,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public bool Status { get; set; } = true;
 
         // Navigation Properties
-        public virtual Role Role { get; set; } = new (); // Navigation property, one user has one role
+        public virtual Role? Role { get; set; } // Navigation property, one user has one role
         public virtual ICollection<Order>? Orders { get; set; } // Navigation property, one user can create many orders
         public virtual ICollection<OrderDetail>? OrderDetails { get; set; } // Navigation property, one user can be assigned to many order detail
         public virtual ICollection<UserAnswer>? Answers { get; set; } // Navigation property, one user has many answers
