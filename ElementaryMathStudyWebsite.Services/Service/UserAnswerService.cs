@@ -63,39 +63,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return _mapper.Map<UserAnswerDTO>(userAnswer);
         }
 
-        //public async Task<UserAnswerDTO> CreateUserAnswerAsync(UserAnswerDTO userAnswerDTO)
-        //{
-        //    // Check if QuestionId exists
-        //    if (!await _unitOfWork.GetRepository<Question>().Entities.AnyAsync(q => q.Id == userAnswerDTO.QuestionId))
-        //    {
-        //        throw new BaseException.NotFoundException("question_not_found",$"Question with ID '{userAnswerDTO.QuestionId}' not found.");
-        //    }
-
-        //    // Check if UserId exists
-        //    if (!await _unitOfWork.GetRepository<User>().Entities.AnyAsync(u => u.Id == userAnswerDTO.UserId))
-        //    {
-        //        throw new BaseException.NotFoundException("user_not_found",$"User with ID '{userAnswerDTO.UserId}' not found.");
-        //    }
-
-        //    // Check if OptionId exists
-        //    if (!await _unitOfWork.GetRepository<Option>().Entities.AnyAsync(o => o.Id == userAnswerDTO.OptionId))
-        //    {
-        //        throw new BaseException.NotFoundException("option_not_found",$"Option with ID '{userAnswerDTO.OptionId}' not found.");
-        //    }
-
-        //    var userAnswer = new UserAnswer
-        //    {
-        //        QuestionId = userAnswerDTO.QuestionId,
-        //        UserId = userAnswerDTO.UserId,
-        //        OptionId = userAnswerDTO.OptionId,
-        //        AttemptNumber = userAnswerDTO.AttemptNumber,
-        //    };
-
-        //    await _unitOfWork.GetRepository<UserAnswer>().InsertAsync(userAnswer);
-        //    await _unitOfWork.GetRepository<UserAnswer>().SaveAsync();
-        //    return userAnswerDTO;
-        //}
-
         public async Task<ResultProgressDto> CreateUserAnswersAsync(UserAnswerCreateDTO userAnswerCreateDTO)
         {
             User currentUser = await _userService.GetCurrentUserAsync();
@@ -165,25 +132,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Save all changes after the loop
             await _unitOfWork.GetRepository<UserAnswer>().SaveAsync();
-
-            //var result = new List<UserAnswerWithDetailsDTO>();
-            //foreach (var userAnswer in userAnswerCreateDTO.UserAnswerList)
-            //{
-            //    var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(userAnswer.QuestionId);
-            //    var option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(userAnswer.OptionId);
-
-            //    var userAnswerWithDetails = new UserAnswerWithDetailsDTO
-            //    {
-            //        QuestionId = userAnswer.QuestionId,
-            //        QuestionContent = question?.QuestionContext ?? "Unknown Question",
-            //        UserId = currentUserId,
-            //        UserFullName = currentUser.FullName ?? "Unknown User",
-            //        OptionId = userAnswer.OptionId,
-            //        OptionAnswer = option?.Answer ?? "Unknown Answer",
-            //        AttemptNumber = tempAttempNumber,
-            //    };
-            //    result.Add(userAnswerWithDetails);
-            //}
 
             ResultCreateDto resultCreateDto = new ResultCreateDto()
             {
