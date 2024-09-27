@@ -44,7 +44,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             var claims = new List<Claim>
             {
                 new Claim("userId", user.Id ?? string.Empty),
-                new Claim("roleName", user.Role.RoleName ?? string.Empty),
+                new Claim("roleName", user.Role!.RoleName ?? string.Empty),
                 new Claim("roleId", user.Role.Id ?? string.Empty),
                 new Claim("phone", user.PhoneNumber ?? string.Empty),
                 new Claim("email", user.Email ?? string.Empty),

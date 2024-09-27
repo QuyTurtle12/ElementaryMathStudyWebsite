@@ -191,7 +191,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 
             var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
                 condition,
-                u => u.Role // Include the Role if needed
+                u => u.Role! // Include the Role if needed
                 // Add other includes here if needed
             );
 
@@ -202,7 +202,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 
             // Activate the user account
             user.Status = true;
-            if (!user.Role.RoleName.Equals("Student"))
+            if (!user.Role!.RoleName.Equals("Student"))
             {
                 user.CreatedBy = user.Id;
             }

@@ -36,7 +36,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-                user => user.Role // Include the Role navigation property
+                user => user.Role! // Include the Role navigation property
             };
 
             // Get all users with their roles
@@ -81,7 +81,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-                user => user.Role // Include the Role navigation property
+                user => user.Role! // Include the Role navigation property
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
@@ -106,7 +106,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
                 condition,
-                u => u.Role // Include the Role if needed
+                u => u.Role! // Include the Role if needed
                 // Add other includes here if needed
             );
 
@@ -172,7 +172,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
                 condition,
-                u => u.Role // Include the Role if needed
+                u => u.Role! // Include the Role if needed
                 // Add other includes here if needed
             );
 
@@ -234,7 +234,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Optionally include related entities, if needed
             var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
                 condition,
-                u => u.Role // Include the Role if needed
+                u => u.Role! // Include the Role if needed
                 // Add other includes here if needed
             );
             if (user == null)
@@ -340,7 +340,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-                user => user.Role // Include the Role navigation property
+                user => user.Role! // Include the Role navigation property
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
@@ -429,7 +429,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define includes to eagerly load the Role navigation property, if needed
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-                user => user.Role // Include the Role navigation property if necessary
+                user => user.Role! // Include the Role navigation property if necessary
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
