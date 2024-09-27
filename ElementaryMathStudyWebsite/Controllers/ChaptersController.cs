@@ -29,32 +29,11 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterAdminViewDto?>>>> GetChapters(int pageNumber = -1, int pageSize = -1)
         {
-            try
-            {
-                BasePaginatedList<ChapterAdminViewDto?> chapters = await _chapterService.GetChaptersAsync(pageNumber, pageSize);
-                var response = BaseResponse<BasePaginatedList<ChapterAdminViewDto?>>.OkResponse(chapters);
-                return response;
-            }
-            //catch (BaseException.CoreException coreEx)
-            //{
-            //    // Handle specific CoreException
-            //    return StatusCode(coreEx.StatusCode, new
-            //    {
-            //        code = coreEx.Code,
-            //        message = coreEx.Message,
-            //        additionalData = coreEx.AdditionalData
-            //    });
-            //}
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            BasePaginatedList<ChapterAdminViewDto?> chapters = await _chapterService.GetChaptersAsync(pageNumber, pageSize);
+            var response = BaseResponse<BasePaginatedList<ChapterAdminViewDto?>>.OkResponse(chapters);
+            return response;
         }
+
 
         // GET: api/chapters/Content/{id}
         // Get chapters for Content & Admin
@@ -67,46 +46,14 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterAdminViewDto?>>>> GetChapter(string id)
         {
-            try
+            var chapter = await _chapterService.GetChapterByChapterIdAsync(id);
+            if (chapter == null)
             {
-                var chapter = await _chapterService.GetChapterByChapterIdAsync(id);
-                if (chapter == null)
-                {
-                    throw new BaseException.BadRequestException("chapter_not_found", "The requested chapter was not found.");
-                }
+                throw new BaseException.BadRequestException("chapter_not_found", "The requested chapter was not found.");
+            }
 
-                var response = BaseResponse<object>.OkResponse(chapter);
-                return Ok(response);
-                //var chapter = await _chapterService.GetChapterByChapterIdAsync(id);
-                //if (chapter == null)
-                //{
-                //    return NotFound(new
-                //    {
-                //        error = "Invalid Chapter Id",
-                //        message = "The chapter with the specified ID was not found."
-                //    });
-                //}
-                //return Ok(chapter);
-            }
-            //catch (BaseException.CoreException coreEx)
-            //{
-            //    // Handle specific CoreException
-            //    return StatusCode(coreEx.StatusCode, new
-            //    {
-            //        code = coreEx.Code,
-            //        message = coreEx.Message,
-            //        additionalData = coreEx.AdditionalData
-            //    });
-            //}
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            var response = BaseResponse<object>.OkResponse(chapter);
+            return Ok(response);
         }
 
 
@@ -120,37 +67,14 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterViewDto?>>>> GetChapterForGeneralUser([Required] string id)
         {
-            try
+            var chapter = await _chapterService.GetChapterDtoByChapterIdAsync(id);
+            if (chapter == null)
             {
-                var chapter = await _chapterService.GetChapterDtoByChapterIdAsync(id);
-                if (chapter == null)
-                {
-                    throw new BaseException.BadRequestException("chapter_not_found", "The requested chapter was not found.");
-                }
-
-                var response = BaseResponse<object>.OkResponse(chapter);
-                return Ok(response);
+                throw new BaseException.BadRequestException("chapter_not_found", "The requested chapter was not found.");
             }
 
-            //catch (BaseException.CoreException coreEx)
-            //{
-            //    // Handle specific CoreException
-            //    return StatusCode(coreEx.StatusCode, new
-            //    {
-            //        code = coreEx.Code,
-            //        message = coreEx.Message,
-            //        additionalData = coreEx.AdditionalData
-            //    });
-            //}
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            var response = BaseResponse<object>.OkResponse(chapter);
+            return Ok(response);
         }
 
 
@@ -163,40 +87,10 @@ namespace ElementaryMathStudyWebsite.Controllers
         //    )]
         //public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterViewDto?>>>> GetChaptersForGeneralUser(int pageNumber = -1, int pageSize = -1)
         //{
-        //    try
-        //    {
         //        BasePaginatedList<ChapterViewDto?> chapters = await _chapterService.GetChapterDtosAsync(pageNumber, pageSize);
         //        var response = BaseResponse<BasePaginatedList<ChapterViewDto?>>.OkResponse(chapters);
         //        return response;
-        //    }
-        //    //catch (BaseException.CoreException coreEx)
-        //    //{
-        //    //    // Handle specific CoreException
-        //    //    return StatusCode(coreEx.StatusCode, new
-        //    //    {
-        //    //        code = coreEx.Code,
-        //    //        message = coreEx.Message,
-        //    //        additionalData = coreEx.AdditionalData
-        //    //    });
-        //    //}
-        //    catch (BaseException.BadRequestException badRequestEx)
-        //    {
-        //        // Handle specific BadRequestException
-        //        return BadRequest(new
-        //        {
-        //            errorCode = badRequestEx.ErrorDetail.ErrorCode,
-        //            errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-        //        });
-        //    }
-        //    //catch (Exception ex)
-        //    //{
-        //    //    // Handle any other exceptions
-        //    //    return StatusCode(500, new
-        //    //    {
-        //    //        error = "An unexpected error occurred.",
-        //    //        details = ex.Message
-        //    //    });
-        //    //}
+        //   
         //}
 
         [HttpGet]
@@ -207,24 +101,9 @@ namespace ElementaryMathStudyWebsite.Controllers
            )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterViewDto>>>> GetChapterBySubjectId([Required] string subjectId, int pageNumber = -1, int pageSize = -1)
         {
-            try
-            {
-                BasePaginatedList<ChapterViewDto> chapters = await _chapterService.GetChaptersBySubjectIdAsync(pageNumber, pageSize, subjectId);
-                var response = BaseResponse<BasePaginatedList<ChapterViewDto>>.OkResponse(chapters);
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
+            BasePaginatedList<ChapterViewDto> chapters = await _chapterService.GetChaptersBySubjectIdAsync(pageNumber, pageSize, subjectId);
+            var response = BaseResponse<BasePaginatedList<ChapterViewDto>>.OkResponse(chapters);
+            return response;
         }
 
 
@@ -235,25 +114,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> SearchChapter([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)
         {
-            try
-            {
-                var subjects = await _chapterService.SearchChapterAsync(searchTerm, pageNumber, pageSize);
-                var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
-
+            var subjects = await _chapterService.SearchChapterAsync(searchTerm, pageNumber, pageSize);
+            var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
+            return Ok(response);
         }
 
         [Authorize(Policy = "Admin-Content")]
@@ -264,30 +127,14 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> SearchChapterForAdmin([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)
         {
+            var subjects = await _chapterService.SearchChapterForAdminAsync(searchTerm, pageNumber, pageSize);
+            if (subjects?.Items.Count == 0 || subjects == null)
+            {
+                throw new BaseException.NotFoundException("no_subjects_found", "No chapters match the search criteria.");
+            }
 
-            try
-            {
-                var subjects = await _chapterService.SearchChapterForAdminAsync(searchTerm, pageNumber, pageSize);
-                if (subjects?.Items.Count == 0 || subjects == null)
-                {
-                    throw new BaseException.NotFoundException("no_subjects_found", "No chapters match the search criteria.");
-                }
-
-                var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
+            var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
+            return Ok(response);
         }
 
         // POST: api/chapters/
@@ -309,57 +156,17 @@ namespace ElementaryMathStudyWebsite.Controllers
                 });
             }
 
-            try
+            var createdChapter = await _chapterService.CreateChapterAsync(new ChapterDto
             {
-                var createdChapter = await _chapterService.CreateChapterAsync(new ChapterDto
-                {
-                    ChapterName = chapterDTO.ChapterName,
-                    //Status = true, // Set status as active when created
-                    SubjectId = chapterDTO.SubjectId,
-                    QuizId = chapterDTO.QuizId,
-                });
-                var response = BaseResponse<ChapterViewDto>.OkResponse(createdChapter);
+                ChapterName = chapterDTO.ChapterName,
+                //Status = true, // Set status as active when created
+                SubjectId = chapterDTO.SubjectId,
+                QuizId = chapterDTO.QuizId,
+            });
+            var response = BaseResponse<ChapterViewDto>.OkResponse(createdChapter);
 
-                return CreatedAtAction(nameof(GetChapterForGeneralUser), new { id = createdChapter.Id }, response);
-            }
-            //catch (ArgumentException argEx)
-            //{
-            //    // Handle argument exceptions such as validation errors
-            //    return StatusCode(400, new
-            //    {
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = argEx.Message
-            //    });
-            //}
-            //catch (BaseException.CoreException coreEx)
-            //{
-            //    // Handle specific CoreException
-            //    return StatusCode(coreEx.StatusCode, new
-            //    {
-            //        code = coreEx.Code,
-            //        message = coreEx.Message,
-            //        additionalData = coreEx.AdditionalData
-            //    });
-            //}
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                // Catch all other exceptions and return a generic server error
-                return StatusCode(500, new
-                {
-                    errorCode= "announcement",
-                    errorMessage = ex.Message
-                    //details = ex.Message
-                });
-            }
+            return CreatedAtAction(nameof(GetChapterForGeneralUser), new { id = createdChapter.Id }, response);
+
         }
 
         [Authorize(Policy = "Admin-Content")]
@@ -379,24 +186,10 @@ namespace ElementaryMathStudyWebsite.Controllers
                 });
             }
 
-            try
-            {
-                var updatedChapter = await _chapterService.UpdateChapterAsync(id, chapterDTO);
-                var response = BaseResponse<ChapterAdminViewDto>.OkResponse(updatedChapter);
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
+            var updatedChapter = await _chapterService.UpdateChapterAsync(id, chapterDTO);
+            var response = BaseResponse<ChapterAdminViewDto>.OkResponse(updatedChapter);
+            return Ok(response);
+
         }
 
         [Authorize(Policy = "Admin-Content")]
@@ -407,57 +200,13 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> AssignQuizIdToChapter(string chapterId, string quizId)
         {
-            try
-            {
-                var updatedChapter = await _chapterService.AssignQuizIdToChapterAsync(chapterId, quizId);
-                var response = BaseResponse<bool>.OkResponse(updatedChapter);
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
+            var updatedChapter = await _chapterService.AssignQuizIdToChapterAsync(chapterId, quizId);
+            var response = BaseResponse<bool>.OkResponse(updatedChapter);
+            return Ok(response);
 
 
         }
 
-        //[Authorize(Policy = "Admin-Content")]
-        //[HttpPost("change-order-chapter")]
-        //[SwaggerOperation(
-        //    Summary = "Authorization: Admin, Content",
-        //    Description = "Change order number chapter."
-        //)]
-        //public async Task<IActionResult> ChangeChapterOrder(int currentChapterNumber, int newChapterNumber)
-        //{
-        //    try
-        //    {
-        //        bool result = await _chapterService.ChangeChapterOrderAsync(currentChapterNumber, newChapterNumber);
-        //        var response = BaseResponse<bool>.OkResponse(result);
-        //        return Ok(response);
-        //    }
-        //    catch (ArgumentException ex)
-        //    {
-        //        // Catch all other exceptions and return a generic server error
-        //        return StatusCode(500, new
-        //        {
-        //            errorCode = "announcement",
-        //            errorMessage = ex.Message
-        //            //details = ex.Message
-        //        });
-        //    }
-        //    catch (InvalidOperationException ex)
-        //    {
-        //        return NotFound(new { message = ex.Message });
-        //    }
-        //}
 
         [Authorize(Policy = "Admin-Content")]
         [HttpPut("update-numbers")]
@@ -472,33 +221,10 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return BadRequest(new { message = "Invalid input data." });
             }
 
-            try
-            {
-                //bool result = await _chapterService.UpdateChapterNumbersAsync(subjectId, chapterNumberDto);
-                //if (result)
-                //{
-                //    return Ok(new { message = "Chapter numbers updated successfully." });
-                //}
-                //else
-                //{
-                //    return BadRequest(new { message = "Failed to update chapter numbers." });
-                //}
-                var updatedChapterNumber = await _chapterService.UpdateChapterNumbersAsync(subjectId, chapterNumberDto);
-                var response = BaseResponse<bool>.OkResponse(updatedChapterNumber);
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
+            var updatedChapterNumber = await _chapterService.UpdateChapterNumbersAsync(subjectId, chapterNumberDto);
+            var response = BaseResponse<bool>.OkResponse(updatedChapterNumber);
+            return Ok(response);
+
         }
 
         [Authorize(Policy = "Admin-Content")]
@@ -517,29 +243,14 @@ namespace ElementaryMathStudyWebsite.Controllers
                     details = ModelState
                 });
             }
+            var chapter = await _chapterService.ChangeChapterStatusAsync(id);
+            if (chapter == null)
+            {
+                throw new BaseException.NotFoundException("chapter_not_found", "The requested chapter was not found.");
+            }
+            var response = BaseResponse<ChapterAdminViewDto>.OkResponse(chapter);
+            return Ok(response);
 
-            try
-            {
-                var chapter = await _chapterService.ChangeChapterStatusAsync(id);
-                if (chapter == null)
-                {
-                    throw new BaseException.NotFoundException("chapter_not_found", "The requested chapter was not found.");
-                }
-                var response = BaseResponse<ChapterAdminViewDto>.OkResponse(chapter);
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
         }
 
 
@@ -560,28 +271,14 @@ namespace ElementaryMathStudyWebsite.Controllers
                 });
             }
 
-            try
+            var chapter = await _chapterService.rollbackChapterDeletedAsync(id);
+            if (chapter == null)
             {
-                var chapter = await _chapterService.rollbackChapterDeletedAsync(id);
-                if (chapter == null)
-                {
-                    throw new BaseException.NotFoundException("chapter_not_found", "The requested chapter was not found.");
-                }
-                var response = BaseResponse<ChapterAdminViewDto>.OkResponse(chapter);
-                return Ok(response);
+                throw new BaseException.NotFoundException("chapter_not_found", "The requested chapter was not found.");
             }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
+            var response = BaseResponse<ChapterAdminViewDto>.OkResponse(chapter);
+            return Ok(response);
+
         }
 
 
@@ -602,43 +299,18 @@ namespace ElementaryMathStudyWebsite.Controllers
                     details = ModelState
                 });
             }
-            try
-            {
-                var result = await _chapterService.DeleteChapterAsync(id);
+            var result = await _chapterService.DeleteChapterAsync(id);
 
-                if (result)
-                {
-                    var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
-                    return Ok(successResponse);
+            if (result)
+            {
+                var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
+                return Ok(successResponse);
 
-                }
-                var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
+            }
+            var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
 
-                return Ok(failedResponse);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(failedResponse);
+
         }
 
 
@@ -649,26 +321,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Content & Admin",
             Description = "View list chapter was deleted for Content and Admin Role. Insert -1 to get all items"
         )]
-        public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterAdminDelete?>>>> GetChaptersDeleted(int pageNumber = -1, int pageSize = -1)
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterAdminViewDto>>>> GetChaptersDeleted(int pageNumber = -1, int pageSize = -1)
         {
-            try
-            {
-                BasePaginatedList<ChapterAdminDelete?> chapters = await _chapterService.GetChaptersDeletedAsync(pageNumber, pageSize);
-                var response = BaseResponse<BasePaginatedList<ChapterAdminDelete?>>.OkResponse(chapters);
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
+            BasePaginatedList<ChapterAdminViewDto> chapters = await _chapterService.GetChaptersDeletedAsync(pageNumber, pageSize);
+            var response = BaseResponse<BasePaginatedList<ChapterAdminViewDto>>.OkResponse(chapters);
+            return response;
+
         }
 
         //// GET: api/ChapterAccess/{chapterId}

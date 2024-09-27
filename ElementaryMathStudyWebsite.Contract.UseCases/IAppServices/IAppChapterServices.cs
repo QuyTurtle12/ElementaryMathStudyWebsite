@@ -31,9 +31,9 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         //Task<bool> ChangeChapterOrderAsync(int currentChapterNumber, int newChapterNumber);
 
-        Task<ChapterAdminDelete> rollbackChapterDeletedAsync(string chapterId);
+        Task<ChapterAdminViewDto> rollbackChapterDeletedAsync(string chapterId);
 
-        Task<BasePaginatedList<ChapterAdminDelete?>> GetChaptersDeletedAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<ChapterAdminViewDto>> GetChaptersDeletedAsync(int pageNumber, int pageSize);
 
         Task<BasePaginatedList<ChapterViewDto>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId);
         Task<bool> UpdateChapterNumbersAsync(string subjectId, ChapterNumberDto chapterNumberDto);
