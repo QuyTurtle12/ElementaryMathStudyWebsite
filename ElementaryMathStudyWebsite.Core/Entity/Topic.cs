@@ -20,7 +20,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         // Navigation properties
         [JsonIgnore]
-        public virtual Chapter Chapter { get; set; } = new(); // Navigation property, one topic belong to one chapter
+        public virtual Chapter? Chapter { get; set; } // Navigation property, one topic belong to one chapter
         [JsonIgnore]
         public virtual Quiz? Quiz { get; set; } // Navigation property, one topic can only has one quiz
     }

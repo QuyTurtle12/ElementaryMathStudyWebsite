@@ -16,9 +16,9 @@ namespace ElementaryMathStudyWebsite.Core.Entity
         public DateTimeOffset DateTaken { get; set; } = CoreHelper.SystemTimeNow;
 
         // Navigation Properties
-        public virtual Quiz Quiz { get; set; } = new(); // Navigation property, one result can belong to one quizzes
+        public virtual Quiz? Quiz { get; set; } // Navigation property, one result can belong to one quizzes
 
-        public virtual User Student { get; set; } = new(); // Navigation property, one result can belong to one student
+        public virtual User? Student { get; set; } // Navigation property, one result can belong to one student
 
 
     }
