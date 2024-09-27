@@ -1,7 +1,9 @@
-﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
+﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Entity;
+using ElementaryMathStudyWebsite.Services.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -57,18 +59,33 @@ namespace ElementaryMathStudyWebsite.Controllers
         [HttpPost]
         [Route("create")]
         [HttpPost]
-        public async Task<IActionResult> CreateUserAnswers([FromBody] UserAnswerCreateDTO userAnswerCreateDTO)
+        public async Task<ActionResult<BaseResponse<UserAnswer>>> CreateUserAnswers([FromBody] UserAnswerCreateDTO userAnswerCreateDTO)
         {
-            if (userAnswerCreateDTO == null || !userAnswerCreateDTO.UserAnswerList.Any())
-            {
-                return BadRequest(new BaseException.BadRequestException("input_error", "Invalid input. The user answer list is empty or null."));
-            }
-
             try
             {
+                if (userAnswerCreateDTO == null || !userAnswerCreateDTO.UserAnswerList.Any())
+                {
+                    throw new BaseException.BadRequestException("input_error", "Invalid input. The user answer list is empty or null.");
+                }
+
                 var createdUserAnswers = await _userAnswerService.CreateUserAnswersAsync(userAnswerCreateDTO);
-                var response = BaseResponse<List<UserAnswerWithDetailsDTO>>.OkResponse(createdUserAnswers);
-                return Ok(response);
+
+                if (!createdUserAnswers.IsAddedResult)
+                {
+                    throw new BaseException.CoreException("error", "Failed to add student result");
+                }
+
+                if (createdUserAnswers.IsPassedTheQuiz)
+                {
+                    // Return only a success message
+                    var passedQuizResponse = BaseResponse<UserAnswer>.OkResponse("Congratulations, you passed the quiz.Keep it up!");
+                    return passedQuizResponse;
+                }
+
+                // Return only a failure message
+                var failedQuizResponse = BaseResponse<UserAnswer>.OkResponse("You worked hard, but hard is not enough, try again next time");
+                return failedQuizResponse;
+
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
@@ -78,9 +95,15 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
             }
-            catch (Exception ex)
+            catch (BaseException.CoreException coreEx)
             {
-                return StatusCode(500, new { message = $"An error occurred while creating the user answers: {ex.Message}" });
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
             }
         }
 

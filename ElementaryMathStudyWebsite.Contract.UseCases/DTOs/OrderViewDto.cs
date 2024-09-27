@@ -1,6 +1,4 @@
-﻿using ElementaryMathStudyWebsite.Core.Store;
-
-namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
+﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
 {
     public class OrderViewDto
     {

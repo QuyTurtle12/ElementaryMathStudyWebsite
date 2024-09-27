@@ -23,7 +23,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             _userService = userService;
         }
 
-        // GET: api/progress//parent/view/{studentId}
+        // GET: api/progress/parent/view/{studentId}
         // Get 1 child learning progress of specific parent
         [Authorize(Policy = "Parent")]
         [HttpGet]
@@ -82,7 +82,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/progress/student/view
-        // Get 1 child learning progress of specific parent
+        // Get 1 child learning progress
         [Authorize(Policy = "Student")]
         [HttpGet]
         [Route("/student/view")]

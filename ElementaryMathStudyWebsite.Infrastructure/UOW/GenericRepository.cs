@@ -116,6 +116,7 @@ namespace ElementaryMathStudyWebsite.Infrastructure.UOW
         {
             return await _dbSet.FirstOrDefaultAsync(expression);
         }
+
         public async Task<T?> FindByConditionWithIncludesAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = _dbSet;

@@ -1,4 +1,5 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+﻿using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
@@ -15,14 +16,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IAppUserServices _userServices;
         private readonly IAppProgressServices _progressServices;
         private readonly IAppSubjectServices _subjectServices;
+        private readonly IMapper _mapper;
 
         // Constructor
-        public ResultService(IUnitOfWork unitOfWork, IAppUserServices userServices, IAppProgressServices progressServices, IAppSubjectServices subjectServices)
+        public ResultService(IUnitOfWork unitOfWork, IAppUserServices userServices, IAppProgressServices progressServices, IAppSubjectServices subjectServices, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _userServices = userServices;
             _progressServices = progressServices;
             _subjectServices = subjectServices;
+            _mapper = mapper;
         }
 
         // Calculate the latest student score
@@ -77,7 +80,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Calculate student grade
             // Max grade is 10
-            return correctAnswer / totalQuestion * 10;
+            double mark = ((double)correctAnswer / totalQuestion) * 10;
+            return mark;
         }
 
         // Check if the student passed the quiz
@@ -130,16 +134,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Map result data to view dto
             foreach (var result in studentResultList)
             {
-                ResultViewDto dto = new()
-                {
-                    StudentId = result.StudentId,
-                    StudentName = result.Student.FullName,
-                    QuizId = result.QuizId,
-                    QuizName = result.Quiz.QuizName,
-                    Score = result.Score,
-                    Attempt = result.AttemptNumber,
-                    DateTaken = result.DateTaken
-                };
+                var dto = _mapper.Map<ResultViewDto>(result);
+
+                //ResultViewDto dto = new()
+                //{
+                //    StudentId = result.StudentId,
+                //    StudentName = result.Student.FullName,
+                //    QuizId = result.QuizId,
+                //    QuizName = result.Quiz.QuizName,
+                //    Score = result.Score,
+                //    Attempt = result.AttemptNumber,
+                //    DateTaken = result.DateTaken
+                //};
 
                 resultViewDtos.Add(dto);
             }
@@ -170,6 +176,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (quiz != null && user != null && latestAttemptNumber != 0)
             {
+
                 Result studentResult = new Result
                 {
                     QuizId = dto.QuizId,
@@ -199,10 +206,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     SubjectId = subjectId,
                 };
 
-                if (await IsPassedTheQuizAsync(newStudentProgress.QuizId, newStudentProgress.StudentId))
+                result.IsPassedTheQuiz = await IsPassedTheQuizAsync(newStudentProgress.QuizId, newStudentProgress.StudentId);
+
+                if ( result.IsPassedTheQuiz &&
+                    await IsAlreadyAddedProgress(newStudentProgress.QuizId, newStudentProgress.StudentId) == false)
                 {
                     // Check if progress is added to database successfully
-                    result.IsAddedProgress = await _progressServices.AddSubjectProgressAsync(newStudentProgress);
+                    await _progressServices.AddSubjectProgressAsync(newStudentProgress);
                 }
 
                 return result;
@@ -213,6 +223,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
             else if (latestAttemptNumber == 0) { throw new BaseException.BadRequestException("invalid_latest_attempt_number", "This student hasn't done the quiz yet"); }
 
             return result;
+        }
+
+        private async Task<bool> IsAlreadyAddedProgress(string quizId, string studentId) 
+        {
+            Progress? studentProgress = await _unitOfWork.GetRepository<Progress>().FindByConditionAsync(p => p.QuizId.Equals(quizId) && p.StudentId.Equals(studentId));
+
+            if (studentProgress != null)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         // Get latest attempt number
@@ -295,5 +317,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return resultParentViewDto;
         }
+
     }
 }

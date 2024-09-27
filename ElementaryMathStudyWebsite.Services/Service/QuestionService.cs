@@ -3,8 +3,6 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Utils;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -13,10 +11,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
     public class QuestionService : IAppQuestionServices
     {
         private readonly IUnitOfWork _unitOfWork;
-
-        public QuestionService(IUnitOfWork unitOfWork)
+        private readonly IAppUserServices _userService;
+        private readonly IAppOptionServices _optionService;
+        public QuestionService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppOptionServices optionService)
         {
             _unitOfWork = unitOfWork;
+            _userService = userService;
+            _optionService = optionService;
         }
 
         // Get questions with all properties
@@ -46,11 +47,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     QuestionContext = question.QuestionContext,
                     QuizName = question.Quiz?.QuizName ?? string.Empty,
                     QuizId = question.QuizId,
+
                     CreatedBy = question.CreatedBy ?? string.Empty,
                     CreatorName = creator?.FullName ?? string.Empty,
                     CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                    CreatedTime = question.CreatedTime, // No null check needed
-                    LastUpdatedTime = question.LastUpdatedTime // No null check needed
+                    CreatedTime = question.CreatedTime,
+
+                    LastUpdatedBy = question.LastUpdatedBy ?? string.Empty,
+                    LastUpdatedPersonName = question.LastUpdatedByUser?.FullName ?? string.Empty,
+                    LastUpdatedPersonPhone = question.LastUpdatedByUser?.PhoneNumber ?? string.Empty,
+                    LastUpdatedTime = question.LastUpdatedTime
                 };
 
                 questionDtos.Add(dto);
@@ -80,17 +86,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(question.LastUpdatedBy ?? string.Empty);
 
             // Create QuestionMainViewDto
-            var dto = new QuestionMainViewDto
+            QuestionMainViewDto dto = new QuestionMainViewDto
             {
                 Id = question.Id,
                 QuestionContext = question.QuestionContext,
                 QuizName = question.Quiz?.QuizName ?? string.Empty,
                 QuizId = question.QuizId,
+
                 CreatedBy = question.CreatedBy ?? string.Empty,
                 CreatorName = creator?.FullName ?? string.Empty,
                 CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                CreatedTime = question.CreatedTime, // No null check needed
-                LastUpdatedTime = question.LastUpdatedTime // No null check needed
+                CreatedTime = question.CreatedTime,
+
+                LastUpdatedBy = question.LastUpdatedBy ?? string.Empty,
+                LastUpdatedPersonName = question.LastUpdatedByUser?.FullName ?? string.Empty,
+                LastUpdatedPersonPhone = question.LastUpdatedByUser?.PhoneNumber ?? string.Empty,
+                LastUpdatedTime = question.LastUpdatedTime
             };
 
             return dto; // Return the QuestionMainViewDto
@@ -109,8 +120,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 Id = q.Id,
                 QuestionContext = q.QuestionContext,
-                QuizName = q.Quiz?.QuizName ?? string.Empty, 
-                QuizId = q.Quiz?.Id ?? string.Empty 
+                QuizName = q.Quiz?.QuizName ?? string.Empty,
+                QuizId = q.Quiz?.Id ?? string.Empty
             }).ToList();
 
             return questionDtos;
@@ -141,9 +152,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             IQueryable<Question> query = _unitOfWork.GetRepository<Question>().Entities
                 .Where(q => string.IsNullOrWhiteSpace(q.DeletedBy))
-                .Include(q => q.Quiz) // Include related Quiz data
-                .Include(q => q.CreatedByUser) // Include creator info
-                .Include(q => q.LastUpdatedByUser); // Include last updater info
+                .Include(q => q.Quiz)
+                .Include(q => q.CreatedByUser)
+                .Include(q => q.LastUpdatedByUser);
 
             // Retrieve total count for pagination
             var totalCount = await query.CountAsync();
@@ -170,8 +181,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     CreatedBy = question.CreatedBy ?? string.Empty,
                     CreatorName = creator?.FullName ?? string.Empty,
                     CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                    CreatedTime = question.CreatedTime, // No null check needed
-                    LastUpdatedTime = question.LastUpdatedTime // No null check needed
+                    CreatedTime = question.CreatedTime,
+                    LastUpdatedBy = question.LastUpdatedBy ?? string.Empty,
+                    LastUpdatedPersonName = question.LastUpdatedByUser?.FullName ?? string.Empty,
+                    LastUpdatedPersonPhone = question.LastUpdatedByUser?.PhoneNumber ?? string.Empty,
+                    LastUpdatedTime = question.LastUpdatedTime
                 };
 
                 questionDtos.Add(dto);
@@ -181,6 +195,115 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return new BasePaginatedList<QuestionMainViewDto>(questionDtos, totalCount, pageNumber, pageSize);
         }
 
+        // Method to add a new question
+        public async Task<QuestionMainViewDto> AddQuestionAsync(QuestionCreateDto dto)
+        {
+            // Create new question entity
+            var question = new Question
+            {
+                QuestionContext = dto.QuestionContext,
+                QuizId = dto.QuizId,
+                CreatedBy = (await _userService.GetCurrentUserAsync()).Id.ToUpper(),
+                CreatedTime = DateTime.UtcNow
+            };
 
+            // Add the question to the repository
+            await _unitOfWork.GetRepository<Question>().InsertAsync(question);
+            await _unitOfWork.SaveAsync();
+
+            // Get the current user for auditing purposes
+            User currentUser = await _userService.GetCurrentUserAsync();
+            question.LastUpdatedBy = currentUser.Id ?? string.Empty; // Update LastUpdatedBy
+
+            // Fetch creator and last updated person information
+            var creator = await _unitOfWork.GetRepository<User>().FindByConditionAsync(c => c.Id != null && c.Id.Equals(question.CreatedBy));
+            var lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(question.LastUpdatedBy);
+
+            // Return the created question information in a DTO
+            return new QuestionMainViewDto
+            {
+                Id = question.Id,
+                QuestionContext = question.QuestionContext,
+                QuizName = question.Quiz?.QuizName ?? string.Empty,
+                QuizId = question.QuizId,
+
+                CreatedBy = question.CreatedBy ?? string.Empty,
+                CreatorName = creator?.FullName ?? string.Empty,
+                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                CreatedTime = question.CreatedTime,
+
+                LastUpdatedBy = question.LastUpdatedBy ?? string.Empty,
+                LastUpdatedPersonName = question.LastUpdatedByUser?.FullName ?? string.Empty,
+                LastUpdatedPersonPhone = question.LastUpdatedByUser?.PhoneNumber ?? string.Empty,
+                LastUpdatedTime = question.LastUpdatedTime
+            };
+        }
+
+        // Method to update an existing question
+        public async Task<QuestionMainViewDto> UpdateQuestionAsync(string id, QuestionUpdateDto dto)
+        {
+            // Fetch the existing question by its ID
+            var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(id)
+                            ?? throw new BaseException.NotFoundException("not_found", $"Question with Id '{id}' not found.");
+
+            // Update question information with values from the DTO
+            question.QuestionContext = dto.QuestionContext;
+            question.QuizId = dto.QuizId;
+
+            // Get the current user for auditing purposes
+            User currentUser = await _userService.GetCurrentUserAsync();
+            question.LastUpdatedBy = currentUser.Id ?? string.Empty; // Update LastUpdatedBy
+
+            // Fetch creator and last updated person information
+            var creator = await _unitOfWork.GetRepository<User>().FindByConditionAsync(c => c.Id != null && c.Id.Equals(question.CreatedBy));
+            var lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(question.LastUpdatedBy);
+
+            // Save changes to the database
+            await _unitOfWork.SaveAsync();
+
+            // Return the updated question information in a DTO
+            return new QuestionMainViewDto
+            {
+                Id = question.Id,
+                QuestionContext = question.QuestionContext,
+                QuizName = question.Quiz?.QuizName ?? string.Empty,
+                QuizId = question.QuizId,
+
+                CreatedBy = question.CreatedBy ?? string.Empty,
+                CreatorName = creator?.FullName ?? string.Empty,
+                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                CreatedTime = question.CreatedTime,
+
+                LastUpdatedBy = question.LastUpdatedBy ?? string.Empty,
+                LastUpdatedPersonName = question.LastUpdatedByUser?.FullName ?? string.Empty,
+                LastUpdatedPersonPhone = question.LastUpdatedByUser?.PhoneNumber ?? string.Empty,
+                LastUpdatedTime = question.LastUpdatedTime
+            };
+        }
+
+        public async Task<bool> DeleteQuestion(string questionId)
+        {
+            Question? question;
+
+            if (_unitOfWork.IsValid<Question>(questionId))
+                question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(questionId);
+            else throw new BaseException.NotFoundException("not_found", "Question ID not found");
+
+            _userService.AuditFields(question!, false, true);
+
+            await _unitOfWork.SaveAsync();
+
+            IQueryable<Option> query = _unitOfWork.GetRepository<Option>().GetEntitiesWithCondition(
+                            o => o.QuestionId == questionId &&
+                            string.IsNullOrWhiteSpace(o.DeletedBy)
+                            );
+
+            foreach (var option in query)
+            {
+                await _optionService.DeleteOption(option.Id);
+            }
+
+            return true;
+        }
     }
 }

@@ -25,7 +25,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<BasePaginatedList<OrderViewDto>?> GetOrderDtosAsync(int pageNumber, int pageSize);
 
         // Get Order for general user
-        Task<OrderViewDto?> GetOrderDtoByOrderIdAsync(string orderId);
+        //Task<OrderViewDto?> GetOrderDtoByOrderIdAsync(string orderId);
 
         // Check if order is existed
         Task<bool> IsValidOrderAsync(string orderId);
@@ -35,6 +35,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         Task<BasePaginatedList<OrderAdminViewDto>> GetOrderAdminDtosAsync(int pageNumber, int pageSize);
 
-        Task<Order?> GetOrderByOrderIdAsync(string orderId);
+        //Task<Order?> GetOrderByOrderIdAsync(string orderId);
     }
 }

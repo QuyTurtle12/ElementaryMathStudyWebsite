@@ -31,13 +31,18 @@ namespace ElementaryMathStudyWebsite.Core.Base
             Code = code;
         }
 
-        public static BaseResponse<T> OkResponse(T? data)
+        public static BaseResponse<T> OkResponse(T? data, string v)
         {
             return new BaseResponse<T>(StatusCodeHelper.OK, StatusCodeHelper.OK.Name(), data);
         }
         public static BaseResponse<T> OkResponse(string? mess)
         {
             return new BaseResponse<T>(StatusCodeHelper.OK, StatusCodeHelper.OK.Name(), mess);
+        }
+
+        public static BaseResponse<T> OkResponse(T? data)
+        {
+            return new BaseResponse<T>(StatusCodeHelper.OK, StatusCodeHelper.OK.Name(), data);
         }
     }
 }

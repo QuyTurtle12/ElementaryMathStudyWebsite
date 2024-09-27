@@ -1,6 +1,4 @@
-﻿using ElementaryMathStudyWebsite.Core.Utils;
-
-namespace ElementaryMathStudyWebsite.Core.Store
+﻿namespace ElementaryMathStudyWebsite.Core.Store
 {
     public enum PaymentStatusHelper
     {
