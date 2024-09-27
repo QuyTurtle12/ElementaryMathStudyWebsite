@@ -340,11 +340,17 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-                user => user.Role // Include the Role navigation property
+                user => user.Role, // Include the Role navigation property
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
             IQueryable<User> query = _unitOfWork.GetRepository<User>().GetEntitiesWithCondition(condition, includes);
+
+
+            var query1 = 
+                _unitOfWork
+                .GetRepository<User>()
+                .GetEntitiesWithConditionAndSelect(condition, u => new{ u.Id, u.FullName, u.Role.RoleName } ,includes);
 
             // Apply filters if the corresponding parameters are provided
             if (!string.IsNullOrEmpty(name))
