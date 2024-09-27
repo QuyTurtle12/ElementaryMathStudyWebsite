@@ -43,7 +43,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
         public async Task RegisterAsync(RegisterDto registerDto)
         {
             // Check if the user already exists
-            var existingUser = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Username == registerDto.Username && u.Email == registerDto.Email);
+            var existingUser = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Username == registerDto.Username || u.Email == registerDto.Email);
             if (existingUser != null)
             {
                 throw new InvalidOperationException("User or email already exists.");
