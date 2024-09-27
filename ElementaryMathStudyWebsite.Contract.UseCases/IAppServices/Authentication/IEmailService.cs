@@ -9,5 +9,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authenticati
     public interface IEmailService
     {
         Task SendVerificationEmailAsync(string email, string verificationToken);
+        Task SendPasswordResetEmailAsync(string email, string resetToken);
     }
 }

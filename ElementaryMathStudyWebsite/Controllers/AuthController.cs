@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -502,6 +503,134 @@ namespace ElementaryMathStudyWebsite.Controllers
                 {
                     errorCode = notFoundEx.ErrorDetail.ErrorCode,
                     errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
+        /// <summary>
+        /// Sends a password reset link to the user's email.
+        /// </summary>
+        /// <param name="email">User's email</param>
+        /// <param name="userName">User's username</param>
+        /// <returns>ActionResult indicating the result of the operation.</returns>
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                await _authService.ForgotPasswordAsync(request.Email, request.UserName);
+                var response = BaseResponse<string>.OkResponse("Password reset link has been sent to your email.");
+
+                return Ok(response);
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
+        /// <summary>
+        /// Resets the user's password using a token.
+        /// </summary>
+        /// <param name="resetPasswordDto">The reset password DTO containing the token and new password.</param>
+        /// <returns>ActionResult indicating the result of the operation.</returns>
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto resetPasswordDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                await _authService.ResetPasswordAsync(resetPasswordDto.Token, resetPasswordDto.NewPassword);
+                var response = BaseResponse<string>.OkResponse("Password has been successfully reset.");
+
+                return Ok(response);
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
+                });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                // Handle specific BadRequestException
+                return NotFound(new
+                {
+                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
+                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
+                });
+            }
+        }
+
+        [HttpGet("verify-reset-password-token")]
+        public async Task<IActionResult> VerifyResetPasswordEmailAsync([FromQuery] string token)
+        {
+            try
+            {
+                await _authService.VerifyResetPasswordTokenAsync(token);
+                var response = BaseResponse<String>.OkResponse(token);
+
+                return Ok(response);
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                // Handle specific CoreException
+                return StatusCode(coreEx.StatusCode, new
+                {
+                    code = coreEx.Code,
+                    message = coreEx.Message,
+                    additionalData = coreEx.AdditionalData
+                });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                // Handle specific BadRequestException
+                return BadRequest(new
+                {
+                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
+                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
                 });
             }
         }

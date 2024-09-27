@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Core.Base;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Annotations;
+using ElementaryMathStudyWebsite.Services.Service;
 
 
 namespace ElementaryMathStudyWebsite.Controllers
@@ -579,9 +580,17 @@ namespace ElementaryMathStudyWebsite.Controllers
             //}
             try
             {
-                var deletedTopic = await _topicService.DeleteTopicAsync(id);
-                var successResponse = BaseResponse<object>.OkResponse(deletedTopic);
-                return Ok(successResponse);
+                var result = await _topicService.DeleteTopicAsync(id);
+
+                if (result)
+                {
+                    var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
+                    return Ok(successResponse);
+
+                }
+                var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
+
+                return Ok(failedResponse);
             }
             catch (BaseException.CoreException coreEx)
             {
@@ -611,17 +620,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                     errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
-
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        errorCode = "InternalServerError",
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
         }
 
         [HttpPut]

@@ -3,8 +3,6 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Utils;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -14,11 +12,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userService;
-
-        public QuestionService(IUnitOfWork unitOfWork, IAppUserServices userService)
+        private readonly IAppOptionServices _optionService;
+        public QuestionService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppOptionServices optionService)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
+            _optionService = optionService;
         }
 
         // Get questions with all properties
@@ -282,51 +281,29 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
         }
 
-        // Delete a question
-        public async Task<QuestionDeleteDto> DeleteQuestionAsync(string questionId)
+        public async Task<bool> DeleteQuestion(string questionId)
         {
-            // Check if the provided questionId is null or whitespace
-            if (string.IsNullOrWhiteSpace(questionId))
-            {
-                throw new BaseException.BadRequestException("invalid_arguments", $"Deleted question {questionId}");
-            }
+            Question? question;
 
-            // Fetch the question by ID
-            var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(questionId)
-                            ?? throw new BaseException.NotFoundException("not_found", $"{questionId} not found");
+            if (_unitOfWork.IsValid<Question>(questionId))
+                question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(questionId);
+            else throw new BaseException.NotFoundException("not_found", "Question ID not found");
 
-            // Check if the question has already been deleted
-            if (question.DeletedBy != null)
-            {
-                throw new BaseException.BadRequestException("invalid_arguments", "This question has already been deleted.");
-            }
+            _userService.AuditFields(question!, false, true);
 
-            // Get the current user information
-            User currentUser = await _userService.GetCurrentUserAsync();
-
-            // Mark the question as deleted by setting DeletedBy and DeletedTime
-            question.DeletedBy = currentUser.Id.ToUpper();
-            question.DeletedTime = CoreHelper.SystemTimeNow;
-
-            // Fetch the creator information
-            var creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(question.CreatedBy ?? string.Empty);
-            var lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(question.LastUpdatedBy ?? string.Empty);
-
-            // Update the question entity and save changes
-            await _unitOfWork.GetRepository<Question>().UpdateAsync(question);
             await _unitOfWork.SaveAsync();
 
-            // Return the details of the deleted question in a DeleteQuestionDto
-            return new QuestionDeleteDto
+            IQueryable<Option> query = _unitOfWork.GetRepository<Option>().GetEntitiesWithCondition(
+                            o => o.QuestionId == questionId &&
+                            string.IsNullOrWhiteSpace(o.DeletedBy)
+                            );
+
+            foreach (var option in query)
             {
-                Id = question.Id,
-                QuestionContext = question.QuestionContext,
-                DeletedBy = question.DeletedBy,
-                DeletedTime = CoreHelper.SystemTimeNow,
-                DeletedName = currentUser.FullName,
-                CreatorName = creator?.FullName ?? string.Empty,
-                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
-            };
+                await _optionService.DeleteOption(option.Id);
+            }
+
+            return true;
         }
     }
 }
