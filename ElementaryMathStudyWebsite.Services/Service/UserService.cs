@@ -346,6 +346,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
             IQueryable<User> query = _unitOfWork.GetRepository<User>().GetEntitiesWithCondition(condition, includes);
 
+
+            var query1 = 
+                _unitOfWork
+                .GetRepository<User>()
+                .GetEntitiesWithConditionAndSelect(condition, u => new{ u.Id, u.FullName, u.Role.RoleName } ,includes);
+
             // Apply filters if the corresponding parameters are provided
             if (!string.IsNullOrEmpty(name))
             {

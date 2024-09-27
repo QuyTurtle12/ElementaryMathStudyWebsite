@@ -31,5 +31,15 @@ namespace ElementaryMathStudyWebsite.Contract.Core.IUOW
         Task<T?> FindByConditionAsync(Expression<Func<T, bool>> expression);
         Task<T?> FindByConditionWithIncludesAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includes);
         IQueryable<T> GetEntitiesWithCondition(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includes);
+        Task<TResult?> FindByConditionWithIncludesAndSelectAsync<TResult>(
+            Expression<Func<T, bool>> expression,
+            Expression<Func<T, TResult>> selector,
+            params Expression<Func<T, object>>[] includes);
+
+
+        IQueryable<TResult> GetEntitiesWithConditionAndSelect<TResult>(
+            Expression<Func<T, bool>> expression,
+            Expression<Func<T, TResult>> selector,
+            params Expression<Func<T, object>>[] includes);
     }
 }

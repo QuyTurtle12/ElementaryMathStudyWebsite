@@ -43,10 +43,10 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
         public async Task RegisterAsync(RegisterDto registerDto)
         {
             // Check if the user already exists
-            var existingUser = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Username == registerDto.Username && u.Email == registerDto.Email);
+            var existingUser = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Username == registerDto.Username || u.Email == registerDto.Email);
             if (existingUser != null)
             {
-                throw new InvalidOperationException("User or email already exists.");
+                throw new BaseException.CoreException("invalid_argument", "User or email already exists.");
             }
 
 
@@ -54,7 +54,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             var role = await _unitOfWork.GetRepository<Role>().FindByConditionAsync(r => r.RoleName == "Parent");
             if (role == null)
             {
-                throw new InvalidOperationException("Invalid role name.");
+                throw new BaseException.CoreException("invalid_argument", "Invalid role name.");
             }
 
             // Hash the password
@@ -90,14 +90,14 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             var existingUser = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Username == registerDto.Username);
             if (existingUser != null)
             {
-                throw new InvalidOperationException("User already exists.");
+                throw new BaseException.CoreException("invalid_argument", "User already exists.");
             }
 
             // Verify if the provided role name exists
             var role = await _unitOfWork.GetRepository<Role>().FindByConditionAsync(r => r.RoleName == "Student");
             if (role == null)
             {
-                throw new InvalidOperationException("Invalid role name.");
+                throw new BaseException.CoreException("invalid_argument", "Invalid role name.");
             }
 
             // Hash the password
@@ -197,7 +197,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 
             if (user == null)
             {
-                throw new InvalidOperationException("Invalid verification token.");
+                throw new BaseException.CoreException("invalid_argument", "Invalid verification token.");
             }
 
             // Activate the user account
