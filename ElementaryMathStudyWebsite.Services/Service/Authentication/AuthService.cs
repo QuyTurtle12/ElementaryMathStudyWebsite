@@ -3,6 +3,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using System.Linq.Expressions;
+using ElementaryMathStudyWebsite.Core.Base;
 
 namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 {
@@ -42,11 +43,12 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
         public async Task RegisterAsync(RegisterDto registerDto)
         {
             // Check if the user already exists
-            var existingUser = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Username == registerDto.Username);
+            var existingUser = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Username == registerDto.Username && u.Email == registerDto.Email);
             if (existingUser != null)
             {
-                throw new InvalidOperationException("User already exists.");
+                throw new InvalidOperationException("User or email already exists.");
             }
+
 
             // Verify if the provided role name exists
             var role = await _unitOfWork.GetRepository<Role>().FindByConditionAsync(r => r.RoleName == "Parent");
@@ -106,6 +108,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             {
                 FullName = registerDto.FullName,
                 Gender = registerDto.Gender,
+                Email = email,
                 Username = registerDto.Username,
                 Password = hashedPassword,
                 Status = false, // Set status to false until email is verified
@@ -119,6 +122,67 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 
             // Send verification email
             await _emailService.SendVerificationEmailAsync(email, newUser.VerificationToken);
+        }
+
+        // Forgot Password
+        public async Task ForgotPasswordAsync(string email, string userName)
+        {
+            // Check if the user exists
+            var user = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Email == email && u.Username == userName);
+            if (user == null)
+            {
+                throw new BaseException.NotFoundException("user_not_found", "User with the provided email does not exist.");
+            }
+
+            // Generate password reset token
+            var resetToken = Guid.NewGuid().ToString();
+            user.PasswordResetToken = resetToken;
+            user.ResetTokenExpiry = DateTime.UtcNow.AddHours(1); // Set token expiry time
+
+            // Update user with reset token
+            await _unitOfWork.GetRepository<User>().UpdateAsync(user);
+            await _unitOfWork.SaveAsync();
+
+            // Send password reset email
+            await _emailService.SendPasswordResetEmailAsync(email, resetToken);
+        }
+
+        // Reset Password
+        public async Task ResetPasswordAsync(string token, string newPassword)
+        {
+            // Find user by token
+            var user = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.PasswordResetToken == token);
+            if (user == null || user.ResetTokenExpiry < DateTime.UtcNow)
+            {
+                throw new BaseException.CoreException("invalid_argument", "Invalid or expired token.");
+            }
+
+            // Hash the new password
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
+
+            // Update user's password and clear the token
+            user.Password = hashedPassword;
+            user.PasswordResetToken = null;
+            user.ResetTokenExpiry = null;
+            
+
+            // Update the user in the database
+            await _unitOfWork.GetRepository<User>().UpdateAsync(user);
+            await _unitOfWork.SaveAsync();
+        }
+
+        public async Task VerifyResetPasswordTokenAsync(string token)
+        {
+            Expression<Func<User, bool>> condition = u => u.PasswordResetToken == token;
+
+            var user = await _unitOfWork.GetRepository<User>().FindByConditionAsync(
+                condition
+            );
+            if (user == null || user.ResetTokenExpiry < DateTime.UtcNow)
+            {
+                throw new BaseException.CoreException("invalid_argument", "Invalid or expired token.");
+            }
+
         }
 
         public async Task VerifyEmailAsync(string token)

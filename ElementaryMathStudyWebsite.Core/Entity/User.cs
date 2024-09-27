@@ -17,6 +17,10 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public string? VerificationToken { get; set; }
 
+        public string? PasswordResetToken { get; set; }
+
+        public DateTimeOffset? ResetTokenExpiry { get; set; }
+
         public required string Username { get; set; }
 
         public required string Password { get; set; }
