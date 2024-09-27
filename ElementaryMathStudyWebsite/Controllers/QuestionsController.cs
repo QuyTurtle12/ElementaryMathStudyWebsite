@@ -3,7 +3,6 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Core.Base;
-using Humanizer;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 
@@ -95,13 +94,13 @@ namespace ElementaryMathStudyWebsite.Controllers
         // GET: api/question/search
         [Authorize(Policy = "Admin-Content")]
         [HttpGet("search")]
-        [SwaggerOperation(Summary = "Search questions by context, Authorization: Manager & Admin", Description = "Search for questions where the context contains the specified string.")]
-        public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions([FromQuery] string context)
+        [SwaggerOperation(Summary = "Search questions by Content, Authorization: Manager & Admin", Description = "Search for questions where the Content contains the specified string.")]
+        public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions([FromQuery] string Content)
         {
             try
             {
-                // Search questions by the provided context string
-                var questions = await _questionService.SearchQuestionsByContextAsync(context)
+                // Search questions by the provided Content string
+                var questions = await _questionService.SearchQuestionsByContextAsync(Content)
                     ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
 
                 // Return success response with the search results

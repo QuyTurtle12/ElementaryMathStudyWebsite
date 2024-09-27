@@ -22,7 +22,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         // GET: api/quiz/all
         [Authorize(Policy = "Admin-Content")]
         [HttpGet("all")]
-        [SwaggerOperation(Summary = "Authorization: Admin & Context Manager", Description = "Retrieve all quizzes. Admin access required.")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Retrieve all quizzes. Admin access required.")]
         public async Task<ActionResult<BaseResponse<List<QuizMainViewDto>>>> GetAllQuizzes()
         {
             try
@@ -44,7 +44,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         // GET: api/quiz/{id}
         [Authorize(Policy = "Admin-Content")]
         [HttpGet("{id}")]
-        [SwaggerOperation(Summary = "Authorization: Admin & Context Manager", Description = "Retrieve a quiz by its unique identifier.")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Retrieve a quiz by its unique identifier.")]
         public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> GetQuizById(string id)
         {
             try
@@ -152,7 +152,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         // POST: api/quiz
         [Authorize(Policy = "Admin-Content")]
         [HttpPost]
-        [SwaggerOperation(Summary = "Authorization: Admin & Context Manager", Description = "Creates a new quiz and returns the created quiz.")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Creates a new quiz and returns the created quiz.")]
         public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> AddQuizAsync([FromBody] QuizCreateDto dto)
         {
             try
@@ -174,7 +174,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         // PUT: api/quiz
         [Authorize(Policy = "Admin-Content")]
         [HttpPut]
-        [SwaggerOperation(Summary = "Authorization: Admin & Context Manager", Description = "Updates an existing quiz based on the provided data.")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Updates an existing quiz based on the provided data.")]
         public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> UpdateQuizAsync([Required] string id, [FromBody] QuizUpdateDto dto)
         {
             try
@@ -199,7 +199,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         // DELETE: api/quiz/{id}
         [Authorize(Policy = "Admin-Content")]
         [HttpDelete("{id}")]
-        [SwaggerOperation(Summary = "Authorization: Admin & Context Manager", Description = "Deletes a quiz by its unique identifier.")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Deletes a quiz by its unique identifier.")]
         public async Task<ActionResult<BaseResponse<QuizDeleteDto>>> DeleteQuizAsync(string id)
         {
             try

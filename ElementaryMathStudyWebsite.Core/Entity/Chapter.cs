@@ -29,6 +29,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public virtual ICollection<Topic>? Topics { get; set; } // Navigation property, one chapter has many topics
         [JsonIgnore]
         public virtual Quiz? Quiz { get; set; } // Navigation property, one chapter can only has one quiz
-
+        //[JsonIgnore]
+        //public virtual User? User { get; set; }
     }
 }

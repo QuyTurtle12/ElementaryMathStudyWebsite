@@ -88,7 +88,7 @@ namespace ElementaryMathStudyWebsite.Controllers
 
                 if (!results.Items.Any())
                 {
-                    throw new BaseException.BadRequestException("empty_list","This student hasn't done any test in this quiz yet");
+                    throw new BaseException.BadRequestException("invalid_argument","This student hasn't done any test in this quiz yet");
                 }
 
                 var response = BaseResponse<BasePaginatedList<ResultViewDto>>.OkResponse(results);
