@@ -3,13 +3,10 @@ using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Utils;
-using ElementaryMathStudyWebsite.Infrastructure.UOW;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
@@ -74,21 +71,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
             User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
             User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-            return new SubjectAdminViewDTO
+            var subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
             {
-                Id = subject.Id,
-                SubjectName = subject.SubjectName,
-                Price = subject.Price,
-                Status = subject.Status,
-                CreatedBy = subject.CreatedBy,
-                CreaterName = createdUser?.FullName,
-                CreaterPhone = createdUser?.PhoneNumber,
-                CreatedTime = subject.CreatedTime,
-                LastUpdatedBy = subject.LastUpdatedBy,
-                UpdaterName = createdUser?.FullName,
-                UpdaterPhone = createdUser?.PhoneNumber,
-                LastUpdatedTime = subject.LastUpdatedTime
-            };
+                opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+            });
+
+            return subjectAdminViewDTO;
         }
 
 
@@ -117,34 +106,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
                         User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-                        return (ISubjectBaseDTO)new SubjectAdminViewDTO
+                        var subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
                         {
-                            Id = subject.Id,
-                            SubjectName = subject.SubjectName,
-                            Price = subject.Price,
-                            Status = subject.Status,
-                            CreatedBy = subject.CreatedBy,
-                            CreaterName = createdUser?.FullName,
-                            CreaterPhone = createdUser?.PhoneNumber,
-                            CreatedTime = subject.CreatedTime,
-                            LastUpdatedBy = subject.LastUpdatedBy,
-                            UpdaterName = updatedUser?.FullName,
-                            UpdaterPhone = updatedUser?.PhoneNumber,
-                            LastUpdatedTime = subject.LastUpdatedTime
-                        };
+                            opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                            opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+                        });
+
+                        return (ISubjectBaseDTO)subjectAdminViewDTO;
                     }
                     else
                     {
                         var subjectDTO = _mapper.Map<SubjectDTO>(subject);
 
                         return subjectDTO;
-                        //return (ISubjectBaseDTO)new SubjectDTO
-                        //{
-                        //    Id = subject.Id,
-                        //    SubjectName = subject.SubjectName,
-                        //    Price = subject.Price,
-                        //    Status = subject.Status
-                        //};
                     }
                 }).ToList();
 
@@ -160,34 +134,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
                     User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-                    return (ISubjectBaseDTO)new SubjectAdminViewDTO
+                    var subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
                     {
-                        Id = subject.Id,
-                        SubjectName = subject.SubjectName,
-                        Price = subject.Price,
-                        Status = subject.Status,
-                        CreatedBy = subject.CreatedBy,
-                        CreaterName = createdUser?.FullName,
-                        CreaterPhone = createdUser?.PhoneNumber,
-                        CreatedTime = subject.CreatedTime,
-                        LastUpdatedBy = subject.LastUpdatedBy,
-                        UpdaterName = updatedUser?.FullName,
-                        UpdaterPhone = updatedUser?.PhoneNumber,
-                        LastUpdatedTime = subject.LastUpdatedTime
-                    };
+                        opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                        opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+                    });
+
+                    return (ISubjectBaseDTO)subjectAdminViewDTO;  // Cast to common interface
                 }
                 else
                 {
                     var subjectDTO = _mapper.Map<SubjectDTO>(subject);
 
-                    return subjectDTO;
-                    //return (ISubjectBaseDTO)new SubjectDTO
-                    //{
-                    //    Id = subject.Id,
-                    //    SubjectName = subject.SubjectName,
-                    //    Price = subject.Price,
-                    //    Status = subject.Status
-                    //};
+                    return (ISubjectBaseDTO)subjectDTO;  // Cast to common interface
                 }
             }).ToList();
 
@@ -209,34 +168,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
                 User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-                return new SubjectAdminViewDTO
+                var subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
                 {
-                    Id = subject.Id,
-                    SubjectName = subject.SubjectName,
-                    Price = subject.Price,
-                    Status = subject.Status,
-                    CreatedBy = subject.CreatedBy,
-                    CreaterName = createdUser?.FullName,
-                    CreaterPhone = createdUser?.PhoneNumber,
-                    CreatedTime = subject.CreatedTime,
-                    LastUpdatedBy = subject.LastUpdatedBy,
-                    UpdaterName = createdUser?.FullName,
-                    UpdaterPhone = createdUser?.PhoneNumber,
-                    LastUpdatedTime = subject.LastUpdatedTime
-                };
+                    opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                    opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+                });
+
+                return subjectAdminViewDTO;
             }
             else
             {
                 var subjectDTO = _mapper.Map<SubjectDTO>(subject);
 
                 return subjectDTO;
-                //return new SubjectDTO
-                //{
-                //    Id = subject.Id,
-                //    SubjectName = subject.SubjectName,
-                //    Price = subject.Price,
-                //    Status = subject.Status
-                //};
             }
         }
 
@@ -268,13 +212,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 var allSubjects = await query.ToListAsync();
                 var subjectDtos = _mapper.Map<List<SubjectDTO>>(allSubjects);
-                //var subjectDtos = allSubjects.Select(s => new SubjectDTO
-                //{
-                //    Id = s.Id,
-                //    SubjectName = s.SubjectName,
-                //    Price = s.Price,
-                //    Status = s.Status
-                //}).ToList();
 
                 if (subjectDtos.Count == 0)
                 {
@@ -286,13 +223,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             var paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
             var subjectDtosPaginated = _mapper.Map<List<SubjectDTO>>(paginatedSubjects.Items);
-            //var subjectDtosPaginated = paginatedSubjects.Items.Select(s => new SubjectDTO
-            //{
-            //    Id = s.Id,
-            //    SubjectName = s.SubjectName,
-            //    Price = s.Price,
-            //    Status = s.Status
-            //}).ToList();
 
             if (subjectDtosPaginated.Count == 0)
             {
@@ -339,21 +269,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
                     User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-                    return (ISubjectBaseDTO)new SubjectAdminViewDTO
+                    var subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
                     {
-                        Id = subject.Id,
-                        SubjectName = subject.SubjectName,
-                        Price = subject.Price,
-                        Status = subject.Status,
-                        CreatedBy = subject.CreatedBy,
-                        CreaterName = createdUser?.FullName,
-                        CreaterPhone = createdUser?.PhoneNumber,
-                        CreatedTime = subject.CreatedTime,
-                        LastUpdatedBy = subject.LastUpdatedBy,
-                        UpdaterName = updatedUser?.FullName,
-                        UpdaterPhone = updatedUser?.PhoneNumber,
-                        LastUpdatedTime = subject.LastUpdatedTime
-                    };
+                        opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                        opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+                    });
+
+                    return (ISubjectBaseDTO)subjectAdminViewDTO;
                 }).ToList();
 
                 if (subjectDtos.Count == 0)
@@ -371,21 +293,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
                 User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-                return (ISubjectBaseDTO)new SubjectAdminViewDTO
+                var subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
                 {
-                    Id = subject.Id,
-                    SubjectName = subject.SubjectName,
-                    Price = subject.Price,
-                    Status = subject.Status,
-                    CreatedBy = subject.CreatedBy,
-                    CreaterName = createdUser?.FullName,
-                    CreaterPhone = createdUser?.PhoneNumber,
-                    CreatedTime = subject.CreatedTime,
-                    LastUpdatedBy = subject.LastUpdatedBy,
-                    UpdaterName = updatedUser?.FullName,
-                    UpdaterPhone = updatedUser?.PhoneNumber,
-                    LastUpdatedTime = subject.LastUpdatedTime
-                }; 
+                    opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                    opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+                });
+                return (ISubjectBaseDTO)subjectAdminViewDTO; 
             }).ToList();
 
             if (subjectDtosPaginated.Count == 0)
@@ -433,21 +346,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
             User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-            return new SubjectAdminViewDTO
+            var subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
             {
-                Id = subject.Id,
-                SubjectName = subject.SubjectName,
-                Price = subject.Price,
-                Status = subject.Status,
-                CreatedBy = subject.CreatedBy,
-                CreaterName = createdUser?.FullName,
-                CreaterPhone = createdUser?.PhoneNumber,
-                CreatedTime = subject.CreatedTime,
-                LastUpdatedBy = subject.LastUpdatedBy,
-                UpdaterName = createdUser?.FullName,
-                UpdaterPhone = createdUser?.PhoneNumber,
-                LastUpdatedTime = subject.LastUpdatedTime
-            };
+                opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+            });
+            return subjectAdminViewDTO;
         }
 
         // Change subject status and set LastUpdatedTime to current time
@@ -464,21 +368,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
             User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-            return new SubjectAdminViewDTO
+            var subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
             {
-                Id = subject.Id,
-                SubjectName = subject.SubjectName,
-                Price = subject.Price,
-                Status = subject.Status,
-                CreatedBy = subject.CreatedBy,
-                CreaterName = createdUser?.FullName,
-                CreaterPhone = createdUser?.PhoneNumber,
-                CreatedTime = subject.CreatedTime,
-                UpdaterName = updatedUser?.FullName,
-                UpdaterPhone = updatedUser?.PhoneNumber,
-                LastUpdatedBy = subject.LastUpdatedBy,
-                LastUpdatedTime = subject.LastUpdatedTime
-            };
+                opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+            });
+            return subjectAdminViewDTO;
         }
 
         public async Task<string> GetSubjectNameAsync(string subjectId)
