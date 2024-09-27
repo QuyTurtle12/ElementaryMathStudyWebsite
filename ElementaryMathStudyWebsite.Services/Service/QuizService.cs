@@ -46,8 +46,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     QuizName = quiz.QuizName,
                     Criteria = quiz.Criteria,
                     Status = quiz.Status,
-                    ChapterName = quiz.Chapter?.ChapterName ?? string.Empty,  // Assuming Chapter has ChapterName
-                    TopicName = quiz.Topic?.TopicName ?? string.Empty,        // Assuming Topic has TopicName
+                    ChapterName = !string.IsNullOrWhiteSpace(quiz.Chapter?.ChapterName) ? quiz.Chapter.ChapterName : string.Empty,
+                    TopicName = !string.IsNullOrWhiteSpace(quiz.Topic?.TopicName) ? quiz.Topic.TopicName : string.Empty,
 
                     CreatedBy = quiz.CreatedBy ?? string.Empty,
                     CreatorName = creator?.FullName ?? string.Empty,
@@ -56,13 +56,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
                     LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
 
-                    CreatedTime = quiz.CreatedTime, // Assuming CreatedTime has a value
-                    LastUpdatedTime = quiz.LastUpdatedTime // Assuming LastUpdatedTime has a value
+                    CreatedTime = quiz.CreatedTime,
+                    LastUpdatedTime = quiz.LastUpdatedTime
                 };
 
                 quizDtos.Add(dto);
             }
-
             return quizDtos;
         }
 
@@ -82,17 +81,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(quiz.CreatedBy ?? string.Empty);
             var lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(quiz.LastUpdatedBy ?? string.Empty);
 
-            // Create a new QuizMainViewDto and map properties
-            var dto = new QuizMainViewDto
+            // Create QuizMainViewDto
+            QuizMainViewDto dto = new QuizMainViewDto
             {
                 Id = quiz.Id,
                 QuizName = quiz.QuizName,
                 Criteria = quiz.Criteria,
                 Status = quiz.Status,
-                ChapterName = quiz.Chapter?.ChapterName ?? string.Empty,
-                TopicName = quiz.Topic?.TopicName ?? string.Empty,
-                CreatedBy = creator?.FullName ?? string.Empty,
-                LastUpdatedBy = lastUpdatedPerson?.FullName ?? string.Empty,
+                ChapterName = !string.IsNullOrWhiteSpace(quiz.Chapter?.ChapterName) ? quiz.Chapter.ChapterName : string.Empty,
+                TopicName = !string.IsNullOrWhiteSpace(quiz.Topic?.TopicName) ? quiz.Topic.TopicName : string.Empty,
+
+                CreatedBy = quiz.CreatedBy ?? string.Empty,
+                CreatorName = creator?.FullName ?? string.Empty,
+                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                LastUpdatedBy = quiz.LastUpdatedBy ?? string.Empty,
+                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+
+                CreatedTime = quiz.CreatedTime,
+                LastUpdatedTime = quiz.LastUpdatedTime
             };
 
             return dto; // Return the QuizMainViewDto
@@ -104,6 +111,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Fetch quizzes that match the quiz name
             var quizzes = await _unitOfWork.GetRepository<Quiz>().Entities
                 .Where(q => q.QuizName.Contains(quizName) && string.IsNullOrWhiteSpace(q.DeletedBy))
+                .Include(q => q.Chapter)
+                .Include(q => q.Topic)
                 .ToListAsync();
 
             var quizDtos = quizzes.Select(quiz => new QuizViewDto
@@ -112,6 +121,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 QuizName = quiz.QuizName,
                 Criteria = quiz.Criteria,
                 Status = quiz.Status,
+                ChapterName = !string.IsNullOrWhiteSpace(quiz.Chapter?.ChapterName) ? quiz.Chapter.ChapterName : string.Empty,
+                TopicName = !string.IsNullOrWhiteSpace(quiz.Topic?.TopicName) ? quiz.Topic.TopicName : string.Empty,
             }).ToList();
 
             return quizDtos; // Return the list of QuizViewDto
@@ -120,21 +131,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get all quizzes that belong to a specific chapter or topic (by id conference)
         public async Task<List<QuizViewDto>> GetQuizzesByChapterOrTopicIdAsync(string? chapterId, string? topicId)
         {
-            IQueryable<Quiz> query = _unitOfWork.GetRepository<Quiz>().Entities
-                .Where(q => string.IsNullOrWhiteSpace(q.DeletedBy));
-
-            if (!string.IsNullOrWhiteSpace(chapterId))
-            {
-                query = query.Where(q => q.Chapter != null && q.Chapter.Id == chapterId);
-            }
-
-            if (!string.IsNullOrWhiteSpace(topicId))
-            {
-                query = query.Where(q => q.Topic != null && q.Topic.Id == topicId);
-            }
-
-            // Execute the query and get the quizzes
-            var quizzes = await query.ToListAsync();
+            var quizzes = await _unitOfWork.GetRepository<Quiz>().Entities
+                 .Where(q => string.IsNullOrWhiteSpace(q.DeletedBy))
+                 .Include(q => q.Chapter)
+                 .Include(q => q.Topic)
+                 .ToListAsync();
 
             // Convert Quiz entities to QuizViewDto
             var quizDtos = quizzes.Select(quiz => new QuizViewDto
@@ -143,8 +144,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 QuizName = quiz.QuizName,
                 Criteria = quiz.Criteria,
                 Status = quiz.Status,
-                ChapterName = quiz.Chapter?.ChapterName,
-                TopicName = quiz.Topic?.TopicName
+                ChapterName = !string.IsNullOrWhiteSpace(quiz.Chapter?.ChapterName) ? quiz.Chapter.ChapterName : string.Empty,
+                TopicName = !string.IsNullOrWhiteSpace(quiz.Topic?.TopicName) ? quiz.Topic.TopicName : string.Empty,
             }).ToList();
 
             return quizDtos;
@@ -169,17 +170,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(quiz.CreatedBy ?? string.Empty);
                 User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(quiz.LastUpdatedBy ?? string.Empty);
 
-                // Create a new QuizViewDto and map properties
+                // Create QuizMainViewDto
                 QuizMainViewDto dto = new QuizMainViewDto
                 {
                     Id = quiz.Id,
                     QuizName = quiz.QuizName,
                     Criteria = quiz.Criteria,
                     Status = quiz.Status,
-                    ChapterName = quiz.Chapter?.ChapterName ?? string.Empty,
-                    TopicName = quiz.Topic?.TopicName ?? string.Empty,
-                    CreatedBy = creator?.FullName ?? string.Empty,
-                    LastUpdatedBy = lastUpdatedPerson?.FullName ?? string.Empty
+                    ChapterName = !string.IsNullOrWhiteSpace(quiz.Chapter?.ChapterName) ? quiz.Chapter.ChapterName : string.Empty,
+                    TopicName = !string.IsNullOrWhiteSpace(quiz.Topic?.TopicName) ? quiz.Topic.TopicName : string.Empty,
+
+                    CreatedBy = quiz.CreatedBy ?? string.Empty,
+                    CreatorName = creator?.FullName ?? string.Empty,
+                    CreatorPhone = creator?.PhoneNumber ?? string.Empty,
+                    LastUpdatedBy = quiz.LastUpdatedBy ?? string.Empty,
+                    LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
+                    LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+
+                    CreatedTime = quiz.CreatedTime,
+                    LastUpdatedTime = quiz.LastUpdatedTime
                 };
                 quizDtos.Add(dto); // Add the DTO to the list
             }
@@ -206,7 +215,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (quiz == null)
             {
                 // Optionally, you can throw an exception or return a default value
-                throw new KeyNotFoundException($"Quiz with Id '{quizId}' not found.");
+                throw new BaseException.NotFoundException("not_found", "quiz not found.");
             }
 
             // Return the quiz name
@@ -251,16 +260,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 QuizName = quiz.QuizName,
                 Criteria = quiz.Criteria,
                 Status = quiz.Status,
-                ChapterName = dto.ChapterName,
-                TopicName = dto.TopicName,
+                ChapterName = !string.IsNullOrWhiteSpace(quiz.Chapter?.ChapterName) ? quiz.Chapter.ChapterName : string.Empty,
+                TopicName = !string.IsNullOrWhiteSpace(quiz.Topic?.TopicName) ? quiz.Topic.TopicName : string.Empty,
+
                 CreatedBy = quiz.CreatedBy ?? string.Empty,
                 CreatorName = creator?.FullName ?? string.Empty,
                 CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                LastUpdatedBy = quiz.LastUpdatedBy,
+                LastUpdatedBy = quiz.LastUpdatedBy ?? string.Empty,
                 LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
                 LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+
                 CreatedTime = quiz.CreatedTime,
-                LastUpdatedTime = CoreHelper.SystemTimeNow
+                LastUpdatedTime = quiz.LastUpdatedTime
             };
         }
 
@@ -313,23 +324,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Save changes to the database
             await _unitOfWork.SaveAsync();
 
-            // Return the updated quiz information in a DTO
+            // Return the created quiz as DTO including audit fields
             return new QuizMainViewDto
             {
                 Id = quiz.Id,
                 QuizName = quiz.QuizName,
                 Criteria = quiz.Criteria,
                 Status = quiz.Status,
-                ChapterName = chapterName,
-                TopicName = topicName,    
+                ChapterName = !string.IsNullOrWhiteSpace(quiz.Chapter?.ChapterName) ? quiz.Chapter.ChapterName : string.Empty,
+                TopicName = !string.IsNullOrWhiteSpace(quiz.Topic?.TopicName) ? quiz.Topic.TopicName : string.Empty,
+
                 CreatedBy = quiz.CreatedBy ?? string.Empty,
-                CreatorName = creator?.FullName ?? string.Empty,        
+                CreatorName = creator?.FullName ?? string.Empty,
                 CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                LastUpdatedBy = quiz.LastUpdatedBy,
-                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty, 
+                LastUpdatedBy = quiz.LastUpdatedBy ?? string.Empty,
+                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
                 LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
+
                 CreatedTime = quiz.CreatedTime,
-                LastUpdatedTime = CoreHelper.SystemTimeNow
+                LastUpdatedTime = quiz.LastUpdatedTime
             };
         }
 
@@ -381,4 +394,3 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
     }
 }
-// 10Đ
