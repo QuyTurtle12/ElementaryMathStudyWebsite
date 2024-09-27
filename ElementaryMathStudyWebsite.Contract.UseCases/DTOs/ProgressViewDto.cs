@@ -10,7 +10,7 @@
 
         public string SubjectName { get; set; } = string.Empty;
 
-        public double SubjectPercentage { get; set; }
+        public double SubjectPercentage { get; set; } = 0;
 
         public IEnumerable<FinishedTopic>? FinishedTopics {  get; set; } = new List<FinishedTopic>();
         
