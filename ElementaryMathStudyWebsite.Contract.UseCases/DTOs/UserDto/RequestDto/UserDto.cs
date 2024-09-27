@@ -37,6 +37,12 @@
 
             //public string? Password { get; set; } // Optional, only if you want to update the password
         }
+
+        public class ForgotPasswordRequestDto
+        {
+            public required string Email { get; set; }
+            public required string UserName { get; set; }
+        }
     }
 
 }
