@@ -399,6 +399,36 @@ namespace ElementaryMathStudyWebsite.Controllers
             }
         }
 
+        [Authorize(Policy = "Admin-Content")]
+        [HttpPost("assign-quiz")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin, Content",
+            Description = "Assign quizId to chapter"
+        )]
+        public async Task<IActionResult> AssignQuizIdToChapter(string chapterId, string quizId)
+        {
+            try
+            {
+                var updatedChapter = await _chapterService.AssignQuizIdToChapterAsync(chapterId, quizId);
+                var response = BaseResponse<bool>.OkResponse(updatedChapter);
+                return Ok(response);
+            }
+            catch (BaseException.CoreException coreEx)
+            {
+                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
+            }
+            catch (BaseException.NotFoundException notFoundEx)
+            {
+                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
+            }
+            catch (BaseException.BadRequestException badRequestEx)
+            {
+                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+            }
+
+
+        }
+
         //[Authorize(Policy = "Admin-Content")]
         //[HttpPost("change-order-chapter")]
         //[SwaggerOperation(

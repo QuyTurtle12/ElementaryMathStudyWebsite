@@ -17,15 +17,17 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<bool> DeleteChapterAsync(string optionId);
         Task<BasePaginatedList<ChapterViewDto?>> GetChapterDtosAsync(int pageNumber, int pageSize);
 
-        Task<ChapterViewDto?> GetChapterDtoByChapterIdAsync(string Id);
+        Task<object> GetChapterDtoByChapterIdAsync(string Id);
 
         Task<string?> GetChapterNameAsync(string id);
 
         Task<BasePaginatedList<ChapterAdminViewDto?>> GetChaptersAsync(int pageNumber, int pageSize);
 
-        Task<ChapterAdminViewDto?> GetChapterByChapterIdAsync(string id);
+        Task<object> GetChapterByChapterIdAsync(string id);
 
         Task<ChapterAdminViewDto> ChangeChapterStatusAsync(string id);
+
+        Task<bool> AssignQuizIdToChapterAsync(string chapterId, string quizId);
 
         //Task<bool> ChangeChapterOrderAsync(int currentChapterNumber, int newChapterNumber);
 

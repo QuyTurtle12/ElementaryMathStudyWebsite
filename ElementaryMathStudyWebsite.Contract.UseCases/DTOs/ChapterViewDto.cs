@@ -3,7 +3,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
     public class ChapterViewDto
     {
         public required string Id { get; set; }
-        public int? Number { get; set; }
+        public int Number { get; set; } = 0;
         public string ChapterName { get; set; } = string.Empty;
         public bool Status { get; set; }
 
