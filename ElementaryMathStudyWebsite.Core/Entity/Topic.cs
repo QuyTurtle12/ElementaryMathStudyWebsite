@@ -6,7 +6,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
     public class Topic : BaseEntity
     {
 
-        public int? Number { get; set; } // Number use for arranging the topic orderly
+        public int Number { get; set; } = 0; // Number use for arranging the topic orderly
 
         public string TopicName { get; set; } = string.Empty;
 
@@ -19,12 +19,6 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public string ChapterId { get; set; } = string.Empty;
 
         // Navigation properties
-        [JsonIgnore]
-        public virtual User? CreatedByUser { get; set; }
-        [JsonIgnore]
-        public virtual User? LastUpdatedByUser { get; set; }
-        [JsonIgnore]
-        public virtual User? DeletedByUser { get; set; }
         [JsonIgnore]
         public virtual Chapter? Chapter { get; set; } // Navigation property, one topic belong to one chapter
         [JsonIgnore]

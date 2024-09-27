@@ -185,45 +185,51 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
         public async Task<bool> DeleteChapterAsync(string chapterId)
         {
-            // Delete the chapter
-            Chapter? chapter;
+            // Validate chapter ID
+            if (!_unitOfWork.IsValid<Chapter>(chapterId))
+            {
+                throw new BaseException.NotFoundException("not_found", "Chapter ID not found");
+            }
 
-            if (_unitOfWork.IsValid<Chapter>(chapterId))
-                chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId);
-            else throw new BaseException.NotFoundException("not_found", "Chapter ID not found");
+            // Retrieve the chapter
+            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId);
+            if (chapter == null)
+            {
+                throw new BaseException.NotFoundException("not_found", "Chapter does not exist.");
+            }
 
-            _userServices.AuditFields(chapter!, false, true);
+            // Audit fields
+            _userServices.AuditFields(chapter, false, true);
 
+            // Save changes
             await _unitOfWork.SaveAsync();
 
             // Delete the corresponding topics
-            IQueryable<Topic> query = _unitOfWork.GetRepository<Topic>().GetEntitiesWithCondition(
-                            t => t.ChapterId == chapterId &&
-                            string.IsNullOrWhiteSpace(t.DeletedBy)
-                            );
+            var topics = _unitOfWork.GetRepository<Topic>().GetEntitiesWithCondition(
+                t => t.ChapterId == chapterId && string.IsNullOrWhiteSpace(t.DeletedBy)
+            );
 
-            foreach (var topic in query)
+            foreach (var topic in topics)
             {
                 await _topicService.DeleteTopicAsync(topic.Id);
             }
 
             // Delete the corresponding quiz
-            await _quizService.DeleteQuizAsync(chapter!.QuizId!);
+            if (chapter.QuizId != null)
+            {
+                await _quizService.DeleteQuizAsync(chapter.QuizId);
+            }
 
             return true;
-
         }
 
-        public async Task<ChapterAdminDelete> rollbackChapterDeletedAsync(string chapterId)
+
+        public async Task<ChapterAdminViewDto> rollbackChapterDeletedAsync(string chapterId)
         {
             var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new BaseException.NotFoundException("not_found", "Chapter ID not found");
             if (chapter.DeletedBy == null)
             {
                 throw new BaseException.BadRequestException("invalid", "This chapter was rollback");
-            }
-            if (chapter.Status == false)
-            {
-                chapter.Status = true;
             }
             chapter.DeletedBy = null;
             chapter.DeletedTime = null;
@@ -239,7 +245,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             User? deleteBy = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.DeletedBy ?? string.Empty);
 
 
-            ChapterAdminDelete chapterAdminViewDTO = _mapper.Map<ChapterAdminDelete>(chapter, opts =>
+            ChapterAdminViewDto chapterAdminViewDTO = _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
             {
                 opts.Items["CreatedUser"] = createdUser;
                 opts.Items["UpdatedUser"] = updatedUser;
@@ -529,10 +535,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
 
-        public async Task<BasePaginatedList<ChapterAdminDelete?>> GetChaptersDeletedAsync(int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<ChapterAdminViewDto>> GetChaptersDeletedAsync(int pageNumber, int pageSize)
         {
-            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.Status == false && c.DeletedBy != null && c.DeletedTime != null);
-            List<ChapterAdminDelete> chapterView = [];
+            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => c.DeletedBy != null && c.DeletedTime != null);
+            List<ChapterAdminViewDto> chapterView = [];
 
             //If params negative = show all
             if (pageNumber <= 0 || pageSize <= 0)
@@ -545,8 +551,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
                     User? createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
                     User? updatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
-                    User? deleteBy = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.DeletedBy ?? string.Empty);
-                    ChapterAdminDelete chapterAdminViewDTO = _mapper.Map<ChapterAdminDelete>(chapter, opts =>
+                    
+                    ChapterAdminViewDto chapterAdminViewDTO = _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
                     {
                         opts.Items["CreatedUser"] = createdUser;
                         opts.Items["UpdatedUser"] = updatedUser;
@@ -555,7 +561,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     });
                     chapterView.Add(chapterAdminViewDTO);
                 }
-                return new BasePaginatedList<ChapterAdminDelete?>(chapterView, chapterView.Count, 1, chapterView.Count);
+                return new BasePaginatedList<ChapterAdminViewDto>(chapterView, chapterView.Count, 1, chapterView.Count);
             }
 
 
@@ -570,7 +576,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
                 User? createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
                 User? updatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
-                ChapterAdminDelete chapterAdminViewDTO = _mapper.Map<ChapterAdminDelete>(chapter, opts =>
+                ChapterAdminViewDto chapterAdminViewDTO = _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
                 {
                     opts.Items["CreatedUser"] = createdUser;
                     opts.Items["UpdatedUser"] = updatedUser;
@@ -580,7 +586,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 chapterView.Add(chapterAdminViewDTO);
             }
 
-            return new BasePaginatedList<ChapterAdminDelete?>(chapterView, paginatedChapters.TotalItems, pageNumber, pageSize);
+            return new BasePaginatedList<ChapterAdminViewDto>(chapterView, paginatedChapters.TotalItems, pageNumber, pageSize);
         }
         public async Task<BasePaginatedList<ChapterViewDto?>> GetChapterDtosAsync(int pageNumber, int pageSize)
         {
@@ -633,12 +639,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId);
             if (chapter == null)
             {
-                throw new BaseException.NotFoundException("not_found","Chapter không tồn tại.");
+                throw new BaseException.NotFoundException("not_found", "Chapter does not exist.");
             }
 
             if (chapter.QuizId != null)
             {
-                throw new BaseException.BadRequestException("invalid","Chapter đã có QuizId.");
+                throw new BaseException.BadRequestException("invalid", "Chapters already have a QuizId.");
             }
 
             if (quizId != null)
@@ -649,7 +655,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 bool quizIdExists = chapters.Any(c => c.QuizId?.Equals(quizId) ?? false) || topics.Any(t => t.QuizId?.Equals(quizId) ?? false);
                 if (quizIdExists)
                 {
-                    throw new BaseException.BadRequestException("invalid","QuizId đã được gán vào chapter hoặc topic khác.");
+                    throw new BaseException.BadRequestException("invalid", "The QuizId has been assigned to another chapter or topic.");
                 }
 
                 chapter.QuizId = quizId;
@@ -657,7 +663,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return true;
             }
 
-            throw new BaseException.NotFoundException("not_found","QuizId là null.");
+            throw new BaseException.NotFoundException("not_found","QuizId is null.");
         }
 
 
@@ -797,7 +803,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     User? createdUser = chapter.CreatedBy != null ? await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy) : null;
                     User? updatedUser = chapter.LastUpdatedBy != null ? await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy) : null;
 
-                    ChapterAdminDelete chapterAdminViewDTO = _mapper.Map<ChapterAdminDelete>(chapter, opts =>
+                    ChapterAdminViewDto chapterAdminViewDTO = _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
                     {
                         opts.Items["CreatedUser"] = createdUser;
                         opts.Items["UpdatedUser"] = updatedUser;
@@ -825,7 +831,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 User? createdUser = chapter.CreatedBy != null ? await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy) : null;
                 User? updatedUser = chapter.LastUpdatedBy != null ? await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy) : null;
 
-                ChapterAdminDelete chapterAdminViewDTO = _mapper.Map<ChapterAdminDelete>(chapter, opts =>
+                ChapterAdminViewDto chapterAdminViewDTO = _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
                 {
                     opts.Items["CreatedUser"] = createdUser;
                     opts.Items["UpdatedUser"] = updatedUser;

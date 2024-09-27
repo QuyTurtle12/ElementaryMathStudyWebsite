@@ -20,7 +20,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
         {
             User? user = await _userRepository.FindByConditionWithIncludesAsync(
                 u => u.Username == username,
-                u => u.Role // Include the 'Role' navigation property
+                u => u.Role! // Include the 'Role' navigation property
             );
 
             if (user != null && BCrypt.Net.BCrypt.Verify(password, user.Password))

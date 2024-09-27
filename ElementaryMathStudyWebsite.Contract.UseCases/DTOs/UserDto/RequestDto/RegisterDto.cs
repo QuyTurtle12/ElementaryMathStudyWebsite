@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto
+﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto
 {
     public class RegisterDto
     {
@@ -13,7 +7,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto
         public required string Email { get; set; }
         public required string FullName { get; set; }
         public string? PhoneNumber { get; set; }
-        public string? Gender { get; set; }
+        public string Gender { get; set; } = "Male";
     }
     public class StudentRegisterDto
     {
@@ -21,6 +15,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto
         public required string Password { get; set; }
         public required string FullName { get; set; }
         public string? PhoneNumber { get; set; }
-        public string? Gender { get; set; }
+        public string Gender { get; set; } = "Male";
     }
 }
