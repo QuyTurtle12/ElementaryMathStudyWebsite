@@ -350,7 +350,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var query1 = 
                 _unitOfWork
                 .GetRepository<User>()
-                .GetEntitiesWithConditionAndSelect(condition, u => new{ u.Id, u.FullName, u.Role.RoleName } ,includes);
+                .GetEntitiesWithConditionAndSelect(condition, u => new{ u.Id, u.FullName, u.Role!.RoleName } ,includes);
 
             // Apply filters if the corresponding parameters are provided
             if (!string.IsNullOrEmpty(name))
