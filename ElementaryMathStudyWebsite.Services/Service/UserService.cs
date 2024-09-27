@@ -283,7 +283,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             AuditFields(user, false, true);
 
             // Update the user in the repository
-            _unitOfWork.GetRepository<User>().Update(user);
+            await _unitOfWork.GetRepository<User>().UpdateAsync(user);
             await _unitOfWork.SaveAsync();
 
             return true; // Return true if the user was successfully disabled
