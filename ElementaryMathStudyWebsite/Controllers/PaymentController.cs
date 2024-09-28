@@ -28,94 +28,32 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> VnPayCheckout()
         {
-            try
-            {
-                var result = BaseResponse<string>.OkResponse(await _vnPayService.CreatePaymentUrl(HttpContext));
+            var result = await _vnPayService.CreatePaymentUrl(HttpContext);
 
-
-                return Ok(result);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(BaseResponse<string>.OkResponse(result));
         }
 
         [HttpGet]
         [Route("vnpay-callback")]
         [SwaggerOperation(
             Summary = "Warning: Not for test purpose",
-            Description = "This api is only for the vnpay checkout procedure use"
+            Description = "This API is only for the vnpay checkout procedure use"
             )]
         public async Task<IActionResult> VnPayCallback()
         {
-            try
-            {
-                var vnPayResponse = _vnPayService.PaymentExecute(Request.Query);
+            var vnPayResponse = _vnPayService.PaymentExecute(Request.Query);
+            string response;
 
-                if (vnPayResponse.VnPayResponseCode != "00")
-                {
-                    var failedResponse = BaseResponse<string>.OkResponse(await _orderService.HandleVnPayCallback(vnPayResponse.OrderId, false));
-
-                    return Ok(failedResponse);
-                }
-
-                var successResponse = BaseResponse<string>.OkResponse(await _orderService.HandleVnPayCallback(vnPayResponse.OrderId, true));
-
-                return Ok(successResponse);
-            }
-            catch (BaseException.CoreException coreEx)
+            if (vnPayResponse.VnPayResponseCode != "00")
             {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
+                response = await _orderService.HandleVnPayCallback(vnPayResponse.OrderId, false);
+
+                return Ok(BaseResponse<string>.OkResponse(response));
             }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+
+            response = await _orderService.HandleVnPayCallback(vnPayResponse.OrderId, true);
+
+            return Ok(BaseResponse<string>.OkResponse(response));
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+﻿using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
@@ -12,11 +13,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IAppUserServices _userService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public OptionService(IAppUserServices userService, IUnitOfWork unitOfWork)
+        public OptionService(IAppUserServices userService, IUnitOfWork unitOfWork, IMapper mapper)
         {
             _userService = userService;
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         // Add option to database
@@ -39,12 +42,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             await _unitOfWork.GetRepository<Option>().InsertAsync(option);
             await _unitOfWork.SaveAsync();
 
-            return new OptionViewDto
-            {
-                OptionId = option.Id,
-                Answer = option.Answer,
-                IsCorrect = option.IsCorrect
-            };
+            return _mapper.Map<OptionViewDto>(option);
         }
 
         //Delete an option
