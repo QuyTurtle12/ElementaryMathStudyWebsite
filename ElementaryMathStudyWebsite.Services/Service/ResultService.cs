@@ -89,8 +89,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             IQueryable<Result> resultQuery = _unitOfWork.GetRepository<Result>().GetEntitiesWithCondition(
                     r => r.QuizId.Equals(quizId) && r.StudentId.Equals(studentId),
-                    r => r.Quiz,
-                    r => r.Student
+                    r => r.Quiz!,
+                    r => r.Student!
                 );
 
             var studentResultList = await resultQuery.ToListAsync();
@@ -123,8 +123,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Get student results from database
             IQueryable<Result> resultQuery = _unitOfWork.GetRepository<Result>().GetEntitiesWithCondition(
                         r => r.QuizId.Equals(quizId) && r.StudentId.Equals(currentUser.Id),
-                        r => r.Quiz,
-                        r => r.Student
+                        r => r.Quiz!,
+                        r => r.Student!
                     );
 
             var studentResultList = await resultQuery.ToListAsync();
@@ -265,8 +265,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<Result> resultQuery = _unitOfWork.GetRepository<Result>()
                 .GetEntitiesWithCondition(
                     r => r.StudentId.Equals(studentId),
-                    r => r.Quiz,  // Include related Quiz entity
-                    r => r.Student // Include related Student entity
+                    r => r.Quiz!,  // Include related Quiz entity
+                    r => r.Student! // Include related Student entity
                 );
 
             // Group the results by QuizId and select the result with the highest AttemptNumber for each quiz
@@ -301,7 +301,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     resultInfos = g.Select(rs => new ResultInfo
                     {
                         QuizId = rs.Result.QuizId,  // Set QuizId
-                        QuizName = rs.Result.Quiz.QuizName,  // Set QuizName
+                        QuizName = rs.Result.Quiz?.QuizName ?? string.Empty,  // Set QuizName
                         Score = rs.Result.Score,  // Set Score
                         DateTaken = rs.Result.DateTaken  // Set DateTaken
                     }).ToList()  // Create a list of ResultInfo for each subject
