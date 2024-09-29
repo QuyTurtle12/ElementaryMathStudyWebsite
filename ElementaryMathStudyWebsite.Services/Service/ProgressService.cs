@@ -40,14 +40,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
 
         // Get list of finished topic and list of finished chapter of specific student
-        //private async Task<(IList<FinishedTopic>, IList<FinishedChapter>)> GetFinishedTopicsAndChaptersAsync(string studentId, string subjectId)
+        //private async Task<(ICollection<FinishedTopic>, ICollection<FinishedChapter>)> GetFinishedTopicsAndChaptersAsync(string studentId, string subjectId)
         //{
         //    // Get the list of progress records for the student
         //    IQueryable<Progress> progressQuery = _unitOfWork.GetRepository<Progress>().GetEntitiesWithCondition(p => p.StudentId.Equals(studentId));
         //    var studentProgressInfoList = await progressQuery.ToListAsync();
 
-        //    IList<FinishedTopic> finishedTopicList = new List<FinishedTopic>();
-        //    IList<FinishedChapter> finishedChapterList = new List<FinishedChapter>();
+        //    ICollection<FinishedTopic> finishedTopicList = new List<FinishedTopic>();
+        //    ICollection<FinishedChapter> finishedChapterList = new List<FinishedChapter>();
 
         //    // Loop through the student's progress
         //    foreach (var progress in studentProgressInfoList)
@@ -95,17 +95,17 @@ namespace ElementaryMathStudyWebsite.Services.Service
         //}
 
         // Get list of finished topic and list of finished chapter of specific student
-        private async Task<(IList<FinishedTopic>, IList<FinishedChapter>)> GetFinishedTopicsAndChaptersModifiedAsync(string studentId, string subjectId)
+        private async Task<(IEnumerable<FinishedTopic>, IEnumerable<FinishedChapter>)> GetFinishedTopicsAndChaptersModifiedAsync(string studentId, string subjectId)
         {
             // Get the list of progress records for the student
             IQueryable<Progress> progressQuery = _unitOfWork.GetRepository<Progress>().GetEntitiesWithCondition(p => p.StudentId.Equals(studentId));
-            var studentProgressInfoList = await progressQuery.ToListAsync();
+            IEnumerable<Progress> studentProgressInfoList = await progressQuery.ToListAsync();
 
-            IList<FinishedTopic> finishedTopicList = new List<FinishedTopic>();
-            IList<FinishedChapter> finishedChapterList = new List<FinishedChapter>();
+            ICollection<FinishedTopic> finishedTopicList = new List<FinishedTopic>();
+            ICollection<FinishedChapter> finishedChapterList = new List<FinishedChapter>();
 
             // Loop through the student's progress
-            foreach (var progress in studentProgressInfoList)
+            foreach (Progress progress in studentProgressInfoList)
             {
 
                 // Check if the finished topic belongs to the subject
@@ -166,7 +166,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         //    IQueryable<OrderDetail> assignedSubjects = _unitOfWork.GetRepository<OrderDetail>().Entities
         //        .Where(od => od.StudentId.Equals(studentId) && allSuccessOrderId.Contains(od.OrderId));
 
-        //    IList<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
+        //    ICollection<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
 
         //    var studentProgresses = await assignedSubjects.ToListAsync();
 
@@ -231,18 +231,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .Where(o => o.Status == PaymentStatusHelper.SUCCESS.ToString())
                 .Select(o => o.Id);
 
-            var allSuccessOrderId = await ordersQuery.ToListAsync();
+            IEnumerable<string> allSuccessOrderId = await ordersQuery.ToListAsync();
 
             // Get list of assigned subjects for the specific student
             IQueryable<OrderDetail> assignedSubjects = _unitOfWork.GetRepository<OrderDetail>().Entities
                 .Where(od => od.StudentId.Equals(studentId) && allSuccessOrderId.Contains(od.OrderId));
 
-            var studentProgresses = await assignedSubjects.ToListAsync();
+            IEnumerable<OrderDetail> studentProgresses = await assignedSubjects.ToListAsync();
 
             // List to hold the progress DTOs
-            IList<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
+            ICollection<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
 
-            foreach (var prog in studentProgresses)
+            foreach (OrderDetail prog in studentProgresses)
             {
                 // Retrieve the progress entity
                 Progress? progressEntity = await _unitOfWork.GetRepository<Progress>()
@@ -275,7 +275,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 dto.SubjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
                 // Get student finished chapters and topics list
-                var (finishedTopics, finishedChapters) = await GetFinishedTopicsAndChaptersModifiedAsync(prog.StudentId, prog.SubjectId);
+                (IEnumerable<FinishedTopic> finishedTopics, IEnumerable<FinishedChapter> finishedChapters) = await GetFinishedTopicsAndChaptersModifiedAsync(prog.StudentId, prog.SubjectId);
                 dto.FinishedTopics = finishedTopics;
                 dto.FinishedChapters = finishedChapters;
 
@@ -312,7 +312,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         //    var studentList = await students.ToListAsync();
 
-        //    IList<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
+        //    ICollection<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
 
         //    // Get list of progress of children
         //    foreach (var student in studentList)
@@ -393,25 +393,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
                             : u.CreatedBy != null && u.CreatedBy.Equals(parentId)); // Get all users that have CreatedBy is not null
                                                                                     // and CreatedBy is equal to parent id
 
-            var studentList = await students.ToListAsync();
-            IList<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
+            IEnumerable<User> studentList = await students.ToListAsync();
+            ICollection<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
 
             // Get list of progress of children
-            foreach (var student in studentList)
+            foreach (User student in studentList)
             {
                 // Get all orders with "SUCCESS" status
                 IQueryable<string> ordersQuery = _unitOfWork.GetRepository<Order>().Entities
                     .Where(o => o.Status == PaymentStatusHelper.SUCCESS.ToString())
                     .Select(o => o.Id);
 
-                var allSuccessOrderId = await ordersQuery.ToListAsync();
+                IEnumerable<string> allSuccessOrderId = await ordersQuery.ToListAsync();
 
                 // Get list of assigned subjects for the specific student
                 IQueryable<OrderDetail> assignedSubjects = _unitOfWork.GetRepository<OrderDetail>().Entities
                     .Where(od => od.StudentId.Equals(student.Id) && allSuccessOrderId.Contains(od.OrderId));
 
-                var studentProgresses = await assignedSubjects.ToListAsync();
-                foreach (var prog in studentProgresses)
+                ICollection<OrderDetail> studentProgresses = await assignedSubjects.ToListAsync();
+                foreach (OrderDetail prog in studentProgresses)
                 {
                     // Retrieve the progress entity
                     Progress? progressEntity = await _unitOfWork.GetRepository<Progress>()
@@ -442,7 +442,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     dto.SubjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
                     // Get student finished chapters and topics list
-                    var (finishedTopics, finishedChapters) = await GetFinishedTopicsAndChaptersModifiedAsync(prog.StudentId, prog.SubjectId);
+                    (IEnumerable<FinishedTopic> finishedTopics, IEnumerable<FinishedChapter> finishedChapters) = await GetFinishedTopicsAndChaptersModifiedAsync(prog.StudentId, prog.SubjectId);
                     dto.FinishedTopics = finishedTopics;
                     dto.FinishedChapters = finishedChapters;
 
@@ -477,7 +477,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .Where(p => p.StudentId.Equals(studentId) && p.SubjectId.Equals(subjectId));
 
             // Get all completed quizzes that student has done
-            var completedQuizProgress = await progressQuery.ToListAsync();
+            ICollection<Progress> completedQuizProgress = await progressQuery.ToListAsync();
             int completedQuizzes = completedQuizProgress.Count;
 
             // Count chapters for the subject
@@ -486,14 +486,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .CountAsync();
 
             // Get list of chapters for the specific subject
-            var chapters = await _unitOfWork.GetRepository<Chapter>().Entities
+            IEnumerable<Chapter> chapters = await _unitOfWork.GetRepository<Chapter>().Entities
                 .Where(c => c.SubjectId.Equals(subjectId))
                 .ToListAsync();
 
             int totalTopics = 0;
 
             // Count topics for each chapter
-            foreach (var chapter in chapters)
+            foreach (Chapter chapter in chapters)
             {
 
                 int topicCount = await _unitOfWork.GetRepository<Topic>().Entities
@@ -529,7 +529,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<Progress> query = _unitOfWork.GetRepository<Progress>().Entities
                 .Where(p => p.StudentId.Equals(studentId));
 
-            var studentProgresses = await query.ToListAsync();
+            IEnumerable<Progress> studentProgresses = await query.ToListAsync();
 
             // Validation process
             foreach (var progress in studentProgresses)
@@ -609,14 +609,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .Where(o => o.Status == PaymentStatusHelper.SUCCESS.ToString())
                 .Select(o => o.Id);
 
-            var allSuccessOrderId = await ordersQuery.ToListAsync();
+            IEnumerable<string> allSuccessOrderId = await ordersQuery.ToListAsync();
 
             // Get list of assigned subject of specific student
             IQueryable<OrderDetail> orderDetailQuery = _unitOfWork.GetRepository<OrderDetail>().Entities
                 .Where( od => od.StudentId.Equals(currentUser.Id) && allSuccessOrderId.Contains(od.OrderId));
 
-            var assignedSubjectList = await orderDetailQuery.ToListAsync();
-            IList<AssignedSubjectDto> assignedSubjectDtos = new List<AssignedSubjectDto>();
+            ICollection<OrderDetail> assignedSubjectList = await orderDetailQuery.ToListAsync();
+            ICollection<AssignedSubjectDto> assignedSubjectDtos = new List<AssignedSubjectDto>();
 
             foreach (OrderDetail assignedSubject in assignedSubjectList)
             {
@@ -666,7 +666,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         //    IQueryable<OrderDetail> assignedSubjects = _unitOfWork.GetRepository<OrderDetail>().Entities
         //        .Where(od => od.StudentId.Equals(currentUser.Id) && allSuccessOrderId.Contains(od.OrderId));
 
-        //    IList<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
+        //    ICollection<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
 
         //    var studentProgresses = await assignedSubjects.ToListAsync();
 
@@ -730,16 +730,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .Where(o => o.Status == PaymentStatusHelper.SUCCESS.ToString())
                 .Select(o => o.Id);
 
-            var allSuccessOrderId = await ordersQuery.ToListAsync();
+            IEnumerable<string> allSuccessOrderId = await ordersQuery.ToListAsync();
 
             // Get list of assigned subjects for the specific student
             IQueryable<OrderDetail> assignedSubjects = _unitOfWork.GetRepository<OrderDetail>().Entities
                 .Where(od => od.StudentId.Equals(currentUser.Id) && allSuccessOrderId.Contains(od.OrderId));
 
-            var studentProgresses = await assignedSubjects.ToListAsync();
-            IList<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
+            ICollection<OrderDetail> studentProgresses = await assignedSubjects.ToListAsync();
+            ICollection<ProgressViewDto> studentProgressDtos = new List<ProgressViewDto>();
 
-            foreach (var prog in studentProgresses)
+            foreach (OrderDetail prog in studentProgresses)
             {
                 // Retrieve the progress entity
                 Progress? progressEntity = await _unitOfWork.GetRepository<Progress>()
@@ -770,7 +770,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 dto.SubjectName = await _subjectService.GetSubjectNameAsync(prog.SubjectId);
 
                 // Get student finished chapters and topics list
-                var (finishedTopics, finishedChapters) = await GetFinishedTopicsAndChaptersModifiedAsync(prog.StudentId, prog.SubjectId);
+                (IEnumerable<FinishedTopic> finishedTopics, IEnumerable<FinishedChapter> finishedChapters) = await GetFinishedTopicsAndChaptersModifiedAsync(prog.StudentId, prog.SubjectId);
                 dto.FinishedTopics = finishedTopics;
                 dto.FinishedChapters = finishedChapters;
 

@@ -35,13 +35,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<Question> questionQuery = _unitOfWork.GetRepository<Question>().Entities
                 .Where(q => q.QuizId.Equals(quizId) && string.IsNullOrWhiteSpace(q.DeletedBy));
 
-            var questionList = await questionQuery.ToListAsync();
+            ICollection<Question> questionList = await questionQuery.ToListAsync();
 
             // Count the student's correct answer
             int correctAnswer = 0;
             int totalQuestion = questionList.Count;
 
-            foreach (var question in questionList)
+            foreach (Question question in questionList)
             {
                 // Query student answers for the specific question and student
                 IQueryable<UserAnswer>? studentAnswers = _unitOfWork.GetRepository<UserAnswer>().Entities
@@ -61,12 +61,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     .Where(o => o.QuestionId.Equals(question.Id) && o.IsCorrect == true && string.IsNullOrWhiteSpace(o.DeletedBy));
 
                 // Check student's answer
-                foreach (var userAnswer in latestStudentAnswers)
+                foreach (UserAnswer userAnswer in latestStudentAnswers)
                 {
                     if (userAnswer != null)
                     {
                         // Use for multiple choices and single choice
-                        foreach (var option in correctOption)
+                        foreach (Option option in correctOption)
                         {
                             // Check if the user choice is correct
                             if (userAnswer.OptionId.Equals(option?.Id))
@@ -93,7 +93,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     r => r.Student!
                 );
 
-            var studentResultList = await resultQuery.ToListAsync();
+            IEnumerable<Result> studentResultList = await resultQuery.ToListAsync();
 
             // Get the latest attempt number
             int latestAttemptNumber = studentResultList.Any() ? studentResultList.Max(r => r.AttemptNumber) : 0;
@@ -127,25 +127,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         r => r.Student!
                     );
 
-            var studentResultList = await resultQuery.ToListAsync();
+            IEnumerable<Result> studentResultList = await resultQuery.ToListAsync();
 
-            IList<ResultViewDto> resultViewDtos = new List<ResultViewDto>();
+            ICollection<ResultViewDto> resultViewDtos = new List<ResultViewDto>();
 
             // Map result data to view dto
-            foreach (var result in studentResultList)
+            foreach (Result result in studentResultList)
             {
-                var dto = _mapper.Map<ResultViewDto>(result);
-
-                //ResultViewDto dto = new()
-                //{
-                //    StudentId = result.StudentId,
-                //    StudentName = result.Student.FullName,
-                //    QuizId = result.QuizId,
-                //    QuizName = result.Quiz.QuizName,
-                //    Score = result.Score,
-                //    Attempt = result.AttemptNumber,
-                //    DateTaken = result.DateTaken
-                //};
+                ResultViewDto dto = _mapper.Map<ResultViewDto>(result);
 
                 resultViewDtos.Add(dto);
             }
@@ -270,21 +259,21 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 );
 
             // Group the results by QuizId and select the result with the highest AttemptNumber for each quiz
-            var latestResultsForEachQuiz = await resultQuery
+            IEnumerable<Result?> latestResultsForEachQuiz = await resultQuery
                 .GroupBy(r => r.QuizId)  // Group by QuizId
                 .Select(g => g.OrderByDescending(r => r.AttemptNumber).FirstOrDefault())  // Get the latest attempt per quiz
                 .ToListAsync();  // Execute the query and get a list of results
 
             // Create a list to hold the results with their subject names
-            var resultWithSubject = new List<(string SubjectId, string SubjectName, Result Result)>();
+            List<(string SubjectId, string SubjectName, Result Result)> resultWithSubject = new List<(string SubjectId, string SubjectName, Result Result)>();
 
-            foreach (var result in latestResultsForEachQuiz)
+            foreach (Result? result in latestResultsForEachQuiz)
             {
                 if (result != null)
                 {
                     // Fetch subject ID from the quiz ID, then fetch the subject name
-                    var subjectId = await _progressServices.GetSubjectIdFromQuizIdAsync(result.QuizId);
-                    var subjectName = await _subjectServices.GetSubjectNameAsync(subjectId);
+                    string subjectId = await _progressServices.GetSubjectIdFromQuizIdAsync(result.QuizId);
+                    string subjectName = await _subjectServices.GetSubjectNameAsync(subjectId);
 
                     // Add the result along with its subject ID and name to the list
                     resultWithSubject.Add((subjectId, subjectName, result));
@@ -292,7 +281,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Group the results by subject name in-memory
-            var groupedResultsBySubject = resultWithSubject
+            IEnumerable<SubjectResult> groupedResultsBySubject = resultWithSubject
                 .GroupBy(rs => new { rs.SubjectId, rs.SubjectName })  // Group by both SubjectId and SubjectName
                 .Select(g => new SubjectResult
                 {
@@ -308,7 +297,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }).ToList();
 
             // Create the parent view DTO
-            var resultParentViewDto = new ResultParentViewDto
+            ResultParentViewDto resultParentViewDto = new ResultParentViewDto
             {
                 StudentId = studentId,
                 StudentName = latestResultsForEachQuiz.FirstOrDefault()?.Student?.FullName ?? string.Empty,

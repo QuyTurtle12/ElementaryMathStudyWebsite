@@ -236,7 +236,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             try
             {
                 double? totalPrice = 0;
-                foreach (var subject in dto.SubjectStudents)
+                foreach (SubjectStudentDto subject in dto.SubjectStudents)
                 {
                     Subject boughtSubject = await _subjectService.GetSubjectByIDAsync(subject.SubjectId);
 
@@ -314,10 +314,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .Where(o => o.CustomerId.Equals(currentUser.Id) && string.IsNullOrWhiteSpace(o.DeletedBy));
                 
 
-            IList<OrderViewDto> orderDtos = [];
-            var allOrders = await query.ToListAsync(); // Asynchronously fetch all orders
+            ICollection<OrderViewDto> orderDtos = [];
+            IEnumerable<Order> allOrders = await query.ToListAsync(); // Asynchronously fetch all orders
                                                        
-            foreach (var order in allOrders)
+            foreach (Order order in allOrders)
             {
                 // Map entities data to dto
                 OrderViewDto dto = _mapper.Map<OrderViewDto>(order);
@@ -359,12 +359,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .Where(o => string.IsNullOrWhiteSpace(o.DeletedBy))
                 .Include(o => o.User);
 
-            var allOrders = await query.ToListAsync();
+            ICollection<Order> allOrders = await query.ToListAsync();
 
             // list of order for admin view
-            IList<OrderAdminViewDto> adminOrders = [];
+            ICollection<OrderAdminViewDto> adminOrders = [];
 
-            foreach (var order in allOrders)
+            foreach (Order order in allOrders)
             {
 
                 if (order != null)
@@ -412,12 +412,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (!await _subjectService.IsValidSubjectAsync(subjectId)) return $"The subject Id {subjectId} is not exist";
 
             // Check if the studentId is a valid student id
-            var student = await _unitOfWork.GetRepository<User>().GetByIdAsync(studentId);
+            User? student = await _unitOfWork.GetRepository<User>().GetByIdAsync(studentId);
 
             // Check if student exist
             if (student is null) return $"The student Id {studentId} is not exist";
 
-            var role = await _unitOfWork.GetRepository<Role>().GetByIdAsync(student.RoleId);
+            Role? role = await _unitOfWork.GetRepository<Role>().GetByIdAsync(student.RoleId);
 
             // Check if the role is exist 
             if (role == null) return $"The role for student Id {studentId} does not exist";
@@ -458,7 +458,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .Where(o => string.IsNullOrWhiteSpace(o.DeletedBy))
                 .Include(o => o.User);
 
-            var orders = await query.ToListAsync();
+            IEnumerable<Order> orders = await query.ToListAsync();
             // Modified variable
             filter = filter.Trim().ToLower() ?? string.Empty;
             firstInputValue = firstInputValue?.Trim() ?? null;
@@ -522,18 +522,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get order dto list by customer email
         public async Task<BasePaginatedList<OrderViewDto>> CustomerEmailFilterAsync(string? inputValue, IEnumerable<Order> orders, int pageNumber, int pageSize)
         {
-            IList<OrderViewDto> result = new List<OrderViewDto>();
+            ICollection<OrderViewDto> result = new List<OrderViewDto>();
 
             IQueryable<User> userQuery = _unitOfWork.GetRepository<User>().GetEntitiesWithCondition(u => string.IsNullOrWhiteSpace(u.DeletedBy));
 
-            var users = await userQuery.ToListAsync();
+            IEnumerable<User> users = await userQuery.ToListAsync();
 
-            foreach (var user in users)
+            foreach (User user in users)
             {
                 if (user.Email == inputValue)
                 {
                     // Transfer entity data to dto value that human understand
-                    foreach (var order in orders)
+                    foreach (Order order in orders)
                     {
                         if (order.CustomerId == user.Id)
                         {
@@ -564,7 +564,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get order dto list by customer phone
         public async Task<BasePaginatedList<OrderViewDto>> CustomerPhoneFilterAsync(string? inputValue, IEnumerable<Order> orders, int pageNumber, int pageSize)
         {
-            IList<OrderViewDto> result = new List<OrderViewDto>();
+            ICollection<OrderViewDto> result = new List<OrderViewDto>();
 
             // Define phone number regex pattern
             string phonePattern = @"^0\d{9,10}$";
@@ -578,12 +578,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Get all users in database, including deleted user
             IEnumerable<User> users = await _unitOfWork.GetRepository<User>().GetAllAsync();
 
-            foreach (var user in users)
+            foreach (User user in users)
             {
                 if (user.PhoneNumber == inputValue)
                 {
                     // Transfer entity data to dto value that human understand
-                    foreach (var order in orders)
+                    foreach (Order order in orders)
                     {
                         if (order.CustomerId == user.Id)
                         {
@@ -650,14 +650,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Filter orders by date range
-            var filteredOrders = orders.Where(o =>
+            IEnumerable<Order> filteredOrders = orders.Where(o =>
                 (!startDateParsed.HasValue || o.CreatedTime >= startDateParsed.Value) &&
                 (!endDateParsed.HasValue || o.CreatedTime <= endDateParsed.Value));
 
             // Map filtered orders to OrderViewDto
-            var orderDtos = new List<OrderViewDto>();
+            ICollection<OrderViewDto> orderDtos = new List<OrderViewDto>();
 
-            foreach (var order in filteredOrders)
+            foreach (Order order in filteredOrders)
             {
                 // Map entities data to dto
                 OrderViewDto dto = _mapper.Map<OrderViewDto>(order);
@@ -695,12 +695,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Filter orders by total amount range
-            var filteredOrders = orders.Where(o => IsAmountInRange(o.TotalPrice, minTotalAmount, maxTotalAmount));
+            IEnumerable<Order> filteredOrders = orders.Where(o => IsAmountInRange(o.TotalPrice, minTotalAmount, maxTotalAmount));
 
             // Map filtered orders to OrderViewDto
-            var orderDtos = new List<OrderViewDto>();
+            ICollection<OrderViewDto> orderDtos = new List<OrderViewDto>();
 
-            foreach (var order in filteredOrders)
+            foreach (Order order in filteredOrders)
             {
                 // Map entities data to dto
                 OrderViewDto dto = _mapper.Map<OrderViewDto>(order);

@@ -49,14 +49,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .Include(od => od.Subject)
                 .Include(od => od.User);
 
-            IList<OrderDetailViewDto> detailDtos = new List<OrderDetailViewDto>();
+            ICollection<OrderDetailViewDto> detailDtos = new List<OrderDetailViewDto>();
 
-            var allDetails = await query.ToListAsync();
+            IEnumerable<OrderDetail> allDetails = await query.ToListAsync();
 
             // Map orders to OrderViewDto
-            foreach (var detail in allDetails)
+            foreach (OrderDetail detail in allDetails)
             {
-                var dto = _mapper.Map<OrderDetailViewDto>(detail);
+                OrderDetailViewDto dto = _mapper.Map<OrderDetailViewDto>(detail);
 
                 detailDtos.Add(dto);
             }
@@ -78,8 +78,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<bool> IsValidStudentSubjectBeforeCreateOrder(CartCreateDto orderCreateDto)
         {
             // Check for duplicates in the SubjectStudents list
-            var uniqueSubjectStudents = orderCreateDto.SubjectStudents
-                .GroupBy(s => new { s.SubjectId, s.StudentId })
+            List<(string SubjectId, string StudentId)> uniqueSubjectStudents = orderCreateDto.SubjectStudents
+                .GroupBy(s => (s.SubjectId, s.StudentId))
                 .Where(g => g.Count() > 1)
                 .Select(g => g.Key)
                 .ToList();
@@ -91,13 +91,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Validation process
-            foreach (var newSubject in orderCreateDto.SubjectStudents)
+            foreach (SubjectStudentDto newSubject in orderCreateDto.SubjectStudents)
             {
                 // Get student assigned subject
                 IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>().Entities.Where(d => d.StudentId.Equals(newSubject.StudentId));
-                var studentCurrentLearningSubject = await query.ToListAsync();
+                List<OrderDetail> studentCurrentLearningSubject = await query.ToListAsync();
 
-                foreach (var studentSubject in studentCurrentLearningSubject)
+                foreach (OrderDetail studentSubject in studentCurrentLearningSubject)
                 {
                     if (studentSubject.SubjectId.Equals(newSubject.SubjectId))
                     {
