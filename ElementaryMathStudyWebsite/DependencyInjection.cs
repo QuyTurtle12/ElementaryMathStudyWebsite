@@ -109,6 +109,7 @@ namespace ElementaryMathStudyWebsite
                     options.Events = new JwtBearerEvents
                     {
                         OnForbidden = context =>
+
                         {
                             context.Response.StatusCode = StatusCodes.Status403Forbidden;
                             context.Response.ContentType = "application/json";

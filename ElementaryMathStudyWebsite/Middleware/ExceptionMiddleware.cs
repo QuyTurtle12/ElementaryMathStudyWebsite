@@ -53,6 +53,18 @@ namespace ElementaryMathStudyWebsite.Middleware
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(result);
             }
+            catch (BaseException.UnauthorizedException unAuthEx)
+            {
+                // Handle NotFoundException specifically
+                context.Response.StatusCode = unAuthEx.StatusCode;
+                var result = JsonSerializer.Serialize(new
+                {
+                    errorCode = unAuthEx.ErrorDetail.ErrorCode,
+                    errorMessage = unAuthEx.ErrorDetail.ErrorMessage
+                });
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsync(result);
+            }
             catch (Exception ex)
             {
                 // Handle all other unexpected exceptions

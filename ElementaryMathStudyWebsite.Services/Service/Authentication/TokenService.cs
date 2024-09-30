@@ -43,6 +43,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             // Create claims based on user information, with null checks
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, user.Id ?? string.Empty),
                 new Claim("userId", user.Id ?? string.Empty),
                 new Claim("roleName", user.Role!.RoleName ?? string.Empty),
                 new Claim("roleId", user.Role.Id ?? string.Empty),
