@@ -233,21 +233,17 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Calculate total price for order
         private async Task<double> CalculateTotalPrice(CartCreateDto dto)
         {
-            try
+            double totalPrice = 0;
+            foreach (SubjectStudentDto subject in dto.SubjectStudents)
             {
-                double? totalPrice = 0;
-                foreach (SubjectStudentDto subject in dto.SubjectStudents)
-                {
-                    Subject boughtSubject = await _subjectService.GetSubjectByIDAsync(subject.SubjectId);
 
-                    totalPrice += boughtSubject.Price;
-                }
-                return (double)totalPrice;
+                Subject boughtSubject = await _unitOfWork.GetRepository<Subject>()
+                                                            .FindByConditionAsync(s => s.Equals(subject.SubjectId))
+                                                            ?? throw new BaseException.NotFoundException("not_found", $"subject with Id {subject.SubjectId} is not existed");
+
+                totalPrice += boughtSubject.Price;
             }
-            catch (Exception)
-            {
-                return -1;
-            }
+            return (double)totalPrice;
         }
 
         //// Get one order with all properties
@@ -295,7 +291,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         //}
 
         // Get order list with selected properties
-        
+
         /// <summary>
         /// Get Order list for general user
         /// </summary>
@@ -316,14 +312,17 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             ICollection<OrderViewDto> orderDtos = [];
             IEnumerable<Order> allOrders = await query.ToListAsync(); // Asynchronously fetch all orders
-                                                       
+            
+            if (!allOrders.Any()) throw new BaseException.CoreException("server_error", "the system didn't find any order");
+
             foreach (Order order in allOrders)
             {
                 // Map entities data to dto
                 OrderViewDto dto = _mapper.Map<OrderViewDto>(order);
 
                 // Get list of detail info about an order
-                BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
+                BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id)
+                                                                    ?? throw new BaseException.NotFoundException("not_found", $"The system didn't find the detail of order {order.Id}");
                 dto.Details = detailList.Items;
 
                 // Get the purchase date
