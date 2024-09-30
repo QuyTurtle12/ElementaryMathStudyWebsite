@@ -12,8 +12,17 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ChapterMa
         {
             // Mapping for Chapter to ChapterViewDto
             CreateMap<Chapter, ChapterViewDto>()
-                    .ForMember(dest => dest.SubjectName, opt => opt.MapFrom(src => src.Subject != null ? src.Subject.SubjectName : string.Empty))
-                    .ForMember(dest => dest.QuizName, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.QuizName : string.Empty));
+                .ForMember(dest => dest.SubjectName, opt => opt.MapFrom((src, dest, destMember, context) =>
+                    src.Subject != null && context.Items["Subject"] is Subject subject
+                    ? subject.SubjectName
+                    : null))
+                .ForMember(dest => dest.QuizName, opt => opt.MapFrom((src, dest, destMember, context) =>
+                    src.QuizId != null && context.Items["Quiz"] is Quiz quiz
+                    ? quiz.QuizName
+                    : null));
+
+            //.ForMember(dest => dest.SubjectName, opt => opt.MapFrom(src => src.Subject != null ? src.Subject.SubjectName : string.Empty))
+            //.ForMember(dest => dest.QuizName, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.QuizName : string.Empty));
 
             // Mapping for Chapter to ChapterAdminViewDto
             CreateMap<Chapter, ChapterAdminViewDto>()
@@ -40,7 +49,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ChapterMa
                 .ForMember(dest => dest.QuizName, opt => opt.MapFrom((src, dest, destMember, context) =>
                     src.QuizId != null && context.Items["Quiz"] is Quiz quiz
                     ? quiz.QuizName
-                    : null));
+                    : null)); 
         }
     }
 }

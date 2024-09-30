@@ -27,11 +27,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Content & Admin",
             Description = "View chapter list for Content and Admin Role. Insert -1 to get all items"
         )]
-        public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterAdminViewDto?>>>> GetChapters(int pageNumber = -1, int pageSize = -1)
+        public async Task<IActionResult> GetChapters(int pageNumber = -1, int pageSize = -1)
         {
-            BasePaginatedList<ChapterAdminViewDto?> chapters = await _chapterService.GetChaptersAsync(pageNumber, pageSize);
-            var response = BaseResponse<BasePaginatedList<ChapterAdminViewDto?>>.OkResponse(chapters);
-            return response;
+            var chapters = await _chapterService.GetChaptersAsync(pageNumber, pageSize);
+            return Ok(BaseResponse<BasePaginatedList<object>>.OkResponse(chapters));
         }
 
 
@@ -114,8 +113,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> SearchChapter([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)
         {
-            var subjects = await _chapterService.SearchChapterAsync(searchTerm, pageNumber, pageSize);
-            var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
+            var chapters = await _chapterService.SearchChapterAsync(searchTerm, pageNumber, pageSize);
+            var response = BaseResponse<BasePaginatedList<object>>.OkResponse(chapters);
             return Ok(response);
         }
 
@@ -127,13 +126,13 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> SearchChapterForAdmin([FromQuery] string searchTerm, int pageNumber = 1, int pageSize = 10)
         {
-            var subjects = await _chapterService.SearchChapterForAdminAsync(searchTerm, pageNumber, pageSize);
-            if (subjects?.Items.Count == 0 || subjects == null)
+            var chapters = await _chapterService.SearchChapterForAdminAsync(searchTerm, pageNumber, pageSize);
+            if (chapters?.Items.Count == 0 || chapters == null)
             {
-                throw new BaseException.NotFoundException("no_subjects_found", "No chapters match the search criteria.");
+                throw new BaseException.NotFoundException("no_chapters_found", "No chapters match the search criteria.");
             }
 
-            var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
+            var response = BaseResponse<BasePaginatedList<object>>.OkResponse(chapters);
             return Ok(response);
         }
 
@@ -216,7 +215,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> UpdateChapterNumbers(string subjectId, [FromBody] ChapterNumberDto chapterNumberDto)
         {
-            if (string.IsNullOrEmpty(subjectId) || chapterNumberDto == null || !chapterNumberDto.ChapterNumbersOrder.Any())
+            if (string.IsNullOrWhiteSpace(subjectId) || chapterNumberDto == null || !chapterNumberDto.ChapterNumbersOrder.Any())
             {
                 return BadRequest(new { message = "Invalid input data." });
             }
@@ -321,12 +320,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Content & Admin",
             Description = "View list chapter was deleted for Content and Admin Role. Insert -1 to get all items"
         )]
-        public async Task<ActionResult<BaseResponse<BasePaginatedList<ChapterAdminViewDto>>>> GetChaptersDeleted(int pageNumber = -1, int pageSize = -1)
+        public async Task<IActionResult> GetChaptersDeleted(int pageNumber = -1, int pageSize = -1)
         {
-            BasePaginatedList<ChapterAdminViewDto> chapters = await _chapterService.GetChaptersDeletedAsync(pageNumber, pageSize);
-            var response = BaseResponse<BasePaginatedList<ChapterAdminViewDto>>.OkResponse(chapters);
-            return response;
-
+            var chapters = await _chapterService.GetChaptersDeletedAsync(pageNumber, pageSize);
+            return Ok(BaseResponse<BasePaginatedList<object>>.OkResponse(chapters));
         }
 
         //// GET: api/ChapterAccess/{chapterId}
