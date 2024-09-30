@@ -7,6 +7,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using AutoMapper;
+using System.Collections.Generic;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -40,18 +41,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // If page size is -1 or pagination parameters are invalid, fetch all data without pagination
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
-                var allUserAnswers = await query.ToListAsync();
+                List<UserAnswer> allUserAnswers = await query.ToListAsync();
 
                 // Map to the detailed DTO using AutoMapper
-                var result = _mapper.Map<List<UserAnswerWithDetailsDTO>>(allUserAnswers);
+                List<UserAnswerWithDetailsDTO> result = _mapper.Map<List<UserAnswerWithDetailsDTO>>(allUserAnswers);
                 return new BasePaginatedList<UserAnswerWithDetailsDTO>(result, result.Count, 1, result.Count);
             }
 
             // Fetch paginated data
-            var paginatedUserAnswers = await _unitOfWork.GetRepository<UserAnswer>().GetPagging(query, pageNumber, pageSize);
+            BasePaginatedList<UserAnswer> paginatedUserAnswers = await _unitOfWork.GetRepository<UserAnswer>().GetPagging(query, pageNumber, pageSize);
 
             // Map paginated items to UserAnswerWithDetailsDTO using AutoMapper
-            var userAnswerDtosPaginated = _mapper.Map<List<UserAnswerWithDetailsDTO>>(paginatedUserAnswers.Items);
+            List<UserAnswerWithDetailsDTO> userAnswerDtosPaginated = _mapper.Map<List<UserAnswerWithDetailsDTO>>(paginatedUserAnswers.Items);
 
             // Return paginated results with DTOs
             return new BasePaginatedList<UserAnswerWithDetailsDTO>(userAnswerDtosPaginated, userAnswerDtosPaginated.Count, pageNumber, pageSize);
@@ -59,14 +60,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<UserAnswerDTO> GetUserAnswerByIdAsync(string id)
         {
-            var userAnswer = await _unitOfWork.GetRepository<UserAnswer>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Cannot find user answer with ID '{id}'.");
+            UserAnswer userAnswer = await _unitOfWork.GetRepository<UserAnswer>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"Cannot find user answer with ID '{id}'.");
             return _mapper.Map<UserAnswerDTO>(userAnswer);
         }
 
         public async Task<ResultProgressDto> CreateUserAnswersAsync(UserAnswerCreateDTO userAnswerCreateDTO)
         {
             User currentUser = await _userService.GetCurrentUserAsync();
-            var currentUserId = currentUser.Id;
+            string currentUserId = currentUser.Id;
             
 
 
@@ -78,7 +79,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .FirstOrDefault();
             
             // Check for duplicate QuestionId entries in the user answer list
-            var duplicateQuestionIds = userAnswerCreateDTO.UserAnswerList
+            List<string> duplicateQuestionIds = userAnswerCreateDTO.UserAnswerList
                 .GroupBy(ua => ua.QuestionId)
                 .Where(g => g.Count() > 1)
                 .Select(g => g.Key)
@@ -86,7 +87,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (duplicateQuestionIds.Any())
             {
-                var duplicateIds = string.Join(", ", duplicateQuestionIds);
+                string duplicateIds = string.Join(", ", duplicateQuestionIds);
                 throw new BaseException.BadRequestException("duplicate_questions", $"Duplicate Question IDs found: {duplicateIds}");
             }
 
@@ -105,16 +106,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
 
                 // Check if a user answer already exists for this question and user
-                var existingUserAnswer = await _unitOfWork.GetRepository<UserAnswer>()
+                UserAnswer? existingUserAnswer = await _unitOfWork.GetRepository<UserAnswer>()
                                                 .Entities
                                                 .Where(ua => ua.QuestionId == userAnswerDTO.QuestionId && ua.UserId == currentUserId)
                                                 .OrderByDescending(ua => ua.AttemptNumber)
                                                 .FirstOrDefaultAsync();
 
-                var attemptNumber = existingUserAnswer != null ? existingUserAnswer.AttemptNumber + 1 : 1;
+                int attemptNumber = existingUserAnswer != null ? existingUserAnswer.AttemptNumber + 1 : 1;
 
-                //var userAnswer = _mapper.Map<UserAnswer>(userAnswerDTO);
-                var userAnswer = new UserAnswer
+                UserAnswer userAnswer = new UserAnswer
                 {
                     QuestionId = userAnswerDTO.QuestionId,
                     OptionId = userAnswerDTO.OptionId,
@@ -141,7 +141,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public async Task<UserAnswerDTO> UpdateUserAnswerAsync(string id, UserAnswerDTO userAnswerDTO)
         {
-            var userAnswer = await _unitOfWork.GetRepository<UserAnswer>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"User Answer with ID '{id}' not found.");
+            UserAnswer userAnswer = await _unitOfWork.GetRepository<UserAnswer>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"User Answer with ID '{id}' not found.");
 
             // Check if QuestionId exists
             if (!await _unitOfWork.GetRepository<Question>().Entities.AnyAsync(q => q.Id == userAnswerDTO.QuestionId))
@@ -173,10 +173,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<UserAnswerWithDetailsDTO>> GetUserAnswersByQuizIdAsync(string quizId)
         {
             User currentUser = await _userService.GetCurrentUserAsync();
-            var currentUserId = currentUser.Id;
+            string currentUserId = currentUser.Id;
 
             // Fetch user answers for the given quizId and current user
-            var userAnswers = await _unitOfWork.GetRepository<UserAnswer>().Entities
+            List<UserAnswer> userAnswers = await _unitOfWork.GetRepository<UserAnswer>().Entities
                                 .Where(ua => ua.Question != null &&
                                              ua.Question.QuizId != null &&
                                              ua.Question.QuizId.ToLower() == quizId.ToLower() && // Use ToLower for case-insensitive comparison
@@ -185,14 +185,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                                 .ToListAsync();
 
             // Return a list of user answers with contextual information
-            var result = new List<UserAnswerWithDetailsDTO>();
+            List<UserAnswerWithDetailsDTO> result = new List<UserAnswerWithDetailsDTO>();
             foreach (var userAnswer in userAnswers)
             {
-                var question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(userAnswer.QuestionId);
-                var user = await _unitOfWork.GetRepository<User>().GetByIdAsync(userAnswer.UserId);
-                var option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(userAnswer.OptionId);
+                Question? question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(userAnswer.QuestionId);
+                User? user = await _unitOfWork.GetRepository<User>().GetByIdAsync(userAnswer.UserId);
+                Option? option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(userAnswer.OptionId);
 
-                var userAnswerWithDetails = _mapper.Map<UserAnswerWithDetailsDTO>(userAnswer);
+                UserAnswerWithDetailsDTO userAnswerWithDetails = _mapper.Map<UserAnswerWithDetailsDTO>(userAnswer);
                 userAnswerWithDetails.QuestionContent = question?.QuestionContext ?? "Unknown Question";
                 userAnswerWithDetails.UserFullName = currentUser.FullName ?? "Unknown User";
                 userAnswerWithDetails.OptionAnswer = option?.Answer ?? "Unknown Answer";
