@@ -34,7 +34,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _mapper = mapper;
         }
 
-        // Add new order to database
+        // Add new order to databasez
         public async Task<OrderViewDto> AddItemsToCart(CartCreateDto cartCreateDto)
         {
 

@@ -52,7 +52,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             //}
         }
 
-        public async Task<int?> CountChaptersInSubjectAsync(string subjectId)
+        public async Task<int> CountChaptersInSubjectAsync(string subjectId)
         {
             if (string.IsNullOrWhiteSpace(subjectId))
             {

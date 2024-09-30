@@ -249,8 +249,24 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     .FindByConditionAsync(p => p.SubjectId == prog.SubjectId && p.StudentId == studentId);
 
                 // Map the progress entity to the DTO
-                ProgressViewDto dto = _mapper.Map<ProgressViewDto>(progressEntity);
+                //ProgressViewDto dto = _mapper.Map<ProgressViewDto>(progressEntity);
 
+                ProgressViewDto dto;
+                if (progressEntity != null)
+                {
+                    // Map the progress entity to the DTO
+                    dto = _mapper.Map<ProgressViewDto>(progressEntity);
+                }
+                else
+                {
+                    // If progressEntity is null, initialize DTO with default values
+                    dto = new ProgressViewDto
+                    {
+                        SubjectPercentage = 0,  // Set default percentage
+                        StudentId = prog.StudentId,
+                        SubjectId = prog.SubjectId
+                    };
+                }
                 // Calculate learning progress percentage
                 dto.SubjectPercentage = await CalculateSubjectPercentageAsync(studentId, prog.SubjectId);
 
@@ -401,8 +417,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     Progress? progressEntity = await _unitOfWork.GetRepository<Progress>()
                         .FindByConditionAsync(p => p.SubjectId == prog.SubjectId && p.StudentId == student.Id);
 
-                    // Map the progress entity to the DTO
-                    ProgressViewDto dto = _mapper.Map<ProgressViewDto>(progressEntity);
+                    ProgressViewDto dto;
+                    if (progressEntity != null)
+                    {
+                        // Map the progress entity to the DTO
+                        dto = _mapper.Map<ProgressViewDto>(progressEntity);
+                    }
+                    else
+                    {
+                        // If progressEntity is null, initialize DTO with default values
+                        dto = new ProgressViewDto
+                        {
+                            SubjectPercentage = 0,  // Set default percentage
+                            StudentId = prog.StudentId,
+                            SubjectId = prog.SubjectId
+                        };
+                    }
 
                     // Calculate learning progress percentage
                     dto.SubjectPercentage = await CalculateSubjectPercentageAsync(student.Id, prog.SubjectId);
@@ -715,8 +745,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 Progress? progressEntity = await _unitOfWork.GetRepository<Progress>()
                     .FindByConditionAsync(p => p.SubjectId == prog.SubjectId && p.StudentId == currentUser.Id);
 
-                // Map the progress entity to the DTO
-                ProgressViewDto dto = _mapper.Map<ProgressViewDto>(progressEntity);
+                ProgressViewDto dto;
+                if (progressEntity != null)
+                {
+                    // Map the progress entity to the DTO
+                    dto = _mapper.Map<ProgressViewDto>(progressEntity);
+                }
+                else
+                {
+                    // If progressEntity is null, initialize DTO with default values
+                    dto = new ProgressViewDto
+                    {
+                        SubjectPercentage = 0,  // Set default percentage
+                        StudentId = prog.StudentId,
+                        SubjectId = prog.SubjectId
+                    };
+                }
 
                 // Calculate learning progress percentage
                 dto.SubjectPercentage = await CalculateSubjectPercentageAsync(currentUser.Id, prog.SubjectId);
