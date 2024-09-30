@@ -24,11 +24,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         public async Task<IActionResult> GetAllActiveSubjects(int pageNumber = 1, int pageSize = 10)
         {
             var activeSubjects = await _appSubjectServices.GetAllSubjectsAsync(pageNumber, pageSize, false);
-            if (activeSubjects?.Items.Count == 0 || activeSubjects == null)
-            {
-                throw new BaseException.NotFoundException("subjects_not_found", "No active subjects found.");
-            }
-
             return Ok(BaseResponse<BasePaginatedList<object>>.OkResponse(activeSubjects));
         }
 
@@ -41,7 +36,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         public async Task<IActionResult> GetActiveSubjectById(string id)
         {
             var subject = await _appSubjectServices.GetSubjectByIDAsync(id, false);
-
             var response = BaseResponse<object>.OkResponse(subject);
             return Ok(subject);
         }
@@ -56,11 +50,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         public async Task<IActionResult> GetAllSubjectsForAdmin(int pageNumber = 1, int pageSize = 10)
         {
             var subjects = await _appSubjectServices.GetAllSubjectsAsync(pageNumber, pageSize, true); // true for admin access
-            if (subjects?.Items.Count == 0 || subjects == null)
-            {
-                throw new BaseException.NotFoundException("no_subjects_found", "No subjects found.");
-            }
-
             var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
             return Ok(response);
         }
@@ -77,7 +66,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             var subject = await _appSubjectServices.GetSubjectByIDAsync(id, true); // isAdmin = true
 
             var response = BaseResponse<object>.OkResponse(subject);
-            return Ok(subject);
+            return Ok(response);
         }
 
 
@@ -137,16 +126,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> SearchSubject([FromQuery] string searchTerm, double lowestPrice = -1, double highestPrice = -1, int pageNumber = 1, int pageSize = 10)
         {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-            {
-                throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
-            }
-
-            if (searchTerm.Length < 2)
-            {
-                throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
-            }
-
             var subjects = await _appSubjectServices.SearchSubjectAsync(searchTerm, lowestPrice, highestPrice, pageNumber, pageSize);
             var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
             return Ok(response);
@@ -161,22 +140,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> SearchSubjectAdmin([FromQuery] string searchTerm, double lowestPrice = -1, double highestPrice = -1, bool? status = null, int pageNumber = 1, int pageSize = 10)
         {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-            {
-                throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
-            }
-
-            if (searchTerm.Length < 2)
-            {
-                throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
-            }
-
             var subjects = await _appSubjectServices.SearchSubjectAdminAsync(searchTerm, lowestPrice, highestPrice, status, pageNumber, pageSize);
-            if (subjects?.Items.Count == 0 || subjects == null)
-            {
-                throw new BaseException.NotFoundException("no_subjects_found", "No subjects match the search criteria.");
-            }
-
             var response = BaseResponse<BasePaginatedList<object>>.OkResponse(subjects);
             return Ok(response);
         }

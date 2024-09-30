@@ -188,6 +188,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<object>> SearchSubjectAsync(string searchTerm, double lowestPrice,
                     double highestPrice, int pageNumber, int pageSize)
         {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
+            }
+
+            if (searchTerm.Length < 2)
+            {
+                throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
+            }
+
             var query = _unitOfWork.GetRepository<Subject>().Entities.Where(s => s.Status == true);
 
             //Not get soft deleted item
@@ -235,6 +245,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<object>> SearchSubjectAdminAsync(string searchTerm, double lowestPrice,
                     double highestPrice, bool? status, int pageNumber, int pageSize)
         {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
+            }
+
+            if (searchTerm.Length < 2)
+            {
+                throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
+            }
+
             var query = _unitOfWork.GetRepository<Subject>().Entities.AsQueryable();
 
             //Not get soft deleted item
