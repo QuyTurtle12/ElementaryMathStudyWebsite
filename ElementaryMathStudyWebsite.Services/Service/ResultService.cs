@@ -257,6 +257,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     r => r.Quiz!,  // Include related Quiz entity
                     r => r.Student! // Include related Student entity
                 );
+            User currentUser = await _userServices.GetCurrentUserAsync();
+
+            if (!await _userServices.IsCustomerChildren(currentUser.Id, studentId))
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "They are not parent and child relationship");
+            }
 
             // Group the results by QuizId and select the result with the highest AttemptNumber for each quiz
             IEnumerable<Result?> latestResultsForEachQuiz = await resultQuery
