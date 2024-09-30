@@ -306,8 +306,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             User currentUser = await _userService.GetCurrentUserAsync();
 
             // Get all logged user's orders from the database
-            IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities
-                .Where(o => o.CustomerId.Equals(currentUser.Id) && string.IsNullOrWhiteSpace(o.DeletedBy));
+            IQueryable<Order> query = _unitOfWork.GetRepository<Order>()
+                                                    .GetEntitiesWithCondition(o => o.CustomerId.Equals(currentUser.Id) &&
+                                                                                    string.IsNullOrWhiteSpace(o.DeletedBy));
                 
 
             ICollection<OrderViewDto> orderDtos = [];

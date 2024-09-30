@@ -3,6 +3,7 @@ using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -44,10 +45,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Get all order details from database
             // If null then return empty collection
             IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>()
-                .Entities
-                .Where(od => od.OrderId.Equals(orderId))
-                .Include(od => od.Subject)
-                .Include(od => od.User);
+                .GetEntitiesWithCondition(
+                od => od.OrderId.Equals(orderId),
+                od => od.Subject!,  // Include the Subject
+                od => od.User!      // Include the User
+                );
 
             ICollection<OrderDetailViewDto> detailDtos = new List<OrderDetailViewDto>();
 

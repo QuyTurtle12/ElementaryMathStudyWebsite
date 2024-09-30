@@ -51,13 +51,12 @@ namespace ElementaryMathStudyWebsite
         {
             // Add services here
             services.AddScoped<IAppUserServices, UserService>();
-            //services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IAppOptionServices, OptionService>();
             services.AddScoped<IAppUserAnswerServices, UserAnswerService>();
             services.AddScoped<IAppOrderServices, OrderService>();
             services.AddScoped<IAppOrderDetailServices, OrderDetailService>();
             services.AddScoped<IAppProgressServices, ProgressService>();
-
             services.AddScoped<IAppQuizServices, QuizService>();
             services.AddScoped<IAppQuestionServices, QuestionService>();
             services.AddScoped<IAppSubjectServices, SubjectService>();
