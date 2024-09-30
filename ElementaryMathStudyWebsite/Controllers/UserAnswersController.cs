@@ -28,27 +28,6 @@ namespace ElementaryMathStudyWebsite.Controllers
             return Ok(response);
         }
 
-        // GET: api/UserAnswers/{id}
-        //[Authorize(Policy = "Admin-Content")]
-        //[SwaggerOperation(
-        //    Summary = "Authorization: Admin, Content Manager",
-        //    Description = "Get the user answer by id"
-        //)]
-        //[HttpGet("{id}")]
-        //public async Task<IActionResult> GetUserAnswerById(string id)
-        //{
-        //    try
-        //    {
-        //        var userAnswer = await _userAnswerService.GetUserAnswerByIdAsync(id);
-        //        var response = BaseResponse<object>.OkResponse(userAnswer);
-        //        return Ok(response);
-        //    }
-        //    catch (KeyNotFoundException ex)
-        //    {
-        //        return NotFound(new { message = ex.Message });
-        //    }
-        //}
-
         [Authorize(Policy = "Student")]
         [SwaggerOperation(
             Summary = "Authorization: Student",
@@ -59,78 +38,29 @@ namespace ElementaryMathStudyWebsite.Controllers
         [HttpPost]
         public async Task<ActionResult<BaseResponse<UserAnswer>>> CreateUserAnswers([FromBody] UserAnswerCreateDTO userAnswerCreateDTO)
         {
-            try
+            if (userAnswerCreateDTO == null || !userAnswerCreateDTO.UserAnswerList.Any())
             {
-                if (userAnswerCreateDTO == null || !userAnswerCreateDTO.UserAnswerList.Any())
-                {
-                    throw new BaseException.BadRequestException("input_error", "Invalid input. The user answer list is empty or null.");
-                }
-
-                var createdUserAnswers = await _userAnswerService.CreateUserAnswersAsync(userAnswerCreateDTO);
-
-                if (!createdUserAnswers.IsAddedResult)
-                {
-                    throw new BaseException.CoreException("error", "Failed to add student result");
-                }
-
-                if (createdUserAnswers.IsPassedTheQuiz)
-                {
-                    // Return only a success message
-                    var passedQuizResponse = BaseResponse<UserAnswer>.OkResponse("Congratulations, you passed the quiz.Keep it up!");
-                    return passedQuizResponse;
-                }
-
-                // Return only a failure message
-                var failedQuizResponse = BaseResponse<UserAnswer>.OkResponse("You worked hard, but hard is not enough, try again next time");
-                return failedQuizResponse;
-
+                throw new BaseException.BadRequestException("input_error", "Invalid input. The user answer list is empty or null.");
             }
-            catch (BaseException.BadRequestException badRequestEx)
+
+            var createdUserAnswers = await _userAnswerService.CreateUserAnswersAsync(userAnswerCreateDTO);
+
+            if (!createdUserAnswers.IsAddedResult)
             {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
+                throw new BaseException.CoreException("error", "Failed to add student result");
             }
-            catch (BaseException.NotFoundException notFoundEx)
+
+            if (createdUserAnswers.IsPassedTheQuiz)
             {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
+                // Return only a success message
+                var passedQuizResponse = BaseResponse<UserAnswer>.OkResponse("Congratulations, you passed the quiz.Keep it up!");
+                return passedQuizResponse;
             }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
+
+            // Return only a failure message
+            var failedQuizResponse = BaseResponse<UserAnswer>.OkResponse("You worked hard, but hard is not enough, try again next time");
+            return failedQuizResponse;
         }
-
-
-        // PUT: api/UserAnswers/{id}
-        //[Authorize(Policy = "Admin-Content")]
-        //[SwaggerOperation(
-        //    Summary = "Authorization: Admin, Content Manager",
-        //    Description = "Update user answer"
-        //)]
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> UpdateUserAnswer(string id, [FromBody] UserAnswerDTO userAnswerDTO)
-        //{
-        //    if (userAnswerDTO == null)
-        //    {
-        //        return BadRequest(new BaseException.BadRequestException("input_error", "Invalid input."));
-        //    }
-
-        //    try
-        //    {
-        //        var userAnswer = await _userAnswerService.UpdateUserAnswerAsync(id, userAnswerDTO);
-        //        var response = BaseResponse<object>.OkResponse(userAnswer);
-        //        return Ok(response);
-        //    }
-        //    catch (BaseException.NotFoundException notFoundEx)
-        //    {
-        //        return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-        //    }
-        //}
 
         // GET: api/QuizAnswers/quiz/{quizId}
         [Authorize(Policy = "Student")]
@@ -141,20 +71,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         [HttpGet("quiz/{quizId}")]
         public async Task<IActionResult> GetUserAnswersByQuizId(string quizId)
         {
-            try
-            {
-                var userAnswers = await _userAnswerService.GetUserAnswersByQuizIdAsync(quizId);
-                var response = BaseResponse<BasePaginatedList<UserAnswerWithDetailsDTO>>.OkResponse(userAnswers);
-                return Ok(response);
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            var userAnswers = await _userAnswerService.GetUserAnswersByQuizIdAsync(quizId);
+            var response = BaseResponse<BasePaginatedList<UserAnswerWithDetailsDTO>>.OkResponse(userAnswers);
+            return Ok(response);
         }
     }
 }
