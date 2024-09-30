@@ -20,47 +20,23 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/quiz/all
-        [Authorize(Policy = "Admin-Content")]
+        //[Authorize(Policy = "Admin-Content")]
         [HttpGet("all")]
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Retrieve all quizzes. Admin access required.")]
         public async Task<ActionResult<BaseResponse<List<QuizMainViewDto>>>> GetAllQuizzes()
         {
-            try
-            {
-                var quizzes = await _quizService.GetAllQuizzesAsync()
-                    ?? throw new BaseException.NotFoundException("not_found", "quizzes not found.");
-                return BaseResponse<List<QuizMainViewDto>>.OkResponse(quizzes);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
+            var quizzes = await _quizService.GetAllQuizzesAsync();
+            return Ok(quizzes);
         }
 
         // GET: api/quiz/{id}
-        [Authorize(Policy = "Admin-Content")]
+        //[Authorize(Policy = "Admin-Content")]
         [HttpGet("{id}")]
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Retrieve a quiz by its unique identifier.")]
         public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> GetQuizById(string id)
         {
-            try
-            {
-                var quiz = await _quizService.GetQuizByQuizIdAsync(id)
-                    ?? throw new BaseException.NotFoundException("not_found", "quiz not found.");
-                return BaseResponse<QuizMainViewDto>.OkResponse(quiz);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
+            var quiz = await _quizService.GetQuizByQuizIdAsync(id);
+            return Ok(quiz);
         }
 
         // GET: api/quiz/chapter/{chapterId}
@@ -106,7 +82,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/quiz/search
-        [Authorize(Policy = "Admin-Content")]
+        //[Authorize(Policy = "Admin-Content")]
         [HttpGet("search")]
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Search for quizzes by name.")]
         public async Task<ActionResult<BaseResponse<List<QuizViewDto>>>> SearchQuizzesByName([FromQuery, Required] string quizName)
@@ -128,7 +104,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/quiz/paged
-        [Authorize(Policy = "Admin-Content")]
+        //[Authorize(Policy = "Admin-Content")]
         [HttpGet("paged")]
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Retrieve quizzes with pagination.")]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<QuizMainViewDto>>>> GetQuizzesPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
@@ -150,7 +126,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // POST: api/quiz
-        [Authorize(Policy = "Admin-Content")]
+        //[Authorize(Policy = "Admin-Content")]
         [HttpPost]
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Creates a new quiz and returns the created quiz.")]
         public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> AddQuizAsync([FromBody] QuizCreateDto dto)
@@ -197,7 +173,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // DELETE: api/quiz/{id}
-        [Authorize(Policy = "Admin-Content")]
+        //[Authorize(Policy = "Admin-Content")]
         [HttpDelete("{id}")]
         [SwaggerOperation(Summary = "Delete a quiz.", Description = "Marks a quiz as deleted.")]
         public async Task<IActionResult> DeleteQuizAsync(string id)

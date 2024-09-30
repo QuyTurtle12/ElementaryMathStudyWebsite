@@ -347,11 +347,6 @@ namespace ElementaryMathStudyWebsite.Controllers
                     errorMessage = notFoundEx.ErrorDetail.ErrorMessage
                 });
             }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                return NotFound(new { errorCode = notFoundEx.ErrorDetail.ErrorCode, errorMessage = notFoundEx.ErrorDetail.ErrorMessage });
-            }
         }
-
     }
 }
