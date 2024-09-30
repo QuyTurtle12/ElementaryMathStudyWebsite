@@ -476,7 +476,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         //restore soft deleted
         public async Task RestoreSubjectAsync(string id)
         {
-            Subject subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id);
+            Subject? subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id);
 
             if (subject == null || string.IsNullOrWhiteSpace(subject.DeletedBy))
             {
