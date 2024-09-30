@@ -34,7 +34,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _mapper = mapper;
         }
 
-        // Add new order to databasez
+        /// <summary>
+        /// Add new order to databasez
+        /// </summary>
+        /// <param name="cartCreateDto"></param>
+        /// <returns></returns>
+        /// <exception cref="BaseException.BadRequestException"></exception>
+        /// <exception cref="BaseException.CoreException"></exception>
         public async Task<OrderViewDto> AddItemsToCart(CartCreateDto cartCreateDto)
         {
 
@@ -121,7 +127,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }; // Show that create order process is completed
         }
 
-        // Remove the cart and items within the cart
+        /// <summary>
+        /// Remove the cart and items within the cart
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="BaseException.NotFoundException"></exception>
         public async Task<bool> RemoveCart()
         {
             // Get logged in User
@@ -159,7 +169,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return true;
         }
 
-        // Check cart inventory
+        /// <summary>
+        /// Check cart inventory
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="BaseException.NotFoundException"></exception>
         public async Task<OrderViewDto> ViewCart()
         {
             // Get logged in User
@@ -230,7 +244,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return "Failed to purchase";
         }
 
-        // Calculate total price for order
+        /// <summary>
+        /// Calculate total price for order
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
+        /// <exception cref="BaseException.NotFoundException"></exception>
         private async Task<double> CalculateTotalPrice(CartCreateDto dto)
         {
             double totalPrice = 0;
@@ -309,28 +328,33 @@ namespace ElementaryMathStudyWebsite.Services.Service
             IQueryable<Order> query = _unitOfWork.GetRepository<Order>()
                                                     .GetEntitiesWithCondition(o => o.CustomerId.Equals(currentUser.Id) &&
                                                                                     string.IsNullOrWhiteSpace(o.DeletedBy));
-                
-
-            ICollection<OrderViewDto> orderDtos = [];
-            IEnumerable<Order> allOrders = await query.ToListAsync(); // Asynchronously fetch all orders
+            // Asynchronously fetch all orders    
+            IEnumerable<Order> allOrders = await query.ToListAsync(); 
             
             if (!allOrders.Any()) throw new BaseException.CoreException("server_error", "the system didn't find any order");
 
-            foreach (Order order in allOrders)
+            // Get list of order and map them to Dto
+            ICollection<OrderViewDto> orderDtos = allOrders.Select(order =>
             {
                 // Map entities data to dto
                 OrderViewDto dto = _mapper.Map<OrderViewDto>(order);
 
                 // Get list of detail info about an order
-                BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id)
-                                                                    ?? throw new BaseException.NotFoundException("not_found", $"The system didn't find the detail of order {order.Id}");
-                dto.Details = detailList.Items;
+                IEnumerable<OrderDetail> orderDetails = _unitOfWork.GetRepository<OrderDetail>()
+                                                            .GetEntitiesWithCondition(
+                                                                od => od.OrderId.Equals(order.Id),   // Condition
+                                                                od => od.Subject!,                  // Include the Subject
+                                                                od => od.User!                      // Include the User
+                                                                )
+                                                            .ToList();
+
+                dto.Details = _mapper.Map<IEnumerable<OrderDetailViewDto>>(orderDetails);
 
                 // Get the purchase date
                 dto.PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null;
 
-                orderDtos.Add(dto);
-            }
+                return dto;
+            }).ToList();
 
             if (orderDtos.Count == 0)
             {
@@ -347,41 +371,51 @@ namespace ElementaryMathStudyWebsite.Services.Service
             pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, orderDtos.Count, pageSize);
 
             // Return the paginated DTOs without reapplying pagination
-            return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(orderDtos, pageNumber, pageSize);
+            return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto((IEnumerable<OrderViewDto>)orderDtos, pageNumber, pageSize);
         }
 
 
-        // Get orders with all properties
+        /// <summary>
+        /// Get orders with all properties
+        /// </summary>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
+        /// <exception cref="BaseException.NotFoundException"></exception>
         public async Task<BasePaginatedList<OrderAdminViewDto>> GetOrderAdminDtosAsync(int pageNumber, int pageSize)
         {
             // Get all orders from database
-            IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities
-                .Where(o => string.IsNullOrWhiteSpace(o.DeletedBy))
-                .Include(o => o.User);
+            IQueryable<Order> query = _unitOfWork.GetRepository<Order>()
+                .GetEntitiesWithCondition(o => string.IsNullOrWhiteSpace(o.DeletedBy),  // Condition
+                                          o => o.User!                                  // Include the User
+                                          );
 
             ICollection<Order> allOrders = await query.ToListAsync();
 
-            // list of order for admin view
-            ICollection<OrderAdminViewDto> adminOrders = [];
+            if (!allOrders.Any()) throw new BaseException.NotFoundException("not_found", "the system didn't find any order");
 
-            foreach (Order order in allOrders)
+            // Get list of order and map them to Dto
+            ICollection<OrderAdminViewDto> adminOrders = allOrders.Select(order =>
             {
+                // Map entities data to dto
+                OrderAdminViewDto dto = _mapper.Map<OrderAdminViewDto>(order);
 
-                if (order != null)
-                {
-                    // Map entities data to dto
-                    OrderAdminViewDto dto = _mapper.Map<OrderAdminViewDto>(order);
+                // Get list of detail info about an order
+                IEnumerable<OrderDetail> orderDetails = _unitOfWork.GetRepository<OrderDetail>()
+                                                            .GetEntitiesWithCondition(
+                                                                od => od.OrderId.Equals(order.Id),   // Condition
+                                                                od => od.Subject!,                  // Include the Subject
+                                                                od => od.User!                      // Include the User
+                                                                )
+                                                            .ToList();
 
-                    // Get list of detail info about an order
-                    BasePaginatedList<OrderDetailViewDto> detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
-                    dto.Details = detailList.Items;
+                dto.Details = _mapper.Map<IEnumerable<OrderDetailViewDto>>(orderDetails);
 
-                    dto.PurchaseDate = (order?.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null;
+                // Get the purchase date
+                dto.PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null;
 
-     
-                    adminOrders.Add(dto);
-                }
-            }
+                return dto;
+            }).ToList();
 
             if (adminOrders.Count == 0)
             {
@@ -402,7 +436,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
 
-        // General Validation
+        /// <summary>
+        /// General Validation
+        /// </summary>
+        /// <param name="subjectId"></param>
+        /// <param name="studentId"></param>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         public async Task<string?> IsGenerallyValidatedAsync(string subjectId, string studentId, CartCreateDto dto)
         {
             // Get logged in User
@@ -423,7 +463,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (role == null) return $"The role for student Id {studentId} does not exist";
 
             // check if the role of inputted user is Student
-            if (role.RoleName != "Student") return $"The Id {studentId} is not a student Id";
+            if (role.RoleName != RoleHelper.Student.Name()) return $"The Id {studentId} is not a student Id";
 
             if (!await _userService.IsCustomerChildren(currentUser.Id, studentId)) return "They are not parents and children";
 
@@ -433,7 +473,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return null;
         }
 
-        // Check if order is exist
+        /// <summary>
+        /// Check if order is exist
+        /// </summary>
+        /// <param name="orderId"></param>
+        /// <returns></returns>
         public async Task<bool> IsValidOrderAsync(string orderId)
         {
             // Get order from database
@@ -448,21 +492,34 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return true;
         }
 
-        // Search Order by specific filter
+        /// <summary>
+        /// Search Order by specific filter
+        /// </summary>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="firstInputValue"></param>
+        /// <param name="secondInputValue"></param>
+        /// <param name="filter"></param>
+        /// <returns></returns>
+        /// <exception cref="BaseException.BadRequestException"></exception>
+        /// <exception cref="BaseException.NotFoundException"></exception>
         public async Task<BasePaginatedList<OrderViewDto>> searchOrderDtosAsync(int pageNumber, int pageSize, string? firstInputValue, string? secondInputValue, string filter)
         {
 
             // Get all orders from database
             IQueryable<Order> query = _unitOfWork.GetRepository<Order>()
-                .Entities
-                .Where(o => string.IsNullOrWhiteSpace(o.DeletedBy))
-                .Include(o => o.User);
+                .GetEntitiesWithCondition(
+                o => string.IsNullOrWhiteSpace(o.DeletedBy),
+                o => o.User!
+                );
 
             IEnumerable<Order> orders = await query.ToListAsync();
+            if (!orders.Any()) throw new BaseException.NotFoundException("not_found", "the system didn't find any order");
+
             // Modified variable
             filter = filter.Trim().ToLower() ?? string.Empty;
-            firstInputValue = firstInputValue?.Trim() ?? null;
-            secondInputValue = secondInputValue?.Trim() ?? null;
+            firstInputValue = firstInputValue?.Trim();
+            secondInputValue = secondInputValue?.Trim();
 
 
             // variable for using only one input
@@ -481,27 +538,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
             switch (filter)
             {
                 case "customer email": // Search orders by customer email
-                    result = await CustomerEmailFilterAsync(inputValue, orders, pageNumber, pageSize);
+                    result =  CustomerEmailFilterAsync(inputValue, orders, pageNumber, pageSize);
                     break;
                 case "customer phone": // Search orders by customer phone
-                    result = await CustomerPhoneFilterAsync(inputValue, orders, pageNumber, pageSize);
+                    result = CustomerPhoneFilter(inputValue, orders, pageNumber, pageSize);
                     break;
                 case "order date": // Search orders by order date
-                    result = await DateFilterAsync(firstInputValue, secondInputValue, orders, pageNumber, pageSize);
+                    result = DateFilter(firstInputValue, secondInputValue, orders, pageNumber, pageSize);
                     break;
                 case "total price": // Search orders by total price
 
-                    // Validation
-                    if (string.IsNullOrWhiteSpace(firstInputValue)) firstInputValue = "0";
-                    if (string.IsNullOrWhiteSpace(secondInputValue))
-                    {
-                        throw new BaseException.BadRequestException(
-                        "invalid_max_amount", // Error Code
-                        "Invalid maximum total amount. Please provide a valid non-negative number."  // Error Message
-                        );
-                    }
+                    // Validate inputs and retrieve the amounts
+                    (double minTotalAmount, double maxTotalAmount) = ValidateTotalPriceInputs(firstInputValue, secondInputValue);
 
-                    result = await GetTotalPriceInRangeAsync(Double.Parse(firstInputValue), Double.Parse(secondInputValue), orders, pageNumber, pageSize);
+                    result = GetTotalPriceInRange(minTotalAmount, maxTotalAmount, orders, pageNumber, pageSize);
                     break;
                 default:
                     throw new BaseException.BadRequestException("invalid_argument", $"Invalid {nameof(filter)}: {filter}. Allowed filters are 'customer email', 'customer phone', 'order date', 'total price'.");
@@ -519,40 +569,89 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return result;
         }
 
-        // Get order dto list by customer email
-        public async Task<BasePaginatedList<OrderViewDto>> CustomerEmailFilterAsync(string? inputValue, IEnumerable<Order> orders, int pageNumber, int pageSize)
+        private (double minTotalAmount, double maxTotalAmount) ValidateTotalPriceInputs(string? firstInputValue, string? secondInputValue)
+        {
+            // Default first input value to "0" if it's null or whitespace
+            if (string.IsNullOrWhiteSpace(firstInputValue))
+            {
+                firstInputValue = "0";
+            }
+
+            // Validate the second input value
+            if (string.IsNullOrWhiteSpace(secondInputValue))
+            {
+                throw new BaseException.BadRequestException(
+                    "invalid_max_amount", // Error Code
+                    "Invalid maximum total amount. Please provide a valid non-negative number." // Error Message
+                );
+            }
+
+            // Attempt to parse the first input
+            if (!double.TryParse(firstInputValue, out double minTotalAmount) || minTotalAmount < 0)
+            {
+                throw new BaseException.BadRequestException(
+                    "invalid_min_amount", // Error Code
+                    "Invalid minimum total amount. Please provide a valid non-negative number." // Error Message
+                );
+            }
+
+            // Attempt to parse the second input
+            if (!double.TryParse(secondInputValue, out double maxTotalAmount) || maxTotalAmount < 0)
+            {
+                throw new BaseException.BadRequestException(
+                    "invalid_max_amount", // Error Code
+                    "Invalid maximum total amount. Please provide a valid non-negative number." // Error Message
+                );
+            }
+
+            return (minTotalAmount, maxTotalAmount); // Return parsed amounts as a tuple
+        }
+
+
+        /// <summary>
+        /// Get order dto list by customer email
+        /// </summary>
+        /// <param name="inputValue"></param>
+        /// <param name="orders"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
+        public BasePaginatedList<OrderViewDto> CustomerEmailFilterAsync(string? inputValue, IEnumerable<Order> orders, int pageNumber, int pageSize)
         {
             ICollection<OrderViewDto> result = new List<OrderViewDto>();
 
-            IQueryable<User> userQuery = _unitOfWork.GetRepository<User>().GetEntitiesWithCondition(u => string.IsNullOrWhiteSpace(u.DeletedBy));
+            // Get a list of orders 
+            IEnumerable<Order> filterOrders = orders.Where(order => order.User!.Email!.Equals(inputValue));
 
-            IEnumerable<User> users = await userQuery.ToListAsync();
-
-            foreach (User user in users)
+            if (!filterOrders.Any())
             {
-                if (user.Email == inputValue)
-                {
-                    // Transfer entity data to dto value that human understand
-                    foreach (Order order in orders)
-                    {
-                        if (order.CustomerId == user.Id)
-                        {
-                            // Map entities data to dto
-                            OrderViewDto dto = _mapper.Map<OrderViewDto>(order);
-
-                            // Get list of detail info about an order
-                            BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
-                            dto.Details = detailList.Items;
-
-                            // Get the purchase date
-                            dto.PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null;
-
-                            result.Add(dto);
-                        }
-                    }
-                    break; // Break when found the correct user
-                }
+                throw new BaseException.NotFoundException("not_found", $"cannot found order with customer email {inputValue}");
             }
+
+            // Map filtered orders to OrderViewDto
+            result = filterOrders.Select(order =>
+            {
+                // Map entities data to dto
+                OrderViewDto dto = _mapper.Map<OrderViewDto>(order);
+
+                // Get list of detail info about an order
+                IEnumerable<OrderDetail> orderDetails = _unitOfWork.GetRepository<OrderDetail>()
+                                                            .GetEntitiesWithCondition(
+                                                                od => od.OrderId.Equals(order.Id),   // Condition
+                                                                od => od.Subject!,                  // Include the Subject
+                                                                od => od.User!                      // Include the User
+                                                                )
+                                                            .ToList();
+
+                dto.Details = _mapper.Map<IEnumerable<OrderDetailViewDto>>(orderDetails);
+
+                // Get the purchase date
+                dto.PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null;
+
+                return dto;
+            }).ToList();
+
+
 
             // validate and adjust page number
             pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, result.Count, pageSize);
@@ -561,13 +660,21 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
         }
 
-        // Get order dto list by customer phone
-        public async Task<BasePaginatedList<OrderViewDto>> CustomerPhoneFilterAsync(string? inputValue, IEnumerable<Order> orders, int pageNumber, int pageSize)
+        /// <summary>
+        /// Get order dto list by customer phone
+        /// </summary>
+        /// <param name="inputValue"></param>
+        /// <param name="orders"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
+        /// <exception cref="BaseException.BadRequestException"></exception>
+        public BasePaginatedList<OrderViewDto> CustomerPhoneFilter(string? inputValue, IEnumerable<Order> orders, int pageNumber, int pageSize)
         {
             ICollection<OrderViewDto> result = new List<OrderViewDto>();
 
             // Define phone number regex pattern
-            string phonePattern = @"^0\d{9,10}$";
+            string phonePattern = PhonePatternHelper.PhonePattern;
 
             // Check if inputValue matches the phone number regex
             if (string.IsNullOrWhiteSpace(inputValue) || !Regex.IsMatch(inputValue, phonePattern))
@@ -575,34 +682,38 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("invalid_argument", "The phone number must be 10 or 11 digits, starting with '0'.");
             }
 
-            // Get all users in database, including deleted user
-            IEnumerable<User> users = await _unitOfWork.GetRepository<User>().GetAllAsync();
+            // Get a list of orders 
+            IEnumerable<Order> filterOrders = orders.Where(order => order.User!.PhoneNumber!.Equals(inputValue));
 
-            foreach (User user in users)
+            if (!filterOrders.Any())
             {
-                if (user.PhoneNumber == inputValue)
-                {
-                    // Transfer entity data to dto value that human understand
-                    foreach (Order order in orders)
-                    {
-                        if (order.CustomerId == user.Id)
-                        {
-                            // Map entities data to dto
-                            OrderViewDto dto = _mapper.Map<OrderViewDto>(order);
-
-                            // Get list of detail info about an order
-                            BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
-                            dto.Details = detailList.Items;
-
-                            // Get the purchase date
-                            dto.PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null;
-
-                            result.Add(dto);
-                        }
-                    }
-                    break; // Break when found the correct user
-                }
+                throw new BaseException.NotFoundException("not_found", $"cannot found order with customer phone number {inputValue}");
             }
+
+            // Map filtered orders to OrderViewDto
+            result = filterOrders.Select(order =>
+            {
+
+                // Map entities data to dto
+                OrderViewDto dto = _mapper.Map<OrderViewDto>(order);
+
+                // Get list of detail info about an order
+                IEnumerable<OrderDetail> orderDetails = _unitOfWork.GetRepository<OrderDetail>()
+                                                            .GetEntitiesWithCondition(
+                                                                od => od.OrderId.Equals(order.Id),   // Condition
+                                                                od => od.Subject!,                  // Include the Subject
+                                                                od => od.User!                      // Include the User
+                                                                )
+                                                            .ToList();
+
+                // Map order detail to view dto
+                dto.Details = _mapper.Map<IEnumerable<OrderDetailViewDto>>(orderDetails);
+
+                // Get the purchase date
+                dto.PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null;
+
+                return dto;
+            }).ToList();
 
             // validate and adjust page number
             pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, result.Count, pageSize);
@@ -611,84 +722,100 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
         }
 
-        // Get order list by order date
-        public async Task<BasePaginatedList<OrderViewDto>> DateFilterAsync(string? startDate, string? endDate, IEnumerable<Order> orders, int pageNumber, int pageSize)
+        /// <summary>
+        /// Get order list by order date
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="orders"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
+        /// <exception cref="BaseException.BadRequestException"></exception>
+        public BasePaginatedList<OrderViewDto> DateFilter(string? startDate, string? endDate, IEnumerable<Order> orders, int pageNumber, int pageSize)
         {
             // Define the date format
             string dateFormat = "dd/MM/yyyy";
 
-            // Parse the startDate and endDate
-            DateTime? startDateParsed = null;
-            DateTime? endDateParsed = null;
-
-            // Parse the startDate
-            if (!string.IsNullOrWhiteSpace(startDate))
-            {
-                if (DateTime.TryParseExact(startDate, dateFormat, null, System.Globalization.DateTimeStyles.None, out DateTime startDateValue))
-                {
-                    startDateParsed = startDateValue;
-                }
-                else
-                {
-                    // Handle invalid date format
-                    throw new BaseException.BadRequestException("invalid_date_format", "Invalid start date format. Please use " + dateFormat);
-                }
-            }
-
-            // Parse the endDate
-            if (!string.IsNullOrWhiteSpace(endDate))
-            {
-                if (DateTime.TryParseExact(endDate, dateFormat, null, System.Globalization.DateTimeStyles.None, out DateTime endDateValue))
-                {
-                    endDateParsed = endDateValue;
-                }
-                else
-                {
-                    // Handle invalid date format
-                    throw new BaseException.BadRequestException("invalid_date_format", "Invalid end date format. Please use " + dateFormat);
-                }
-            }
+            // Parse the startDate and endDate using the helper method
+            DateTime? startDateParsed = ParseDate(startDate, dateFormat);
+            DateTime? endDateParsed = ParseDate(endDate, dateFormat);
 
             // Filter orders by date range
             IEnumerable<Order> filteredOrders = orders.Where(o =>
                 (!startDateParsed.HasValue || o.CreatedTime >= startDateParsed.Value) &&
                 (!endDateParsed.HasValue || o.CreatedTime <= endDateParsed.Value));
 
-            // Map filtered orders to OrderViewDto
-            ICollection<OrderViewDto> orderDtos = new List<OrderViewDto>();
+            ICollection<OrderViewDto> result = new List<OrderViewDto>();
 
-            foreach (Order order in filteredOrders)
+            // Map filtered orders to OrderViewDto
+            result = filteredOrders.Select(order =>
             {
+
                 // Map entities data to dto
                 OrderViewDto dto = _mapper.Map<OrderViewDto>(order);
 
                 // Get list of detail info about an order
-                BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
-                dto.Details = detailList.Items;
+                IEnumerable<OrderDetail> orderDetails = _unitOfWork.GetRepository<OrderDetail>()
+                                                            .GetEntitiesWithCondition(
+                                                                od => od.OrderId.Equals(order.Id),   // Condition
+                                                                od => od.Subject!,                  // Include the Subject
+                                                                od => od.User!                      // Include the User
+                                                                )
+                                                            .ToList();
+
+                // Map order detail to view dto
+                dto.Details = _mapper.Map<IEnumerable<OrderDetailViewDto>>(orderDetails);
 
                 // Get the purchase date
                 dto.PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null;
 
-                orderDtos.Add(dto);
-            }
+                return dto;
+            }).ToList();
 
             // validate and adjust page number
-            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, orderDtos.Count, pageSize);
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, result.Count, pageSize);
 
             // Paginate the result
-            return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(orderDtos, pageNumber, pageSize);
+            return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
         }
 
-        // Get order list by order price
-        public async Task<BasePaginatedList<OrderViewDto>> GetTotalPriceInRangeAsync(double? minTotalAmount, double? maxTotalAmount, IEnumerable<Order> orders, int pageNumber, int pageSize)
+        /// <summary>
+        /// Method to parse date
+        /// </summary>
+        /// <param name="dateString"></param>
+        /// <param name="dateFormat"></param>
+        /// <returns></returns>
+        /// <exception cref="BaseException.BadRequestException"></exception>
+        private DateTime? ParseDate(string? dateString, string dateFormat)
         {
-            // Validate the total amount range
-
-            if (minTotalAmount < 0 || maxTotalAmount < 0)
+            if (string.IsNullOrWhiteSpace(dateString))
             {
-                throw new BaseException.BadRequestException("invalid_argument", "Invalid total amount: Total amounts cannot be negative.");
+                return null; // Return null if the date string is empty or whitespace
             }
 
+            if (DateTime.TryParseExact(dateString, dateFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dateValue))
+            {
+                return dateValue; // Return the parsed date
+            }
+
+            // Handle invalid date format
+            throw new BaseException.BadRequestException("invalid_date_format", $"Invalid date format for '{nameof(dateString)}'. Please use {dateFormat}");
+        }
+
+        /// <summary>
+        /// Get order list by order price
+        /// </summary>
+        /// <param name="minTotalAmount"></param>
+        /// <param name="maxTotalAmount"></param>
+        /// <param name="orders"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
+        /// <exception cref="BaseException.BadRequestException"></exception>
+        public BasePaginatedList<OrderViewDto> GetTotalPriceInRange(double? minTotalAmount, double? maxTotalAmount, IEnumerable<Order> orders, int pageNumber, int pageSize)
+        {
+            // Validate the total amount range
             if (minTotalAmount > maxTotalAmount)
             {
                 throw new BaseException.BadRequestException("invalid_argument", "Invalid total amount: Minimum total amount cannot be greater than the maximum total amount.");
@@ -697,32 +824,47 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Filter orders by total amount range
             IEnumerable<Order> filteredOrders = orders.Where(o => IsAmountInRange(o.TotalPrice, minTotalAmount, maxTotalAmount));
 
-            // Map filtered orders to OrderViewDto
-            ICollection<OrderViewDto> orderDtos = new List<OrderViewDto>();
+            ICollection<OrderViewDto> result = new List<OrderViewDto>();
 
-            foreach (Order order in filteredOrders)
+            // Map filtered orders to OrderViewDto
+            result = filteredOrders.Select(order =>
             {
+
                 // Map entities data to dto
                 OrderViewDto dto = _mapper.Map<OrderViewDto>(order);
 
                 // Get list of detail info about an order
-                BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, order.Id);
-                dto.Details = detailList.Items;
+                IEnumerable<OrderDetail> orderDetails = _unitOfWork.GetRepository<OrderDetail>()
+                                                                    .GetEntitiesWithCondition(
+                                                                        od => od.OrderId.Equals(order.Id),   // Condition
+                                                                        od => od.Subject!,                  // Include the Subject
+                                                                        od => od.User!                      // Include the User
+                                                                        )
+                                                                    .ToList();
+
+                // Map order detail to view dto
+                dto.Details = _mapper.Map<IEnumerable<OrderDetailViewDto>>(orderDetails);
 
                 // Get the purchase date
                 dto.PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null;
 
-                orderDtos.Add(dto);
-            }
+                return dto;
+            }).ToList();
 
             // validate and adjust page number
-            pageNumber =  PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, orderDtos.Count, pageSize);
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, result.Count, pageSize);
 
             // Paginate the result
-            return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(orderDtos, pageNumber, pageSize);
+            return _unitOfWork.GetRepository<OrderViewDto>().GetPaggingDto(result, pageNumber, pageSize);
         }
 
-        // Check if total amount is in given range
+        /// <summary>
+        /// Check if total amount is in given range
+        /// </summary>
+        /// <param name="amountToCheck"></param>
+        /// <param name="minTotalAmount"></param>
+        /// <param name="maxTotalAmount"></param>
+        /// <returns></returns>
         private static bool IsAmountInRange(double? amountToCheck, double? minTotalAmount, double? maxTotalAmount)
         {
             // Check if amount is lower than min value or higher than max value

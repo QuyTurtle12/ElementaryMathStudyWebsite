@@ -3,7 +3,6 @@ using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -42,26 +41,28 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get Order Detail list by order Id 
         public async Task<BasePaginatedList<OrderDetailViewDto>> GetOrderDetailDtoListByOrderIdAsync(int pageNumber, int pageSize, string orderId)
         {
+            // Validate the orderId input
+            if (string.IsNullOrWhiteSpace(orderId))
+            {
+                throw new BaseException.BadRequestException("invalid_order_id", "Order ID cannot be null or empty.");
+            }
+
             // Get all order details from database
             // If null then return empty collection
             IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>()
                 .GetEntitiesWithCondition(
-                od => od.OrderId.Equals(orderId),
-                od => od.Subject!,  // Include the Subject
-                od => od.User!      // Include the User
-                );
-
-            ICollection<OrderDetailViewDto> detailDtos = new List<OrderDetailViewDto>();
+                    od => od.OrderId.Equals(orderId),   // Condition
+                    od => od.Subject!,                  // Include the Subject
+                    od => od.User!                      // Include the User
+                    );
 
             IEnumerable<OrderDetail> allDetails = await query.ToListAsync();
 
-            // Map orders to OrderViewDto
-            foreach (OrderDetail detail in allDetails)
-            {
-                OrderDetailViewDto dto = _mapper.Map<OrderDetailViewDto>(detail);
+            // Throw error if nothing was found
+            if (!allDetails.Any()) throw new BaseException.NotFoundException("not_found", $"the system didn't find any detail of order {orderId}");
 
-                detailDtos.Add(dto);
-            }
+            // Map orders to OrderDetailViewDto
+            ICollection<OrderDetailViewDto> detailDtos = allDetails.Select(detail => _mapper.Map<OrderDetailViewDto>(detail)).ToList();
 
             // If pageNumber or pageSize are 0 or negative, show all order details without pagination
             if (pageNumber <= 0 || pageSize <= 0)

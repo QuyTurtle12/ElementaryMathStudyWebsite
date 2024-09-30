@@ -51,7 +51,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 int latestAttemptNumber = studentAnswers.Any() ? studentAnswers.Max(ua => ua.AttemptNumber) : 0;
 
                 // Query the user's answers for the latest attempt
-                List<UserAnswer> latestStudentAnswers = studentAnswers
+                IEnumerable<UserAnswer> latestStudentAnswers = studentAnswers
                     .Where(ua => ua.AttemptNumber == latestAttemptNumber)
                     .ToList();
 
@@ -129,15 +129,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             IEnumerable<Result> studentResultList = await resultQuery.ToListAsync();
 
-            ICollection<ResultViewDto> resultViewDtos = new List<ResultViewDto>();
-
-            // Map result data to view dto
-            foreach (Result result in studentResultList)
-            {
-                ResultViewDto dto = _mapper.Map<ResultViewDto>(result);
-
-                resultViewDtos.Add(dto);
-            }
+            ICollection<ResultViewDto> resultViewDtos = studentResultList.Select(result => _mapper.Map<ResultViewDto>(result)).ToList();
 
             // Show all student's results in 1 page
             if (pageNumber < 0 || pageSize < 0)
@@ -270,21 +262,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .Select(g => g.OrderByDescending(r => r.AttemptNumber).FirstOrDefault())  // Get the latest attempt per quiz
                 .ToListAsync();  // Execute the query and get a list of results
 
-            // Create a list to hold the results with their subject names
-            List<(string SubjectId, string SubjectName, Result Result)> resultWithSubject = new List<(string SubjectId, string SubjectName, Result Result)>();
-
-            foreach (Result? result in latestResultsForEachQuiz)
+            if (!latestResultsForEachQuiz.Any())
             {
-                if (result != null)
-                {
-                    // Fetch subject ID from the quiz ID, then fetch the subject name
-                    string subjectId = await _progressServices.GetSubjectIdFromQuizIdAsync(result.QuizId);
-                    string subjectName = await _subjectServices.GetSubjectNameAsync(subjectId);
-
-                    // Add the result along with its subject ID and name to the list
-                    resultWithSubject.Add((subjectId, subjectName, result));
-                }
+                throw new BaseException.NotFoundException("not_found", "Cannot find this student result");
             }
+
+            // Create a list to hold the results with their subject names
+            List<(string SubjectId, string SubjectName, Result Result)> resultWithSubject = (await Task.WhenAll(latestResultsForEachQuiz.Select(async result =>
+            {
+                // Fetch subject ID from the quiz ID, then fetch the subject name
+                string subjectId = await _progressServices.GetSubjectIdFromQuizIdAsync(result!.QuizId);
+                string subjectName = await _subjectServices.GetSubjectNameAsync(subjectId);
+                return (subjectId, subjectName, result);
+            }))).ToList();
+
 
             // Group the results by subject name in-memory
             IEnumerable<SubjectResult> groupedResultsBySubject = resultWithSubject
