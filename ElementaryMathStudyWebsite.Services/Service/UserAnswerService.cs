@@ -90,7 +90,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("duplicate_questions", $"Duplicate Question IDs found: {duplicateIds}");
             }
 
-            var tempAttempNumber = 1;
             foreach (var userAnswerDTO in userAnswerCreateDTO.UserAnswerList)
             {
                 // Check if QuestionId exists
@@ -113,10 +112,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                                                 .FirstOrDefaultAsync();
 
                 var attemptNumber = existingUserAnswer != null ? existingUserAnswer.AttemptNumber + 1 : 1;
-                if(tempAttempNumber < attemptNumber)
-                {
-                    tempAttempNumber = attemptNumber;
-                }
 
                 //var userAnswer = _mapper.Map<UserAnswer>(userAnswerDTO);
                 var userAnswer = new UserAnswer
@@ -211,7 +206,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.NotFoundException("answer_not_found", "There is no answer in the user answer");
             }
 
-            return new BasePaginatedList<UserAnswerWithDetailsDTO>(result, result.Count, 1, result.Count);
+            return new BasePaginatedList<UserAnswerWithDetailsDTO>(result.OrderByDescending(x => x.AttemptNumber).ToList(), result.Count, 1, result.Count);
         }
     }
 }
