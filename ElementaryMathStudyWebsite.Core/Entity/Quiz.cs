@@ -17,6 +17,7 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         [JsonIgnore]
         public virtual Topic? Topic { get; set; } // Navigation property, one quiz belong to one topic
         [JsonIgnore]
+
         public virtual ICollection<Question>? Questions { get; set; } // Navigation property, one quiz has many question
         [JsonIgnore]
         public virtual ICollection<Progress>? Progresses { get; set; } // Navigation property, one quiz can be in many progresses

@@ -51,7 +51,7 @@ namespace ElementaryMathStudyWebsite
         {
             // Add services here
             services.AddScoped<IAppUserServices, UserService>();
-            services.AddScoped<IRoleService, RoleService>();
+            //services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IAppOptionServices, OptionService>();
             services.AddScoped<IAppUserAnswerServices, UserAnswerService>();
             services.AddScoped<IAppOrderServices, OrderService>();
@@ -82,7 +82,7 @@ namespace ElementaryMathStudyWebsite
             services.AddAutoMapper(typeof(ProgressMappingProfile));
             services.AddAutoMapper(typeof(OrderMappingProfile));
             services.AddAutoMapper(typeof(ResultMappingProfile));
-
+            services.AddAutoMapper(typeof(QuizMappingProfile));
             services.AddAutoMapper(typeof(ChapterMappingProfile));
         }
 
