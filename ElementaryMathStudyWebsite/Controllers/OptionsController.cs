@@ -28,39 +28,8 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> AddOption([Required] OptionCreateDto dto)
         {
-            try
-            {
-                var result = BaseResponse<OptionViewDto>.OkResponse(await _optionService.AddOption(dto));
-                return Ok(result);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            var response = await _optionService.AddOption(dto);
+            return Ok(BaseResponse<OptionViewDto>.OkResponse(response));
         }
 
 
@@ -74,48 +43,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> DeleteOption([Required] string id)
         {
-            try
-            {
-                var result = await _optionService.DeleteOption(id);
+            await _optionService.DeleteOption(id);
 
-                if (result)
-                {
-                    var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
-                    return Ok(successResponse);
-
-                }
-                var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
-
-                return Ok(failedResponse);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(BaseResponse<string>.OkResponse("Delete successfully"));
         }
 
 
@@ -128,39 +58,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> GetOptionDtosByQuestion([Required] string questionId, int pageNumber = -1, int pageSize = -1)
         {
-            try
-            {
-                var result = BaseResponse<BasePaginatedList<OptionViewDto>>.OkResponse(await _optionService.GetOptionDtosByQuestion(pageNumber, pageSize, questionId));
-                return Ok(result);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            var response = await _optionService.GetOptionDtosByQuestion(pageNumber, pageSize, questionId);
+
+            return Ok(BaseResponse<BasePaginatedList<OptionViewDto>>.OkResponse(response));
         }
 
 
@@ -174,40 +74,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> UpdateOption([Required] string id, [Required] OptionUpdateDto dto)
         {
-            try
-            {
-                var result = BaseResponse<OptionViewDto>.OkResponse(await _optionService.UpdateOption(id, dto));
+            var response = await _optionService.UpdateOption(id, dto);
 
-                return Ok(result);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(BaseResponse<OptionViewDto>.OkResponse(response));
         }
 
     }

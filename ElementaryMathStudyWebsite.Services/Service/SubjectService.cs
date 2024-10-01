@@ -1,14 +1,12 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+﻿using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Utils;
-using ElementaryMathStudyWebsite.Infrastructure.UOW;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Services.Service
@@ -18,12 +16,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userService;
         private readonly IAppChapterServices _chapterService;
+        private readonly IMapper _mapper;
 
-        public SubjectService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppChapterServices chapterService)
+        public SubjectService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppChapterServices chapterService, IMapper mapper)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _userService = userService;
             _chapterService = chapterService;
+            _mapper = mapper;
         }
 
         // Helper method for validation
@@ -46,7 +46,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             ValidateSubject(subjectDTO);
 
             // Check if another subject with the same name already exists
-            var existingSubject = await _unitOfWork.GetRepository<Subject>().Entities
+            Subject? existingSubject = await _unitOfWork.GetRepository<Subject>().Entities
                 .Where(s => s.SubjectName == subjectDTO.SubjectName)
                 .FirstOrDefaultAsync();
 
@@ -55,7 +55,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("duplicate_name", $"A subject with the name '{subjectDTO.SubjectName}' already exists.");
             }
 
-            var subject = new Subject
+            //var subject = _mapper.Map<Subject>(subjectDTO);
+            Subject subject = new Subject
             {
                 SubjectName = subjectDTO.SubjectName,
                 Price = subjectDTO.Price,
@@ -64,27 +65,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             AuditFields(subject, isCreating: true);
 
-            await _unitOfWork.GetRepository<Subject>().UpdateAsync(subject);
+            await _unitOfWork.GetRepository<Subject>().InsertAsync(subject);
             await _unitOfWork.SaveAsync();
 
             User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
             User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-            return new SubjectAdminViewDTO
+            var subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
             {
-                Id = subject.Id,
-                SubjectName = subject.SubjectName,
-                Price = subject.Price,
-                Status = subject.Status,
-                CreatedBy = subject.CreatedBy,
-                CreaterName = createdUser?.FullName,
-                CreaterPhone = createdUser?.PhoneNumber,
-                CreatedTime = subject.CreatedTime,
-                LastUpdatedBy = subject.LastUpdatedBy,
-                UpdaterName = createdUser?.FullName,
-                UpdaterPhone = createdUser?.PhoneNumber,
-                LastUpdatedTime = subject.LastUpdatedTime
-            };
+                opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+            });
+
+            return subjectAdminViewDTO;
         }
 
 
@@ -104,8 +97,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Handle pagination
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
-                var allSubjects = await query.ToListAsync();
-                var subjectDtos = allSubjects.Select(subject =>
+                List<Subject> allSubjects = await query.ToListAsync();
+                List<ISubjectBaseDTO> subjectDtos = allSubjects.Select(subject =>
                 {
                     if (isAdmin)
                     {
@@ -113,31 +106,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
                         User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-                        return (ISubjectBaseDTO)new SubjectAdminViewDTO
+                        SubjectAdminViewDTO subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
                         {
-                            Id = subject.Id,
-                            SubjectName = subject.SubjectName,
-                            Price = subject.Price,
-                            Status = subject.Status,
-                            CreatedBy = subject.CreatedBy,
-                            CreaterName = createdUser?.FullName,
-                            CreaterPhone = createdUser?.PhoneNumber,
-                            CreatedTime = subject.CreatedTime,
-                            LastUpdatedBy = subject.LastUpdatedBy,
-                            UpdaterName = updatedUser?.FullName,
-                            UpdaterPhone = updatedUser?.PhoneNumber,
-                            LastUpdatedTime = subject.LastUpdatedTime
-                        };
+                            opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                            opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+                        });
+
+                        return (ISubjectBaseDTO)subjectAdminViewDTO;
                     }
                     else
                     {
-                        return (ISubjectBaseDTO)new SubjectDTO
-                        {
-                            Id = subject.Id,
-                            SubjectName = subject.SubjectName,
-                            Price = subject.Price,
-                            Status = subject.Status
-                        };
+                        SubjectDTO subjectDTO = _mapper.Map<SubjectDTO>(subject);
+
+                        return subjectDTO;
                     }
                 }).ToList();
 
@@ -153,31 +134,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
                     User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-                    return (ISubjectBaseDTO)new SubjectAdminViewDTO
+                    SubjectAdminViewDTO? subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
                     {
-                        Id = subject.Id,
-                        SubjectName = subject.SubjectName,
-                        Price = subject.Price,
-                        Status = subject.Status,
-                        CreatedBy = subject.CreatedBy,
-                        CreaterName = createdUser?.FullName,
-                        CreaterPhone = createdUser?.PhoneNumber,
-                        CreatedTime = subject.CreatedTime,
-                        LastUpdatedBy = subject.LastUpdatedBy,
-                        UpdaterName = updatedUser?.FullName,
-                        UpdaterPhone = updatedUser?.PhoneNumber,
-                        LastUpdatedTime = subject.LastUpdatedTime
-                    };
+                        opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                        opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+                    });
+
+                    return (ISubjectBaseDTO)subjectAdminViewDTO;  // Cast to common interface
                 }
                 else
                 {
-                    return (ISubjectBaseDTO)new SubjectDTO
-                    {
-                        Id = subject.Id,
-                        SubjectName = subject.SubjectName,
-                        Price = subject.Price,
-                        Status = subject.Status
-                    };
+                    SubjectDTO subjectDTO = _mapper.Map<SubjectDTO>(subject);
+
+                    return (ISubjectBaseDTO)subjectDTO;  // Cast to common interface
                 }
             }).ToList();
 
@@ -188,7 +157,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get a specific subject by ID
         public async Task<object> GetSubjectByIDAsync(string id, bool isAdmin)
         {
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{id}'.");
+            Subject subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{id}'.");
             if ((!isAdmin && !subject.Status) || !String.IsNullOrWhiteSpace(subject.DeletedBy))
             {
                 throw new BaseException.NotFoundException("key_not_found", $"Cannot find product with ID '{id}'.");
@@ -199,31 +168,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
                 User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-                return new SubjectAdminViewDTO
+                SubjectAdminViewDTO subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
                 {
-                    Id = subject.Id,
-                    SubjectName = subject.SubjectName,
-                    Price = subject.Price,
-                    Status = subject.Status,
-                    CreatedBy = subject.CreatedBy,
-                    CreaterName = createdUser?.FullName,
-                    CreaterPhone = createdUser?.PhoneNumber,
-                    CreatedTime = subject.CreatedTime,
-                    LastUpdatedBy = subject.LastUpdatedBy,
-                    UpdaterName = createdUser?.FullName,
-                    UpdaterPhone = createdUser?.PhoneNumber,
-                    LastUpdatedTime = subject.LastUpdatedTime
-                };
+                    opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                    opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+                });
+
+                return subjectAdminViewDTO;
             }
             else
             {
-                return new SubjectDTO
-                {
-                    Id = subject.Id,
-                    SubjectName = subject.SubjectName,
-                    Price = subject.Price,
-                    Status = subject.Status
-                };
+                SubjectDTO subjectDTO = _mapper.Map<SubjectDTO>(subject);
+
+                return subjectDTO;
             }
         }
 
@@ -231,6 +188,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<object>> SearchSubjectAsync(string searchTerm, double lowestPrice,
                     double highestPrice, int pageNumber, int pageSize)
         {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
+            }
+
+            if (searchTerm.Length < 2)
+            {
+                throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
+            }
+
             var query = _unitOfWork.GetRepository<Subject>().Entities.Where(s => s.Status == true);
 
             //Not get soft deleted item
@@ -253,14 +220,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
-                var allSubjects = await query.ToListAsync();
-                var subjectDtos = allSubjects.Select(s => new SubjectDTO
-                {
-                    Id = s.Id,
-                    SubjectName = s.SubjectName,
-                    Price = s.Price,
-                    Status = s.Status
-                }).ToList();
+                List<Subject> allSubjects = await query.ToListAsync();
+                List<SubjectDTO> subjectDtos = _mapper.Map<List<SubjectDTO>>(allSubjects);
 
                 if (subjectDtos.Count == 0)
                 {
@@ -270,14 +231,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
 
-            var paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
-            var subjectDtosPaginated = paginatedSubjects.Items.Select(s => new SubjectDTO
-            {
-                Id = s.Id,
-                SubjectName = s.SubjectName,
-                Price = s.Price,
-                Status = s.Status
-            }).ToList();
+            BasePaginatedList<Subject> paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
+            List<SubjectDTO> subjectDtosPaginated = _mapper.Map<List<SubjectDTO>>(paginatedSubjects.Items);
 
             if (subjectDtosPaginated.Count == 0)
             {
@@ -290,6 +245,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<object>> SearchSubjectAdminAsync(string searchTerm, double lowestPrice,
                     double highestPrice, bool? status, int pageNumber, int pageSize)
         {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
+            }
+
+            if (searchTerm.Length < 2)
+            {
+                throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
+            }
+
             var query = _unitOfWork.GetRepository<Subject>().Entities.AsQueryable();
 
             //Not get soft deleted item
@@ -317,28 +282,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
-                var allSubjects = await query.ToListAsync();
-                var subjectDtos = allSubjects.Select(subject =>
+                List<Subject> allSubjects = await query.ToListAsync();
+                List<ISubjectBaseDTO> subjectDtos = allSubjects.Select(subject =>
                 {
                     // Fetch the created and updated users
                     User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
                     User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-                    return (ISubjectBaseDTO)new SubjectAdminViewDTO
+                    SubjectAdminViewDTO subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
                     {
-                        Id = subject.Id,
-                        SubjectName = subject.SubjectName,
-                        Price = subject.Price,
-                        Status = subject.Status,
-                        CreatedBy = subject.CreatedBy,
-                        CreaterName = createdUser?.FullName,
-                        CreaterPhone = createdUser?.PhoneNumber,
-                        CreatedTime = subject.CreatedTime,
-                        LastUpdatedBy = subject.LastUpdatedBy,
-                        UpdaterName = updatedUser?.FullName,
-                        UpdaterPhone = updatedUser?.PhoneNumber,
-                        LastUpdatedTime = subject.LastUpdatedTime
-                    };
+                        opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                        opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+                    });
+
+                    return (ISubjectBaseDTO)subjectAdminViewDTO;
                 }).ToList();
 
                 if (subjectDtos.Count == 0)
@@ -349,28 +306,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
 
-            var paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
-            var subjectDtosPaginated = paginatedSubjects.Items.Select(subject =>
+            BasePaginatedList<Subject> paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
+            List<ISubjectBaseDTO> subjectDtosPaginated = paginatedSubjects.Items.Select(subject =>
             {
                 // Fetch the created and updated users
                 User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
                 User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-                return (ISubjectBaseDTO)new SubjectAdminViewDTO
+                SubjectAdminViewDTO subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
                 {
-                    Id = subject.Id,
-                    SubjectName = subject.SubjectName,
-                    Price = subject.Price,
-                    Status = subject.Status,
-                    CreatedBy = subject.CreatedBy,
-                    CreaterName = createdUser?.FullName,
-                    CreaterPhone = createdUser?.PhoneNumber,
-                    CreatedTime = subject.CreatedTime,
-                    LastUpdatedBy = subject.LastUpdatedBy,
-                    UpdaterName = updatedUser?.FullName,
-                    UpdaterPhone = updatedUser?.PhoneNumber,
-                    LastUpdatedTime = subject.LastUpdatedTime
-                }; 
+                    opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                    opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+                });
+                return (ISubjectBaseDTO)subjectAdminViewDTO; 
             }).ToList();
 
             if (subjectDtosPaginated.Count == 0)
@@ -384,10 +332,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Update subject and set LastUpdatedTime to current time
         public async Task<SubjectAdminViewDTO> UpdateSubjectAsync(string id, SubjectUpdateDTO subjectUpdateDTO)
         {
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.NotFoundException("key_not_found", $"Subject with ID '{id}' not found.");
+            Subject subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.NotFoundException("key_not_found", $"Subject with ID '{id}' not found.");
 
             // Check if another subject with the same name already exists
-            var existingSubject = await _unitOfWork.GetRepository<Subject>().Entities
+            Subject? existingSubject = await _unitOfWork.GetRepository<Subject>().Entities
                 .Where(s => s.SubjectName == subjectUpdateDTO.SubjectName) // Exclude the current subject by its ID
                 .FirstOrDefaultAsync();
 
@@ -418,27 +366,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
             User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
             User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-            return new SubjectAdminViewDTO
+            SubjectAdminViewDTO subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
             {
-                Id = subject.Id,
-                SubjectName = subject.SubjectName,
-                Price = subject.Price,
-                Status = subject.Status,
-                CreatedBy = subject.CreatedBy,
-                CreaterName = createdUser?.FullName,
-                CreaterPhone = createdUser?.PhoneNumber,
-                CreatedTime = subject.CreatedTime,
-                LastUpdatedBy = subject.LastUpdatedBy,
-                UpdaterName = createdUser?.FullName,
-                UpdaterPhone = createdUser?.PhoneNumber,
-                LastUpdatedTime = subject.LastUpdatedTime
-            };
+                opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+            });
+            return subjectAdminViewDTO;
         }
 
         // Change subject status and set LastUpdatedTime to current time
         public async Task<SubjectAdminViewDTO> ChangeSubjectStatusAsync(string id)
         {
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Subject with ID '{id}' not found.");
+            Subject subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Subject with ID '{id}' not found.");
 
             subject.Status = !subject.Status;
             AuditFields(subject);
@@ -449,21 +388,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             User? createdUser = subject.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.CreatedBy) : null;
             User? updatedUser = subject.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(subject.LastUpdatedBy) : null;
 
-            return new SubjectAdminViewDTO
+            SubjectAdminViewDTO subjectAdminViewDTO = _mapper.Map<SubjectAdminViewDTO>(subject, opts =>
             {
-                Id = subject.Id,
-                SubjectName = subject.SubjectName,
-                Price = subject.Price,
-                Status = subject.Status,
-                CreatedBy = subject.CreatedBy,
-                CreaterName = createdUser?.FullName,
-                CreaterPhone = createdUser?.PhoneNumber,
-                CreatedTime = subject.CreatedTime,
-                UpdaterName = updatedUser?.FullName,
-                UpdaterPhone = updatedUser?.PhoneNumber,
-                LastUpdatedBy = subject.LastUpdatedBy,
-                LastUpdatedTime = subject.LastUpdatedTime
-            };
+                opts.Items["CreatedUser"] = createdUser;  // Set created user object
+                opts.Items["UpdatedUser"] = updatedUser;  // Set updated user object
+            });
+            return subjectAdminViewDTO;
         }
 
         public async Task<string> GetSubjectNameAsync(string subjectId)
@@ -480,7 +410,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get a specific subject by ID (For Order)
         public async Task<Subject> GetSubjectByIDAsync(string id)
         {
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Subject with ID '{id}' not found.");
+            Subject subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id) ?? throw new BaseException.BadRequestException("key_not_found", $"Subject with ID '{id}' not found.");
             return subject;
         }
 
@@ -488,7 +418,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             // Get current logged in user info
             User currentUser = await _userService.GetCurrentUserAsync();
-            var currentUserId = currentUser.Id;
+            string currentUserId = currentUser.Id;
 
             // If creating a new entity, set the CreatedBy field
             if (isCreating)
@@ -510,10 +440,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             // Get current logged in user info
             User currentUser = await _userService.GetCurrentUserAsync();
-            var currentUserId = currentUser.Id;
+            string currentUserId = currentUser.Id;
 
             // Query the Progress table for a record with the specified SubjectId and QuizId
-            var progressRecord = await _unitOfWork.GetRepository<Progress>().Entities
+            Progress? progressRecord = await _unitOfWork.GetRepository<Progress>().Entities
                 .Where(p => p.StudentId.Equals(currentUserId.ToString(), StringComparison.CurrentCultureIgnoreCase) && p.SubjectId == subjectId && p.QuizId == quizId)
                 .FirstOrDefaultAsync();
 
@@ -539,16 +469,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                             string.IsNullOrWhiteSpace(c.DeletedBy)
                             );
 
-            foreach (var chapter in query)
-            {
-                await _chapterService.DeleteChapterAsync(chapter.Id);
-            }
+            var tasks = query.Select(chapter => _chapterService.DeleteChapterAsync(chapter.Id));
+            await Task.WhenAll(tasks);
         }
 
         //restore soft deleted
         public async Task RestoreSubjectAsync(string id)
         {
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id);
+            Subject? subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(id);
 
             if (subject == null || string.IsNullOrWhiteSpace(subject.DeletedBy))
             {
