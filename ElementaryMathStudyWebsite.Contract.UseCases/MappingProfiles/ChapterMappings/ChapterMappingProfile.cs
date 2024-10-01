@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
@@ -12,10 +11,12 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ChapterMa
         {
             // Mapping for Chapter to ChapterViewDto
             CreateMap<Chapter, ChapterViewDto>()
+                //.ForMember(dest => dest.SubjectName, opt => opt.MapFrom((src, dest, destMember, context) =>
+                //    src.Subject != null && context.Items["Subject"] is Subject subject
+                //    ? subject.SubjectName
+                //    : null))
                 .ForMember(dest => dest.SubjectName, opt => opt.MapFrom((src, dest, destMember, context) =>
-                    src.Subject != null && context.Items["Subject"] is Subject subject
-                    ? subject.SubjectName
-                    : null))
+                    context.Items["Subject"] is Subject subject ? subject.SubjectName : null))
                 .ForMember(dest => dest.QuizName, opt => opt.MapFrom((src, dest, destMember, context) =>
                     src.QuizId != null && context.Items["Quiz"] is Quiz quiz
                     ? quiz.QuizName

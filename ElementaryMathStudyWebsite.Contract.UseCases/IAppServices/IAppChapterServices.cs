@@ -1,6 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
@@ -15,11 +14,9 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterUpdateDto subjectDTO);
 
         Task<bool> DeleteChapterAsync(string optionId);
-        Task<BasePaginatedList<ChapterViewDto?>> GetChapterDtosAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<object>> GetChapterDtosAsync(int pageNumber, int pageSize);
 
         Task<object> GetChapterDtoByChapterIdAsync(string Id);
-
-        Task<string?> GetChapterNameAsync(string id);
 
         Task<BasePaginatedList<object>> GetChaptersAsync(int pageNumber, int pageSize);
 
@@ -35,7 +32,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         Task<BasePaginatedList<object>> GetChaptersDeletedAsync(int pageNumber, int pageSize);
 
-        Task<BasePaginatedList<ChapterViewDto>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId);
+        Task<BasePaginatedList<object>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId);
         Task<bool> UpdateChapterNumbersAsync(string subjectId, ChapterNumberDto chapterNumberDto);
     }
 }
