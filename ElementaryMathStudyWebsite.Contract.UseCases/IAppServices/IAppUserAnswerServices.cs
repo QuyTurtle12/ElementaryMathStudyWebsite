@@ -8,7 +8,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
     {
         Task<ResultProgressDto> CreateUserAnswersAsync(UserAnswerCreateDTO userAnswerCreateDTO);
         Task<UserAnswerDTO> UpdateUserAnswerAsync(string id, UserAnswerDTO userAnswerDTO);
-        Task<BasePaginatedList<object>> GetAllUserAnswersAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<UserAnswerWithDetailsDTO>> GetAllUserAnswersAsync(int pageNumber, int pageSize);
         Task<UserAnswerDTO> GetUserAnswerByIdAsync(string id);
         Task<BasePaginatedList<UserAnswerWithDetailsDTO>> GetUserAnswersByQuizIdAsync(string quizId);
     }
