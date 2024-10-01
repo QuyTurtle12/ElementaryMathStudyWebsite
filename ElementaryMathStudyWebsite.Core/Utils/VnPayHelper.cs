@@ -9,15 +9,12 @@ namespace ElementaryMathStudyWebsite.Core.Utils
 {
     public class VnPayHelper
     {
-        private readonly SortedList<string, string> _requestData = new SortedList<string, string>();
-        private readonly SortedList<string, string> _responseData = new SortedList<string, string>();
+        private readonly SortedList<string, string> _requestData = [];
+        private readonly SortedList<string, string> _responseData = [];
 
-        public void AddRequestData(string key, string? value)
+        public void AddRequestData(string key, string value)
         {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                _requestData.Add(key, value);
-            }
+            _requestData.Add(key, value);
         }
 
         public void AddResponseData(string key, string value)
@@ -34,12 +31,8 @@ namespace ElementaryMathStudyWebsite.Core.Utils
         }
 
         #region Request
-        public string CreateRequestUrl(string? baseUrl, string? vnpHashSecret)
+        public string CreateRequestUrl(string baseUrl, string vnpHashSecret)
         {
-            if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(vnpHashSecret))
-            {
-                throw new BaseException.BadRequestException("vnpay_error", "VnPay failed to implement");
-            }
             var data = new StringBuilder();
 
             foreach (var (key, value) in _requestData.Where(kv => !string.IsNullOrWhiteSpace(kv.Value)))
@@ -64,10 +57,8 @@ namespace ElementaryMathStudyWebsite.Core.Utils
         #endregion
 
         #region Response process
-        public bool ValidateSignature(string inputHash, string? secretKey)
+        public bool ValidateSignature(string inputHash, string secretKey)
         {
-            if(string.IsNullOrWhiteSpace(secretKey)) throw new BaseException.BadRequestException("vnpay_error", "VnPay failed to implement");
-
             var rspRaw = GetResponseData();
             var myChecksum = Utils.HmacSHA512(secretKey, rspRaw);
             return myChecksum.Equals(inputHash, StringComparison.InvariantCultureIgnoreCase);

@@ -57,7 +57,6 @@ namespace ElementaryMathStudyWebsite
             services.AddScoped<IAppOrderServices, OrderService>();
             services.AddScoped<IAppOrderDetailServices, OrderDetailService>();
             services.AddScoped<IAppProgressServices, ProgressService>();
-
             services.AddScoped<IAppQuizServices, QuizService>();
             services.AddScoped<IAppQuestionServices, QuestionService>();
             services.AddScoped<IAppSubjectServices, SubjectService>();
@@ -82,8 +81,9 @@ namespace ElementaryMathStudyWebsite
             services.AddAutoMapper(typeof(ProgressMappingProfile));
             services.AddAutoMapper(typeof(OrderMappingProfile));
             services.AddAutoMapper(typeof(ResultMappingProfile));
-
+            services.AddAutoMapper(typeof(QuizMappingProfile));
             services.AddAutoMapper(typeof(ChapterMappingProfile));
+            services.AddAutoMapper(typeof(OptionMappingProfile));
         }
 
         public static void AddAuthentication(this IServiceCollection services, IConfiguration configuration)

@@ -16,9 +16,16 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public string? QuizId { get; set; } // Quiz may not exist yet and can be created later
 
-        // Navigation properties
+        //Navigation properties
+        //[JsonIgnore]
+        //public virtual User? CreatedByUser { get; set; }
+        //[JsonIgnore]
+        //public virtual User? LastUpdatedByUser { get; set; }
+        //[JsonIgnore]
+        //public virtual User? DeletedByUser { get; set; }
         [JsonIgnore]
-        public virtual Subject? Subject { get; set; } // Navigation property, one chapter belong to one subject
+        public virtual Subject? Subject { get; set; }// Navigation property, one chapter belong to one subject
+
         [JsonIgnore]
         public virtual ICollection<Topic>? Topics { get; set; } // Navigation property, one chapter has many topics
         [JsonIgnore]

@@ -17,7 +17,5 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
         public virtual ICollection<UserAnswer>? Answers { get; set; } // Navigation property, one option can be in many user's answer
         [JsonIgnore]
         public virtual Question? Question { get; set; } // Navigation property, one option belong to one question
-
-
     }
 }

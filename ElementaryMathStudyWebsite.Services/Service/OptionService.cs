@@ -1,4 +1,5 @@
-﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+﻿using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
@@ -12,11 +13,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
     {
         private readonly IAppUserServices _userService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public OptionService(IAppUserServices userService, IUnitOfWork unitOfWork)
+        public OptionService(IAppUserServices userService, IUnitOfWork unitOfWork, IMapper mapper)
         {
             _userService = userService;
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         // Add option to database
@@ -39,12 +42,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             await _unitOfWork.GetRepository<Option>().InsertAsync(option);
             await _unitOfWork.SaveAsync();
 
-            return new OptionViewDto
-            {
-                OptionId = option.Id,
-                Answer = option.Answer,
-                IsCorrect = option.IsCorrect
-            };
+            return _mapper.Map<OptionViewDto>(option);
         }
 
         //Delete an option
@@ -89,15 +87,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 var allOptions = await query.ToListAsync();
 
-                foreach (var option in allOptions)
+                foreach (Option option in allOptions)
                 {
-                    OptionViewDto dto = new()
-                    {
-                        OptionId = option.Id,
-                        Answer = option.Answer,
-                        IsCorrect = option.IsCorrect
-                    };
-                    optionViewDtos.Add(dto);
+                    optionViewDtos.Add(_mapper.Map<OptionViewDto>(option));
                 }
                 return new BasePaginatedList<OptionViewDto>(optionViewDtos, optionViewDtos.Count, 1, optionViewDtos.Count);
             }
@@ -107,13 +99,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             foreach (var option in paginatedOptions.Items)
             {
-                OptionViewDto dto = new()
-                {
-                    OptionId = option.Id,
-                    Answer = option.Answer,
-                    IsCorrect = option.IsCorrect
-                };
-                optionViewDtos.Add(dto);
+                optionViewDtos.Add(_mapper.Map<OptionViewDto>(option));
             }
 
             return new BasePaginatedList<OptionViewDto>(optionViewDtos, paginatedOptions.TotalItems, pageNumber, pageSize);
@@ -127,7 +113,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Negative params = show all 
             if (pageNumber <= 0 || pageSize <= 0)
             {
-                List<Option> allOptions = query.ToList();
+                List<Option> allOptions = await query.ToListAsync();
                 return new BasePaginatedList<Option>(allOptions, allOptions.Count, 1, allOptions.Count);
             }
 
@@ -152,12 +138,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             await _unitOfWork.SaveAsync();
 
-            return new OptionViewDto
-            {
-                OptionId = option.Id,
-                Answer = option.Answer,
-                IsCorrect = option.IsCorrect,
-            };
+            return _mapper.Map<OptionViewDto>(option);
+
         }
     }
 }

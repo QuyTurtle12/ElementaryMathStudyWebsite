@@ -32,16 +32,23 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<double> CalculateLatestStudentScoreAsync(string quizId, string studentId)
         {
             // Get a list of question base on quiz id
-            IQueryable<Question> questionQuery = _unitOfWork.GetRepository<Question>().Entities
-                .Where(q => q.QuizId.Equals(quizId) && string.IsNullOrWhiteSpace(q.DeletedBy));
+            IQueryable<Question> questionQuery = _unitOfWork.GetRepository<Question>()
+                                    .GetEntitiesWithCondition(
+                                        q => q.QuizId.Equals(quizId) &&
+                                        string.IsNullOrWhiteSpace(q.DeletedBy));
 
-            var questionList = await questionQuery.ToListAsync();
+            ICollection<Question> questionList = await questionQuery.ToListAsync();
+
+            if (!questionList.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", $"The system didn't find any question related to quiz Id {quizId}");
+            }
 
             // Count the student's correct answer
             int correctAnswer = 0;
             int totalQuestion = questionList.Count;
 
-            foreach (var question in questionList)
+            foreach (Question question in questionList)
             {
                 // Query student answers for the specific question and student
                 IQueryable<UserAnswer>? studentAnswers = _unitOfWork.GetRepository<UserAnswer>().Entities
@@ -51,22 +58,24 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 int latestAttemptNumber = studentAnswers.Any() ? studentAnswers.Max(ua => ua.AttemptNumber) : 0;
 
                 // Query the user's answers for the latest attempt
-                List<UserAnswer> latestStudentAnswers = studentAnswers
+                IEnumerable<UserAnswer> latestStudentAnswers = studentAnswers
                     .Where(ua => ua.AttemptNumber == latestAttemptNumber)
                     .ToList();
 
 
                 // Get the list of correct answer of the question
-                IQueryable<Option>? correctOption = _unitOfWork.GetRepository<Option>().Entities
-                    .Where(o => o.QuestionId.Equals(question.Id) && o.IsCorrect == true && string.IsNullOrWhiteSpace(o.DeletedBy));
+                IQueryable<Option>? correctOption = _unitOfWork.GetRepository<Option>()
+                    .GetEntitiesWithCondition(o =>
+                        o.QuestionId.Equals(question.Id) &&
+                        o.IsCorrect == true && string.IsNullOrWhiteSpace(o.DeletedBy));
 
                 // Check student's answer
-                foreach (var userAnswer in latestStudentAnswers)
+                foreach (UserAnswer userAnswer in latestStudentAnswers)
                 {
                     if (userAnswer != null)
                     {
                         // Use for multiple choices and single choice
-                        foreach (var option in correctOption)
+                        foreach (Option option in correctOption)
                         {
                             // Check if the user choice is correct
                             if (userAnswer.OptionId.Equals(option?.Id))
@@ -93,7 +102,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     r => r.Student!
                 );
 
-            var studentResultList = await resultQuery.ToListAsync();
+            IEnumerable<Result> studentResultList = await resultQuery.ToListAsync();
 
             // Get the latest attempt number
             int latestAttemptNumber = studentResultList.Any() ? studentResultList.Max(r => r.AttemptNumber) : 0;
@@ -122,33 +131,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Get student results from database
             IQueryable<Result> resultQuery = _unitOfWork.GetRepository<Result>().GetEntitiesWithCondition(
-                        r => r.QuizId.Equals(quizId) && r.StudentId.Equals(currentUser.Id),
-                        r => r.Quiz!,
-                        r => r.Student!
+                        r => r.QuizId.Equals(quizId) && r.StudentId.Equals(currentUser.Id), // Condition
+                        r => r.Quiz!,                                                       // Include Quiz
+                        r => r.Student!                                                     // Include Student
                     );
 
-            var studentResultList = await resultQuery.ToListAsync();
+            IEnumerable<Result> studentResultList = await resultQuery.ToListAsync();
 
-            IList<ResultViewDto> resultViewDtos = new List<ResultViewDto>();
-
-            // Map result data to view dto
-            foreach (var result in studentResultList)
+            if (!studentResultList.Any())
             {
-                var dto = _mapper.Map<ResultViewDto>(result);
-
-                //ResultViewDto dto = new()
-                //{
-                //    StudentId = result.StudentId,
-                //    StudentName = result.Student.FullName,
-                //    QuizId = result.QuizId,
-                //    QuizName = result.Quiz.QuizName,
-                //    Score = result.Score,
-                //    Attempt = result.AttemptNumber,
-                //    DateTaken = result.DateTaken
-                //};
-
-                resultViewDtos.Add(dto);
+                throw new BaseException.NotFoundException("not_found", "This student hasn't done any test in this quiz yet");
             }
+
+            ICollection<ResultViewDto> resultViewDtos = studentResultList.Select(result => _mapper.Map<ResultViewDto>(result)).ToList();
 
             // Show all student's results in 1 page
             if (pageNumber < 0 || pageSize < 0)
@@ -186,7 +181,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     DateTaken = CoreHelper.SystemTimeNow,
                     Quiz = quiz,
                     Student = user
-
                 };
 
                 await _unitOfWork.GetRepository<Result>().InsertAsync(studentResult);
@@ -241,13 +235,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private async Task<int> GetLatestAttemptNumber(string studentId, string quizId)
         {
             // Get a list of question base on quiz id
-            Question? question = await _unitOfWork.GetRepository<Question>().FindByConditionAsync(q => q.QuizId.Equals(quizId) && string.IsNullOrWhiteSpace(q.DeletedBy));
+            Question? question = await _unitOfWork.GetRepository<Question>()
+                .FindByConditionAsync(q =>
+                    q.QuizId.Equals(quizId) &&
+                    string.IsNullOrWhiteSpace(q.DeletedBy));
 
             if (question != null)
             {
                 // Query student answers for the specific question and student
-                IQueryable<UserAnswer>? studentAnswers = _unitOfWork.GetRepository<UserAnswer>().Entities
-                    .Where(ua => ua.UserId.Equals(studentId) && ua.QuestionId.Equals(question.Id));
+                IQueryable<UserAnswer>? studentAnswers = _unitOfWork.GetRepository<UserAnswer>()
+                    .GetEntitiesWithCondition(ua =>
+                        ua.UserId.Equals(studentId) &&
+                        ua.QuestionId.Equals(question.Id));
 
                 // Get the latest attempt number
                 int latestAttemptNumber = studentAnswers.Any() ? studentAnswers.Max(ua => ua.AttemptNumber) : 0;
@@ -268,31 +267,42 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     r => r.Quiz!,  // Include related Quiz entity
                     r => r.Student! // Include related Student entity
                 );
+            User currentUser = await _userServices.GetCurrentUserAsync();
+
+            if (!await _userServices.IsCustomerChildren(currentUser.Id, studentId))
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "They are not parent and child relationship");
+            }
 
             // Group the results by QuizId and select the result with the highest AttemptNumber for each quiz
-            var latestResultsForEachQuiz = await resultQuery
+            IEnumerable<Result?> latestResultsForEachQuiz = await resultQuery
                 .GroupBy(r => r.QuizId)  // Group by QuizId
                 .Select(g => g.OrderByDescending(r => r.AttemptNumber).FirstOrDefault())  // Get the latest attempt per quiz
                 .ToListAsync();  // Execute the query and get a list of results
 
-            // Create a list to hold the results with their subject names
-            var resultWithSubject = new List<(string SubjectId, string SubjectName, Result Result)>();
-
-            foreach (var result in latestResultsForEachQuiz)
+            if (!latestResultsForEachQuiz.Any())
             {
-                if (result != null)
-                {
-                    // Fetch subject ID from the quiz ID, then fetch the subject name
-                    var subjectId = await _progressServices.GetSubjectIdFromQuizIdAsync(result.QuizId);
-                    var subjectName = await _subjectServices.GetSubjectNameAsync(subjectId);
-
-                    // Add the result along with its subject ID and name to the list
-                    resultWithSubject.Add((subjectId, subjectName, result));
-                }
+                throw new BaseException.NotFoundException("not_found", "Cannot find this student result");
             }
 
-            // Group the results by subject name in-memory
-            var groupedResultsBySubject = resultWithSubject
+            // Create a list to hold the results with their subject names
+            List<(string SubjectId, string SubjectName, Result Result)> resultWithSubject = (await Task.WhenAll(latestResultsForEachQuiz.Select(async result =>
+            {
+                // Check null
+                result = result ?? throw new BaseException.NotFoundException("not_found", $"Cannot find this student's quiz result.");
+
+                // Fetch subject ID from the quiz ID, then fetch the subject name
+                string subjectId = await _progressServices.GetSubjectIdFromQuizIdAsync(result.QuizId);
+                string subjectName = await _subjectServices.GetSubjectNameAsync(subjectId);
+                return (subjectId, subjectName, result);
+            }))).ToList();
+
+            // Get the student latest result
+            ResultParentViewDto resultParentViewDto = new ResultParentViewDto
+            {
+                StudentId = studentId,
+                StudentName = latestResultsForEachQuiz.FirstOrDefault()?.Student?.FullName ?? string.Empty,
+                subjectResults = resultWithSubject
                 .GroupBy(rs => new { rs.SubjectId, rs.SubjectName })  // Group by both SubjectId and SubjectName
                 .Select(g => new SubjectResult
                 {
@@ -305,15 +315,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         Score = rs.Result.Score,  // Set Score
                         DateTaken = rs.Result.DateTaken  // Set DateTaken
                     }).ToList()  // Create a list of ResultInfo for each subject
-                }).ToList();
-
-            // Create the parent view DTO
-            var resultParentViewDto = new ResultParentViewDto
-            {
-                StudentId = studentId,
-                StudentName = latestResultsForEachQuiz.FirstOrDefault()?.Student?.FullName ?? string.Empty,
-                subjectResults = groupedResultsBySubject
-            };
+                }).ToList()
+        };
 
             return resultParentViewDto;
         }

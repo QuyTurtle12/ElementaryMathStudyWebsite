@@ -18,8 +18,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.OrderMapp
             // Mapping for Order to OrderViewDto
             CreateMap<Order, OrderViewDto>()
                 .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.Id))
-                .ForMember(dest => dest.OrderDate, opt => opt.MapFrom(src => src.CreatedTime))
                 .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.User != null ? src.User.FullName : string.Empty))
+                .ForMember(dest => dest.OrderDate, opt => opt.MapFrom(src => src.CreatedTime))
                 .ForPath(dest => dest.Details, opt => opt.MapFrom(src => src.OrderDetails));
 
             // Mapping for Order to OrderAdminViewDto
