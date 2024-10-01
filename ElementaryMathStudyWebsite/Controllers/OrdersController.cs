@@ -21,8 +21,13 @@ namespace ElementaryMathStudyWebsite.Controllers
             _orderDetailService = orderDetailService;
         }
 
-        // GET: api/orders/manager
-        // Get orders for Manager & Admin
+        /// <summary>
+        /// GET: api/orders/manager
+        /// Get orders for Admin & Manager 
+        /// </summary>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>& Admin
         [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("manager")]
@@ -90,6 +95,16 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/orders
         // Get orders for general user
+
+        //// GET: api/orders/manager/{id}
+        //// Get orders for Manager & Admin
+        /// <summary>
+        /// GET: api/orders
+        /// Get orders for Parent
+        /// </summary>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
         [HttpGet]
         [Authorize(Policy = "Parent")]
         [SwaggerOperation(
@@ -137,6 +152,15 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/orders/detail
         // Get order detail list of order for parent
+
+        /// <summary>
+        /// GET: api/orders/detail
+        /// Get orders for Admin & Manager & Parent
+        /// </summary>
+        /// <param name="orderId"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
         [Authorize(Policy = "Admin-Manager-Parent")]
         [HttpGet]
         [Route("detail")]
@@ -152,8 +176,16 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
 
-        // GET: api/orders/search
-        // Search order dto list by filter
+        /// <summary>
+        /// GET: api/orders/search
+        /// Search order dto list by filter
+        /// </summary>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="firstInputValue"></param>
+        /// <param name="secondInputValue"></param>
+        /// <param name="filter"></param>
+        /// <returns></returns>
         [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("search")]
