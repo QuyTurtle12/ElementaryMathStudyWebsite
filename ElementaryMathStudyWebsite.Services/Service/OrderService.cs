@@ -53,7 +53,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                             string.IsNullOrWhiteSpace(o.DeletedBy)
                             );
 
-            if (query.Any()) throw new BaseException.BadRequestException("invalid_argument", "You already have something in your cart, please discard your current cart or proceed to checkout");
+            if (query.Any()) throw new BaseException.BadRequestException(
+                "invalid_argument",
+                "You already have something in your cart, please discard your current cart or proceed to checkout"
+            );
 
             // General Validation for each Subject-Student pair
             foreach (var subjectStudent in cartCreateDto.SubjectStudents)
@@ -91,18 +94,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     SubjectId = subjectStudent.SubjectId,
                     StudentId = subjectStudent.StudentId
                 };
-                string? studentName = await _userService.GetUserNameAsync(orderDetail.StudentId);
-                string? subjectName = await _subjectService.GetSubjectNameAsync(orderDetail.SubjectId);
 
-                OrderDetailViewDto dto = new()
-                {
-                    SubjectId = subjectStudent.SubjectId,
-                    StudentId = subjectStudent.StudentId,
-                    StudentName = studentName,
-                    SubjectName = subjectName
-                };
-
-                detailDtos.Add(dto);
+                detailDtos.Add(_mapper.Map<OrderDetailViewDto>(orderDetail));
 
                 // Add order detail in database
                 bool IsAddedNewOrderDetail = await _orderDetailService.AddOrderDetailAsync(orderDetail);
@@ -114,17 +107,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.CoreException("server_error", "Failed to create order detail");
             }
 
-            return new OrderViewDto
-            {
-                OrderId = order.Id,
-                CustomerId = currentUser.Id,
-                CustomerName = currentUser.FullName,
-                TotalPrice = order.TotalPrice,
-                Status = order.Status,
-                OrderDate = order.CreatedTime,
-                PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null,
-                Details = detailDtos
-            }; // Show that create order process is completed
+            OrderViewDto orderViewDto = _mapper.Map<OrderViewDto>(order);
+
+            orderViewDto.PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null;
+
+            return orderViewDto; // Show that create order process is completed
         }
 
         /// <summary>
@@ -190,37 +177,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 "You have no items in your cart"
             );
 
-            var cart = orderQuery.First();
-            IQueryable<OrderDetail> orderDetailQuery = _unitOfWork.GetRepository<OrderDetail>().GetEntitiesWithCondition(o => o.OrderId == cart.Id);
-            List<OrderDetailViewDto> detailDtos = [];
+            Order cart = orderQuery.First();
 
-            foreach (var orderDetail in orderDetailQuery)
-            {
-                string? studentName = await _userService.GetUserNameAsync(orderDetail.StudentId);
-                string? subjectName = await _subjectService.GetSubjectNameAsync(orderDetail.SubjectId);
+            OrderViewDto orderViewDto = _mapper.Map<OrderViewDto>(cart);
 
-                OrderDetailViewDto dto = new()
-                {
-                    SubjectId = orderDetail.SubjectId,
-                    StudentId = orderDetail.StudentId,
-                    StudentName = studentName,
-                    SubjectName = subjectName
-                };
+            BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, cart.Id);
+            orderViewDto.Details = detailList.Items;
 
-                detailDtos.Add(dto);
-            }
-
-            return new OrderViewDto
-            {
-                OrderId = cart.Id,
-                CustomerId = currentUser.Id,
-                CustomerName = currentUser.FullName,
-                TotalPrice = cart.TotalPrice,
-                PaymentMethod = cart.PaymentMethod,
-                Status = cart.Status,
-                OrderDate = cart.CreatedTime,
-                Details = detailDtos,
-            };
+            orderViewDto.PurchaseDate = (cart.Status == PaymentStatusHelper.SUCCESS.ToString()) ? cart.LastUpdatedTime : null;
+            return _mapper.Map<OrderViewDto>(cart);
         }
 
         public async Task<string> HandleVnPayCallback(string orderId, bool isSuccess)
