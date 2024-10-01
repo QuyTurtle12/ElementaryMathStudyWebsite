@@ -84,11 +84,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             BasePaginatedList<ResultViewDto> results = await _resultService.GetStudentResultListAsync(quizId, pageNumber, pageSize);
 
-            if (!results.Items.Any())
-            {
-                throw new BaseException.BadRequestException("invalid_argument", "This student hasn't done any test in this quiz yet");
-            }
-
             var response = BaseResponse<BasePaginatedList<ResultViewDto>>.OkResponse(results);
             return response;
         }
