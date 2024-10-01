@@ -91,26 +91,47 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("duplicate_questions", $"Duplicate Question IDs found: {duplicateIds}");
             }
 
+            List<string> questionIds = userAnswerCreateDTO.UserAnswerList.Select(ua => ua.QuestionId).ToList();
+            List<string> optionIds = userAnswerCreateDTO.UserAnswerList.Select(ua => ua.OptionId).ToList();
+
+            // Check if all question IDs exist
+            List<string> existingQuestions = await _unitOfWork.GetRepository<Question>()
+                                        .Entities
+                                        .Where(q => questionIds.Contains(q.Id))
+                                        .Select(q => q.Id)
+                                        .ToListAsync();
+
+            if (existingQuestions.Count != questionIds.Count)
+            {
+                string? missingQuestionId = questionIds.Except(existingQuestions).FirstOrDefault();
+                throw new BaseException.NotFoundException("question_not_found", $"Question with ID '{missingQuestionId}' not found.");
+            }
+
+            // Check if all option IDs exist
+            List<string> existingOptions = await _unitOfWork.GetRepository<Option>()
+                                      .Entities
+                                      .Where(o => optionIds.Contains(o.Id))
+                                      .Select(o => o.Id)
+                                      .ToListAsync();
+
+            if (existingOptions.Count != optionIds.Count)
+            {
+                string? missingOptionId = optionIds.Except(existingOptions).FirstOrDefault();
+                throw new BaseException.NotFoundException("option_not_found", $"Option with ID '{missingOptionId}' not found.");
+            }
+
+            // Pre-fetch existing user answers to avoid querying inside the loop
+            List<UserAnswer> userAnswers = await _unitOfWork.GetRepository<UserAnswer>()
+                                   .Entities
+                                   .Where(ua => questionIds.Contains(ua.QuestionId) && ua.UserId == currentUserId)
+                                   .ToListAsync();
+
             foreach (var userAnswerDTO in userAnswerCreateDTO.UserAnswerList)
             {
-                // Check if QuestionId exists
-                if (!await _unitOfWork.GetRepository<Question>().Entities.AnyAsync(q => q.Id == userAnswerDTO.QuestionId))
-                {
-                    throw new BaseException.NotFoundException("question_not_found", $"Question with ID '{userAnswerDTO.QuestionId}' not found.");
-                }
-
-                // Check if OptionId exists
-                if (!await _unitOfWork.GetRepository<Option>().Entities.AnyAsync(o => o.Id == userAnswerDTO.OptionId))
-                {
-                    throw new BaseException.NotFoundException("option_not_found", $"Option with ID '{userAnswerDTO.OptionId}' not found.");
-                }
-
-                // Check if a user answer already exists for this question and user
-                UserAnswer? existingUserAnswer = await _unitOfWork.GetRepository<UserAnswer>()
-                                                .Entities
-                                                .Where(ua => ua.QuestionId == userAnswerDTO.QuestionId && ua.UserId == currentUserId)
-                                                .OrderByDescending(ua => ua.AttemptNumber)
-                                                .FirstOrDefaultAsync();
+                UserAnswer? existingUserAnswer = userAnswers
+                    .Where(ua => ua.QuestionId == userAnswerDTO.QuestionId)
+                    .OrderByDescending(ua => ua.AttemptNumber)
+                    .FirstOrDefault();
 
                 int attemptNumber = existingUserAnswer != null ? existingUserAnswer.AttemptNumber + 1 : 1;
 
@@ -124,6 +145,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 await _unitOfWork.GetRepository<UserAnswer>().InsertAsync(userAnswer);
             }
+
 
             // Save all changes after the loop
             await _unitOfWork.GetRepository<UserAnswer>().SaveAsync();
