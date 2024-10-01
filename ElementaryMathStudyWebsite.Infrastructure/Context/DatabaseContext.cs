@@ -2,10 +2,11 @@
 using ElementaryMathStudyWebsite.Core.Base;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Entity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace ElementaryMathStudyWebsite.Infrastructure.Context
 {
-    public class DatabaseContext : DbContext
+    public class DatabaseContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
     {
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
@@ -23,9 +24,14 @@ namespace ElementaryMathStudyWebsite.Infrastructure.Context
         public DbSet<UserAnswer> UserAnswer { get; set; }
         public DbSet<Result> Result { get; set; }
 
+        public DbSet<ApplicationUserClaims> ApplicationUserClaims { get; set; }
+        public DbSet<ApplicationRoleClaims> ApplicationRoleClaims { get; set; }
+
         // Mapping Configuration
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             // Composite key
             modelBuilder.Entity<Progress>()
                 .HasKey(p => new { p.StudentId, p.QuizId });

@@ -14,6 +14,8 @@ using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ChapterMappin
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ProgressMappings;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.OrderMappings;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ResultMappings;
+using ElementaryMathStudyWebsite.Core.Entity;
+using Microsoft.AspNetCore.Identity;
 
 
 namespace ElementaryMathStudyWebsite
@@ -24,6 +26,7 @@ namespace ElementaryMathStudyWebsite
         {
             services.ConfigRoute();
             services.AddDatabase(configuration);
+            services.AddIdentity();
             services.AddInfrastructure(configuration);
             services.AddServices();
             services.AddMapping();
@@ -43,8 +46,17 @@ namespace ElementaryMathStudyWebsite
         {
             services.AddDbContext<DatabaseContext>(options =>
             {
-                options.UseSqlServer(configuration.GetConnectionString("MyElementaryMathStudyDb"));
+                options.UseLazyLoadingProxies().UseSqlServer(configuration.GetConnectionString("MyElementaryMathStudyDb"));
             });
+        }
+
+        public static void AddIdentity(this IServiceCollection services)
+        {
+            services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+            {
+            })
+             .AddEntityFrameworkStores<DatabaseContext>()
+             .AddDefaultTokenProviders();
         }
 
         public static void AddServices(this IServiceCollection services)

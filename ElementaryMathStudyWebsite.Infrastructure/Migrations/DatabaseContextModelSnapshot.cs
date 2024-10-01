@@ -43,7 +43,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasIndex("QuizId");
 
-                    b.ToTable("Result");
+                    b.ToTable("Result", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Entity.Subject", b =>
@@ -81,7 +81,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subject");
+                    b.ToTable("Subject", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Entity.UserAnswer", b =>
@@ -105,7 +105,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserAnswer");
+                    b.ToTable("UserAnswer", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Chapter", b =>
@@ -156,7 +156,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("Chapter");
+                    b.ToTable("Chapter", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Option", b =>
@@ -197,7 +197,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("Option");
+                    b.ToTable("Option", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Order", b =>
@@ -242,7 +242,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("Order");
+                    b.ToTable("Order", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.OrderDetail", b =>
@@ -262,7 +262,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("OrderDetail");
+                    b.ToTable("OrderDetail", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Progress", b =>
@@ -288,7 +288,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Progress");
+                    b.ToTable("Progress", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Question", b =>
@@ -341,7 +341,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasIndex("QuizId");
 
-                    b.ToTable("Question");
+                    b.ToTable("Question", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Quiz", b =>
@@ -379,7 +379,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Quiz");
+                    b.ToTable("Quiz", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Role", b =>
@@ -411,7 +411,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Role");
+                    b.ToTable("Role", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Topic", b =>
@@ -465,7 +465,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .IsUnique()
                         .HasFilter("[QuizId] IS NOT NULL");
 
-                    b.ToTable("Topic");
+                    b.ToTable("Topic", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", b =>
@@ -533,7 +533,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("User");
+                    b.ToTable("User", (string)null);
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Entity.Result", b =>
