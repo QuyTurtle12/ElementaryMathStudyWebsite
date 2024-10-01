@@ -13,6 +13,7 @@ using System.Text;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ProgressMappings;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.OrderMappings;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ResultMappings;
+using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.TopicMappings;
 
 
 namespace ElementaryMathStudyWebsite
@@ -81,6 +82,7 @@ namespace ElementaryMathStudyWebsite
             services.AddAutoMapper(typeof(ProgressMappingProfile));
             services.AddAutoMapper(typeof(OrderMappingProfile));
             services.AddAutoMapper(typeof(ResultMappingProfile));
+            services.AddAutoMapper(typeof(TopicMappingProfile));
 
         }
 
