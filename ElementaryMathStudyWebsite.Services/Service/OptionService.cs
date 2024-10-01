@@ -61,18 +61,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return true;
         }
 
-        // Get an option with all properties
-        public async Task<Option> GetOptionById(string optionId)
-        {
-            Option? option;
-
-            if (_unitOfWork.IsValid<Option>(optionId))
-                option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionId);
-            else throw new BaseException.NotFoundException("not_found", "Option ID not found");
-
-            return option!;
-        }
-
         // Get options of a question for general user
         public async Task<BasePaginatedList<OptionViewDto>> GetOptionDtosByQuestion(int pageNumber, int pageSize, string questionId)
         {
@@ -103,22 +91,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             return new BasePaginatedList<OptionViewDto>(optionViewDtos, paginatedOptions.TotalItems, pageNumber, pageSize);
-        }
-
-        // Get options with all properties
-        public async Task<BasePaginatedList<Option>> GetOptions(int pageNumber, int pageSize)
-        {
-            IQueryable<Option> query = _unitOfWork.GetRepository<Option>().Entities.Where(q => q.DeletedBy == null);
-
-            // Negative params = show all 
-            if (pageNumber <= 0 || pageSize <= 0)
-            {
-                List<Option> allOptions = await query.ToListAsync();
-                return new BasePaginatedList<Option>(allOptions, allOptions.Count, 1, allOptions.Count);
-            }
-
-            // Show with pagination
-            return await _unitOfWork.GetRepository<Option>().GetPagging(query, pageNumber, pageSize);
         }
 
         // Update an option
