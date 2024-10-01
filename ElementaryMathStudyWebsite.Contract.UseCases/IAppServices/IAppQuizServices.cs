@@ -18,6 +18,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         Task<QuizMainViewDto> AddQuizAsync(QuizCreateDto dto);
         Task<QuizMainViewDto> UpdateQuizAsync(string quizid, QuizUpdateDto dto);
-        Task<bool> DeleteQuizAsync(string quizId);
+        Task<BaseResponse<string>> DeleteQuizAsync(string quizId);
     }
 }

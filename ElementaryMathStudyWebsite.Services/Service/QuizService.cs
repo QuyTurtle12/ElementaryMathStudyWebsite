@@ -42,7 +42,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Get Quiz by its quizId
-        // thêm cái topic hoặc chapter của chính nó
         public async Task<QuizMainViewDto> GetQuizByQuizIdAsync(string quizId)
         {
             // Fetch the quiz by its Id
@@ -63,6 +62,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return dto; // Return the populated QuizMainViewDto
         }
 
+        // Get quizzes with pagination
         public async Task<BasePaginatedList<QuizMainViewDto>> GetQuizzesAsync(int pageNumber, int pageSize)
         {
             // Query all quizzes excluding deleted ones
@@ -220,29 +220,35 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Delete a quiz
-        public async Task<bool> DeleteQuizAsync(string quizId)
+        public async Task<BaseResponse<string>> DeleteQuizAsync(string quizId)
         {
             Quiz? quiz;
 
             if (_unitOfWork.IsValid<Quiz>(quizId))
+            {
                 quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizId);
-            else throw new BaseException.NotFoundException("not_found", "Quiz ID not found");
+            }
+            else
+            {
+                throw new BaseException.NotFoundException("not_found", "Quiz ID not found");
+            }
 
+            // Audit the quiz to mark it as deleted
             _userService.AuditFields(quiz!, false, true);
 
             await _unitOfWork.SaveAsync();
 
-            IQueryable<Question> query = _unitOfWork.GetRepository<Question>().GetEntitiesWithCondition(
-                            q => q.QuizId == quizId &&
-                            string.IsNullOrWhiteSpace(q.DeletedBy)
-                            );
+            // Fetch all related questions that are not already deleted
+            List<Question> questionsToDelete = await _unitOfWork.GetRepository<Question>()
+                .GetEntitiesWithCondition(q => q.QuizId == quizId && string.IsNullOrWhiteSpace(q.DeletedBy))
+                .ToListAsync();
 
-            foreach (var question in query)
-            {
-                await _questionService.DeleteQuestion(question.Id);
-            }
+            // Use Task.WhenAll to delete all questions asynchronously
+            var deleteTasks = questionsToDelete.Select(q => _questionService.DeleteQuestion(q.Id));
+            await Task.WhenAll(deleteTasks);
 
-            return true;
+            // Return a success response
+            return BaseResponse<string>.OkResponse("Quiz deleted successfully.");
         }
 
         //===================================================================================================
