@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using Swashbuckle.AspNetCore.Annotations;
-using Microsoft.AspNetCore.Authorization;
-using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
-using AutoMapper;
+﻿using AutoMapper;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using ElementaryMathStudyWebsite.Core.Base;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -46,10 +47,10 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return BadRequest(ModelState);
             }
 
-                // Authenticate and generate token
-                string token = await _authService.LoginAsync(loginDto);
-                return Ok(new { Token = token });
-      
+            // Authenticate and generate token
+            string token = await _authService.LoginAsync(loginDto);
+            return Ok(new { Token = token });
+
         }
 
         /// <summary>
@@ -94,15 +95,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-
-            // Extract role ID from the token
-            var userId = _tokenService.GetUserIdFromTokenHeader(token);
-
-            if (userId == Guid.Empty)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId) || userId == Guid.Empty)
             {
                 return Unauthorized();
             }
+
             var user = await _userServices.GetUserByIdAsync(userId.ToString());
 
             if (user == null || string.IsNullOrWhiteSpace(user.Email))
@@ -110,22 +108,19 @@ namespace ElementaryMathStudyWebsite.Controllers
                 throw new BaseException.NotFoundException("not_found", "User or Email not found");
             }
 
-                await _authService.StudentRegisterAsync(registerDto, user.Email, user.Id);
-                var response = BaseResponse<String>.OkResponse("Registration successful. Please check your email for verification.");
+            await _authService.StudentRegisterAsync(registerDto, user.Email, user.Id);
+            var response = BaseResponse<String>.OkResponse("Registration successful. Please check your email for verification.");
 
-                return Ok(response);
-
+            return Ok(response);
         }
 
         [HttpGet("verify-email")]
         public async Task<IActionResult> VerifyEmailAsync([FromQuery] string token)
         {
+            await _authService.VerifyEmailAsync(token);
+            var response = BaseResponse<String>.OkResponse("Email verified successfully.");
 
-                await _authService.VerifyEmailAsync(token);
-                var response = BaseResponse<String>.OkResponse("Email verified successfully.");
-
-                return Ok(response);
-
+            return Ok(response);
         }
 
         [HttpGet]
@@ -136,24 +131,22 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> GetAllRoles([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
+            var paginatedRoles = await _roleService.GetAllRolesAsync(pageNumber, pageSize);
 
-                var paginatedRoles = await _roleService.GetAllRolesAsync(pageNumber, pageSize);
+            // Map users to UserResponseDto
+            var roleDtos = _mapper.Map<IEnumerable<RoleDto>>(paginatedRoles.Items);
 
-                // Map users to UserResponseDto
-                var roleDtos = _mapper.Map<IEnumerable<RoleDto>>(paginatedRoles.Items);
+            // Create a new paginated list of UserResponseDto
+            var paginatedRoleDtos = new BasePaginatedList<RoleDto>(
+                roleDtos.ToList(),
+                paginatedRoles.TotalItems,
+                paginatedRoles.CurrentPage,
+                paginatedRoles.PageSize
+            );
 
-                // Create a new paginated list of UserResponseDto
-                var paginatedRoleDtos = new BasePaginatedList<RoleDto>(
-                    roleDtos.ToList(),
-                    paginatedRoles.TotalItems,
-                    paginatedRoles.CurrentPage,
-                    paginatedRoles.PageSize
-                );
+            var response = BaseResponse<BasePaginatedList<RoleDto>>.OkResponse(paginatedRoleDtos);
 
-                var response = BaseResponse<BasePaginatedList<RoleDto>>.OkResponse(paginatedRoleDtos);
-
-                return Ok(response);
-
+            return Ok(response);
         }
 
         [HttpPost]
@@ -169,18 +162,16 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 throw new BaseException.BadRequestException("invalid_argument", "Role data is required.");
             }
-
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+            var role = await _roleService.CreateRoleAsync(createRoleDto);
+            var roleResponseDto = _mapper.Map<RoleDto>(role);
 
-                var role = await _roleService.CreateRoleAsync(createRoleDto);
-                var roleResponseDto = _mapper.Map<RoleDto>(role);
+            var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
 
-                var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
-
-                return Ok(response);
+            return Ok(response);
 
         }
 
@@ -209,12 +200,12 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             }
 
-                var role = await _roleService.UpdateRoleAsync(roleId, roleDto);
-                var roleResponseDto = _mapper.Map<RoleDto>(role);
+            var role = await _roleService.UpdateRoleAsync(roleId, roleDto);
+            var roleResponseDto = _mapper.Map<RoleDto>(role);
 
-                var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
+            var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
 
-                return Ok(response);
+            return Ok(response);
 
         }
 
@@ -231,14 +222,14 @@ namespace ElementaryMathStudyWebsite.Controllers
                 throw new BaseException.BadRequestException("invalid_argument", "Role ID is required.");
             }
 
-                var role = await _roleService.GetRoleByIdAsync(roleId);
+            var role = await _roleService.GetRoleByIdAsync(roleId);
 
 
-                var roleResponseDto = _mapper.Map<RoleDto>(role);
+            var roleResponseDto = _mapper.Map<RoleDto>(role);
 
-                var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
+            var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
 
-                return Ok(response);
+            return Ok(response);
 
         }
 
@@ -262,11 +253,11 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             }
 
-                var role = await _roleService.DeleteRoleAsync(roleId);
+            var role = await _roleService.DeleteRoleAsync(roleId);
 
-                var response = BaseResponse<string>.OkResponse("Delete successfully");
+            var response = BaseResponse<string>.OkResponse("Delete successfully");
 
-                return Ok(response);
+            return Ok(response);
 
         }
 
@@ -282,12 +273,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            await _authService.ForgotPasswordAsync(request.Email, request.UserName);
+            var response = BaseResponse<string>.OkResponse("Password reset link has been sent to your email.");
 
-                await _authService.ForgotPasswordAsync(request.Email, request.UserName);
-                var response = BaseResponse<string>.OkResponse("Password reset link has been sent to your email.");
-
-                return Ok(response);
-
+            return Ok(response);
         }
 
         /// <summary>
@@ -301,22 +290,20 @@ namespace ElementaryMathStudyWebsite.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-                await _authService.ResetPasswordAsync(resetPasswordDto.Token, resetPasswordDto.NewPassword);
-                var response = BaseResponse<string>.OkResponse("Password has been successfully reset.");
+            await _authService.ResetPasswordAsync(resetPasswordDto.Token, resetPasswordDto.NewPassword);
+            var response = BaseResponse<string>.OkResponse("Password has been successfully reset.");
 
-                return Ok(response);
-
+            return Ok(response);
         }
 
         [HttpGet("verify-reset-password-token")]
         public async Task<IActionResult> VerifyResetPasswordEmailAsync([FromQuery] string token)
         {
 
-                await _authService.VerifyResetPasswordTokenAsync(token);
-                var response = BaseResponse<String>.OkResponse(token);
+            await _authService.VerifyResetPasswordTokenAsync(token);
+            var response = BaseResponse<String>.OkResponse(token);
 
-                return Ok(response);
-
+            return Ok(response);
         }
     }
 }

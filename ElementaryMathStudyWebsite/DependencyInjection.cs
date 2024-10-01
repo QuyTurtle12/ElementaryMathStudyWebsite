@@ -57,7 +57,6 @@ namespace ElementaryMathStudyWebsite
             services.AddScoped<IAppOrderServices, OrderService>();
             services.AddScoped<IAppOrderDetailServices, OrderDetailService>();
             services.AddScoped<IAppProgressServices, ProgressService>();
-
             services.AddScoped<IAppQuizServices, QuizService>();
             services.AddScoped<IAppQuestionServices, QuestionService>();
             services.AddScoped<IAppSubjectServices, SubjectService>();
@@ -82,6 +81,7 @@ namespace ElementaryMathStudyWebsite
             services.AddAutoMapper(typeof(ProgressMappingProfile));
             services.AddAutoMapper(typeof(OrderMappingProfile));
             services.AddAutoMapper(typeof(ResultMappingProfile));
+            services.AddAutoMapper(typeof(QuizMappingProfile));
             services.AddAutoMapper(typeof(ChapterMappingProfile));
             services.AddAutoMapper(typeof(OptionMappingProfile));
         }
@@ -109,6 +109,7 @@ namespace ElementaryMathStudyWebsite
                     options.Events = new JwtBearerEvents
                     {
                         OnForbidden = context =>
+
                         {
                             context.Response.StatusCode = StatusCodes.Status403Forbidden;
                             context.Response.ContentType = "application/json";

@@ -53,6 +53,23 @@ namespace ElementaryMathStudyWebsite.Core.Base
             }
         }
 
+        public class UnauthorizedException : ErrorException
+        {
+            public UnauthorizedException(string errorCode, string message)
+                : base(401, errorCode, message)
+            {
+            }
+
+            public UnauthorizedException(ICollection<KeyValuePair<string, ICollection<string>>> errors)
+                : base(401, new ErrorDetail
+                {
+                    ErrorCode = "unauthorized",
+                    ErrorMessage = errors
+                })
+            {
+            }
+        }
+
         public class ErrorException : Exception
         {
             public int StatusCode { get; }
