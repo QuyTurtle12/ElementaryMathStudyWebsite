@@ -74,7 +74,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Enrich each DTO with additional information
             await Task.WhenAll(quizDtos.Select(async dto =>
             {
-                var quiz = allQuizzes.First(q => q.Id == dto.Id);
+                Quiz quiz = allQuizzes.First(q => q.Id == dto.Id);
                 await EnrichQuizDtoAsync(dto, quiz);
             }));
 
@@ -134,7 +134,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Create a new quiz
-        public async Task<QuizMainViewDto> AddQuizAsync(QuizCreateDto dto)
+        public async Task<BaseResponse<string>> AddQuizAsync(QuizCreateDto dto)
         {
             // Validate input DTO
             if (dto == null)
@@ -160,17 +160,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Insert the new quiz into the repository
             await _unitOfWork.GetRepository<Quiz>().InsertAsync(quiz);
             await _unitOfWork.SaveAsync();
-
-            // Fetch the quizzes again to ensure they include relationships
-            var quizzes = await GetQuizzesAsync();
-
-            // Map the created quiz entity to DTO using AutoMapper
-            var quizDto = _mapper.Map<QuizMainViewDto>(quiz);
-
-            // Enrich the DTO with additional user information
-            await EnrichQuizDtosAsync([quizDto], quizzes);
-
-            return quizDto; // Return the enriched quiz DTO
         }
 
         // Update an existing quiz
@@ -285,8 +274,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private async Task EnrichQuizDtoAsync(QuizMainViewDto dto, Quiz quiz)
         {
             // Fetch creator and last updated person info
-            User? creator = await GetUserByIdAsync(quiz.CreatedBy);
-            User? lastUpdatedPerson = await GetUserByIdAsync(quiz.LastUpdatedBy);
+            User? creator = await _userService.GetUserByIdAsync(quiz.CreatedBy!);
+            User? lastUpdatedPerson = await _userService.GetUserByIdAsync(quiz.LastUpdatedBy!);
 
             // Assign additional information manually after mapping
             dto.CreatedBy = quiz.CreatedBy ?? string.Empty;
@@ -299,17 +288,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             dto.CreatedTime = quiz.CreatedTime;
             dto.LastUpdatedTime = quiz.LastUpdatedTime;
-        }
-
-        // Method to get User by ID with null check
-        private async Task<User?> GetUserByIdAsync(string? userId)
-        {
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                return null; // Return null if userId is null or empty
-            }
-
-            return await _unitOfWork.GetRepository<User>().GetByIdAsync(userId);
         }
 
         // Method to filter quizzes by chapterId or topicId
