@@ -10,7 +10,7 @@ namespace ElementaryMathStudyWebsite.Controllers
     public class QuestionController : ControllerBase
     {
         private readonly IAppQuestionServices _questionService;
-
+        // Constructor to inject IAppQuestionServices via dependency injection
         public QuestionController(IAppQuestionServices questionService)
         {
             _questionService = questionService;
@@ -25,7 +25,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // Get question by ID
-        [HttpGet("{id}")]
+        //[HttpGet("{id}")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> GetQuestionById(string id)
         {
             QuestionMainViewDto question = await _questionService.GetQuestionByIdAsync(id);
@@ -34,11 +34,11 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // Search questions by context
         [HttpGet("search")]
-        public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions(string context)
-        {
-            List<QuestionViewDto> questions = await _questionService.SearchQuestionsByContextAsync(context);
-            return BaseResponse<List<QuestionViewDto>>.OkResponse(questions);
-        }
+        //public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions(string context)
+        //{
+        //    List<QuestionViewDto> questions = await _questionService.SearchQuestionsByContextAsync(context);
+        //    return BaseResponse<List<QuestionViewDto>>.OkResponse(questions);
+        //}
 
         // Get questions by Quiz ID
         [HttpGet("quiz/{quizId}")]
@@ -48,15 +48,15 @@ namespace ElementaryMathStudyWebsite.Controllers
             return BaseResponse<List<QuestionViewDto>>.OkResponse(questions);
         }
 
-        // Get questions with pagination
+        // Get questions with pagination 
         [HttpGet("paginated")]
-        public async Task<ActionResult<BaseResponse<BasePaginatedList<QuestionViewDto>>>> GetQuestions(int pageNumber = 1, int pageSize = 10)
-        {
-            BasePaginatedList<QuestionViewDto> paginatedQuestions = await _questionService.GetQuestionsAsync(pageNumber, pageSize);
-            return BaseResponse<BasePaginatedList<QuestionViewDto>>.OkResponse(paginatedQuestions);
-        }
+        //public async Task<ActionResult<BaseResponse<BasePaginatedList<QuestionViewDto>>>> GetQuestions(int pageNumber = 1, int pageSize = 10)
+        //{
+        //    BasePaginatedList<QuestionViewDto> paginatedQuestions = await _questionService.GetQuestionsAsync(pageNumber, pageSize);
+        //    return BaseResponse<BasePaginatedList<QuestionViewDto>>.OkResponse(paginatedQuestions);
+        //}
 
-        // Add a new question
+        // Add a new question using the data from QuestionCreateDto
         [HttpPost]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> AddQuestion(QuestionCreateDto dto)
         {
@@ -64,7 +64,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             return BaseResponse<QuestionMainViewDto>.OkResponse(question);
         }
 
-        // Update an existing question
+        // Update an existing question by its ID using the data from QuestionUpdateDto
         [HttpPut("{id}")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> UpdateQuestion(string id, QuestionUpdateDto dto)
         {
@@ -72,12 +72,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             return BaseResponse<QuestionMainViewDto>.OkResponse(updatedQuestion);
         }
 
-        // Delete a question
+        // Delete a question by its ID
         [HttpDelete("{id}")]
-        public async Task<ActionResult<BaseResponse<string>>> DeleteQuestion(string id)
-        {
-            BaseResponse<string> response = await _questionService.DeleteQuestion(id);
-            return Ok(response);
-        }
+        //public async Task<ActionResult<BaseResponse<string>>> DeleteQuestion(string id)
+        //{
+        //    BaseResponse<string> response = await _questionService.DeleteQuestion(id);
+        //    return Ok(response);
+        //}
     }
 }
