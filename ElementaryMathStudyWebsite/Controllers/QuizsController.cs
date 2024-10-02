@@ -70,12 +70,13 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/quiz/paged
         //[Authorize(Policy = "Admin-Content")]
+        // for all user
         [HttpGet("paged")]
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Retrieve quizzes with pagination.")]
-        public async Task<ActionResult<BaseResponse<BasePaginatedList<QuizMainViewDto>>>> GetQuizzesPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<QuizViewDto>>>> GetQuizzesPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            BasePaginatedList<QuizMainViewDto> quizzes = await _quizService.GetQuizzesAsync(pageNumber, pageSize);
-            return BaseResponse<BasePaginatedList<QuizMainViewDto>>.OkResponse(quizzes);
+            BasePaginatedList<QuizViewDto> quizzes = await _quizService.GetQuizzesAsync(pageNumber, pageSize);
+            return BaseResponse<BasePaginatedList<QuizViewDto>>.OkResponse(quizzes);
         }
 
         // POST: api/quiz
@@ -84,8 +85,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Creates a new quiz and returns the created quiz.")]
         public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> AddQuizAsync([FromBody] QuizCreateDto dto)
         {
-            QuizMainViewDto createdQuiz = await _quizService.AddQuizAsync(dto);
-            return BaseResponse<QuizMainViewDto>.OkResponse("Quiz created successfully.");
+           QuizMainViewDto createdQuiz = await _quizService.AddQuizAsync(dto);
+            return BaseResponse<QuizMainViewDto>.OkResponse(createdQuiz, "Quiz created successfully");
         }
 
         // PUT: api/quiz
@@ -96,7 +97,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             // Update the quiz and get the updated data
             QuizMainViewDto updatedQuizDto = await _quizService.UpdateQuizAsync(id, dto);
-            return BaseResponse<QuizMainViewDto>.OkResponse("Quiz updated successfully.");
+            return BaseResponse<QuizMainViewDto>.OkResponse(updatedQuizDto, "Quiz updated successfully.");
         }
 
         // DELETE: api/quiz/{id}
