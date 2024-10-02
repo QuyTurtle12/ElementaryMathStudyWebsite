@@ -65,6 +65,8 @@ namespace ElementaryMathStudyWebsite
 
             app.UseMiddleware<ExceptionMiddleware>();
 
+            app.UseMiddleware<LoggingMiddleware>();
+
             app.UseAuthorization();
 
 

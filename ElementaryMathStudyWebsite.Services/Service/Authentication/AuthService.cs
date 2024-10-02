@@ -29,12 +29,12 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
 
             if (user == null)
             {
-                throw new UnauthorizedAccessException("Invalid username or password.");
+                throw new BaseException.UnauthorizedException("unauthorized_access", "Invalid username or password.");
             }
 
             if (!user.Status)
             {
-                throw new UnauthorizedAccessException("User account is not active.");
+                throw new BaseException.UnauthorizedException("unauthorized_access", "User account is not active.");
             }
 
             return _authenticationService.GenerateJwtToken(user);

@@ -2,7 +2,7 @@
 {
     public class OptionViewDto
     {
-        public string? OptionId { get; set; }
+        public string? Id { get; set; }
         public string? Answer { get; set; }
         public bool IsCorrect { get; set; }
     }

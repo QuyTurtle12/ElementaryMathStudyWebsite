@@ -1,12 +1,13 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using Microsoft.AspNetCore.Authorization;
-using ElementaryMathStudyWebsite.Core.Base;
-using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using ElementaryMathStudyWebsite.Core.Base;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -30,27 +31,22 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// </summary>
         /// <returns>Returns the profile of the logged-in user.</returns>
         [HttpGet("profile")]
+        [Authorize]
         public async Task<ActionResult<BaseResponse<UserProfile>>> GetProfile()
         {
 
-                // Get the token from the Authorization header
-                var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId) || userId == Guid.Empty)
+            {
+                return Unauthorized();
+            }
 
-                // Extract user ID from the token
-                var userId = _tokenService.GetUserIdFromTokenHeader(token);
+            // Fetch user profile using the user ID
+            var user = await _userServices.GetUserByIdAsync(userId.ToString());
+            var userProfile = _mapper.Map<UserProfile>(user);
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized();
-                }
-
-                // Fetch user profile using the user ID
-                var user = await _userServices.GetUserByIdAsync(userId.ToString());
-                var userProfile = _mapper.Map<UserProfile>(user);
-
-                var response = BaseResponse<UserProfile>.OkResponse(userProfile);
-                return Ok(response);
-
+            var response = BaseResponse<UserProfile>.OkResponse(userProfile);
+            return Ok(response);
         }
 
         /// <summary>
@@ -60,30 +56,25 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <returns>Returns the updated user profile along with a new JWT token.</returns>
         [HttpPut]
         [Route("profile/update")]
+        [Authorize]
         [SwaggerOperation(
             Summary = "Authorization: logged in user",
             Description = "Updating a user profile"
             )]
         public async Task<ActionResult<BaseResponse<UpdateProfileDto>>> UpdateProfile([FromBody] RequestUpdateProfileDto updateUserDto)
         {
-            // Get the token from the Authorization header
-            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-
-            // Extract user ID from the token
-            var userId = _tokenService.GetUserIdFromTokenHeader(token);
-
-            if (userId == Guid.Empty)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId) || userId == Guid.Empty)
             {
                 return Unauthorized();
             }
+            var user = await _userServices.UpdateProfileAsync(userId.ToString(), updateUserDto);
+            var UpdateProfileDto = _mapper.Map<UpdateProfileDto>(user);
+            UpdateProfileDto.Token = _tokenService.GenerateJwtToken(user);
 
-                var user = await _userServices.UpdateProfileAsync(userId.ToString(), updateUserDto);
-                var UpdateProfileDto = _mapper.Map<UpdateProfileDto>(user);
-                UpdateProfileDto.Token = _tokenService.GenerateJwtToken(user);
+            var response = BaseResponse<UpdateProfileDto>.OkResponse(UpdateProfileDto);
 
-                var response = BaseResponse<UpdateProfileDto>.OkResponse(UpdateProfileDto);
-
-                return Ok(response);
+            return Ok(response);
 
         }
 
@@ -102,33 +93,28 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> GetChildren([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            // Get the token from the Authorization header
-            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-
-            // Extract user ID from the token
-            var userId = _tokenService.GetUserIdFromTokenHeader(token);
-
-            if (userId == Guid.Empty)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId) || userId == Guid.Empty)
             {
                 return Unauthorized();
             }
 
-                var paginatedUsers = await _userServices.GetChildrenOfParentAsync(userId.ToString(), pageNumber, pageSize);
+            var paginatedUsers = await _userServices.GetChildrenOfParentAsync(userId.ToString(), pageNumber, pageSize);
 
-                // Map users to UserResponseDto
-                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+            // Map users to UserResponseDto
+            var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
 
-                // Create a new paginated list of UserResponseDto
-                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
-                    userDtos.ToList(),
-                    paginatedUsers.TotalItems,
-                    paginatedUsers.CurrentPage,
-                    paginatedUsers.PageSize
-                );
+            // Create a new paginated list of UserResponseDto
+            var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                userDtos.ToList(),
+                paginatedUsers.TotalItems,
+                paginatedUsers.CurrentPage,
+                paginatedUsers.PageSize
+            );
 
-                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+            var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
 
-                return Ok(response);
+            return Ok(response);
         }
 
         /// <summary>
@@ -158,13 +144,12 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return BadRequest(ModelState);
             }
 
-                var user = await _userServices.CreateUserAsync(createUserDto);
-                var userResponseDto = _mapper.Map<UserResponseDto>(user);
+            var user = await _userServices.CreateUserAsync(createUserDto);
+            var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
-                var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
+            var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
 
-                return Ok(response);
-            
+            return Ok(response);
         }
 
         /// <summary>
@@ -183,15 +168,14 @@ namespace ElementaryMathStudyWebsite.Controllers
         public async Task<IActionResult> GetAllUsersWithRoles()
         {
 
-                var users = await _userServices.GetAllUsersWithRolesAsync();
+            var users = await _userServices.GetAllUsersWithRolesAsync();
 
-                // Map the users to UserResponseDto
-                var userResponseDtos = _mapper.Map<IEnumerable<UserResponseDto>>(users);
+            // Map the users to UserResponseDto
+            var userResponseDtos = _mapper.Map<IEnumerable<UserResponseDto>>(users);
 
-                var response = BaseResponse<IEnumerable<UserResponseDto>>.OkResponse(userResponseDtos);
+            var response = BaseResponse<IEnumerable<UserResponseDto>>.OkResponse(userResponseDtos);
 
-                return Ok(response);
-            
+            return Ok(response);
         }
 
 
@@ -213,23 +197,22 @@ namespace ElementaryMathStudyWebsite.Controllers
         public async Task<IActionResult> GetAllUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
 
-                var paginatedUsers = await _userServices.GetAllUsersAsync(pageNumber, pageSize);
+            var paginatedUsers = await _userServices.GetAllUsersAsync(pageNumber, pageSize);
 
-                // Map users to UserResponseDto
-                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+            // Map users to UserResponseDto
+            var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
 
-                // Create a new paginated list of UserResponseDto
-                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
-                    userDtos.ToList(),
-                    paginatedUsers.TotalItems,
-                    paginatedUsers.CurrentPage,
-                    paginatedUsers.PageSize
-                );
+            // Create a new paginated list of UserResponseDto
+            var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                userDtos.ToList(),
+                paginatedUsers.TotalItems,
+                paginatedUsers.CurrentPage,
+                paginatedUsers.PageSize
+            );
 
-                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+            var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
 
-                return Ok(response);
-
+            return Ok(response);
         }
 
         /// <summary>
@@ -252,27 +235,25 @@ namespace ElementaryMathStudyWebsite.Controllers
         public async Task<IActionResult> SearchUsers([FromQuery] string? name, [FromQuery] bool? status, [FromQuery] string? phone, [FromQuery] string? email, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
 
-                var paginatedUsers = await _userServices.SearchUsersAsync(name, status, phone, email, pageNumber, pageSize);
+            var paginatedUsers = await _userServices.SearchUsersAsync(name, status, phone, email, pageNumber, pageSize);
 
-                // Map users to UserResponseDto
-                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+            // Map users to UserResponseDto
+            var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
 
-                // Create a new paginated list of UserResponseDto
-                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
-                    userDtos.ToList(),
-                    paginatedUsers.TotalItems,
-                    paginatedUsers.CurrentPage,
-                    paginatedUsers.PageSize
-                );
+            // Create a new paginated list of UserResponseDto
+            var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                userDtos.ToList(),
+                paginatedUsers.TotalItems,
+                paginatedUsers.CurrentPage,
+                paginatedUsers.PageSize
+            );
 
-                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+            var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
 
-                return Ok(response);
+            return Ok(response);
 
         }
-        
 
-        
         /// <summary>
         /// Retrieves a user by their ID.
         /// </summary>
@@ -294,9 +275,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
-
             var user = await _userServices.GetUserByIdAsync(userId);
-
 
             var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
@@ -328,24 +307,18 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
-
             if (updateUserDto == null)
             {
                 throw new BaseException.BadRequestException("invalid_argument", "User data is required.");
             }
-
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
-
             }
-                var user = await _userServices.UpdateUserAsync(userId, updateUserDto);
-                var userResponseDto = _mapper.Map<UserResponseDto>(user);
-
-                var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
-
-                return Ok(response);
-
+            var user = await _userServices.UpdateUserAsync(userId, updateUserDto);
+            var userResponseDto = _mapper.Map<UserResponseDto>(user);
+            var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
+            return Ok(response);
         }
 
         /// <summary>
@@ -371,15 +344,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
-                var result = await _userServices.DisableUserAsync(userId);
+            var result = await _userServices.DisableUserAsync(userId);
 
-                if (result)
-                {
-                    var response = BaseResponse<String>.OkResponse("User is disabled");
+            if (result)
+            {
+                var response = BaseResponse<String>.OkResponse("User is disabled");
 
-                    return Ok(response);
-                }
-                throw new BaseException.CoreException("unsuccess", "Disable unsuccessfully");
+                return Ok(response);
+            }
+            throw new BaseException.CoreException("unsuccess", "Disable unsuccessfully");
         }
 
         /// <summary>
@@ -401,15 +374,14 @@ namespace ElementaryMathStudyWebsite.Controllers
                 throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
-                var result = await _userServices.DeleteUserAsync(userId);
+            var result = await _userServices.DeleteUserAsync(userId);
 
-                if (result)
-                {
-                    var response = BaseResponse<String>.OkResponse("User is deleted");
-
-                    return Ok(response);
-                }
-                throw new BaseException.CoreException("unsuccess", "Delete unsuccessfully");
+            if (result)
+            {
+                var response = BaseResponse<String>.OkResponse("User is deleted");
+                return Ok(response);
+            }
+            throw new BaseException.CoreException("unsuccess", "Delete unsuccessfully");
         }
 
         /// <summary>
@@ -435,25 +407,22 @@ namespace ElementaryMathStudyWebsite.Controllers
                 throw new BaseException.BadRequestException("invalid_argument", "Parent ID is required.");
             }
 
-                var paginatedUsers = await _userServices.GetChildrenOfParentAsync(parentId, pageNumber, pageSize);
+            var paginatedUsers = await _userServices.GetChildrenOfParentAsync(parentId, pageNumber, pageSize);
 
-                // Map users to UserResponseDto
-                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+            // Map users to UserResponseDto
+            var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
 
-                // Create a new paginated list of UserResponseDto
-                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
-                    userDtos.ToList(),
-                    paginatedUsers.TotalItems,
-                    paginatedUsers.CurrentPage,
-                    paginatedUsers.PageSize
-                );
+            // Create a new paginated list of UserResponseDto
+            var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                userDtos.ToList(),
+                paginatedUsers.TotalItems,
+                paginatedUsers.CurrentPage,
+                paginatedUsers.PageSize
+            );
 
-                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+            var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
 
-                return Ok(response);
-
+            return Ok(response);
         }
-
-
     }
 }
