@@ -6,10 +6,14 @@ namespace ElementaryMathStudyWebsite.Middleware
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
-        public ExceptionMiddleware(RequestDelegate next)
+        private readonly ILogger<ExceptionMiddleware> _logger;
+
+        public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
         {
             _next = next;
+            _logger = logger;
         }
+
         public async Task Invoke(HttpContext context)
         {
             try
@@ -18,7 +22,7 @@ namespace ElementaryMathStudyWebsite.Middleware
             }
             catch (BaseException.BadRequestException badRequestEx)
             {
-                // Handle BadRequestException specifically
+                _logger.LogError(badRequestEx, "BadRequestException occurred.");
                 context.Response.StatusCode = badRequestEx.StatusCode;
                 var result = JsonSerializer.Serialize(new
                 {
@@ -30,7 +34,7 @@ namespace ElementaryMathStudyWebsite.Middleware
             }
             catch (BaseException.NotFoundException notFoundEx)
             {
-                // Handle NotFoundException specifically
+                _logger.LogError(notFoundEx, "NotFoundException occurred.");
                 context.Response.StatusCode = notFoundEx.StatusCode;
                 var result = JsonSerializer.Serialize(new
                 {
@@ -42,7 +46,7 @@ namespace ElementaryMathStudyWebsite.Middleware
             }
             catch (BaseException.CoreException coreEx)
             {
-                // Handle CoreException specifically
+                _logger.LogError(coreEx, "CoreException occurred.");
                 context.Response.StatusCode = coreEx.StatusCode;
                 var result = JsonSerializer.Serialize(new
                 {
@@ -55,7 +59,7 @@ namespace ElementaryMathStudyWebsite.Middleware
             }
             catch (Exception ex)
             {
-                // Handle all other unexpected exceptions
+                _logger.LogError(ex, "An unexpected exception occurred.");
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 var result = JsonSerializer.Serialize(new
                 {
@@ -64,7 +68,6 @@ namespace ElementaryMathStudyWebsite.Middleware
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(result);
             }
-
         }
     }
 }
