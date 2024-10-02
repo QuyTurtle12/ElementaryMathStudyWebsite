@@ -37,9 +37,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <param name="loginDto">The login request data.</param>
         /// <returns>A JWT token if successful.</returns>
         [HttpPost("login")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> LoginAsync([FromBody] LoginDto loginDto)
         {
             if (!ModelState.IsValid)
@@ -59,9 +56,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <param name="registerDto">The registration request data.</param>
         /// <returns>A message indicating the result of the registration attempt.</returns>
         [HttpPost("register")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto registerDto)
         {
             if (!ModelState.IsValid)
@@ -81,9 +75,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <param name="registerDto">The registration request data.</param>
         /// <returns>A message indicating the result of the registration attempt.</returns>
         [HttpPost("student-register")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
         [Authorize(Policy = "Parent")]
         [SwaggerOperation(
             Summary = "Authorization: Parent",
