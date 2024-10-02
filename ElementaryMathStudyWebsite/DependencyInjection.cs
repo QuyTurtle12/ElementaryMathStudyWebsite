@@ -14,6 +14,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ChapterMappin
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ProgressMappings;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.OrderMappings;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ResultMappings;
+using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.TopicMappings;
 
 
 namespace ElementaryMathStudyWebsite
