@@ -81,7 +81,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             ValidateChapter(chapterDTO);
 
             // Check if another chapter with the same name already exists
-            var existingChapter = await _unitOfWork.GetRepository<Chapter>().Entities
+            Chapter? existingChapter = await _unitOfWork.GetRepository<Chapter>().Entities
                 .Where(c => c.ChapterName == chapterDTO.ChapterName)
                 .FirstOrDefaultAsync();
 
@@ -90,11 +90,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("value_duplicate_error", "This chapter name was used");
             }
 
-            var chapterCount = await CountChaptersInSubjectAsync(chapterDTO.SubjectId);
+            //Đếm số lượng Chapter trong Subject
+            int chapterCount = await CountChaptersInSubjectAsync(chapterDTO.SubjectId);
 
+            //Kiểm tra sự tồn tại của Subject
             if (!string.IsNullOrWhiteSpace(chapterDTO.SubjectId))
             {
-                var subjectExists = await _unitOfWork.GetRepository<Subject>().Entities
+                bool subjectExists = await _unitOfWork.GetRepository<Subject>().Entities
                     .AnyAsync(s => s.Id == chapterDTO.SubjectId);
 
                 if (!subjectExists)
@@ -102,21 +104,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     throw new BaseException.NotFoundException("not_found", "Subject with Id does not exist");
                 }
             }
-            //if (string.IsNullOrWhiteSpace(chapterDTO.QuizId)) 
-            //{
-            //    chapterDTO.QuizId = null;
-            //}
 
+            //Kiểm tra sự tồn tại của Quiz và tính duy nhất của QuizId
             if (!string.IsNullOrWhiteSpace(chapterDTO.QuizId))
             {
-                var quizExists = await _unitOfWork.GetRepository<Quiz>().Entities
+                bool quizExists = await _unitOfWork.GetRepository<Quiz>().Entities
                     .AnyAsync(q => q.Id == chapterDTO.QuizId);
 
                 if (!quizExists)
                 {
                     throw new BaseException.NotFoundException("not_found", "Quiz with Id does not exist");
                 }
-                var isQuizId = await IsQuizIdInChaptersAsync(chapterDTO.QuizId);
+                bool isQuizId = await IsQuizIdInChaptersAsync(chapterDTO.QuizId);
                 if (isQuizId)
                 {
                     throw new BaseException.BadRequestException("value_duplicate_error", "This Quiz Id was used");
@@ -124,7 +123,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
 
-            var chapter = new Chapter
+            Chapter chapter = new Chapter
             {
                 Number = chapterCount + 1,
                 ChapterName = chapterDTO.ChapterName,
@@ -135,11 +134,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             _userServices.AuditFields(chapter, isCreating: true);
 
+            //Chèn Chapter mới vào repository và lưu thay đổi
             _unitOfWork.GetRepository<Chapter>().Insert(chapter);
             await _unitOfWork.GetRepository<Chapter>().SaveAsync();
 
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
-            var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+            //Lấy thông tin Subject và Quiz liên quan
+            Subject? subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+            Quiz? quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
 
             ChapterViewDto chapterViewDTO = _mapper.Map<ChapterViewDto>(chapter, opts =>
             {
@@ -160,13 +161,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <exception cref="BaseException.BadRequestException"></exception>
         public async Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterUpdateDto chapterDTO)
         {
-            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(id) ?? throw new BaseException.NotFoundException("not_found", "Chapter with ID not found");
+            Chapter chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(id) ?? throw new BaseException.NotFoundException("not_found", "Chapter with ID not found");
             if (string.IsNullOrWhiteSpace(chapterDTO.ChapterName))
             {
                 throw new BaseException.BadRequestException("invalid", "Chapter name is required and cannot be empty.");
             }
             // Check if another subject with the same name already exists
-            var existingSubject = await _unitOfWork.GetRepository<Chapter>().Entities
+            Chapter? existingSubject = await _unitOfWork.GetRepository<Chapter>().Entities
                 .Where(c => c.ChapterName == chapterDTO.ChapterName) // Exclude the current subject by its ID
                 .FirstOrDefaultAsync();
 
@@ -182,8 +183,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _unitOfWork.GetRepository<Chapter>().Update(chapter);
             await _unitOfWork.GetRepository<Chapter>().SaveAsync();
 
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
-            var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+            Subject? subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+            Quiz? quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
             User? createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
             User? updatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
 
@@ -212,7 +213,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Retrieve the chapter
-            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId);
+            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId);
             if (chapter == null)
             {
                 throw new BaseException.NotFoundException("not_found", "Chapter does not exist.");
@@ -229,7 +230,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 t => t.ChapterId == chapterId && string.IsNullOrWhiteSpace(t.DeletedBy)
             );
 
-            foreach (var topic in topics)
+            foreach (Topic topic in topics)
             {
                 await _topicService.DeleteTopicAsync(topic.Id);
             }
@@ -252,7 +253,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <exception cref="BaseException.BadRequestException"></exception>
         public async Task<ChapterAdminViewDto> rollbackChapterDeletedAsync(string chapterId)
         {
-            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new BaseException.NotFoundException("not_found", "Chapter ID not found");
+            Chapter chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId) ?? throw new BaseException.NotFoundException("not_found", "Chapter ID not found");
             if (chapter.DeletedBy == null)
             {
                 throw new BaseException.BadRequestException("invalid", "This chapter was rollback");
@@ -264,8 +265,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _unitOfWork.GetRepository<Chapter>().Update(chapter);
             await _unitOfWork.GetRepository<Chapter>().SaveAsync();
 
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
-            var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+            Subject? subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+            Quiz? quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
             User? createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
             User? updatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
 
@@ -327,19 +328,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return chapter; // Trả về chapter để duy trì cấu trúc Select
             }).ToList(); // Chuyển đổi kết quả thành danh sách để thực hiện các hành động
 
-            //foreach (var chapter in chaptersToUpdate)
-            //{
-            //    if (string.IsNullOrWhiteSpace(chapter.Id))
-            //    {
-            //        throw new BaseException.BadRequestException("invalid_id", "Chapter Id cannot be null or empty.");
-            //    }
-
-            //    if (!chapter.Number.HasValue || chapter.Number.Value < 1)
-            //    {
-            //        throw new BaseException.BadRequestException("invalid_number", "Chapter Number must be 1 or greater.");
-            //    }
-            //}
-
             var chapters = await _unitOfWork.GetRepository<Chapter>().Entities
                 .Where(c => c.SubjectId == subjectId && chapterIds.Contains(c.Id))
                 .ToListAsync();
@@ -367,46 +355,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .Select(c => c.Number)
                 .ToListAsync();
 
-            //foreach (var chapter in chapters)
-            //{
-            //    var dto = chaptersToUpdate.FirstOrDefault(c => c.Id == chapter.Id);
-            //    if (dto != null && dto.Number.HasValue)
-            //    {
-            //        // Check if the new number is within the valid range
-            //        if (dto.Number.Value > totalChaptersInSubject)
-            //        {
-            //            throw new BaseException.BadRequestException("invalid_number", $"Chapter Number must be less than or equal to the total number of chapters in the subject ({totalChaptersInSubject}).");
-            //        }
-
-            //        if (chapter.Number != dto.Number.Value)
-            //        {
-            //            var duplicateNumber = await _unitOfWork.GetRepository<Chapter>().Entities
-            //                .AnyAsync(c => c.SubjectId == subjectId && c.Number == dto.Number.Value && !chapterIds.Contains(c.Id));
-
-            //            if (duplicateNumber)
-            //            {
-            //                throw new BaseException.BadRequestException("duplicate_number", $"Duplicate chapter number: {dto.Number.Value}");
-            //            }
-            //        }
-
-            //        if (existingNumbers.Contains(dto.Number.Value))
-            //        {
-            //            throw new BaseException.BadRequestException("duplicate_number", $"Duplicate chapter number: {dto.Number.Value}");
-            //        }
-
-            //        existingNumbers.Add(dto.Number.Value);
-            //        chapter.Number = dto.Number.Value;
-            //        _unitOfWork.GetRepository<Chapter>().Update(chapter);
-            //    }
-            //}
-
-            //foreach (var number in existingNumbers)
-            //{
-            //    if (currentNumbers.Contains(number))
-            //    {
-            //        throw new BaseException.BadRequestException("duplicate_number", $"Duplicate chapter number: {number}");
-            //    }
-            //}
             chaptersToUpdate.Select(dto =>
             {
                 var chapter = chapters.FirstOrDefault(c => c.Id == dto.Id);
@@ -468,18 +416,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <exception cref="BaseException.NotFoundException"></exception>
         public async Task<object> GetChapterByChapterIdAsync(string Id)
         {
-            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(Id) ?? throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{Id}'.");
+            //Lấy Chapter từ repository
+            Chapter chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(Id) ?? throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{Id}'.");
+
+            //Kiểm tra Status và DeletedBy của Chapter
             if ((!chapter.Status) || !String.IsNullOrWhiteSpace(chapter.DeletedBy))
             {
                 throw new BaseException.NotFoundException("key_not_found", $"Cannot find product with ID '{Id}'.");
             }
 
+            //Xử lý khi Chapter có Status true
             if (chapter.Status)
             {
                 User? createdUser = chapter.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.CreatedBy) : null;
                 User? updatedUser = chapter.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.LastUpdatedBy) : null;
-                var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
-                var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                Subject? subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+                Quiz? quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
 
                 ChapterAdminViewDto chapterAdminViewDTO = _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
                 {
@@ -493,7 +445,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
             else
             {
-                var chapterDTO = _mapper.Map<ChapterDto>(chapter);
+                //Xử lý khi Chapter có Status != true
+                ChapterDto chapterDTO = _mapper.Map<ChapterDto>(chapter);
 
                 return chapterDTO;
             }
@@ -508,16 +461,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <exception cref="BaseException.NotFoundException"></exception>
         public async Task<object> GetChapterDtoByChapterIdAsync(string Id)
         {
-            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(Id) ?? throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{Id}'.");
+            //Lấy Chapter từ repository
+            Chapter chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(Id) ?? throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{Id}'.");
+
+            //Kiểm tra Status và DeletedBy của Chapter
             if ((!chapter.Status) || !String.IsNullOrWhiteSpace(chapter.DeletedBy))
             {
                 throw new BaseException.NotFoundException("key_not_found", $"Cannot find product with ID '{Id}'.");
             }
 
+            //Xử lý khi Chapter có Status true
             if (chapter.Status)
             {
-                var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
-                var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+                Subject? subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+                Quiz? quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
 
                 ChapterViewDto chapterViewDTO = _mapper.Map<ChapterViewDto>(chapter, opts =>
                 {
@@ -529,7 +486,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
             else
             {
-                var chapterDTO = _mapper.Map<ChapterDto>(chapter);
+                //Xử lý khi Chapter có Status != true
+                ChapterDto chapterDTO = _mapper.Map<ChapterDto>(chapter);
 
                 return chapterDTO;
             }
@@ -545,20 +503,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <exception cref="BaseException.NotFoundException"></exception>
         public async Task<BasePaginatedList<object>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId)
         {
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(subjectId) ?? throw new BaseException.NotFoundException("not_found", "Subject ID not found");
+            Subject subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(subjectId) ?? throw new BaseException.NotFoundException("not_found", "Subject ID not found");
 
-            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => String.IsNullOrWhiteSpace(c.DeletedBy) && c.Status == true);
+            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities
+            .Where(c => c.SubjectId == subjectId && String.IsNullOrWhiteSpace(c.DeletedBy) && c.Status == true);
 
 
+            //Kiểm tra và xử lý phân trang
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
-                List<Chapter> allChapters = query.ToList();
+                List<Chapter> allChapters = await query.ToListAsync();
                 var chapterViewTasks = allChapters.Select(chapter =>
                 {
                     if (chapter != null)
                     {
-                        var subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
-                        var quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+                        Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
+                        Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
 
                         return _mapper.Map<ChapterViewDto>(chapter, opts =>
                         {
@@ -572,13 +532,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(chapterViewTasks!, chapterViewTasks.Count, 1, chapterViewTasks.Count);
             }
 
+            //Thực hiện phân trang tự động
             var paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
             var paginatedChapterViewTasks = paginatedChapters.Items.Select(chapter =>
             {
                 if (chapter != null)
                 {
-                    var subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
-                    var quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+                    Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
+                    Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
 
                     return _mapper.Map<ChapterViewDto>(chapter, opts =>
                     {
@@ -601,6 +562,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(s => String.IsNullOrWhiteSpace(s.DeletedBy));
 
+            //Kiểm tra và xử lý phân trang
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
                 List<Chapter> allChapters = query.ToList();
@@ -610,8 +572,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     {
                         User? createdUser = chapter.CreatedBy != null ?  _unitOfWork.GetRepository<User>().GetById(chapter.CreatedBy) : null;
                         User? updatedUser = chapter.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.LastUpdatedBy) : null;
-                        var subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
-                        var quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+                        Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
+                        Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
 
                         return _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
                         {
@@ -627,6 +589,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(chapterViewTasks!, chapterViewTasks.Count, 1, chapterViewTasks.Count);
             }
 
+            //Thực hiện phân trang tự động
             var paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
             var paginatedChapterViewTasks = paginatedChapters.Items.Select(chapter =>
             {
@@ -634,8 +597,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     User? createdUser = chapter.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.CreatedBy) : null;
                     User? updatedUser = chapter.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.LastUpdatedBy) : null;
-                    var subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
-                    var quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+                    Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
+                    Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
 
                     return _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
                     {
@@ -661,6 +624,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<object>> GetChaptersDeletedAsync(int pageNumber, int pageSize)
         {
             IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(s => !String.IsNullOrWhiteSpace(s.DeletedBy));
+
+            //Kiểm tra và xử lý phân trang
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
                 List<Chapter> allChapters = query.ToList();
@@ -670,8 +635,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     {
                         User? createdUser = chapter.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.CreatedBy) : null;
                         User? updatedUser = chapter.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.LastUpdatedBy) : null;
-                        var subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
-                        var quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+                        Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
+                        Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
 
                         return _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
                         {
@@ -687,6 +652,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(chapterViewTasks!, chapterViewTasks.Count, 1, chapterViewTasks.Count);
             }
 
+            //Thực hiện phân trang tự động
             var paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
             var paginatedChapterViewTasks = paginatedChapters.Items.Select(chapter =>
             {
@@ -694,8 +660,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     User? createdUser = chapter.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.CreatedBy) : null;
                     User? updatedUser = chapter.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.LastUpdatedBy) : null;
-                    var subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
-                    var quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+                    Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
+                    Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
 
                     return _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
                     {
@@ -722,7 +688,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => String.IsNullOrWhiteSpace(c.DeletedBy) && c.Status == true);
 
-
+            //Kiểm tra và xử lý phân trang
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
                 List<Chapter> allChapters = query.ToList();
@@ -730,8 +696,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     if (chapter != null)
                     {
-                        var subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
-                        var quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+                        Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
+                        Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
 
                         return _mapper.Map<ChapterViewDto>(chapter, opts =>
                         {
@@ -745,13 +711,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(chapterViewTasks!, chapterViewTasks.Count, 1, chapterViewTasks.Count);
             }
 
+            //Thực hiện phân trang tự động
             var paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
             var paginatedChapterViewTasks = paginatedChapters.Items.Select(chapter =>
             {
                 if (chapter != null)
                 {
-                    var subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
-                    var quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+                    Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
+                    Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
 
                     return _mapper.Map<ChapterViewDto>(chapter, opts =>
                     {
@@ -799,7 +766,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // nếu Chapter đã có QuizId
             if (chapter.QuizId != null)
             {
-                // nếu Chapter đã có QuizId
                 throw new BaseException.BadRequestException("invalid_argument", "Chapter already has a QuizId.");
             }
 
@@ -808,7 +774,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             var topics = await _unitOfWork.GetRepository<Topic>().GetAllAsync();
 
             // Lấy Quiz từ repository bằng quizId
-            var quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizId);
+            Quiz? quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizId);
             if (quiz == null)
             {
                 // nếu Quiz không tồn tại
@@ -839,19 +805,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <exception cref="BaseException.NotFoundException"></exception>
         public async Task<ChapterAdminViewDto> ChangeChapterStatusAsync(string id)
         {
-            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(id) ?? throw new BaseException.NotFoundException("not_found", "Chapter ID not found");
+            //Lấy Chapter từ repository
+            Chapter chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(id) ?? throw new BaseException.NotFoundException("not_found", "Chapter ID not found");
+
+            //Thay đổi trạng thái của Chapter
             chapter.Status = !chapter.Status;
-            //subject.LastUpdatedTime = DateTime.UtcNow;
 
             _userServices.AuditFields(chapter);
-            var subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
-            var quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
+
+            //Lấy thông tin liên quan từ repository
+            Subject? subject = await _unitOfWork.GetRepository<Subject>().GetByIdAsync(chapter.SubjectId);
+            Quiz? quiz = chapter.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(chapter.QuizId) : null;
             User? createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.CreatedBy ?? string.Empty);
             User? updatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(chapter.LastUpdatedBy ?? string.Empty);
 
+            //Cập nhật Chapter trong repository
             _unitOfWork.GetRepository<Chapter>().Update(chapter);
             await _unitOfWork.GetRepository<Chapter>().SaveAsync();
 
+            //Ánh xạ Chapter sang ChapterAdminViewDto
             ChapterAdminViewDto chapterAdminViewDTO = _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
             {
                 opts.Items["CreatedUser"] = createdUser;
@@ -880,6 +852,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 query = query.Where(c => EF.Functions.Like(c.ChapterName, $"%{searchTerm}%"));
             }
 
+            //Kiểm tra tính hợp lệ của searchTerm
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
                 throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
@@ -890,14 +863,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
             }
 
+            //Thực hiện truy vấn và lấy tất cả các Chapter
             var allChapters = await query.ToListAsync();
 
+            //Kiểm tra và xử lý phân trang
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
                 var chapterDtos = allChapters.Select(chapter =>
                 {
-                    var subject = chapter.SubjectId != null ? _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId) : null;
-                    var quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+                    Subject? subject = chapter.SubjectId != null ? _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId) : null;
+                    Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
 
                     return _mapper.Map<ChapterViewDto>(chapter, opts =>
                     {
@@ -914,11 +889,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(chapterDtos, chapterDtos.Count, 1, chapterDtos.Count);
             }
 
+            //Thực hiện phân trang tự động
             var paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
             var chapterDtosPaginated = paginatedChapters.Items.Select(chapter =>
             {
-                var subject = chapter.SubjectId != null ? _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId) : null;
-                var quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+                Subject? subject = chapter.SubjectId != null ? _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId) : null;
+                Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
                 return _mapper.Map<ChapterViewDto>(chapter, opts =>
                 {
                     opts.Items["Subject"] = subject;
@@ -946,14 +922,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
 
             IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => String.IsNullOrWhiteSpace(c.DeletedBy));
-            // Not get soft deleted item
-            //query = query.Where(c => String.IsNullOrWhiteSpace(c.DeletedBy));
-
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 query = query.Where(c => EF.Functions.Like(c.ChapterName, $"%{searchTerm}%"));
             }
+
+            //Kiểm tra tính hợp lệ của searchTerm
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
                 throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
@@ -964,6 +939,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
             }
 
+            //Kiểm tra và xử lý phân trang
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
             {
                 List<Chapter> allChapters = query.ToList();
@@ -973,8 +949,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     {
                         User? createdUser = chapter.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.CreatedBy) : null;
                         User? updatedUser = chapter.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.LastUpdatedBy) : null;
-                        var subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
-                        var quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+                        Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
+                        Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
 
                         return _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
                         {
@@ -990,6 +966,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return new BasePaginatedList<object>(chapterViewTasks!, chapterViewTasks.Count, 1, chapterViewTasks.Count);
             }
 
+            //Thực hiện phân trang tự động
             var paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
             var paginatedChapterViewTasks = paginatedChapters.Items.Select(chapter =>
             {
@@ -997,8 +974,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     User? createdUser = chapter.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.CreatedBy) : null;
                     User? updatedUser = chapter.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.LastUpdatedBy) : null;
-                    var subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
-                    var quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+                    Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
+                    Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
 
                     return _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
                     {

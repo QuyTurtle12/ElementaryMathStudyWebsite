@@ -43,10 +43,12 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ChapterMa
                     src.LastUpdatedBy != null && context.Items["UpdatedUser"] is User updatedUser
                     ? updatedUser.PhoneNumber
                     : null))
+                //.ForMember(dest => dest.SubjectName, opt => opt.MapFrom((src, dest, destMember, context) =>
+                //    src.Subject != null && context.Items["Subject"] is Subject subject
+                //    ? subject.SubjectName
+                //    : null))
                 .ForMember(dest => dest.SubjectName, opt => opt.MapFrom((src, dest, destMember, context) =>
-                    src.Subject != null && context.Items["Subject"] is Subject subject
-                    ? subject.SubjectName
-                    : null))
+                    context.Items["Subject"] is Subject subject ? subject.SubjectName : null))
                 .ForMember(dest => dest.QuizName, opt => opt.MapFrom((src, dest, destMember, context) =>
                     src.QuizId != null && context.Items["Quiz"] is Quiz quiz
                     ? quiz.QuizName
