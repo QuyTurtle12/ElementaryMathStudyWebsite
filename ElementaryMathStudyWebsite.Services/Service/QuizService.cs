@@ -134,7 +134,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Create a new quiz
-        public async Task<BaseResponse<string>> AddQuizAsync(QuizCreateDto dto)
+        public async Task<QuizMainViewDto> AddQuizAsync(QuizCreateDto dto)
         {
             // Validate input DTO
             if (dto == null)
@@ -160,6 +160,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Insert the new quiz into the repository
             await _unitOfWork.GetRepository<Quiz>().InsertAsync(quiz);
             await _unitOfWork.SaveAsync();
+
+            // Map the newly created quiz to QuizMainViewDto
+            QuizMainViewDto quizDto = _mapper.Map<QuizMainViewDto>(quiz);
+
+            // Enrich the DTO with additional information
+            await EnrichQuizDtoAsync(quizDto, quiz);
+
+            // Return the created quiz DTO
+            return quizDto;
         }
 
         // Update an existing quiz
