@@ -72,7 +72,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 CustomerId = currentUser.Id,
                 TotalPrice = totalPrice,
-                //TotalPrice = 0,
                 Status = PaymentStatusHelper.CART.ToString()
             };
 
