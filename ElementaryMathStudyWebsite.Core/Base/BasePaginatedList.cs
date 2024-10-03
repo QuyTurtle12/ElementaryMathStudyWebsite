@@ -25,7 +25,7 @@ namespace ElementaryMathStudyWebsite.Core.Base
             TotalItems = count;
             CurrentPage = pageNumber;
             PageSize = pageSize;
-            TotalPages = (int)Math.Ceiling(count / (double)pageSize);
+            TotalPages = (pageSize > 0) ? (int)Math.Ceiling(count / (double)pageSize) : (count > 0 ? 1 : 0);
             Items = items;
         }
 
