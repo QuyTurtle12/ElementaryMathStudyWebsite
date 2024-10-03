@@ -25,7 +25,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // Get question by ID
-        //[HttpGet("{id}")]
+        [HttpGet("{id}")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> GetQuestionById(string id)
         {
             QuestionMainViewDto question = await _questionService.GetQuestionByIdAsync(id);
@@ -33,7 +33,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // Search questions by context
-        [HttpGet("search")]
+        //[HttpGet("search")]
         //public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions(string context)
         //{
         //    List<QuestionViewDto> questions = await _questionService.SearchQuestionsByContextAsync(context);
@@ -49,7 +49,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // Get questions with pagination 
-        [HttpGet("paginated")]
+        //[HttpGet("paginated")]
         //public async Task<ActionResult<BaseResponse<BasePaginatedList<QuestionViewDto>>>> GetQuestions(int pageNumber = 1, int pageSize = 10)
         //{
         //    BasePaginatedList<QuestionViewDto> paginatedQuestions = await _questionService.GetQuestionsAsync(pageNumber, pageSize);
@@ -73,7 +73,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // Delete a question by its ID
-        [HttpDelete("{id}")]
+        //[HttpDelete("{id}")]
         //public async Task<ActionResult<BaseResponse<string>>> DeleteQuestion(string id)
         //{
         //    BaseResponse<string> response = await _questionService.DeleteQuestion(id);
