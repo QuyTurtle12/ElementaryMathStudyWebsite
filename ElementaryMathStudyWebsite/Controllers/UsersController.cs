@@ -122,9 +122,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// </summary>
         /// <param name="createUserDto">The user data required for creation.</param>
         /// <returns>Returns the created user along with its ID.</returns>
-        /// <response code="201">User created successfully.</response>
-        /// <response code="400">Invalid user data provided.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpPost]
         [Route("create")]
         [Authorize(Policy = "Admin-Manager")]
@@ -156,8 +153,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// Retrieves a list of all users with their associated roles.
         /// </summary>
         /// <returns>Returns a list of users with their roles.</returns>
-        /// <response code="200">List of users retrieved successfully.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("all-list")]
         [Authorize(Policy = "Admin-Manager")]
@@ -185,8 +180,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <param name="pageNumber">The page number to retrieve (default is 1).</param>
         /// <param name="pageSize">The number of users per page (default is 10).</param>
         /// <returns>Returns a paginated list of users.</returns>
-        /// <response code="200">List of users retrieved successfully.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("all-pagination")]
         [Authorize(Policy = "Admin-Manager")]
@@ -259,10 +252,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// </summary>
         /// <param name="userId">The ID of the user to retrieve.</param>
         /// <returns>Returns the user details.</returns>
-        /// <response code="200">User found and details returned.</response>
-        /// <response code="400">Invalid user ID provided.</response>
-        /// <response code="404">User not found.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("get/{userId}")]
         [SwaggerOperation(
@@ -290,10 +279,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <param name="userId">The ID of the user to update.</param>
         /// <param name="updateUserDto">The updated user data.</param>
         /// <returns>Returns the updated user details.</returns>
-        /// <response code="200">User updated successfully.</response>
-        /// <response code="400">Invalid user ID or data provided.</response>
-        /// <response code="404">User not found.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpPut]
         [Route("update/{userId}")]
         [Authorize(Policy = "Admin-Manager")]
@@ -326,10 +311,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// </summary>
         /// <param name="userId">The ID of the user to disable.</param>
         /// <returns>Returns a success or failure message.</returns>
-        /// <response code="200">User successfully disabled.</response>
-        /// <response code="400">Invalid user ID provided.</response>
-        /// <response code="404">User not found.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpPatch]
         [Route("disable/{userId}")]
         [Authorize(Policy = "Admin-Manager")]
@@ -391,9 +372,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <param name="pageNumber">The page number to retrieve (default is 1).</param>
         /// <param name="pageSize">The number of users per page (default is 10).</param>
         /// <returns>Returns a paginated list of users who are children of the specified parent.</returns>
-        /// <response code="200">List of children retrieved successfully.</response>
-        /// <response code="400">Invalid parent ID provided.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("children/{parentId}")]
         [SwaggerOperation(
