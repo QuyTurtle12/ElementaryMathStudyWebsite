@@ -129,7 +129,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 ChapterName = chapterDTO.ChapterName,
                 Status = true,
                 SubjectId = chapterDTO.SubjectId,
-                QuizId = chapterDTO.QuizId,
+                QuizId = string.IsNullOrWhiteSpace(chapterDTO.QuizId) ? null : chapterDTO.QuizId,
             };
 
             _userServices.AuditFields(chapter, isCreating: true);
@@ -560,7 +560,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <returns></returns>
         public async Task<BasePaginatedList<object>> GetChaptersAsync(int pageNumber, int pageSize)
         {
-            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(s => String.IsNullOrWhiteSpace(s.DeletedBy));
+            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => String.IsNullOrWhiteSpace(c.DeletedBy) && c.Status == true);
 
             //Kiểm tra và xử lý phân trang
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
