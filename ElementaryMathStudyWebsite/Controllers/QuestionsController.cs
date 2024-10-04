@@ -72,12 +72,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             return BaseResponse<QuestionMainViewDto>.OkResponse(updatedQuestion);
         }
 
-        // Delete a question by its ID
-        //[HttpDelete("{id}")]
-        //public async Task<ActionResult<BaseResponse<string>>> DeleteQuestion(string id)
-        //{
-        //    BaseResponse<string> response = await _questionService.DeleteQuestion(id);
-        //    return Ok(response);
-        //}
+        //Delete a question by its ID
+       [HttpDelete("{id}")]
+        public async Task<ActionResult<BaseResponse<string>>> DeleteQuestion(string id)
+        {
+            BaseResponse<string> response = await _questionService.DeleteQuestion(id);
+            return Ok(response);
+        }
     }
 }
