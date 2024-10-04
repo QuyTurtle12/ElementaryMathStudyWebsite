@@ -74,11 +74,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 ? await _unitOfWork.GetRepository<Option>().GetPagging(query, 1, query.Count())
                 : await _unitOfWork.GetRepository<Option>().GetPagging(query, pageNumber, pageSize);
 
-            var responseItems = resultQuery.Items.Select(item =>
-            {
-                OptionViewDto responseModel = _mapper.Map<OptionViewDto>(item);
-                return responseModel;
-            }).ToList();
+            var responseItems = resultQuery.Items.Select(_mapper.Map<OptionViewDto>).ToList();
 
             return new BasePaginatedList<OptionViewDto>(responseItems, resultQuery.TotalItems, resultQuery.CurrentPage, resultQuery.PageSize);
         }

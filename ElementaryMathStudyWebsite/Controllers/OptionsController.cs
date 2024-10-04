@@ -26,7 +26,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Admin & Content Manager",
             Description = "Add an option (of a question)"
             )]
-        public async Task<IActionResult> AddOption([Required] OptionCreateDto dto)
+        public async Task<IActionResult> AddOption(OptionCreateDto dto)
         {
             var response = await _optionService.AddOption(dto);
             return Ok(BaseResponse<OptionViewDto>.OkResponse(response));
