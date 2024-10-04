@@ -1,6 +1,7 @@
 ﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto
 {
     using System.ComponentModel.DataAnnotations;
+    using System.Reflection;
 
     namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto
     {
@@ -25,6 +26,7 @@
             public string Password { get; set; } = string.Empty;
         }
 
+        [AtLeastOneFieldRequired]
         public class UpdateUserDto
         {
             public string? FullName { get; set; }
@@ -44,6 +46,7 @@
             // public string? Password { get; set; } // Optional, only if you want to update the password
         }
 
+        [AtLeastOneFieldRequired]
         public class RequestUpdateProfileDto
         {
             public string? FullName { get; set; }
@@ -66,6 +69,24 @@
 
             [Required(ErrorMessage = "Username is required.")]
             public required string UserName { get; set; }
+        }
+
+        public class AtLeastOneFieldRequiredAttribute : ValidationAttribute
+        {
+            protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+            {
+                var properties = validationContext.ObjectType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                var hasValue = properties
+                    .Where(p => p.GetValue(validationContext.ObjectInstance) != null)
+                    .Any(p => p.GetValue(validationContext.ObjectInstance) is string str ? !string.IsNullOrWhiteSpace(str) : true);
+
+                if (!hasValue)
+                {
+                    return new ValidationResult("At least one field must be provided.");
+                }
+
+                return ValidationResult.Success;
+            }
         }
 
     }
