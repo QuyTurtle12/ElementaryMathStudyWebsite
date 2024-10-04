@@ -1,6 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
@@ -17,10 +16,5 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         
         //Delete an option
         Task<bool> DeleteOption(string optionId);
-
-        Task<BasePaginatedList<Option>> GetOptions(int pageNumber, int pageSize);
-
-        // Get option with all properties
-        Task<Option> GetOptionById(string optionId);
     }
 }

@@ -222,7 +222,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
 
                 Subject boughtSubject = await _unitOfWork.GetRepository<Subject>()
-                                                            .FindByConditionAsync(s => s.Equals(subject.SubjectId))
+                                                            .FindByConditionAsync(s => s.Id == subject.SubjectId)
                                                             ?? throw new BaseException.NotFoundException("not_found", $"subject with Id {subject.SubjectId} is not existed");
 
                 totalPrice += boughtSubject.Price;
