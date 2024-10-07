@@ -5,353 +5,207 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Utils;
-
+using ElementaryMathStudyWebsite.Core.Store;
+using System.Text.RegularExpressions;
+using ElementaryMathStudyWebsite.Core.Entity;
+using AutoMapper;
+using EllipticCurve.Utils;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
     public class TopicService : IAppTopicServices
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IAppQuizServices _quizService;
         private readonly IAppUserServices _userService;
-        
+        private readonly IMapper _mapper;
 
-        public TopicService(IUnitOfWork unitOfWork, IAppQuizServices quizService, IAppUserServices userService)
+        public TopicService(IUnitOfWork unitOfWork, IAppUserServices userService, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
-            _quizService = quizService;
             _userService = userService;
+            _mapper = mapper;
+
         }
 
         // Lấy danh sách Topic ( Admin )
         public async Task<BasePaginatedList<TopicAdminViewDto>> GetAllExistTopicsAsync(int pageNumber, int pageSize)
         {
-            IQueryable<Topic> query = _unitOfWork.GetRepository<Topic>().Entities.Where(t => t.Status == true);
+            // Fetch all active topics asynchronously without invalid Include statements
+            var topics = await _unitOfWork.GetRepository<Topic>()
+                .Entities
+                .Where(t => t.Status == true)
+                .Include(t => t.Quiz)
+                .Include(t => t.Chapter)
+                .ToListAsync();
 
-            // Kiểm tra các tham số phân trang
+            // If no topics found, throw an exception
+            if (!topics.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "cannot find any topics");
+            }
+
+            // Fetch related users manually
+            var createdUserIds = topics.Where(t => t.CreatedBy != null).Select(t => t.CreatedBy).Distinct();
+            var updatedUserIds = topics.Where(t => t.LastUpdatedBy != null).Select(t => t.LastUpdatedBy).Distinct();
+
+            var createdUsers = await _unitOfWork.GetRepository<User>().Entities
+                .Where(u => createdUserIds.Contains(u.Id))
+                .ToListAsync();
+
+            var updatedUsers = await _unitOfWork.GetRepository<User>().Entities
+                .Where(u => updatedUserIds.Contains(u.Id))
+                .ToListAsync();
+
+            // Create a list to hold TopicAdminViewDto objects
+            var topicAdminViewDtos = topics.Select(topic =>
+            {
+                var createdUser = createdUsers.FirstOrDefault(u => u.Id == topic.CreatedBy);
+                var updatedUser = updatedUsers.FirstOrDefault(u => u.Id == topic.LastUpdatedBy);
+
+                return _mapper.Map<TopicAdminViewDto>(topic, opts =>
+                {
+                    opts.Items["CreatedUser"] = createdUser;
+                    opts.Items["UpdatedUser"] = updatedUser;
+                });
+            }).Where(dto => dto != null).ToList();
+
+            // Check if any valid TopicAdminViewDto was created
+            if (!topicAdminViewDtos.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "cannot find any topics");
+            }
+
+            // Validate and adjust pagination parameters
             if (pageNumber <= 0 || pageSize <= 0)
             {
-                var allTopics = await query.ToListAsync();
-                var topicAdminViewDtos = new List<TopicAdminViewDto>();
-
-                foreach (var topic in allTopics)
-                {
-                    if (topic != null)
-                    {
-                        string quizName = string.Empty;
-                        if (!string.IsNullOrWhiteSpace(topic.QuizId))
-                        {
-                            quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-                        }
-
-                        string chapterName = string.Empty;
-                        if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
-                        {
-                            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
-
-                            chapterName = chapter!.ChapterName;
-                        }
-
-                        User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
-                        User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
-
-                        topicAdminViewDtos.Add(new TopicAdminViewDto
-                        {
-                            Id = topic!.Id,
-                            Number = topic.Number,
-                            TopicName = topic.TopicName,
-                            TopicContext = topic.TopicContext,
-                            QuizId = topic.QuizId,
-                            QuizName = quizName,
-                            ChapterId = topic.ChapterId,
-                            CreatedBy = topic?.CreatedBy ?? string.Empty,
-                            CreatorName = creator?.FullName ?? string.Empty,
-                            CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                            LastUpdatedBy = topic?.LastUpdatedBy ?? string.Empty,
-                            LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
-                            LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
-                            CreatedTime = topic?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                            LastUpdatedTime = topic?.LastUpdatedTime ?? CoreHelper.SystemTimeNow
-                        });
-                    }
-                }
-                if (topicAdminViewDtos.Count == 0)
-                {
-                    throw new BaseException.NotFoundException("Not Found!", "Cannot found any topics");
-                }
-
-                // Trả về danh sách không phân trang
                 return new BasePaginatedList<TopicAdminViewDto>(topicAdminViewDtos, topicAdminViewDtos.Count, 1, topicAdminViewDtos.Count);
             }
-            var totalCount = await query.CountAsync();
 
-            // Thực hiện phân trang
-            var paginatedTopics = await _unitOfWork.GetRepository<Topic>().GetPagging(query, pageNumber, pageSize);
+            // Adjust page number for valid pagination
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, topicAdminViewDtos.Count, pageSize);
 
-            // Chuyển đổi các Topic sang TopicViewDto
-            var topicViewDtosPaginated = new List<TopicAdminViewDto>();
+            // Return paginated results
+            var paginatedTopics = topicAdminViewDtos
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
-            foreach (var topic in paginatedTopics.Items)
-            {
-                if (topic != null)
-                {
-                    string quizName = string.Empty;
-                    if (!string.IsNullOrWhiteSpace(topic.QuizId))
-                    {
-                        quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-                    }
-
-                    string chapterName = string.Empty;
-                    if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
-                    {
-                        Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
-
-                        chapterName = chapter!.ChapterName;
-                    }
-
-                    User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
-                    User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
-                    topicViewDtosPaginated.Add(new TopicAdminViewDto
-                    {
-                        Id = topic!.Id,
-                        Number = topic.Number,
-                        TopicName = topic.TopicName,
-                        TopicContext = topic.TopicContext,
-                        QuizId = topic.QuizId,
-                        QuizName = quizName,
-                        ChapterId = topic.ChapterId,
-                        CreatedBy = topic?.CreatedBy ?? string.Empty,
-                        CreatorName = creator?.FullName ?? string.Empty,
-                        CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                        LastUpdatedBy = topic?.LastUpdatedBy ?? string.Empty,
-                        LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
-                        LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
-                        CreatedTime = topic?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                        LastUpdatedTime = topic?.LastUpdatedTime ?? CoreHelper.SystemTimeNow
-                    });
-                }
-            }
-            if (topicViewDtosPaginated.Count == 0)
-            {
-                throw new BaseException.NotFoundException("Not Found!", "Cannot found any topics");
-            }
-            // Trả về danh sách đã phân trang
-            return new BasePaginatedList<TopicAdminViewDto>(topicViewDtosPaginated, totalCount, pageNumber, pageSize);
+            return new BasePaginatedList<TopicAdminViewDto>(paginatedTopics, topicAdminViewDtos.Count, pageNumber, pageSize);
         }
+
+
         public async Task<BasePaginatedList<TopicAdminViewDto>> GetAllDeleteTopicsAsync(int pageNumber, int pageSize)
         {
-            IQueryable<Topic> query = _unitOfWork.GetRepository<Topic>().Entities.Where(c => c.Status == false && c.DeletedBy != null && c.DeletedTime != null);
+            // Fetch all deleted topics asynchronously
+            var topics = await _unitOfWork.GetRepository<Topic>()
+                .Entities
+                .Where(c => c.Status == false && c.DeletedBy != null && c.DeletedTime != null)
+                .Include(t => t.Quiz)
+                .Include(t => t.Chapter)
+                .ToListAsync();
 
-            // Kiểm tra các tham số phân trang
+            // If no topics found, throw an exception
+            if (!topics.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "cannot find any topics");
+            }
+
+            // Fetch related users manually
+            var createdUserIds = topics.Where(t => t.CreatedBy != null).Select(t => t.CreatedBy).Distinct();
+            var updatedUserIds = topics.Where(t => t.LastUpdatedBy != null).Select(t => t.LastUpdatedBy).Distinct();
+
+            var createdUsers = await _unitOfWork.GetRepository<User>().Entities
+                .Where(u => createdUserIds.Contains(u.Id))
+                .ToListAsync();
+
+            var updatedUsers = await _unitOfWork.GetRepository<User>().Entities
+                .Where(u => updatedUserIds.Contains(u.Id))
+                .ToListAsync();
+
+            // Create a list to hold TopicAdminViewDto objects
+            var topicAdminViewDtos = topics.Select(topic =>
+            {
+                var createdUser = createdUsers.FirstOrDefault(u => u.Id == topic.CreatedBy);
+                var updatedUser = updatedUsers.FirstOrDefault(u => u.Id == topic.LastUpdatedBy);
+
+                return _mapper.Map<TopicAdminViewDto>(topic, opts =>
+                {
+                    opts.Items["CreatedUser"] = createdUser;
+                    opts.Items["UpdatedUser"] = updatedUser;
+                });
+            }).Where(dto => dto != null).ToList();
+
+            // Check if any valid TopicAdminViewDto was created
+            if (!topicAdminViewDtos.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "cannot find any topics");
+            }
+
+            // Validate and adjust pagination parameters
             if (pageNumber <= 0 || pageSize <= 0)
             {
-                var allTopics = await query.ToListAsync();
-                var topicAdminViewDtos = new List<TopicAdminViewDto>();
-
-                foreach (var topic in allTopics)
-                {
-                    if (topic != null)
-                    {
-                        string quizName = string.Empty;
-                        if (!string.IsNullOrWhiteSpace(topic.QuizId))
-                        {
-                            quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-                        }
-
-                        string chapterName = string.Empty;
-                        if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
-                        {
-                            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
-
-                            chapterName = chapter!.ChapterName;
-                        }
-
-                        User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
-                        User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
-
-                        topicAdminViewDtos.Add(new TopicAdminViewDto
-                        {
-                            Id = topic!.Id,
-                            Number = topic.Number,
-                            TopicName = topic.TopicName,
-                            TopicContext = topic.TopicContext,
-                            Status = topic.Status,
-                            QuizId = topic.QuizId,
-                            QuizName = quizName,
-                            ChapterId = topic.ChapterId,
-                            CreatedBy = topic?.CreatedBy ?? string.Empty,
-                            CreatorName = creator?.FullName ?? string.Empty,
-                            CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                            LastUpdatedBy = topic?.LastUpdatedBy ?? string.Empty,
-                            LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
-                            LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
-                            CreatedTime = topic?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                            LastUpdatedTime = topic?.LastUpdatedTime ?? CoreHelper.SystemTimeNow
-                        });
-                    }
-                }
-                if (topicAdminViewDtos.Count == 0)
-                {
-                    throw new BaseException.NotFoundException("Not Found!", "Cannot find any topics that have been deleted.");
-                }
-                // Trả về danh sách không phân trang
                 return new BasePaginatedList<TopicAdminViewDto>(topicAdminViewDtos, topicAdminViewDtos.Count, 1, topicAdminViewDtos.Count);
             }
-            var totalCount = await query.CountAsync();
 
-            // Thực hiện phân trang
-            var paginatedTopics = await _unitOfWork.GetRepository<Topic>().GetPagging(query, pageNumber, pageSize);
+            // Adjust page number for valid pagination
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, topicAdminViewDtos.Count, pageSize);
 
-            // Chuyển đổi các Topic sang TopicViewDto
-            var topicViewDtosPaginated = new List<TopicAdminViewDto>();
+            // Return paginated results
+            var paginatedTopics = topicAdminViewDtos
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
-            foreach (var topic in paginatedTopics.Items)
-            {
-                if (topic != null)
-                {
-                    string quizName = string.Empty;
-                    if (!string.IsNullOrWhiteSpace(topic.QuizId))
-                    {
-                        quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-                    }
-
-                    string chapterName = string.Empty;
-                    if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
-                    {
-                        Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
-
-                        chapterName = chapter!.ChapterName;
-                    }
-                    string createdById = topic?.CreatedBy ?? string.Empty;
-                    User? createdBy = await _unitOfWork.GetRepository<User>().GetByIdAsync(createdById);
-
-                    User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
-                    User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
-                    topicViewDtosPaginated.Add(new TopicAdminViewDto
-                    {
-                        Id = topic!.Id,
-                        Number = topic.Number,
-                        TopicName = topic.TopicName,
-                        TopicContext = topic.TopicContext,
-                        QuizId = topic.QuizId,
-                        QuizName = quizName,
-                        ChapterId = topic.ChapterId,
-                        CreatedBy = topic?.CreatedBy ?? string.Empty,
-                        CreatorName = creator?.FullName ?? string.Empty,
-                        CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                        LastUpdatedBy = topic?.LastUpdatedBy ?? string.Empty,
-                        LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
-                        LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
-                        CreatedTime = topic?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                        LastUpdatedTime = topic?.LastUpdatedTime ?? CoreHelper.SystemTimeNow
-                    });
-                }
-            }
-            if (topicViewDtosPaginated.Count == 0)
-            {
-                throw new BaseException.NotFoundException("Not Found!", "Cannot find any topics that have been deleted.");
-            }
-            // Trả về danh sách đã phân trang
-            return new BasePaginatedList<TopicAdminViewDto>(topicViewDtosPaginated, totalCount, pageNumber, pageSize);
+            return new BasePaginatedList<TopicAdminViewDto>(paginatedTopics, topicAdminViewDtos.Count, pageNumber, pageSize);
         }
-        //Lấy danh sách Topic ( User )
+
         public async Task<BasePaginatedList<TopicViewDto>> GetAllTopicsAsync(int pageNumber, int pageSize)
         {
-            //IQueryable<Topic> query = _topicRepository.Entities;
-            IQueryable<Topic> query = _unitOfWork.GetRepository<Topic>().Entities.Where(t => t.Status == true);
+            // Fetch all active topics asynchronously
+            var topics = await _unitOfWork.GetRepository<Topic>()
+                .Entities
+                .Where(t => t.Status == true)
+                .Include(t => t.Quiz)
+                .Include(t => t.Chapter)
+                .ToListAsync();
 
+            // If no topics found, throw an exception
+            if (!topics.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "cannot find any topics");
+            }
 
-            // Kiểm tra các tham số phân trang
+            // Map Topic to TopicViewDto
+            var topicViewDtos = topics.Select(topic => _mapper.Map<TopicViewDto>(topic)).ToList();
+
+            // Filter out null entries (if any)
+            var validTopicViewDtos = topicViewDtos.Where(dto => dto != null).ToList();
+
+            // Check if any valid TopicViewDto was created
+            if (!validTopicViewDtos.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "cannot find any topics");
+            }
+
+            // Validate and adjust pagination parameters
             if (pageNumber <= 0 || pageSize <= 0)
             {
-                var allTopics = await query.ToListAsync();
-                var topicViewDtos = new List<TopicViewDto>();
-
-                foreach (var topic in allTopics)
-                {
-                    if (topic != null)
-                    {
-                        string quizName = string.Empty;
-                        if (!string.IsNullOrWhiteSpace(topic.QuizId))
-                        {
-                            quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-                        }
-
-                        string chapterName = string.Empty;
-                        if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
-                        {
-                            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
-
-                            chapterName = chapter!.ChapterName;
-                        }
-
-                        topicViewDtos.Add(new TopicViewDto
-                        {
-                            Id = topic.Id,
-                            Number = topic.Number,
-                            TopicName = topic.TopicName,
-                            TopicContext = topic.TopicContext,
-                            QuizId = topic.QuizId,
-                            QuizName = quizName,
-                            ChapterId = topic.ChapterId,
-                            ChapterName = chapterName
-                        });
-                    }
-                }
-                if (topicViewDtos.Count == 0)
-                {
-                    throw new BaseException.NotFoundException("Not Found!", "Cannot found any topics");
-                }
-                // Trả về danh sách không phân trang
-                return new BasePaginatedList<TopicViewDto>(topicViewDtos, topicViewDtos.Count, 1, topicViewDtos.Count);
+                return new BasePaginatedList<TopicViewDto>(validTopicViewDtos, validTopicViewDtos.Count, 1, validTopicViewDtos.Count);
             }
-            var totalCount = await query.CountAsync();
 
-            // Thực hiện phân trang
-            var paginatedTopics = await _unitOfWork.GetRepository<Topic>().GetPagging(query, pageNumber, pageSize);
+            // Adjust page number for valid pagination
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, validTopicViewDtos.Count, pageSize);
 
-            // Chuyển đổi các Topic sang TopicViewDto
-            var topicViewDtosPaginated = new List<TopicViewDto>();
+            // Paginate the result
+            var paginatedTopics = validTopicViewDtos
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
-            foreach (var topic in paginatedTopics.Items)
-            {
-                if (topic != null)
-                {
-                    string quizName = string.Empty;
-                    if (!string.IsNullOrWhiteSpace(topic.QuizId))
-                    {
-                        quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-                    }
-
-                    string chapterName = string.Empty;
-                    if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
-                    {
-                        Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
-
-                        chapterName = chapter!.ChapterName;
-                    }
-                    else chapterName = string.Empty;
-
-                    topicViewDtosPaginated.Add(new TopicViewDto
-                    {
-                        Id = topic.Id,
-                        Number = topic.Number,
-                        TopicName = topic.TopicName,
-                        TopicContext = topic.TopicContext,
-                        QuizId = topic.QuizId,
-                        QuizName = quizName,
-                        ChapterId = topic.ChapterId,
-                        ChapterName = chapterName
-                    });
-                }
-            }
-            if (topicViewDtosPaginated.Count == 0)
-            {
-                throw new BaseException.NotFoundException("Not Found!", "Cannot found any topics");
-            }
-            // Trả về danh sách đã phân trang
-            return new BasePaginatedList<TopicViewDto>(topicViewDtosPaginated, totalCount, pageNumber, pageSize);
+            // Return paginated results
+            return new BasePaginatedList<TopicViewDto>(paginatedTopics, validTopicViewDtos.Count, pageNumber, pageSize);
         }
+
         // Tìm kiếm Topic bằng ID ( Admin )
         public async Task<TopicAdminViewDto?> GetTopicAllByIdAsync(string id)
         {
@@ -365,41 +219,54 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (topic == null || topic.Status == false)
             {
-                throw new BaseException.NotFoundException("Not Found!", $"Topic with ID '{id}' not found.");
+                throw new BaseException.NotFoundException("not_found", $"Topic with ID '{id}' not found.");
             }
 
-            if (string.IsNullOrWhiteSpace(topic.ChapterId))
-            {
-                throw new BaseException.BadRequestException("Chapter ID cannot be empty.", nameof(topic.ChapterId));
-            }
+            //if (string.IsNullOrWhiteSpace(topic.ChapterId))
+            //{
+            //    throw new BaseException.BadRequestException("Chapter ID cannot be empty.", nameof(topic.ChapterId));
+            //}
 
-            if (string.IsNullOrWhiteSpace(topic.QuizId))
-            {
-                throw new BaseException.BadRequestException("Quiz ID cannot be empty.", nameof(topic.QuizId));
-            }
+            //if (string.IsNullOrWhiteSpace(topic.QuizId))
+            //{
+            //    throw new BaseException.BadRequestException("Quiz ID cannot be empty.", nameof(topic.QuizId));
+            //}
 
-            string quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-            User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
-            User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
+            //// Lấy tên chương và tên quiz
+            //string chapterName = await _chapterService.GetChapterNameAsync(topic.ChapterId) ?? string.Empty;
+            //string quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
 
-            return new TopicAdminViewDto
+            //// Lấy thông tin người tạo và người cập nhật
+            //User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
+            //User? lastUpdatedPerson = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
+
+            //// Ánh xạ topic sang TopicAdminViewDto
+            //var topicAdminViewDto = _mapper.Map<TopicAdminViewDto>(topic);
+
+            //// Thiết lập các thuộc tính bổ sung
+            //topicAdminViewDto.QuizName = quizName;
+            //topicAdminViewDto.ChapterName = chapterName;
+            //topicAdminViewDto.CreatorName = creator?.FullName ?? string.Empty;
+            //topicAdminViewDto.CreatorPhone = creator?.PhoneNumber ?? string.Empty;
+            //topicAdminViewDto.LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty;
+            //topicAdminViewDto.LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty;
+
+            //return topicAdminViewDto;
+
+            Quiz? quiz = topic.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(topic.QuizId) : null;
+            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
+            User? createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
+            User? updatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
+
+            TopicAdminViewDto dto = _mapper.Map<TopicAdminViewDto>(topic, opts =>
             {
-                Id = topic!.Id,
-                Number = topic.Number,
-                TopicName = topic.TopicName,
-                TopicContext = topic.TopicContext,
-                QuizId = topic.QuizId,
-                QuizName = quizName,
-                ChapterId = topic.ChapterId,
-                CreatedBy = topic?.CreatedBy ?? string.Empty,
-                CreatorName = creator?.FullName ?? string.Empty,
-                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                LastUpdatedBy = topic?.LastUpdatedBy ?? string.Empty,
-                LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty,
-                LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty,
-                CreatedTime = topic?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                LastUpdatedTime = topic?.LastUpdatedTime ?? CoreHelper.SystemTimeNow
-            };
+                opts.Items["CreatedUser"] = createdUser;
+                opts.Items["UpdatedUser"] = updatedUser;
+                opts.Items["Chapter"] = chapter;
+                opts.Items["Quiz"] = quiz;
+            });
+
+            return dto;
         }
 
         // Tìm kiếm Topic bằng Topic Id ( User )
@@ -414,129 +281,70 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             if (topic == null || topic.Status == false)
             {
-                throw new BaseException.NotFoundException("Not Found!", $"Topic with ID '{id}' not found.");
+                throw new BaseException.NotFoundException("not_found", $"Topic with ID '{id}' not found.");
             }
+            Quiz? quiz = topic.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(topic.QuizId) : null;
+            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
 
-            if (string.IsNullOrWhiteSpace(topic.ChapterId))
+            TopicViewDto dto = _mapper.Map<TopicViewDto>(topic, opts =>
             {
-                throw new BaseException.BadRequestException("Chapter ID cannot be empty.", nameof(topic.ChapterId));
-            }
+                opts.Items["Chapter"] = chapter;
+                opts.Items["Quiz"] = quiz;
+            });
 
-            if (string.IsNullOrWhiteSpace(topic.QuizId))
-            {
-                throw new BaseException.BadRequestException("Quiz ID cannot be empty.", nameof(topic.QuizId));
-            }
-
-            string chapterName = string.Empty;
-            if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
-            {
-                Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
-
-                chapterName = chapter!.ChapterName;
-            }
-
-            string quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-
-            return new TopicViewDto
-            {
-                Id = topic.Id,
-                Number = topic.Number,
-                TopicName = topic.TopicName,
-                TopicContext = topic.TopicContext,
-                QuizId = topic.QuizId,
-                QuizName = quizName,
-                ChapterId = topic.ChapterId,
-                ChapterName = chapterName
-            };
+            return dto;
         }
 
         // Tìm kiếm Topic bằng Topic's Name
-        public async Task<BasePaginatedList<object>> SearchTopicByNameAsync(string searchTerm, int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<TopicViewDto>> SearchTopicByNameAsync(string searchTerm, int pageNumber, int pageSize)
         {
-            var query = _unitOfWork.GetRepository<Topic>().Entities.Where(t => t.Status == true);
+            var query = _unitOfWork.GetRepository<Topic>()
+                .Entities
+                .Where(t => t.Status == true);
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 query = query.Where(t => EF.Functions.Like(t.TopicName, $"%{searchTerm}%"));
             }
-
-            if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
+            var allTopics = await query
+                .Include(t => t.Quiz)
+                .Include(t => t.Chapter)
+                .ToListAsync();
+            // If no topics found, throw an exception
+            if (!allTopics.Any())
             {
-                var allTopics = await query.ToListAsync();
-                var topicViewDtos = new List<TopicViewDto>();
-
-                foreach (var topic in allTopics)
-                {
-                    string chapterName = string.Empty;
-                    if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
-                    {
-                        Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
-
-                        chapterName = chapter!.ChapterName;
-                    }
-                    string quizName = string.Empty;
-                    if (!string.IsNullOrWhiteSpace(topic.QuizId))
-                    {
-                        quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-                    }
-
-                    topicViewDtos.Add(new TopicViewDto
-                    {
-                        Id = topic.Id,
-                        Number = topic.Number,
-                        TopicName = topic.TopicName,
-                        TopicContext = topic.TopicContext,
-                        QuizId = topic.QuizId,
-                        QuizName = quizName,
-                        ChapterId = topic.ChapterId,
-                        ChapterName = chapterName
-                    });
-                }
-
-                if (!topicViewDtos.Any())
-                {
-                    throw new BaseException.NotFoundException("Not Found!", $"No topics found with name containing '{searchTerm}'.");
-                }
-
-                return new BasePaginatedList<object>(topicViewDtos, topicViewDtos.Count, 1, topicViewDtos.Count);
+                throw new BaseException.NotFoundException("not_found", "cannot find any topics");
             }
 
-            var paginatedTopics = await _unitOfWork.GetRepository<Topic>().GetPagging(query, pageNumber, pageSize);
-            var topicDtosPaginated = new List<TopicViewDto>();
+            // Map Topic to TopicViewDto
+            var topicViewDtos = allTopics.Select(topic => _mapper.Map<TopicViewDto>(topic)).ToList();
 
-            foreach (var topic in paginatedTopics.Items)
+            // Filter out null entries (if any)
+            var validTopicViewDtos = topicViewDtos.Where(dto => dto != null).ToList();
+
+            // Check if any valid TopicViewDto was created
+            if (!validTopicViewDtos.Any())
             {
-                string chapterName = string.Empty;
-                if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
-                {
-                    Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
-
-                    chapterName = chapter!.ChapterName;
-                }
-                string quizName = string.Empty;
-                if (!string.IsNullOrWhiteSpace(topic.QuizId))
-                {
-                    quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-                }
-                topicDtosPaginated.Add(new TopicViewDto
-                {
-                    Id = topic.Id,
-                    Number = topic.Number,
-                    TopicName = topic.TopicName,
-                    TopicContext = topic.TopicContext,
-                    QuizId = topic.QuizId,
-                    QuizName = quizName,
-                    ChapterId = topic.ChapterId,
-                    ChapterName = chapterName
-                });
+                throw new BaseException.NotFoundException("not_found", "cannot find any topics");
             }
 
-            if (!topicDtosPaginated.Any())
+            // Validate and adjust pagination parameters
+            if (pageNumber <= 0 || pageSize <= 0)
             {
-                throw new BaseException.NotFoundException("Not Found!", $"No topics found with name containing '{searchTerm}'.");
+                return new BasePaginatedList<TopicViewDto>(validTopicViewDtos, validTopicViewDtos.Count, 1, validTopicViewDtos.Count);
             }
 
-            return new BasePaginatedList<object>(topicDtosPaginated, topicDtosPaginated.Count, pageNumber, pageSize);
+            // Adjust page number for valid pagination
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, validTopicViewDtos.Count, pageSize);
+
+            // Paginate the result
+            var paginatedTopics = validTopicViewDtos
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            // Return paginated results
+            return new BasePaginatedList<TopicViewDto>(paginatedTopics, validTopicViewDtos.Count, pageNumber, pageSize);
         }
 
         // Lấy danh sách Topic theo ChapterId
@@ -544,78 +352,54 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             ValidateChapterId(chapterId);
 
-            var topics = await _unitOfWork.GetRepository<Topic>().Entities
+            // Fetch all active topics asynchronously
+            var topics = await _unitOfWork.GetRepository<Topic>()
+                .Entities
                 .Where(t => t.ChapterId == chapterId && t.Status)
+                .Include(t => t.Quiz)
+                .Include(t => t.Chapter)
                 .ToListAsync();
 
+            // If no topics found, throw an exception
             if (!topics.Any())
             {
-                throw new BaseException.NotFoundException("Not Found!", $"No topics found for Chapter ID '{chapterId}'.");
+                throw new BaseException.NotFoundException("not_found", "cannot find any topics");
             }
 
-            var topicViewDtos = new List<TopicViewDto>();
-
-            foreach (var topic in topics)
-
-            {
-                string quizName = string.Empty;
-                if (!string.IsNullOrWhiteSpace(topic.QuizId))
-                {
-                    quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-                }
-
-                string chapterName = string.Empty;
-                if (_unitOfWork.IsValid<Chapter>(topic.ChapterId))
-                {
-                    Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
-
-                    chapterName = chapter!.ChapterName;
-                }
-
-                topicViewDtos.Add(new TopicViewDto
-                {
-                    Id = topic.Id,
-                    Number = topic.Number,
-                    TopicName = topic.TopicName,
-                    TopicContext = topic.TopicContext,
-                    QuizId = topic.QuizId,
-                    QuizName = quizName,
-                    ChapterId = topic.ChapterId,
-                    ChapterName = chapterName
-                });
-            }
-            if (topicViewDtos.Count == 0)
-            {
-                throw new BaseException.NotFoundException("Not Found!", "Cannot found any topics");
-            }
-            return topicViewDtos;
+            // Create a list to hold TopicViewDto objects
+            var tp = topics.Select(topic => _mapper.Map<TopicViewDto>(topic)).ToList();
+            return tp;
         }
 
         // Tạo 1 Topic ( Nếu New Topic trùng Number với Old Topic thì Number từ Old Topic trở về sau sẽ tự động +1) 
         public async Task<TopicAdminViewDto> AddTopicAsync(TopicCreateDto topicCreateDto)
         {
             ValidateTopicDto(topicCreateDto);
+
             // Kiểm tra xem tên Topic đã tồn tại chưa
             var existingTopicByName = await _unitOfWork.GetRepository<Topic>().Entities
-                .FirstOrDefaultAsync(t => t.TopicName == topicCreateDto.TopicName && t.ChapterId == topicCreateDto.ChapterId && t.Status);
+                .FirstOrDefaultAsync(t => t.TopicName == topicCreateDto.TopicName
+                                           && t.ChapterId == topicCreateDto.ChapterId
+                                           && t.Status);
 
             if (existingTopicByName != null)
             {
                 throw new BaseException.BadRequestException("Invalid!", $"A topic with the name '{topicCreateDto.TopicName}' already exists in this chapter.");
             }
+
             // Kiểm tra xem số thứ tự đã tồn tại trong chapter chưa
             var existingTopics = await _unitOfWork.GetRepository<Topic>().Entities
                 .Where(t => t.ChapterId == topicCreateDto.ChapterId && t.Status)
                 .ToListAsync();
 
             // Kiểm tra số thứ tự có bị trùng không
-            var existingTopicWithSameNumber = existingTopics
+            Topic? existingTopicWithSameNumber = existingTopics
                 .FirstOrDefault(t => t.Number == topicCreateDto.Number);
 
             if (existingTopicWithSameNumber != null)
             {
                 // Cộng số thứ tự của các topic liền kề và lớn hơn
-                foreach (var existingTopic in existingTopics.Where(t => t.Number >= topicCreateDto.Number))
+                foreach (Topic existingTopic in existingTopics.Where(t => t.Number >= topicCreateDto.Number))
                 {
                     existingTopic.Number += 1;
                     _unitOfWork.GetRepository<Topic>().Update(existingTopic);
@@ -624,9 +408,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 // Lưu thay đổi trước khi thêm topic mới
                 await _unitOfWork.SaveAsync();
             }
-            
+
+            // Kiểm tra QuizId không trùng
+            if (topicCreateDto.QuizId != null)
+            {
+                var existingTopicWithSameQuizId = await _unitOfWork.GetRepository<Topic>().Entities
+                    .FirstOrDefaultAsync(t => t.QuizId == topicCreateDto.QuizId
+                                               && t.ChapterId == topicCreateDto.ChapterId
+                                               && t.Status);
+
+                if (existingTopicWithSameQuizId != null)
+                {
+                    throw new BaseException.BadRequestException("Invalid!", $"A topic with the same QuizId already exists in this chapter.");
+                }
+            }
+
+
+
             User currentUser = await _userService.GetCurrentUserAsync();
-            
+
             // Tạo topic mới
             Topic newTopic = new Topic
             {
@@ -636,48 +436,31 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 ChapterId = topicCreateDto.ChapterId,
                 QuizId = topicCreateDto.QuizId,
                 Status = true,
-                //CreatedBy = currentUser?.Id ?? string.Empty,
-                //LastUpdatedBy = currentUser?.LastUpdatedBy ?? string.Empty,
-                //CreatedTime = topicCreateDto?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                //LastUpdatedTime = topicCreateDto?.LastUpdatedTime ?? CoreHelper.SystemTimeNow
             };
+            newTopic.CreatedBy = currentUser.Id; //
+            newTopic.CreatedTime = DateTime.UtcNow; //
+            newTopic.LastUpdatedBy = currentUser.Id; //
+            newTopic.LastUpdatedTime = DateTime.UtcNow; //
+            _userService.AuditFields(newTopic, false);
 
             await _unitOfWork.GetRepository<Topic>().InsertAsync(newTopic);
             await _unitOfWork.SaveAsync();
 
-            if (string.IsNullOrWhiteSpace(newTopic.ChapterId))
-            {
-                throw new BaseException.BadRequestException("Chapter ID cannot be empty.", nameof(newTopic.ChapterId));
-            }
+            Quiz? quiz = newTopic.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(newTopic.QuizId) : null;
+            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(newTopic.ChapterId);
+            User? createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(newTopic?.CreatedBy ?? string.Empty);
+            User? updatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(newTopic?.LastUpdatedBy ?? string.Empty);
 
-
-            if (string.IsNullOrWhiteSpace(newTopic.QuizId))
+            TopicAdminViewDto topicAdminViewDto = _mapper.Map<TopicAdminViewDto>(newTopic, opts =>
             {
-                throw new BaseException.BadRequestException("Quiz ID cannot be empty.", nameof(newTopic.ChapterId));
-            }
-            string quizName = await _quizService.GetQuizNameAsync(newTopic.QuizId) ?? string.Empty;
-           
+                opts.Items["CreatedUser"] = createdUser;
+                opts.Items["UpdatedUser"] = updatedUser;
+                opts.Items["Chapter"] = chapter;
+                opts.Items["Quiz"] = quiz;
+            });
 
-            return new TopicAdminViewDto
-            {
-                Id = newTopic!.Id,
-                Number = newTopic.Number,
-                TopicName = newTopic.TopicName,
-                TopicContext = newTopic.TopicContext,
-                QuizId = newTopic.QuizId,
-                QuizName = quizName,
-                ChapterId = newTopic.ChapterId,
-                CreatedBy = currentUser?.Id ?? string.Empty,
-                CreatorName = currentUser?.FullName ?? string.Empty,
-                CreatorPhone = currentUser?.PhoneNumber ?? string.Empty,
-                LastUpdatedBy = currentUser?.LastUpdatedBy ?? string.Empty,
-                LastUpdatedPersonName = currentUser?.FullName ?? string.Empty,
-                LastUpdatedPersonPhone = currentUser?.PhoneNumber ?? string.Empty,
-                CreatedTime = newTopic?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                LastUpdatedTime = newTopic?.LastUpdatedTime ?? CoreHelper.SystemTimeNow
-            };
+            return topicAdminViewDto;
         }
-
 
         //// Tạo 1 Topic ( Tăng Number tự động )
         //public async Task<TopicAdminViewDto> AddTopicAsync(TopicCreateDto topicCreateDto)
@@ -746,11 +529,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
             ValidateTopicId(id);
             Topic? existingTopic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(id);
 
-            if (existingTopic == null) throw new BaseException.NotFoundException("Not Found!", $"No topics found for ID '{id}'.");
+            User currentUser = await _userService.GetCurrentUserAsync();
+
+            if (existingTopic == null)
+                throw new BaseException.NotFoundException("not_found", $"No topics found for ID '{id}'.");
 
             // Kiểm tra xem tên Topic đã tồn tại chưa (trừ chính nó)
             var existingTopicByName = await _unitOfWork.GetRepository<Topic>().Entities
-                .FirstOrDefaultAsync(t => t.TopicName == topicUpdateDto.TopicName && t.ChapterId == topicUpdateDto.ChapterId && t.Status && t.Id != id);
+                .FirstOrDefaultAsync(t => t.TopicName == topicUpdateDto.TopicName);
 
             if (existingTopicByName != null)
             {
@@ -759,133 +545,188 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             existingTopic.TopicName = topicUpdateDto.TopicName;
             existingTopic.TopicContext = topicUpdateDto.TopicContext;
-            //existingTopic.Number = topicUpdateDto.Number;
-            existingTopic.ChapterId = topicUpdateDto.ChapterId;
-            existingTopic.QuizId = topicUpdateDto.QuizId;
             existingTopic.Status = true;
-            //existingTopic.CreatedBy = topicUpdateDto.CreatedByUser;
-            //existingTopic.LastUpdatedBy = topicUpdateDto.LastUpdatedByUser;
+            existingTopic.LastUpdatedBy = currentUser.Id; //
+            existingTopic.LastUpdatedTime = DateTime.UtcNow; //
 
             _userService.AuditFields(existingTopic, false);
 
             await _unitOfWork.SaveAsync();
-            if (string.IsNullOrWhiteSpace(existingTopic.ChapterId))
-            {
-                throw new BaseException.BadRequestException("Chapter ID cannot be empty.", nameof(existingTopic.ChapterId));
-            }
 
-            if (string.IsNullOrWhiteSpace(existingTopic.QuizId))
-            {
-                throw new BaseException.BadRequestException("Quiz ID cannot be empty.", nameof(existingTopic.QuizId));
-            }
+            Quiz? quiz = existingTopic.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(existingTopic.QuizId) : null;
+            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(existingTopic.ChapterId);
+            User? createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(existingTopic?.CreatedBy ?? string.Empty);
+            User? updatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(existingTopic?.LastUpdatedBy ?? string.Empty);
 
-            string quizName = await _quizService.GetQuizNameAsync(existingTopic.QuizId) ?? string.Empty;
-            User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(existingTopic?.CreatedBy ?? string.Empty);
-            User currentUser = await _userService.GetCurrentUserAsync();
-
-            return new TopicAdminViewDto
+            TopicAdminViewDto topicAdminViewDto = _mapper.Map<TopicAdminViewDto>(existingTopic, opts =>
             {
-                Id = existingTopic!.Id,
-                Number = existingTopic.Number,
-                TopicName = existingTopic.TopicName,
-                TopicContext = existingTopic.TopicContext,
-                QuizId = existingTopic.QuizId,
-                QuizName = quizName,
-                ChapterId = existingTopic.ChapterId,
-                CreatedBy = existingTopic?.CreatedBy ?? string.Empty,
-                CreatorName = creator?.FullName ?? string.Empty,
-                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                LastUpdatedBy = currentUser.Id,
-                LastUpdatedPersonName = currentUser.FullName,
-                LastUpdatedPersonPhone = currentUser.PhoneNumber ?? string.Empty,
-                CreatedTime = existingTopic?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                LastUpdatedTime = existingTopic?.LastUpdatedTime ?? CoreHelper.SystemTimeNow
-            };
+                opts.Items["CreatedUser"] = createdUser;
+                opts.Items["UpdatedUser"] = updatedUser;
+                opts.Items["Chapter"] = chapter;
+                opts.Items["Quiz"] = quiz;
+            });
+            return topicAdminViewDto;
         }
 
-        public async Task<bool> DeleteTopicAsync(string topicId)
+        public async Task<TopicAdminViewDto> UpdateQuizIdTopicAsync(string id, TopicUpdateQuizIdDto topicUpdateDto)
         {
-            //Delete the topic
-            Topic? topic;
+            ValidateTopicId(id);
+            Topic? existingTopic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(id);
 
-            if (_unitOfWork.IsValid<Topic>(topicId))
-                topic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(topicId);
-            else throw new BaseException.NotFoundException("not_found", "Topic ID not found");
+            User currentUser = await _userService.GetCurrentUserAsync();
 
-            _userService.AuditFields(topic!, false, true);
+            if (existingTopic == null)
+                throw new BaseException.NotFoundException("not_found", "QuizId is null.");
+
+            // Check if the QuizId is provided
+            if (topicUpdateDto.QuizId != null)
+            {
+                // Check if the QuizId exists
+                var quizExists = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(topicUpdateDto.QuizId) != null;
+                if (!quizExists)
+                {
+                    throw new BaseException.BadRequestException("not_found", $"No quiz found for ID '{topicUpdateDto.QuizId}'.");
+                }
+
+                // Check for conflicts with other topics (excluding the current topic)
+                var existingTopicByQuizId = await _unitOfWork.GetRepository<Topic>().Entities
+                    .FirstOrDefaultAsync(t => t.QuizId == topicUpdateDto.QuizId && t.Id != id);
+                if (existingTopicByQuizId != null)
+                {
+                    throw new BaseException.BadRequestException("not_found", $"The Quiz ID '{topicUpdateDto.QuizId}' is already assigned to another topic.");
+                }
+
+                existingTopic.QuizId = topicUpdateDto.QuizId;
+            }
+            else
+            {
+                // Allow QuizId to be null
+                existingTopic.QuizId = null;
+            }
+
+            existingTopic.LastUpdatedBy = currentUser.Id; //
+            existingTopic.LastUpdatedTime = DateTime.UtcNow; //
+
+            existingTopic.Status = true;
+
+            _userService.AuditFields(existingTopic, false);
 
             await _unitOfWork.SaveAsync();
 
-            // Delete the corresponding quiz
-            await _quizService.DeleteQuizAsync(topic!.QuizId!);
+            Quiz? quiz = existingTopic.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(existingTopic.QuizId) : null;
+            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(existingTopic.ChapterId);
+            User? createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(existingTopic.CreatedBy ?? string.Empty);
+            User? updatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(existingTopic.LastUpdatedBy ?? string.Empty);
 
-            return true;
+            TopicAdminViewDto topicAdminViewDto = _mapper.Map<TopicAdminViewDto>(existingTopic, opts =>
+            {
+                opts.Items["CreatedUser"] = createdUser;
+                opts.Items["UpdatedUser"] = updatedUser;
+                opts.Items["Chapter"] = chapter;
+                opts.Items["Quiz"] = quiz;
+            });
+
+            return topicAdminViewDto;
+        }
+
+        // Xóa 1 Topic 
+        public async Task<TopicDeleteDto> DeleteTopicAsync(string id)
+        {
+            // Lấy token
+            User currentUser = await _userService.GetCurrentUserAsync();
+
+            // Tìm topic theo ID
+            Topic topic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(id) ?? throw new BaseException.NotFoundException("not_found", $"Topic with ID '{id}' not found.");
+
+            // Kiểm tra xem topic đã bị xóa chưa
+            if (topic.DeletedBy != null)
+            {
+                throw new BaseException.BadRequestException("Invalid!", "This topic was already deleted.");
+            }
+
+            // Đánh dấu topic là đã xóa
+            if (topic.Status == true)
+            {
+                topic.Status = false;// Đặt trạng thái là không hoạt động
+            }
+
+            topic.DeletedBy = currentUser.Id; // Lưu ID người đã xóa
+            topic.DeletedTime = DateTime.UtcNow; // Ghi lại thời gian xóa
+
+            // Ghi lại thông tin audit nếu cần thiết
+            _userService.AuditFields(topic, true);
+
+            // Cập nhật topic trong cơ sở dữ liệu
+            _unitOfWork.GetRepository<Topic>().Update(topic);
+            await _unitOfWork.GetRepository<Topic>().SaveAsync();
+
+            Quiz? quiz = topic.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(topic.QuizId) : null;
+            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
+            User? createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
+            User? updatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
+            User? deletedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.DeletedBy ?? string.Empty);
+
+            TopicDeleteDto topicDeleteDto = _mapper.Map<TopicDeleteDto>(topic, opts =>
+            {
+                opts.Items["CreatedUser"] = createdUser;
+                opts.Items["UpdatedUser"] = updatedUser;
+                opts.Items["DeleteUser"] = deletedUser;
+                opts.Items["Chapter"] = chapter;
+                opts.Items["Quiz"] = quiz;
+            });
+            return topicDeleteDto;
         }
 
         // Rollback Topic đã xóa
-        public async Task<TopicDeleteDto> RollBackTopicDeletedAsync(string Id)
+        public async Task<TopicDeleteDto> RollBackTopicDeletedAsync(string id)
         {
-            var topic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(Id) ?? throw new BaseException.BadRequestException("Not Found", "Topic ID not found");
+            var topic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(id)
+                        ?? throw new BaseException.BadRequestException("not_found", "Topic ID not found");
+
             if (topic.DeletedBy == null)
             {
-                throw new BaseException.BadRequestException("Succecffully", "This chapter was rollback");
+                throw new BaseException.BadRequestException("Successfully", "This topic was already rolled back");
             }
-            if (topic.Status == false)
+
+            if (!topic.Status)
             {
                 topic.Status = true;
             }
+
             topic.DeletedBy = null;
             topic.DeletedTime = null;
 
             _userService.AuditFields(topic);
 
             await _unitOfWork.SaveAsync();
-            if (string.IsNullOrWhiteSpace(topic.ChapterId))
-            {
-                throw new BaseException.BadRequestException("Chapter ID cannot be empty.", nameof(topic.ChapterId));
-            }
 
-            if (string.IsNullOrWhiteSpace(topic.QuizId))
-            {
-                throw new BaseException.BadRequestException("Quiz ID cannot be empty.", nameof(topic.QuizId));
-            }
-
-            string quizName = await _quizService.GetQuizNameAsync(topic.QuizId) ?? string.Empty;
-            User? creator = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
+            Quiz? quiz = topic.QuizId != null ? await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(topic.QuizId) : null;
+            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topic.ChapterId);
+            User? createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.CreatedBy ?? string.Empty);
+            User? updatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(topic?.LastUpdatedBy ?? string.Empty);
             User currentUser = await _userService.GetCurrentUserAsync();
 
-            return new TopicDeleteDto
+            TopicDeleteDto topicDeleteDto = _mapper.Map<TopicDeleteDto>(topic, opts =>
             {
-                Id = topic!.Id,
-                Number = topic.Number,
-                TopicName = topic.TopicName,
-                TopicContext = topic.TopicContext,
-                Status = topic.Status,
-                QuizId = topic.QuizId,
-                QuizName = quizName,
-                ChapterId = topic.ChapterId,
-                CreatedBy = topic?.CreatedBy ?? string.Empty,
-                CreatorName = creator?.FullName ?? string.Empty,
-                CreatorPhone = creator?.PhoneNumber ?? string.Empty,
-                LastUpdatedBy = currentUser.Id,
-                LastUpdatedPersonName = currentUser.FullName,
-                LastUpdatedPersonPhone = currentUser.PhoneNumber ?? string.Empty,
-                CreatedTime = topic?.CreatedTime ?? CoreHelper.SystemTimeNow,
-                LastUpdatedTime = topic?.LastUpdatedTime ?? CoreHelper.SystemTimeNow
-            };
+                opts.Items["CreatedUser"] = createdUser;
+                opts.Items["UpdatedUser"] = updatedUser;
+                opts.Items["Chapter"] = chapter;
+                opts.Items["Quiz"] = quiz;
+            });
+            return topicDeleteDto;
         }
 
         //Chỉ cho phép hoán đổi vị trí number trong cùng 1 chapter
         public async Task SwapTopicNumbersAsync(string topicId1, string topicId2)
         {
             // Lấy thông tin của hai topic
-            var topic1 = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(topicId1);
-            var topic2 = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(topicId2);
+            Topic? topic1 = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(topicId1);
+            Topic? topic2 = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(topicId2);
 
             // Kiểm tra xem topic có tồn tại không
             if (topic1 == null || topic2 == null)
             {
-                throw new BaseException.NotFoundException("Not Found!", "One or both topics not found.");
+                throw new BaseException.NotFoundException("not_found", "One or both topics not found.");
             }
 
             // Kiểm tra xem có cùng chapterId không
@@ -895,7 +736,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Đổi số thứ tự
-            var tempNumber = topic1.Number;
+            int tempNumber = topic1.Number;
             topic1.Number = topic2.Number;
             topic2.Number = tempNumber;
 
@@ -925,7 +766,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("Invalid!", "Topic ID cannot be empty.");
             }
         }
-        
         private void ValidateTopicDto(TopicCreateDto topicCreateDto)
         {
             if (string.IsNullOrWhiteSpace(topicCreateDto.TopicName))
