@@ -58,10 +58,10 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // Add a new question
         [HttpPost]
-        public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> AddQuestion(QuestionCreateDto dto)
+        public async Task<ActionResult<BaseResponse<string>>> AddQuestionAsync(QuestionCreateDto dto)
         {
-            QuestionMainViewDto question = await _questionService.AddQuestionAsync(dto);
-            return BaseResponse<QuestionMainViewDto>.OkResponse(question);
+            BaseResponse<string> response = await _questionService.AddQuestionAsync(dto);
+            return Ok(response);
         }
 
         // Update an existing question
@@ -76,7 +76,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult<BaseResponse<string>>> DeleteQuestion(string id)
         {
-            BaseResponse<string> response = await _questionService.DeleteQuestion(id);
+            BaseResponse<string> response = await _questionService.DeleteQuestionAsync(id);
             return Ok(response);
         }
     }

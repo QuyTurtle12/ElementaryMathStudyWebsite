@@ -25,41 +25,91 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _mapper = mapper;
         }
 
-        // Get questions with all properties
+        // Get all questions exist
+
         public async Task<List<QuestionMainViewDto>> GetAllQuestionsMainViewDtoAsync()
         {
-            // Query all questions from the repository, including related entities
-            List<Question> questions = await _unitOfWork.GetRepository<Question>().Entities
-                .Where(q => string.IsNullOrWhiteSpace(q.DeletedBy))
+            // Retrieve the list of questions that are not deleted
+            List<Question> questions = await _unitOfWork.GetRepository<Question>()
+                .GetEntitiesWithCondition(q => string.IsNullOrWhiteSpace(q.DeletedBy))
                 .Include(q => q.Quiz)
-                .Include(q => q.CreatedByUser)
-                .Include(q => q.LastUpdatedByUser)
                 .ToListAsync();
 
-            // Map the list of questions to a list of QuestionMainViewDto using AutoMapper
-            List<QuestionMainViewDto> questionDtos = _mapper.Map<List<QuestionMainViewDto>>(questions);
+            // Check if any questions were found
+            if (questions == null || !questions.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "No questions found.");
+            }
 
-            return questionDtos; // Return the list of QuestionMainViewDto
+            // Get distinct IDs of users who created and last updated the questions
+            List<string?> createdByIds = questions.Select(q => q.CreatedBy).Distinct().ToList();
+            List<string?> lastUpdatedByIds = questions.Select(q => q.LastUpdatedBy).Distinct().ToList();
+
+            // Retrieve user information based on the IDs
+            List<User> createdUsers = await _unitOfWork.GetRepository<User>()
+                .GetEntitiesWithCondition(u => createdByIds.Contains(u.Id))
+                .ToListAsync();
+
+            List<User> updatedUsers = await _unitOfWork.GetRepository<User>()
+                .GetEntitiesWithCondition(u => lastUpdatedByIds.Contains(u.Id))
+                .ToListAsync();
+
+            // Optional: Check if users were found
+            if (createdUsers == null || updatedUsers == null)
+            {
+                throw new BaseException.NotFoundException("not_found", "Some user information could not be found.");
+            }
+
+            // Use AutoMapper to map the Question entities to DTOs
+            List<QuestionMainViewDto> questionDtos = _mapper.Map<List<QuestionMainViewDto>>(questions, opt =>
+            {
+                opt.Items["CreatedUsers"] = createdUsers;
+                opt.Items["UpdatedUsers"] = updatedUsers;
+            });
+
+            return questionDtos;
         }
 
-        // Get questions by Id question
+        // Get question by its id
         public async Task<QuestionMainViewDto> GetQuestionByIdAsync(string questionId)
         {
-            // Fetch the question by its Id
+            // Validate input
+            if (string.IsNullOrWhiteSpace(questionId))
+            {
+                throw new BaseException.BadRequestException("invalid_question_id", "Question ID cannot be null or empty.");
+            }
+
+            // Fetch the question by its Id along with related users
             Question? question = await _unitOfWork.GetRepository<Question>().Entities
                 .Include(q => q.Quiz)
-                .Include(q => q.CreatedByUser)
-                .Include(q => q.LastUpdatedByUser)
                 .FirstOrDefaultAsync(q => q.Id == questionId && string.IsNullOrWhiteSpace(q.DeletedBy));
 
-            // Check if question exists
+            // Check if the question exists
             if (question == null)
             {
                 throw new BaseException.NotFoundException("not_found", $"Question ID {questionId} not found");
             }
 
-            // Use AutoMapper to map to QuestionMainViewDto
-            QuestionMainViewDto dto = _mapper.Map<QuestionMainViewDto>(question);
+            // Fetch user information for created and last updated users if they exist
+            User? createdUser = null;
+            if (!string.IsNullOrWhiteSpace(question.CreatedBy))
+            {
+                createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(question.CreatedBy);
+            }
+
+            User? lastUpdatedUser = null;
+            if (!string.IsNullOrWhiteSpace(question.LastUpdatedBy))
+            {
+                lastUpdatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(question.LastUpdatedBy);
+            }
+
+            // Map question to QuestionMainViewDto
+            QuestionMainViewDto dto = _mapper.Map<QuestionMainViewDto>(question, opt =>
+            {
+                // Include created and last updated user information
+                opt.Items["CreatedUser"] = createdUser;
+                opt.Items["LastUpdatedUser"] = lastUpdatedUser;
+            });
 
             return dto; // Return the QuestionMainViewDto
         }
@@ -67,13 +117,26 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Search for questions where the question context contains a specified string
         public async Task<List<QuestionViewDto>> SearchQuestionsByContextAsync(string questionContext)
         {
+            // Validate input
+            if (string.IsNullOrWhiteSpace(questionContext))
+            {
+                throw new BaseException.NotFoundException("not_found", "Search term cannot be null or empty.");
+            }
+
             // Fetch questions that match the question context
             List<Question> questions = await _unitOfWork.GetRepository<Question>().Entities
                 .Where(q => q.QuestionContext.Contains(questionContext) && string.IsNullOrWhiteSpace(q.DeletedBy))
                 .Include(q => q.Quiz)
                 .ToListAsync();
 
-            // Use AutoMapper to map questions to QuestionViewDto
+
+            // Check if any questions were found
+            if (questions == null || !questions.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "No questions found matching the specified context.");
+            }
+
+            // Use AutoMapper to map questions to QuestionViewDto using a separate mapping method
             List<QuestionViewDto> questionDtos = _mapper.Map<List<QuestionViewDto>>(questions);
 
             return questionDtos;
@@ -82,13 +145,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get all questions that belong to a specific quiz (by quizId)
         public async Task<List<QuestionViewDto>> GetQuestionsByQuizIdAsync(string quizId)
         {
+            // Validate input
+            if (string.IsNullOrWhiteSpace(quizId))
+            {
+                throw new BaseException.BadRequestException("invalid_quiz_id","Quiz ID cannot be null or empty.");
+            }
+
             // Fetch questions that belong to the specified quiz
             List<Question> questions = await _unitOfWork.GetRepository<Question>().Entities
                 .Where(q => q.QuizId == quizId && string.IsNullOrWhiteSpace(q.DeletedBy))
                 .Include(q => q.Quiz)
                 .ToListAsync();
 
-            // Use AutoMapper to map questions to QuestionViewDto
+            // Check if any questions were found
+            if (questions == null || !questions.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", $"No questions found for Quiz ID {quizId}.");
+            }
+
+            // Use AutoMapper to map questions to QuestionViewDto using a separate mapping method
             List<QuestionViewDto> questionDtos = _mapper.Map<List<QuestionViewDto>>(questions);
 
             return questionDtos;
@@ -97,38 +172,59 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get questions with pagination
         public async Task<BasePaginatedList<QuestionViewDto>> GetQuestionsAsync(int pageNumber, int pageSize)
         {
-            // Query all questions excluding deleted ones
-            List<Question> allQuestions = await _unitOfWork.GetRepository<Question>().Entities
-                .Where(q => string.IsNullOrWhiteSpace(q.DeletedBy))
-                .Include(q => q.Quiz)
-                .ToListAsync();
-
-            // Use AutoMapper to map questions to QuestionMainViewDto
-            List<QuestionViewDto> questionDtos = _mapper.Map<List<QuestionViewDto>>(allQuestions);
-
-            // If pageNumber or pageSize are 0 or negative, return all questions without pagination
-            if (pageNumber <= 0 || pageSize <= 0)
+            if (pageNumber <= 0)
             {
-                return new BasePaginatedList<QuestionViewDto>(questionDtos, questionDtos.Count, 1, questionDtos.Count);
+                throw new BaseException.BadRequestException("invalid_page_number", "Page number must be greater than 0.");
             }
 
-            // Paginate the list of questions
-            List<QuestionViewDto> paginatedQuestionsDto = questionDtos
+            if (pageSize <= 0)
+            {
+                throw new BaseException.BadRequestException("invalid_page_size", "Page size must be greater than 0.");
+            }
+
+            // Query all questions excluding deleted ones
+            IQueryable<Question> query = _unitOfWork.GetRepository<Question>().Entities
+                .Where(q => string.IsNullOrWhiteSpace(q.DeletedBy))
+                .Include(q => q.Quiz);
+
+            // Get the total count of questions for pagination
+            int totalQuestionsCount = await query.CountAsync();
+
+            // Fetch the paginated questions
+            List<Question> paginatedQuestions = await query
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
-            return new BasePaginatedList<QuestionViewDto>(paginatedQuestionsDto, questionDtos.Count, pageNumber, pageSize);
+            // Check if there are any results after pagination
+            if (!paginatedQuestions.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "No questions found for the given page.");
+            }
+
+            // Use AutoMapper to map questions to QuestionViewDto
+            List<QuestionViewDto> questionDtos = _mapper.Map<List<QuestionViewDto>>(paginatedQuestions);
+
+            // Return paginated results
+            return new BasePaginatedList<QuestionViewDto>(questionDtos, totalQuestionsCount, pageNumber, pageSize);
         }
 
+        //=============================================================================================================
 
         // Method to add a new question
-        public async Task<QuestionMainViewDto> AddQuestionAsync(QuestionCreateDto dto)
+        public async Task<BaseResponse<string>> AddQuestionAsync(QuestionCreateDto dto)
         {
-            // Validate input DTO
-            if (dto == null)
+
+            // Validate QuestionContext
+            if (string.IsNullOrWhiteSpace(dto.QuestionContext) || string.IsNullOrWhiteSpace(dto.QuizId))
             {
-                throw new BaseException.BadRequestException("invalid_arguments", "Question data cannot be null.");
+                throw new BaseException.BadRequestException("invalid_arguments", "Question context or quiz id cannot be null or empty.");
+            }
+
+            Quiz? quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(dto.QuizId);
+            if (quiz == null)
+            {
+                throw new BaseException.NotFoundException("not_founds", $"Quiz ID {dto.QuizId} not found.");
             }
 
             // Get the current user for auditing purposes
@@ -137,7 +233,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Create a new Question entity
             Question question = new()
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = Guid.NewGuid().ToString().ToUpper(),
                 QuestionContext = dto.QuestionContext,
                 QuizId = dto.QuizId,
                 CreatedTime = CoreHelper.SystemTimeNow,
@@ -150,11 +246,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             await _unitOfWork.GetRepository<Question>().InsertAsync(question);
             await _unitOfWork.SaveAsync();
 
-            // Map the newly created question to QuestionMainViewDto using AutoMapper
-            QuestionMainViewDto questionDto = _mapper.Map<QuestionMainViewDto>(question);
-
-            // Return the created question DTO
-            return questionDto;
+            return BaseResponse<string>.OkResponse("Question created successfully.");
         }
 
         // Method to update an existing question
@@ -164,48 +256,77 @@ namespace ElementaryMathStudyWebsite.Services.Service
             Question question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(id)
                                 ?? throw new BaseException.NotFoundException("not_found", $"Question with Id '{id}' not found.");
 
-            // Update question information with values from the DTO
+            // Validate DTO
+            if (dto == null || string.IsNullOrWhiteSpace(dto.QuestionContext))
+            {
+                throw new BaseException.BadRequestException("invalid_arguments", "Question context cannot be null or empty.");
+            }
+
+            // If QuizId is null or empty, retain the existing QuizId
+            if (!string.IsNullOrWhiteSpace(dto.QuizId))
+            {
+                question.QuizId = dto.QuizId;
+            }
+
+            // Update question context
             question.QuestionContext = dto.QuestionContext;
-            question.QuizId = dto.QuizId;
 
             // Get the current user for auditing purposes
             User currentUser = await _userService.GetCurrentUserAsync();
 
             // Update LastUpdatedBy and LastUpdatedTime
-            question.LastUpdatedBy = currentUser.Id ?? string.Empty; // Update LastUpdatedBy
-            question.LastUpdatedTime = CoreHelper.SystemTimeNow; // Update LastUpdatedTime
+            question.LastUpdatedBy = currentUser.Id ?? string.Empty;
+            question.LastUpdatedTime = CoreHelper.SystemTimeNow;
 
             // Save changes to the database
             await _unitOfWork.SaveAsync();
 
-            // Map the updated question to QuestionMainViewDto using AutoMapper
-            QuestionMainViewDto questionDto = _mapper.Map<QuestionMainViewDto>(question);
+            // Fetch users who created and last updated the question
+            User? createdByUser = await _unitOfWork.GetRepository<User>()
+                                .GetEntitiesWithCondition(u => u.Id == question.CreatedBy)
+                                .FirstOrDefaultAsync();
 
-            // Return the updated question information in a DTO
+            User? lastUpdatedByUser = await _unitOfWork.GetRepository<User>()
+                                .GetEntitiesWithCondition(u => u.Id == question.LastUpdatedBy)
+                                .FirstOrDefaultAsync();
+
+            // Map the updated question to QuestionMainViewDto using AutoMapper
+            QuestionMainViewDto questionDto = _mapper.Map<QuestionMainViewDto>(question, opt =>
+            {
+                opt.Items["CreatedUser"] = createdByUser;
+                opt.Items["LastUpdatedUser"] = lastUpdatedByUser;
+            });
+
+            // Return the updated question DTO
             return questionDto;
         }
 
-        public async Task<BaseResponse<string>> DeleteQuestion(string questionId)
+        // Method delete question by id
+        public async Task<BaseResponse<string>> DeleteQuestionAsync(string questionId)
         {
-            Question? question;
+            // validate questionid
+            if (string.IsNullOrWhiteSpace(questionId))
+            {
+                throw new BaseException.BadRequestException("invalid_arguments", "Question ID cannot be null or empty.");
+            }
 
-            if (_unitOfWork.IsValid<Question>(questionId))
-                question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(questionId);
-            else
-                throw new BaseException.NotFoundException("not_found", "Question ID not found");
+            // Check if the question exists
+            Question? question = await _unitOfWork.GetRepository<Question>().GetByIdAsync(questionId);
+            if (question == null)
+            {
+                throw new BaseException.NotFoundException("not_found", $"Question with ID '{questionId}' not found.");
+            }
 
-            // Audit the quiz to mark it as deleted
-            _userService.AuditFields(question!, false, true);
+            // Mark the question as deleted
+            _userService.AuditFields(question, false, true);
             await _unitOfWork.SaveAsync();
 
+            // Fetch and soft delete related options
+            List<Option> options = await _unitOfWork.GetRepository<Option>()
+                .GetEntitiesWithCondition(o => o.QuestionId == questionId && string.IsNullOrWhiteSpace(o.DeletedBy))
+                .ToListAsync();
 
-            // Fetch all related questions that are not already deleted
-            IQueryable<Option> query = _unitOfWork.GetRepository<Option>().GetEntitiesWithCondition(
-                            o => o.QuestionId == questionId &&
-                            string.IsNullOrWhiteSpace(o.DeletedBy)
-                            );
-
-            foreach (var option in query)
+            foreach (var option in options)
             {
                 await _optionService.DeleteOption(option.Id);
             }

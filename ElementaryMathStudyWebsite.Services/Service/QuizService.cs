@@ -34,7 +34,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             List<QuizMainViewDto> quizDtos = _mapper.Map<List<QuizMainViewDto>>(quizzes);
 
             // Enrich DTOs with additional information
-            await EnrichQuizDtosAsync(quizDtos, quizzes);
+            await EnrichDtosAsync(quizDtos, quizzes);
 
             return quizDtos;
         }
@@ -55,7 +55,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             QuizMainViewDto dto = _mapper.Map<QuizMainViewDto>(quiz);
 
             // Enrich the DTO with additional information
-            await EnrichQuizDtoAsync(dto, quiz);
+            await EnrichDtoAsync(dto, quiz);
 
             return dto; // Return the populated QuizMainViewDto
         }
@@ -130,7 +130,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Validate input DTO
             if (dto == null)
             {
-                throw new BaseException.BadRequestException("invalid_arguments", "Quiz data cannot be null.");
+                throw new BaseException.BadRequestException("Invalid_arguments", "Quiz data cannot be null.");
+            }
+
+            // Validate QuizName
+            if (string.IsNullOrWhiteSpace(dto.QuizName))
+            {
+                throw new BaseException.BadRequestException("Invalid_arguments", "Quiz name cannot be null or empty.");
+            }
+
+            // Validate Criteria
+            if (dto.Criteria <= 0 || dto.Criteria > 10)
+            {
+                throw new BaseException.BadRequestException("Invalid_arguments", "Criteria must be greater than 0 and smaller than 10, cannot be empty.");
             }
 
             // Get the current user for auditing purposes
@@ -139,7 +151,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Create a new Quiz entity
             Quiz quiz = new()
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = Guid.NewGuid().ToString().ToUpper(),
                 QuizName = dto.QuizName,
                 Criteria = dto.Criteria,
                 CreatedTime = CoreHelper.SystemTimeNow,
@@ -156,7 +168,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             QuizMainViewDto quizDto = _mapper.Map<QuizMainViewDto>(quiz);
 
             // Enrich the DTO with additional information
-            await EnrichQuizDtoAsync(quizDto, quiz);
+            await EnrichDtoAsync(quizDto, quiz);
 
             // Return the created quiz DTO
             return quizDto;
@@ -185,7 +197,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             QuizMainViewDto quizDto = _mapper.Map<QuizMainViewDto>(quiz);
 
             // Enrich the DTO with additional information
-            await EnrichQuizDtoAsync(quizDto, quiz);
+            await EnrichDtoAsync(quizDto, quiz);
 
             // Return the updated quiz DTO
             return quizDto;
@@ -215,8 +227,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .ToListAsync();
 
             // Use Task.WhenAll to delete all questions asynchronously
-            IEnumerable<Task> deleteTasks = questionsToDelete.Select(q => _questionService.DeleteQuestion(q.Id));
-            await Task.WhenAll(deleteTasks);
+            //IEnumerable<Task> deleteTasks = questionsToDelete.Select(q => _questionService.DeleteQuestion(q.Id));
+            //await Task.WhenAll(deleteTasks);
 
             // Return a success response
             return BaseResponse<string>.OkResponse("Quiz deleted successfully.");
@@ -235,7 +247,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Method to enrich DTOs with additional information
-        private async Task EnrichQuizDtosAsync(List<QuizMainViewDto> quizDtos, List<Quiz> quizzes)
+        private async Task EnrichDtosAsync(List<QuizMainViewDto> quizDtos, List<Quiz> quizzes)
         {
             foreach (Quiz quiz in quizzes)
             {
@@ -243,7 +255,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 if (dto != null)
                 {
-                    await EnrichQuizDtoAsync(dto, quiz);
+                    await EnrichDtoAsync(dto, quiz);
                 }
                 else
                 {
@@ -253,7 +265,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Method to enrich a single QuizMainViewDto
-        private async Task EnrichQuizDtoAsync(QuizMainViewDto dto, Quiz quiz)
+        private async Task EnrichDtoAsync(QuizMainViewDto dto, Quiz quiz)
         {
             // Fetch creator and last updated person info
             User? creator = await _userService.GetUserByIdAsync(quiz.CreatedBy!);
@@ -280,7 +292,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 (string.IsNullOrWhiteSpace(topicId) || q.Topic?.Id == topicId)           // Filter by topicId if provided
             ).ToList();
         }
-
 
     }
 }

@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-
+using ElementaryMathStudyWebsite.Core.Utils;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.QuestionMappings
 {
@@ -9,26 +9,39 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.QuestionM
     {
         public QuestionMappingProfile()
         {
+
             CreateMap<Question, QuestionMainViewDto>()
-
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.QuestionContext, opt => opt.MapFrom(src => src.QuestionContext))
-                .ForMember(dest => dest.QuizName, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.QuizName : string.Empty))
                 .ForMember(dest => dest.QuizId, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.Id : string.Empty))
+                .ForMember(dest => dest.QuizName, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.QuizName : string.Empty))
 
-                .ForMember(dest => dest.CreatedBy, opt => opt.MapFrom(src => src.CreatedByUser != null ? src.CreatedByUser.Id : string.Empty))
-                .ForMember(dest => dest.CreatorName, opt => opt.MapFrom(src => src.CreatedByUser != null ? src.CreatedByUser.FullName: string.Empty))
-                .ForMember(dest => dest.CreatorPhone, opt => opt.MapFrom(src => src.CreatedByUser != null ? src.CreatedByUser.PhoneNumber : string.Empty))
+                .ForMember(dest => dest.CreatorName, opt => opt.MapFrom((src, dest, destMember, context) =>
+                    GetUserFullName(src.CreatedBy, context.Items["CreatedUsers"] as List<User>)))
+                .ForMember(dest => dest.CreatorPhone, opt => opt.MapFrom((src, dest, destMember, context) =>
+                    GetUserPhoneNumber(src.CreatedBy, context.Items["CreatedUsers"] as List<User>)))
+                .ForMember(dest => dest.LastUpdatedPersonName, opt => opt.MapFrom((src, dest, destMember, context) =>
+                    GetUserFullName(src.LastUpdatedBy, context.Items["UpdatedUsers"] as List<User>)))
+                .ForMember(dest => dest.LastUpdatedPersonPhone, opt => opt.MapFrom((src, dest, destMember, context) =>
+                    GetUserPhoneNumber(src.LastUpdatedBy, context.Items["UpdatedUsers"] as List<User>)));
 
-                .ForMember(dest => dest.LastUpdatedBy, opt => opt.MapFrom(src => src.LastUpdatedByUser != null ? src.LastUpdatedByUser.Id : string.Empty))
-                .ForMember(dest => dest.LastUpdatedPersonName, opt => opt.MapFrom(src => src.LastUpdatedByUser != null ? src.LastUpdatedByUser.FullName : string.Empty))
-                .ForMember(dest => dest.LastUpdatedPersonPhone, opt => opt.MapFrom(src => src.LastUpdatedByUser != null ? src.LastUpdatedByUser.PhoneNumber : string.Empty))
-                
-                .ForMember(dest => dest.CreatedTime, opt => opt.MapFrom(src => src.CreatedTime))
-                .ForMember(dest => dest.LastUpdatedTime, opt => opt.MapFrom(src => src.LastUpdatedTime));
+
 
             CreateMap<Question, QuestionViewDto>()
-               .ForMember(dest => dest.QuizName, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.QuizName : string.Empty))
-               .ForMember(dest => dest.QuizId, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.Id : string.Empty));
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.QuestionContext, opt => opt.MapFrom(src => src.QuestionContext))
+                .ForMember(dest => dest.QuizId, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.Id : string.Empty))
+                .ForMember(dest => dest.QuizName, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.QuizName : string.Empty));
+        }
+
+        private string GetUserFullName(string? userId, List<User>? users)
+        {
+            return users?.FirstOrDefault(u => u.Id == userId)?.FullName ?? string.Empty;
+        }
+
+        private string GetUserPhoneNumber(string? userId, List<User>? users)
+        {
+            return users?.FirstOrDefault(u => u.Id == userId)?.PhoneNumber ?? string.Empty;
         }
     }
 }
