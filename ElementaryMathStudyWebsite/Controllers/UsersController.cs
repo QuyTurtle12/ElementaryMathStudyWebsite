@@ -337,6 +337,36 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         /// <summary>
+        /// Enables a user.
+        /// </summary>
+        /// <param name="userId">The ID of the user to enable.</param>
+        /// <returns>Returns a success or failure message.</returns>
+        [HttpPatch]
+        [Route("enable/{userId}")]
+        [Authorize(Policy = "Admin-Manager")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Enable a user"
+            )]
+        public async Task<IActionResult> EnsableUser(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
+            }
+
+            var result = await _userServices.EnableUserAsync(userId);
+
+            if (result)
+            {
+                var response = BaseResponse<String>.OkResponse("User is enabled");
+
+                return Ok(response);
+            }
+            throw new BaseException.CoreException("unsuccess", "Enable unsuccessfully");
+        }
+
+        /// <summary>
         /// Deletes a user based on the provided user ID.
         /// </summary>
         /// <param name="userId">The ID of the user to be deleted.</param>

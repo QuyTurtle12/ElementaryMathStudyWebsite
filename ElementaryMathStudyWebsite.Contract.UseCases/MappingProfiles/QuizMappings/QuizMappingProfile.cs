@@ -23,6 +23,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ProgressM
                 .ForMember(dest => dest.LastUpdatedPersonPhone, opt => opt.Ignore())
                 .ForMember(dest => dest.LastUpdatedTime, opt => opt.Ignore());
 
+
             CreateMap<Quiz, QuizViewDto>()
                 .ForMember(dest => dest.ChapterName, opt => opt.MapFrom(src => src.Chapter != null ? src.Chapter.ChapterName : string.Empty))
                 .ForMember(dest => dest.TopicName, opt => opt.MapFrom(src => src.Topic != null ? src.Topic.TopicName : string.Empty));
