@@ -4,6 +4,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Store;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.EntityFrameworkCore;
 
@@ -97,7 +98,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             foreach (SubjectStudentDto newSubject in orderCreateDto.SubjectStudents)
             {
                 // Get student assigned subject
-                IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>().Entities.Where(d => d.StudentId.Equals(newSubject.StudentId));
+                IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>().Entities
+                    .Include(d => d.Order)
+                    .Where(d => d.StudentId.Equals(newSubject.StudentId) && d.Order!.Status != PaymentStatusHelper.FAILED.ToString());
                 List<OrderDetail> studentCurrentLearningSubject = await query.ToListAsync();
 
                 foreach (OrderDetail studentSubject in studentCurrentLearningSubject)
