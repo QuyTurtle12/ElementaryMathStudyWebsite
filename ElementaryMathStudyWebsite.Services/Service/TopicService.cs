@@ -410,7 +410,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Kiểm tra QuizId không trùng
-            if (topicCreateDto.QuizId != null)
+            if (!string.IsNullOrWhiteSpace(topicCreateDto.QuizId))
             {
                 var existingTopicWithSameQuizId = await _unitOfWork.GetRepository<Topic>().Entities
                     .FirstOrDefaultAsync(t => t.QuizId == topicCreateDto.QuizId
@@ -434,7 +434,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 TopicContext = topicCreateDto.TopicContext,
                 Number = topicCreateDto.Number, // Sử dụng số thứ tự đã được kiểm tra
                 ChapterId = topicCreateDto.ChapterId,
-                QuizId = topicCreateDto.QuizId,
+                QuizId = (!string.IsNullOrWhiteSpace(topicCreateDto.QuizId)) ? topicCreateDto.QuizId : null,
                 Status = true,
             };
             newTopic.CreatedBy = currentUser.Id; //
@@ -778,10 +778,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("Invalid!", "Chapter ID cannot be empty.");
             }
 
-            if (string.IsNullOrWhiteSpace(topicCreateDto.QuizId))
-            {
-                throw new BaseException.BadRequestException("Invalid!", "Quiz ID cannot be empty.");
-            }
+            //if (string.IsNullOrWhiteSpace(topicCreateDto.QuizId))
+            //{
+            //    throw new BaseException.BadRequestException("Invalid!", "Quiz ID cannot be empty.");
+            //}
 
             // Kiểm tra người tạo, nếu cần
             //if (string.IsNullOrWhiteSpace(topicCreateDto.CreatedByUser))
