@@ -127,12 +127,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Create a new quiz
         public async Task<QuizMainViewDto> AddQuizAsync(QuizCreateDto dto)
         {
-            // Validate input DTO
-            if (dto == null)
-            {
-                throw new BaseException.BadRequestException("Invalid_arguments", "Quiz data cannot be null.");
-            }
-
             // Validate QuizName
             if (string.IsNullOrWhiteSpace(dto.QuizName))
             {
@@ -222,9 +216,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             await _unitOfWork.SaveAsync();
 
             // Fetch all related questions that are not already deleted
-            List<Question> questionsToDelete = await _unitOfWork.GetRepository<Question>()
-                .GetEntitiesWithCondition(q => q.QuizId == quizId && string.IsNullOrWhiteSpace(q.DeletedBy))
-                .ToListAsync();
+            //List<Question> questionsToDelete = await _unitOfWork.GetRepository<Question>()
+            //    .GetEntitiesWithCondition(q => q.QuizId == quizId && string.IsNullOrWhiteSpace(q.DeletedBy))
+            //    .ToListAsync();
 
             // Use Task.WhenAll to delete all questions asynchronously
             //IEnumerable<Task> deleteTasks = questionsToDelete.Select(q => _questionService.DeleteQuestion(q.Id));
