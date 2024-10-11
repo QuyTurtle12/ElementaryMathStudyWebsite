@@ -223,7 +223,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             User currentUser = await _userService.GetCurrentUserAsync();
 
             // Validate all questions and prepare question entities using LINQ Select
-            var questions = await Task.WhenAll(dtos.Select(async dto =>
+            List<Question> questions = new List<Question>();
+            foreach (var dto in dtos)
             {
                 // Validate QuestionContext and QuizId
                 if (string.IsNullOrWhiteSpace(dto.QuestionContext) || string.IsNullOrWhiteSpace(dto.QuizId))
@@ -238,8 +239,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     throw new BaseException.NotFoundException("not_found", $"Quiz ID {dto.QuizId} not found.");
                 }
 
-                // Return a new Question entity
-                return new Question
+                // Create a new Question entity
+                Question question = new Question
                 {
                     Id = Guid.NewGuid().ToString().ToUpper(),
                     QuestionContext = dto.QuestionContext,
@@ -249,18 +250,23 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     CreatedBy = currentUser.Id.ToUpper(), // Set CreatedBy
                     LastUpdatedBy = currentUser.Id.ToUpper() // Set LastUpdatedBy to the same user
                 };
-            }));
 
-            // Insert each question using LINQ Select
-            await Task.WhenAll(questions.Select(async question =>
-                await _unitOfWork.GetRepository<Question>().InsertAsync(question)
-            ));
+                questions.Add(question);
+            }
+
+            // Insert all questions in a single transaction
+            foreach (Question question in questions)
+            {
+                await _unitOfWork.GetRepository<Question>().InsertAsync(question);
+            }
 
             // Save changes to the database
             await _unitOfWork.SaveAsync();
 
             return BaseResponse<string>.OkResponse($"{dtos.Count} question(s) created successfully.");
         }
+
+
 
         // Method to update an existing question
         public async Task<QuestionMainViewDto> UpdateQuestionAsync(string id, QuestionUpdateDto dto)
