@@ -1,4 +1,6 @@
-﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
 {
     public class OptionCreateDto
     {

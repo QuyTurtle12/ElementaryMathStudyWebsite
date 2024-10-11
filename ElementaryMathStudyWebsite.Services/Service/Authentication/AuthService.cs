@@ -44,7 +44,7 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
         {
             // Check if the user already exists
             var existingUser = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Username == registerDto.Username || u.Email == registerDto.Email);
-            if (existingUser != null)
+            if (existingUser != null && existingUser.DeletedBy == null)
             {
                 throw new BaseException.CoreException("invalid_argument", "User or email already exists.");
             }

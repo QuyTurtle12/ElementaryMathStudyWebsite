@@ -14,6 +14,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ChapterMappin
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ProgressMappings;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.OrderMappings;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ResultMappings;
+using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.TopicMappings;
 
 
 namespace ElementaryMathStudyWebsite
@@ -76,14 +77,17 @@ namespace ElementaryMathStudyWebsite
         }
         public static void AddMapping(this IServiceCollection services)
         {
-            // Register AutoMapper with all profiles
-            services.AddAutoMapper(typeof(UserMappingProfile)); // Add any mapping profiles here
-            services.AddAutoMapper(typeof(ProgressMappingProfile));
-            services.AddAutoMapper(typeof(OrderMappingProfile));
-            services.AddAutoMapper(typeof(ResultMappingProfile));
-            services.AddAutoMapper(typeof(QuizMappingProfile));
-            services.AddAutoMapper(typeof(ChapterMappingProfile));
-            services.AddAutoMapper(typeof(OptionMappingProfile));
+            // Register AutoMapper with all profiles in a single call
+            services.AddAutoMapper(
+                typeof(UserMappingProfile),
+                typeof(ProgressMappingProfile),
+                typeof(OrderMappingProfile),
+                typeof(ResultMappingProfile),
+                typeof(QuizMappingProfile),
+                typeof(ChapterMappingProfile),
+                typeof(OptionMappingProfile),
+                typeof(TopicMappingProfile)
+            );
         }
 
         public static void AddAuthentication(this IServiceCollection services, IConfiguration configuration)
