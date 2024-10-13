@@ -148,7 +148,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Validate input
             if (string.IsNullOrWhiteSpace(quizId))
             {
-                throw new BaseException.BadRequestException("invalid_quiz_id","Quiz ID cannot be null or empty.");
+                throw new BaseException.BadRequestException("invalid_quiz_id", "Quiz ID cannot be null or empty.");
             }
 
             // Fetch questions that belong to the specified quiz
@@ -211,43 +211,62 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         //=============================================================================================================
 
-        // Method to add a new question
-        public async Task<BaseResponse<string>> AddQuestionAsync(QuestionCreateDto dto)
+        // Method to add one or more questions
+        public async Task<BaseResponse<string>> AddQuestionAsync(List<QuestionCreateDto> dtos)
         {
-
-            // Validate QuestionContext
-            if (string.IsNullOrWhiteSpace(dto.QuestionContext) || string.IsNullOrWhiteSpace(dto.QuizId))
+            if (dtos == null || !dtos.Any())
             {
-                throw new BaseException.BadRequestException("invalid_arguments", "Question context or quiz id cannot be null or empty.");
-            }
-
-            Quiz? quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(dto.QuizId);
-            if (quiz == null)
-            {
-                throw new BaseException.NotFoundException("not_founds", $"Quiz ID {dto.QuizId} not found.");
+                throw new BaseException.BadRequestException("invalid_arguments", "Question list cannot be null or empty.");
             }
 
             // Get the current user for auditing purposes
             User currentUser = await _userService.GetCurrentUserAsync();
 
-            // Create a new Question entity
-            Question question = new()
+            // Validate all questions and prepare question entities using LINQ Select
+            List<Question> questions = new List<Question>();
+            foreach (var dto in dtos)
             {
-                Id = Guid.NewGuid().ToString().ToUpper(),
-                QuestionContext = dto.QuestionContext,
-                QuizId = dto.QuizId,
-                CreatedTime = CoreHelper.SystemTimeNow,
-                LastUpdatedTime = CoreHelper.SystemTimeNow,
-                CreatedBy = currentUser.Id.ToUpper(), // Set CreatedBy
-                LastUpdatedBy = currentUser.Id.ToUpper() // Set LastUpdatedBy to the same user
-            };
+                // Validate QuestionContext and QuizId
+                if (string.IsNullOrWhiteSpace(dto.QuestionContext) || string.IsNullOrWhiteSpace(dto.QuizId))
+                {
+                    throw new BaseException.BadRequestException("invalid_arguments", "Question context or quiz id cannot be null or empty.");
+                }
 
-            // Insert the new question into the repository
-            await _unitOfWork.GetRepository<Question>().InsertAsync(question);
+                // Check if the quiz exists
+                Quiz? quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(dto.QuizId);
+                if (quiz == null)
+                {
+                    throw new BaseException.NotFoundException("not_found", $"Quiz ID {dto.QuizId} not found.");
+                }
+
+                // Create a new Question entity
+                Question question = new Question
+                {
+                    Id = Guid.NewGuid().ToString().ToUpper(),
+                    QuestionContext = dto.QuestionContext,
+                    QuizId = dto.QuizId,
+                    CreatedTime = CoreHelper.SystemTimeNow,
+                    LastUpdatedTime = CoreHelper.SystemTimeNow,
+                    CreatedBy = currentUser.Id.ToUpper(), // Set CreatedBy
+                    LastUpdatedBy = currentUser.Id.ToUpper() // Set LastUpdatedBy to the same user
+                };
+
+                questions.Add(question);
+            }
+
+            // Insert all questions in a single transaction
+            foreach (Question question in questions)
+            {
+                await _unitOfWork.GetRepository<Question>().InsertAsync(question);
+            }
+
+            // Save changes to the database
             await _unitOfWork.SaveAsync();
 
-            return BaseResponse<string>.OkResponse("Question created successfully.");
+            return BaseResponse<string>.OkResponse($"{dtos.Count} question(s) created successfully.");
         }
+
+
 
         // Method to update an existing question
         public async Task<QuestionMainViewDto> UpdateQuestionAsync(string id, QuestionUpdateDto dto)
