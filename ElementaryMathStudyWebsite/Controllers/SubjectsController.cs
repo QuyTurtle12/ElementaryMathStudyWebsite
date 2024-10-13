@@ -145,18 +145,18 @@ namespace ElementaryMathStudyWebsite.Controllers
             return Ok(response);
         }
 
-        // DELETE: api/Subjects/SoftDelete/{id}
-        [Authorize(Policy = "Admin-Content")]
-        [HttpDelete("SoftDelete/{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin, Content Manager",
-            Description = "Soft delete a subject by setting DeletedBy and DeletedTime."
-        )]
-        public async Task<IActionResult> SoftDeleteSubject(string id)
-        {
-            await _appSubjectServices.SoftDeleteSubjectAsync(id);
-            return Ok(BaseResponse<object>.OkResponse(new { message = "Subject has been successfully soft deleted." }));
-        }
+        //// DELETE: api/Subjects/SoftDelete/{id}
+        //[Authorize(Policy = "Admin-Content")]
+        //[HttpDelete("SoftDelete/{id}")]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Admin, Content Manager",
+        //    Description = "Soft delete a subject by setting DeletedBy and DeletedTime."
+        //)]
+        //public async Task<IActionResult> SoftDeleteSubject(string id)
+        //{
+        //    await _appSubjectServices.SoftDeleteSubjectAsync(id);
+        //    return Ok(BaseResponse<object>.OkResponse(new { message = "Subject has been successfully soft deleted." }));
+        //}
 
         // PUT: api/Subjects/RestoreSoftDelete/{id}
         //[Authorize(Policy = "Admin-Content")]
