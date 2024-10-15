@@ -27,7 +27,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         // Get 1 child learning progress of specific parent
         [Authorize(Policy = "Parent")]
         [HttpGet]
-        [Route("/parent/view/{studentId}")]
+        [Route("parent/view/{studentId}")]
         [SwaggerOperation(
             Summary = "Authorization: Parent",
             Description = "View a child progress list for Parent role. Insert -1 to get all items"
@@ -54,7 +54,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         // Get 1 child learning progress
         [Authorize(Policy = "Student")]
         [HttpGet]
-        [Route("/student/view")]
+        [Route("student/view")]
         [SwaggerOperation(
             Summary = "Authorization: Student",
             Description = "View a child progress list for Student role. Insert -1 to get all items"
@@ -73,7 +73,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         // Get 1 child learning progress of specific parent
         [Authorize(Policy = "Parent")]
         [HttpGet]
-        [Route("/parent/view")]
+        [Route("parent/view")]
         [SwaggerOperation(
             Summary = "Authorization: Parent",
             Description = "View children progress list. Insert -1 to get all items"
