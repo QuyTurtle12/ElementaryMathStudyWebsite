@@ -34,15 +34,6 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ProgressViewDto>>>> GetStudentProgressByStudentId([Required] string studentId, int pageNumber = -1, int pageSize = -1)
         {
-            // Get logged in User info
-            User currentUser = await _userService.GetCurrentUserAsync();
-
-            // Check if current logged user and the inputted student Id are parent-child relationship
-            if (!await _userService.IsCustomerChildren(currentUser.Id, studentId))
-            {
-                throw new BaseException.BadRequestException("invalid_argument", "They are not parent and child");
-            }
-
             BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetStudentProgressesDtoAsync(studentId, pageNumber, pageSize);
 
             var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
