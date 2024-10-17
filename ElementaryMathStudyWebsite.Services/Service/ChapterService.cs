@@ -388,17 +388,17 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 }
 
                 return dto;
-            }).ToList(); 
-
-            existingNumbers.Select(number =>
-            {
-                if (currentNumbers.Contains(number))
-                {
-                    throw new BaseException.BadRequestException("duplicate_number", $"Duplicate chapter number: {number}");
-                }
-
-                return number; 
             }).ToList();
+
+            //existingNumbers.Select(number =>
+            //{
+            //    if (currentNumbers.Contains(number))
+            //    {
+            //        throw new BaseException.BadRequestException("duplicate_number", $"Duplicate chapter number: {number}");
+            //    }
+
+            //    return number;
+            //}).ToList();
 
 
             await _unitOfWork.GetRepository<Chapter>().SaveAsync();
@@ -419,8 +419,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             //Lấy Chapter từ repository
             Chapter chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(Id) ?? throw new BaseException.BadRequestException("key_not_found", $"Cannot find product with ID '{Id}'.");
 
-            //Kiểm tra Status và DeletedBy của Chapter
-            if ((!chapter.Status) || !String.IsNullOrWhiteSpace(chapter.DeletedBy))
+            //Kiểm tra DeletedBy của Chapter
+            if (!String.IsNullOrWhiteSpace(chapter.DeletedBy))
             {
                 throw new BaseException.NotFoundException("key_not_found", $"Cannot find product with ID '{Id}'.");
             }
@@ -560,7 +560,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <returns></returns>
         public async Task<BasePaginatedList<object>> GetChaptersAsync(int pageNumber, int pageSize)
         {
-            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => String.IsNullOrWhiteSpace(c.DeletedBy) && c.Status == true);
+            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => String.IsNullOrWhiteSpace(c.DeletedBy));
 
             //Kiểm tra và xử lý phân trang
             if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
