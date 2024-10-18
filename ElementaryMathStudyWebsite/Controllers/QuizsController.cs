@@ -39,6 +39,40 @@ namespace ElementaryMathStudyWebsite.Controllers
             return BaseResponse<QuizMainViewDto>.OkResponse(quiz);
         }
 
+        // POST: api/quiz
+        [Authorize(Policy = "Admin-Content")]
+        [HttpPost]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Creates a new quiz.")]
+        public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> AddQuizAsync([FromBody] QuizCreateDto dto)
+        {
+            QuizMainViewDto createdQuiz = await _quizService.AddQuizAsync(dto);
+            return BaseResponse<QuizMainViewDto>.OkResponse(createdQuiz, "Quiz created successfully");
+        }
+
+        // PUT: api/quiz
+        [Authorize(Policy = "Admin-Content")]
+        [HttpPut]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Updates an existing quiz based on the provided data.")]
+        public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> UpdateQuizAsync([Required] string id, [FromBody] QuizUpdateDto dto)
+        {
+            // Update the quiz and get the updated data
+            QuizMainViewDto updatedQuizDto = await _quizService.UpdateQuizAsync(id, dto);
+            return BaseResponse<QuizMainViewDto>.OkResponse(updatedQuizDto, "Quiz updated successfully.");
+        }
+
+        // DELETE: api/quiz/{id}
+        [Authorize(Policy = "Admin-Content")]
+        [HttpDelete("{id}")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Delete a quiz and marks a quiz as deleted.")]
+        public async Task<ActionResult<BaseResponse<string>>> DeleteQuizAsync(string id)
+        {
+            // Call the service method and get the result wrapped in BaseResponse
+            BaseResponse<string> response = await _quizService.DeleteQuizAsync(id);
+            return Ok(response);
+        }
+        
+        //=======================================================================================================================================================
+
         // GET: api/quiz/chapter/{chapterId}
         [HttpGet("chapter/{chapterId}")]
         [SwaggerOperation(Summary = "Authorization: N/A", Description = "Retrieve all quizzes belonging to a specific chapter.")]
@@ -58,9 +92,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/quiz/search
-        [Authorize(Policy = "Admin-Content")]
         [HttpGet("search")]
-        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Search for quizzes by name.")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Search for quizzes by name.")]
         public async Task<ActionResult<BaseResponse<List<QuizViewDto>>>> SearchQuizzesByName([FromQuery, Required] string quizName)
         {
             List<QuizViewDto> quizzes = await _quizService.SearchQuizzesByNameAsync(quizName);
@@ -68,45 +101,14 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         // GET: api/quiz/paged
-        // for all user
         [HttpGet("paged")]
-        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Retrieve quizzes with pagination.")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Retrieve quizzes with pagination.")]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<QuizViewDto>>>> GetQuizzesPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             BasePaginatedList<QuizViewDto> quizzes = await _quizService.GetQuizzesAsync(pageNumber, pageSize);
             return BaseResponse<BasePaginatedList<QuizViewDto>>.OkResponse(quizzes);
         }
 
-        // POST: api/quiz
-        [Authorize(Policy = "Admin-Content")]
-        [HttpPost]
-        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Creates a new quiz and returns the created quiz.")]
-        public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> AddQuizAsync([FromBody] QuizCreateDto dto)
-        {
-           QuizMainViewDto createdQuiz = await _quizService.AddQuizAsync(dto);
-            return BaseResponse<QuizMainViewDto>.OkResponse(createdQuiz, "Quiz created successfully");
-        }
 
-        // PUT: api/quiz
-        [Authorize(Policy = "Admin-Content")]
-        [HttpPut]
-        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Updates an existing quiz based on the provided data.")]
-        public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> UpdateQuizAsync([Required] string id, [FromBody] QuizUpdateDto dto)
-        {
-            // Update the quiz and get the updated data
-            QuizMainViewDto updatedQuizDto = await _quizService.UpdateQuizAsync(id, dto);
-            return BaseResponse<QuizMainViewDto>.OkResponse(updatedQuizDto, "Quiz updated successfully.");
-        }
-
-        // DELETE: api/quiz/{id}
-        [Authorize(Policy = "Admin-Content")]
-        [HttpDelete("{id}")]
-        [SwaggerOperation(Summary = "Delete a quiz.", Description = "Marks a quiz as deleted.")]
-        public async Task<ActionResult<BaseResponse<string>>> DeleteQuizAsync(string id)
-        {
-            // Call the service method and get the result wrapped in BaseResponse
-            BaseResponse<string> response = await _quizService.DeleteQuizAsync(id);
-            return Ok(response);
-        }
     }
 }
