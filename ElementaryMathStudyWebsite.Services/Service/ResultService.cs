@@ -128,6 +128,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get a list of student grade of specific quiz
         public async Task<BasePaginatedList<ResultViewDto>> GetStudentResultListAsync(string quizId, int pageNumber, int pageSize)
         {
+            // Check if quiz Id is valid
+            _ = await _unitOfWork.GetRepository<Quiz>().FindByConditionAsync(q => !q.DeletedTime.HasValue && q.Id.Equals(quizId))
+                ?? throw new BaseException.BadRequestException("invalid_argument", $"The quiz Id {quizId} is not existed");
+
             // Get current logged in user info
             User currentUser = await _userServices.GetCurrentUserAsync();
 
