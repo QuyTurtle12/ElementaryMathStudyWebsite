@@ -159,16 +159,16 @@ namespace ElementaryMathStudyWebsite.Controllers
         //}
 
         // PUT: api/Subjects/RestoreSoftDelete/{id}
-        [Authorize(Policy = "Admin-Content")]
-        [HttpPut("RestoreSoftDelete/{id}")]
-        [SwaggerOperation(
-            Summary = "Authorization: Admin, Content Manager",
-            Description = "Resote soft delete a subject by setting DeletedBy and DeletedTime."
-        )]
-        public async Task<IActionResult> RestoreSoftDeleteSubject(string id)
-        {
-            await _appSubjectServices.RestoreSubjectAsync(id);
-            return Ok(BaseResponse<object>.OkResponse(new { message = "Subject has been successfully restored." }));
-        }
+        //[Authorize(Policy = "Admin-Content")]
+        //[HttpPut("RestoreSoftDelete/{id}")]
+        //[SwaggerOperation(
+        //    Summary = "Authorization: Admin, Content Manager",
+        //    Description = "Resote soft delete a subject by setting DeletedBy and DeletedTime."
+        //)]
+        //public async Task<IActionResult> RestoreSoftDeleteSubject(string id)
+        //{
+        //    await _appSubjectServices.RestoreSubjectAsync(id);
+        //    return Ok(BaseResponse<object>.OkResponse(new { message = "Subject has been successfully restored." }));
+        //}
     }
 }

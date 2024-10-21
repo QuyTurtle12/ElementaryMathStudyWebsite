@@ -267,6 +267,28 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return true; // Return true if the user was successfully disabled
         }
 
+        public async Task<bool> EnableUserAsync(string userId)
+        {
+            // Fetch the user by ID
+            var user = await _unitOfWork.GetRepository<User>().GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new BaseException.NotFoundException("not_found", "User not found");
+            }
+
+            // Set the user's status to false to disable the user
+            user.Status = true;
+
+            // Set audit fields
+            AuditFields(user);
+
+            // Update the user in the repository
+            _unitOfWork.GetRepository<User>().Update(user);
+            await _unitOfWork.SaveAsync();
+
+            return true; // Return true if the user was successfully disabled
+        }
+
         public async Task<bool> DeleteUserAsync(string userId)
         {
             // Fetch the user by ID

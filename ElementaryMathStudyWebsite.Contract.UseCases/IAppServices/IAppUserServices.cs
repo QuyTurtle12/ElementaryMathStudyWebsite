@@ -62,6 +62,11 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<bool> DisableUserAsync(string userId);
 
         /// <summary>
+        /// Enable a user by their ID.
+        /// </summary>
+        Task<bool> EnableUserAsync(string userId);
+
+        /// <summary>
         /// Deletes a user by their ID.
         /// </summary>
         Task<bool> DeleteUserAsync(string userId);
