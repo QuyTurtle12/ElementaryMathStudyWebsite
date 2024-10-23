@@ -21,45 +21,12 @@ jobs:
         with:
           dotnet-version: '8.x'
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
+      - name: Restore
+        run: dotnet resotre ./ElementaryMathStudyWebsite.sln
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o ./ElementaryMathStudyWebsite.sln
+      - name: Build
+        run: dotnet build ./ElementaryMathStudyWebsite.sln --configuration Release --no-restore
 
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: .net-app
-          path: ./ElementaryMathStudyWebsite.sln
-
-  deploy:
-    runs-on: windows-latest
-    needs: build
-    environment:
-      name: 'Production'
-      url: https://myelementarymathstudy-brakakgzbxerd9ac.southeastasia-01.azurewebsites.net/
-    permissions:
-      id-token: write #This is required for requesting the JWT
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: .net-app
-      
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_4EF29A9EAD934FA396B3444B0341A07E }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_6449B19F1D794102AC904F70373099C7 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_DC980DE42B694DD8A2A090C6A9F4C041 }}
-
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'MyElementaryMathStudy'
-          slot-name: 'Production'
-          package: .
+      - name: Publish
+        run: dotnet publish ./ElementaryMathStudyWebsite.sln --configuration Release --no-build
           
