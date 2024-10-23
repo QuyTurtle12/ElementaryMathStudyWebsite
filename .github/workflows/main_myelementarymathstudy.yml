@@ -21,9 +21,6 @@ jobs:
         with:
           dotnet-version: '8.x'
 
-      - name: Restore
-        run: dotnet resotre ./ElementaryMathStudyWebsite.sln
-
       - name: Build
         run: dotnet build ./ElementaryMathStudyWebsite.sln --configuration Release --no-restore
 
