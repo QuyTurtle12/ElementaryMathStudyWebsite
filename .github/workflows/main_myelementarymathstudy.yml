@@ -38,7 +38,7 @@ jobs:
     needs: build
     environment:
       name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+      url: https://myelementarymathstudy-brakakgzbxerd9ac.southeastasia-01.azurewebsites.net/
     permissions:
       id-token: write #This is required for requesting the JWT
 
