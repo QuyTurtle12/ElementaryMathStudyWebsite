@@ -22,13 +22,13 @@ jobs:
         run: dotnet build ElementaryMathStudyWebsite/ElementaryMathStudyWebsite.csproj --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish ElementaryMathStudyWebsite/ElementaryMathStudyWebsite.csproj -c Release -o ${{ runner.workspace }}/ElementaryMathStudyWebsite.sln
+        run: dotnet publish ElementaryMathStudyWebsite/ElementaryMathStudyWebsite.csproj -c Release -o ${{ runner.workspace }}/myapp
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{ runner.workspace }}/ElementaryMathStudyWebsite.sln
+          path: ${{ runner.workspace }}/myapp
 
   deploy:
     runs-on: windows-latest
@@ -44,6 +44,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: .net-app
+          path: ${{ runner.workspace }}/myapp
       
       - name: Login to Azure
         uses: azure/login@v2
@@ -58,4 +59,4 @@ jobs:
         with:
           app-name: 'MyElementaryMathStudy'
           slot-name: 'Production'
-          package: '${{ runner.workspace }}/ElementaryMathStudyWebsite.sln'
+          package: ${{ runner.workspace }}/myapp
