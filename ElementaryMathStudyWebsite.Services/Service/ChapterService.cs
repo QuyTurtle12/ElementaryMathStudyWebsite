@@ -988,6 +988,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return null;
             }).ToList();
 
+            if (paginatedChapterViewTasks.Count == 0)
+            {
+                throw new BaseException.NotFoundException("key_not_found", $"No chapters found with name containing '{searchTerm}'.");
+            }
+
             return new BasePaginatedList<object>(paginatedChapterViewTasks!, paginatedChapterViewTasks.Count, pageNumber, pageSize);
         }
 
