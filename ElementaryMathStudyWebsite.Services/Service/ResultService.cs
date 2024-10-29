@@ -7,6 +7,8 @@ using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -15,17 +17,17 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppUserServices _userServices;
         private readonly IAppProgressServices _progressServices;
-        private readonly IAppSubjectServices _subjectServices;
         private readonly IMapper _mapper;
+        private readonly IServiceProvider _serviceProvider;
 
         // Constructor
-        public ResultService(IUnitOfWork unitOfWork, IAppUserServices userServices, IAppProgressServices progressServices, IAppSubjectServices subjectServices, IMapper mapper)
+        public ResultService(IUnitOfWork unitOfWork, IAppUserServices userServices, IAppProgressServices progressServices, IMapper mapper, IServiceProvider serviceProvider)
         {
             _unitOfWork = unitOfWork;
             _userServices = userServices;
             _progressServices = progressServices;
-            _subjectServices = subjectServices;
             _mapper = mapper;
+            _serviceProvider = serviceProvider;
         }
 
         // Calculate the latest student score
@@ -126,6 +128,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get a list of student grade of specific quiz
         public async Task<BasePaginatedList<ResultViewDto>> GetStudentResultListAsync(string quizId, int pageNumber, int pageSize)
         {
+            // Check if quiz Id is valid
+            _ = await _unitOfWork.GetRepository<Quiz>().FindByConditionAsync(q => !q.DeletedTime.HasValue && q.Id.Equals(quizId))
+                ?? throw new BaseException.BadRequestException("invalid_argument", $"The quiz Id {quizId} is not existed");
+
             // Get current logged in user info
             User currentUser = await _userServices.GetCurrentUserAsync();
 
@@ -288,13 +294,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Create a list to hold the results with their subject names
             List<(string SubjectId, string SubjectName, Result Result)> resultWithSubject = (await Task.WhenAll(latestResultsForEachQuiz.Select(async result =>
             {
-                // Check null
-                result = result ?? throw new BaseException.NotFoundException("not_found", $"Cannot find this student's quiz result.");
+                using (IServiceScope scope = _serviceProvider.CreateScope())
+                {
+                    // Resolve services from the new scope
+                    IAppProgressServices progressServices = scope.ServiceProvider.GetRequiredService<IAppProgressServices>();
+                    IAppSubjectServices subjectServices = scope.ServiceProvider.GetRequiredService<IAppSubjectServices>();
 
-                // Fetch subject ID from the quiz ID, then fetch the subject name
-                string subjectId = await _progressServices.GetSubjectIdFromQuizIdAsync(result.QuizId);
-                string subjectName = await _subjectServices.GetSubjectNameAsync(subjectId);
-                return (subjectId, subjectName, result);
+                    // Check null
+                    result = result ?? throw new BaseException.NotFoundException("not_found", $"Cannot find this student's quiz result.");
+
+                    // Fetch subject ID from the quiz ID, then fetch the subject name
+                    string subjectId = await progressServices.GetSubjectIdFromQuizIdAsync(result.QuizId);
+                    string subjectName = await subjectServices.GetSubjectNameAsync(subjectId);
+                    return (subjectId, subjectName, result);
+                }
             }))).ToList();
 
             // Get the student latest result

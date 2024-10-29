@@ -209,6 +209,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <exception cref="BaseException.NotFoundException"></exception>
         public async Task<BasePaginatedList<ProgressViewDto>> GetStudentProgressesDtoAsync(string studentId, int pageNumber, int pageSize)
         {
+            // Check if student Id exist
+            _ = await _unitOfWork.GetRepository<User>().GetByIdAsync(studentId)
+                ?? throw new BaseException.BadRequestException("invalid_argument", "Student Id is not exist!");
+
+            // Get logged in User info
+            User currentUser = await _userService.GetCurrentUserAsync();
+
+            // Check if current logged user and the inputted student Id are parent-child relationship
+            if (!await _userService.IsCustomerChildren(currentUser.Id, studentId))
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "They are not parent and child");
+            }
+
             // Get all orders with "SUCCESS" status
             IQueryable<string> ordersQuery = _unitOfWork.GetRepository<Order>().Entities
                 .Where(o => o.Status == PaymentStatusHelper.SUCCESS.ToString())
