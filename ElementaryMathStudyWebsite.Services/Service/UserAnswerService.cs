@@ -68,16 +68,66 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             User currentUser = await _userService.GetCurrentUserAsync();
             string currentUserId = currentUser.Id;
-            
-
 
             string? questionId = userAnswerCreateDTO.UserAnswerList.FirstOrDefault()?.QuestionId;
 
-            string? quizId = _unitOfWork.GetRepository<Question>().Entities
-                .Where(q => q.Id.Equals(questionId))
+            // Retrieve the quizId from the first question
+            string? quizId = await _unitOfWork.GetRepository<Question>()
+                .Entities
+                .Where(q => q.Id == questionId)
                 .Select(q => q.QuizId)
-                .FirstOrDefault();
-            
+                .FirstOrDefaultAsync();
+
+            // Ensure that all questions belong to the same quiz
+            var quizIds = userAnswerCreateDTO.UserAnswerList
+                .Select(ua => _unitOfWork.GetRepository<Question>()
+                    .Entities
+                    .Where(q => q.Id == ua.QuestionId)
+                    .Select(q => q.QuizId)
+                    .FirstOrDefault())
+                .Distinct()
+                .ToList();
+
+            if (quizIds.Count > 1)
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "Cannot answer different quizzes.");
+            }
+
+            // Retrieve the subjectId from the quiz, either via Chapter or Topic
+            var subjectId = await _unitOfWork.GetRepository<Chapter>()
+                .Entities
+                .Where(c => c.QuizId == quizId)
+                .Select(c => c.SubjectId)
+                .FirstOrDefaultAsync();
+
+            if (subjectId == null)
+            {
+                // If the quiz is not found in Chapter, search in Topic to find Chapter and then Subject
+                subjectId = await _unitOfWork.GetRepository<Topic>()
+                    .Entities
+                    .Where(t => t.QuizId == quizId)
+                    .Select(t => t.Chapter.SubjectId)
+                    .FirstOrDefaultAsync();
+            }
+
+            // Ensure subjectId is found, otherwise throw error
+            if (subjectId == null)
+            {
+                throw new BaseException.NotFoundException("subject_not_found", "Subject associated with the quiz not found.");
+            }
+
+            // Check if the student is assigned to the subject in the OrderDetail table
+            var isAssigned = await _unitOfWork.GetRepository<OrderDetail>()
+                .Entities
+                .AnyAsync(od => od.SubjectId == subjectId && od.StudentId == currentUserId);
+
+            if (!isAssigned)
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "Cannot answer a quiz of a subject not assigned to you.");
+            }
+
+            // Rest of the logic remains the same...
+
             // Check for duplicate QuestionId entries in the user answer list
             List<string> duplicateQuestionIds = userAnswerCreateDTO.UserAnswerList
                 .GroupBy(ua => ua.QuestionId)
@@ -96,10 +146,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Check if all question IDs exist
             List<string> existingQuestions = await _unitOfWork.GetRepository<Question>()
-                                        .Entities
-                                        .Where(q => questionIds.Contains(q.Id))
-                                        .Select(q => q.Id)
-                                        .ToListAsync();
+                .Entities
+                .Where(q => questionIds.Contains(q.Id))
+                .Select(q => q.Id)
+                .ToListAsync();
 
             if (existingQuestions.Count != questionIds.Count)
             {
@@ -109,10 +159,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Check if all option IDs exist
             List<string> existingOptions = await _unitOfWork.GetRepository<Option>()
-                                      .Entities
-                                      .Where(o => optionIds.Contains(o.Id))
-                                      .Select(o => o.Id)
-                                      .ToListAsync();
+                .Entities
+                .Where(o => optionIds.Contains(o.Id))
+                .Select(o => o.Id)
+                .ToListAsync();
 
             if (existingOptions.Count != optionIds.Count)
             {
@@ -120,11 +170,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.NotFoundException("option_not_found", $"Option with ID '{missingOptionId}' not found.");
             }
 
+            // Check if all questions of the quiz are answered
+            var totalQuestions = await _unitOfWork.GetRepository<Question>()
+                .Entities
+                .Where(q => q.QuizId == quizId)
+                .CountAsync();
+
+            if (userAnswerCreateDTO.UserAnswerList.Count() != totalQuestions)
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "You need to answer all the questions.");
+            }
+
             // Pre-fetch existing user answers to avoid querying inside the loop
             List<UserAnswer> userAnswers = await _unitOfWork.GetRepository<UserAnswer>()
-                                   .Entities
-                                   .Where(ua => questionIds.Contains(ua.QuestionId) && ua.UserId == currentUserId)
-                                   .ToListAsync();
+                .Entities
+                .Where(ua => questionIds.Contains(ua.QuestionId) && ua.UserId == currentUserId)
+                .ToListAsync();
 
             foreach (var userAnswerDTO in userAnswerCreateDTO.UserAnswerList)
             {
@@ -146,7 +207,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 await _unitOfWork.GetRepository<UserAnswer>().InsertAsync(userAnswer);
             }
 
-
             // Save all changes after the loop
             await _unitOfWork.GetRepository<UserAnswer>().SaveAsync();
 
@@ -156,7 +216,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             };
 
             return await _resultService.AddStudentResultAsync(resultCreateDto);
-
         }
 
 
@@ -196,6 +255,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
         {
             User currentUser = await _userService.GetCurrentUserAsync();
             string currentUserId = currentUser.Id;
+
+            // Check if quiz exists
+            var quizExists = await _unitOfWork.GetRepository<Quiz>()
+                .Entities
+                .AnyAsync(q => q.Id == quizId);
+
+            if (!quizExists)
+            {
+                throw new BaseException.NotFoundException("quiz_not_found", "Quiz Id not existed.");
+            }
 
             // Fetch user answers for the given quizId and current user
             List<UserAnswer> userAnswers = await _unitOfWork.GetRepository<UserAnswer>().Entities
