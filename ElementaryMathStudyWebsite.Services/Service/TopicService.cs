@@ -348,9 +348,17 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Lấy danh sách Topic theo ChapterId
+        // Lấy danh sách Topic theo ChapterId
         public async Task<List<TopicViewDto>> GetTopicsByChapterIdAsync(string chapterId)
         {
             ValidateChapterId(chapterId);
+
+            // Kiểm tra xem chapter có tồn tại không
+            var chapterExists = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId);
+            if (chapterExists == null)
+            {
+                throw new BaseException.NotFoundException("not_found", $"Chapter with ID '{chapterId}' not found.");
+            }
 
             // Fetch all active topics asynchronously
             var topics = await _unitOfWork.GetRepository<Topic>()
@@ -375,6 +383,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<TopicAdminViewDto> AddTopicAsync(TopicCreateDto topicCreateDto)
         {
             ValidateTopicDto(topicCreateDto);
+
+            // Kiểm tra giá trị của Number
+            if (topicCreateDto.Number <= 0)
+            {
+                throw new BaseException.BadRequestException("Invalid!", "Number must be greater than 0.");
+            }
+
+            // Kiểm tra xem chapter có tồn tại không
+            var chapterExists = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topicCreateDto.ChapterId);
+            if (chapterExists == null)
+            {
+                throw new BaseException.NotFoundException("not_found", $"Chapter with ID '{topicCreateDto.ChapterId}' not found.");
+            }
 
             // Kiểm tra xem tên Topic đã tồn tại chưa
             var existingTopicByName = await _unitOfWork.GetRepository<Topic>().Entities
@@ -527,16 +548,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<TopicAdminViewDto> UpdateTopicAsync(string id, TopicUpdateDto topicUpdateDto)
         {
             ValidateTopicId(id);
-            Topic? existingTopic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(id);
 
+            // Check if the topic name is empty
+            if (string.IsNullOrWhiteSpace(topicUpdateDto.TopicName))
+            {
+                throw new BaseException.BadRequestException("Invalid!", "The topic name cannot be empty.");
+            }
+
+            Topic? existingTopic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(id);
             User currentUser = await _userService.GetCurrentUserAsync();
 
             if (existingTopic == null)
                 throw new BaseException.NotFoundException("not_found", $"No topics found for ID '{id}'.");
 
-            // Kiểm tra xem tên Topic đã tồn tại chưa (trừ chính nó)
+            // Check if the topic name already exists (excluding the current one)
             var existingTopicByName = await _unitOfWork.GetRepository<Topic>().Entities
-                .FirstOrDefaultAsync(t => t.TopicName == topicUpdateDto.TopicName);
+                .FirstOrDefaultAsync(t => t.TopicName == topicUpdateDto.TopicName && t.Id != id);
 
             if (existingTopicByName != null)
             {
@@ -546,8 +573,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             existingTopic.TopicName = topicUpdateDto.TopicName;
             existingTopic.TopicContext = topicUpdateDto.TopicContext;
             existingTopic.Status = true;
-            existingTopic.LastUpdatedBy = currentUser.Id; //
-            existingTopic.LastUpdatedTime = DateTime.UtcNow; //
+            existingTopic.LastUpdatedBy = currentUser.Id;
+            existingTopic.LastUpdatedTime = DateTime.UtcNow;
 
             _userService.AuditFields(existingTopic, false);
 
@@ -565,6 +592,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 opts.Items["Chapter"] = chapter;
                 opts.Items["Quiz"] = quiz;
             });
+
             return topicAdminViewDto;
         }
 
@@ -719,6 +747,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
         //Chỉ cho phép hoán đổi vị trí number trong cùng 1 chapter
         public async Task SwapTopicNumbersAsync(string topicId1, string topicId2)
         {
+            // Kiểm tra xem topicId có hợp lệ không
+            if (string.IsNullOrWhiteSpace(topicId1) || string.IsNullOrWhiteSpace(topicId2))
+            {
+                throw new BaseException.BadRequestException("Invalid!", "Topic IDs cannot be empty.");
+            }
+
             // Lấy thông tin của hai topic
             Topic? topic1 = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(topicId1);
             Topic? topic2 = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(topicId2);
@@ -733,6 +767,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (topic1.ChapterId != topic2.ChapterId)
             {
                 throw new BaseException.BadRequestException("Invalid!", "Topics must belong to the same chapter to swap their numbers.");
+            }
+
+            // Kiểm tra giá trị của Number
+            if (topic1.Number <= 0 || topic2.Number <= 0)
+            {
+                throw new BaseException.BadRequestException("Invalid!", "Topic numbers must be greater than 0.");
             }
 
             // Đổi số thứ tự
