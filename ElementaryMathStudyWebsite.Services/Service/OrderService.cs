@@ -43,7 +43,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <exception cref="BaseException.CoreException"></exception>
         public async Task<OrderViewDto> AddItemsToCart(CartCreateDto cartCreateDto)
         {
-
+            if (!cartCreateDto.SubjectStudents.Any()) throw new BaseException.BadRequestException(
+                "empty_cart",
+                "You proceed to select something"
+            );
             // Get logged in User
             User currentUser = await _userService.GetCurrentUserAsync();
 
