@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Infrastructure", "ElementaryMathStudyWebsite.Infrastructure\ElementaryMathStudyWebsite.Infrastructure.csproj", "{006AA52F-2906-4EE6-A47F-F0F5910D4262}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElementaryMathStudyWebsite.RazorPage", "ElementaryMathStudyWebsite.RazorPage\ElementaryMathStudyWebsite.RazorPage.csproj", "{B0936B57-0DC7-4EE5-952C-AE0E2742556F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,10 @@ Global
 		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0936B57-0DC7-4EE5-952C-AE0E2742556F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0936B57-0DC7-4EE5-952C-AE0E2742556F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0936B57-0DC7-4EE5-952C-AE0E2742556F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0936B57-0DC7-4EE5-952C-AE0E2742556F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

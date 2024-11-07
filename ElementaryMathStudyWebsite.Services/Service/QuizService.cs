@@ -87,10 +87,28 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Query all quizzes excluding deleted ones
             List<Quiz> quizzes = await GetQuizzesAsync();
 
-            // Use AutoMapper to map quizzes to QuizViewDto
-            List<QuizViewDto> quizDtos = _mapper.Map<List<QuizViewDto>>(quizzes);
+            // Check if quizName is null or empty
+            if (string.IsNullOrWhiteSpace(quizName))
+            {
+                return _mapper.Map<List<QuizViewDto>>(quizzes);
+            }
 
-            return quizDtos; // Return the list of QuizViewDto
+            // Check if any quiz contains the specified name
+            if (!quizzes.Any(q => q.QuizName.Contains(quizName, StringComparison.OrdinalIgnoreCase)))
+            {
+                // If no quiz is found, throw a BaseException
+                throw new BaseException.NotFoundException("not_found", "No quizzes found with the specified name.");
+            }
+
+            // Filter quizzes where the quiz name contains the specified string (case-insensitive)
+            List<Quiz> filteredQuizzes = quizzes
+                .Where(q => q.QuizName.Contains(quizName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            // Use AutoMapper to map filtered quizzes to QuizViewDto
+            List<QuizViewDto> quizDtos = _mapper.Map<List<QuizViewDto>>(filteredQuizzes);
+
+            return quizDtos; // Return the list of filtered QuizViewDto
         }
 
         // Get all quizzes that belong to a specific chapter or topic (by id conference)
@@ -130,14 +148,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Validate QuizName
             if (string.IsNullOrWhiteSpace(dto.QuizName))
             {
-                throw new BaseException.BadRequestException("Invalid_arguments", "Quiz name cannot be null or empty.");
+                throw new BaseException.BadRequestException("Invalid_arguments", "Quizname and cannot be null or empty.");
             }
 
-            // Validate Criteria
-            if (dto.Criteria <= 0 || dto.Criteria > 10)
-            {
-                throw new BaseException.BadRequestException("Invalid_arguments", "Criteria must be greater than 0 and smaller than 10, cannot be empty.");
-            }
+            if (dto.Criteria > 10 || dto.Criteria < 0)
+                throw new BaseException.BadRequestException("Invalid_arguments", "Criteria must be less than or equal to 10.");
 
             // Get the current user for auditing purposes
             User currentUser = await _userService.GetCurrentUserAsync();
@@ -282,10 +297,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private List<Quiz> FilterQuizzesByCriteria(List<Quiz> quizzes, string? chapterId, string? topicId)
         {
             return quizzes.Where(q =>
-                (string.IsNullOrWhiteSpace(chapterId) || q.Topic?.Id == chapterId) && // Filter by chapterId if provided
+                (string.IsNullOrWhiteSpace(chapterId) || q.Chapter?.Id == chapterId) && // Filter by chapterId if provided
                 (string.IsNullOrWhiteSpace(topicId) || q.Topic?.Id == topicId)           // Filter by topicId if provided
             ).ToList();
         }
 
-    }
+    }   
 }
