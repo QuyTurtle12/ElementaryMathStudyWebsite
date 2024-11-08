@@ -1,0 +1,42 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Progress[0].Quiz)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Progress[0].Subject)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Progress) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Quiz!.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Subject!.Id)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
