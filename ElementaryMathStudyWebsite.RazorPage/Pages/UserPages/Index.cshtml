@@ -101,7 +101,7 @@
                 @Html.DisplayFor(modelItem => item.Status)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.RoleId)
+                @Html.DisplayFor(modelItem => item.Role!.RoleName)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.CreatedBy)
