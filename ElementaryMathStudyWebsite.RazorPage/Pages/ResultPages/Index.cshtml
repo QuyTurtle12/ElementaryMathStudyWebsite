@@ -1,0 +1,54 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.ResultPages.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Result[0].Score)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Result[0].DateTaken)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Result[0].Quiz)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Result[0].Student)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Result) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Score)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DateTaken)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Quiz!.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Student!.Id)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
