@@ -20,7 +20,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
         }
 
         [BindProperty]
-        public User User { get; set; } = default!;
+        public new User User { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(string id)
         {

@@ -3,7 +3,6 @@
 
 @{
     ViewData["Title"] = "Index";
-    Layout = "~/Pages/_ViewImports.cshtml";
 }
 
 <h1>Index</h1>
@@ -102,7 +101,7 @@
                 @Html.DisplayFor(modelItem => item.Status)
             </td>
             <td>
-                @(item.Role != null ? item.Role.Id.ToString() : "N/A")
+                @Html.DisplayFor(modelItem => item.RoleId)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.CreatedBy)
