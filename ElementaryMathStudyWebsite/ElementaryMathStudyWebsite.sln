@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElementaryMathStudyWebsite", "ElementaryMathStudyWebsite.csproj", "{EA872D53-B3BF-4915-B6B1-3753628CBEA9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite", "ElementaryMathStudyWebsite.csproj", "{EA872D53-B3BF-4915-B6B1-3753628CBEA9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1.INTERFACE ADAPTERS", "1.INTERFACE ADAPTERS", "{D8BC4421-0767-40F0-855C-982802A09D1E}"
 EndProject
@@ -13,15 +13,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.SERVICES", "3.SERVICES", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.CORE", "4.CORE", "{9B5E4897-588B-495E-B060-ADE1FFCBEFBB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElementaryMathStudyWebsite.Core", "..\ElementaryMathStudyWebsite.Core\ElementaryMathStudyWebsite.Core.csproj", "{4E314843-7C51-4CEA-BDCA-C93A23969EA4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Core", "..\ElementaryMathStudyWebsite.Core\ElementaryMathStudyWebsite.Core.csproj", "{4E314843-7C51-4CEA-BDCA-C93A23969EA4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElementaryMathStudyWebsite.Contract.Core", "..\ElementaryMathStudyWebsite.Contract.Core\ElementaryMathStudyWebsite.Contract.Core.csproj", "{D66E30AC-60F0-404D-9014-AFD33C212F66}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Contract.Core", "..\ElementaryMathStudyWebsite.Contract.Core\ElementaryMathStudyWebsite.Contract.Core.csproj", "{D66E30AC-60F0-404D-9014-AFD33C212F66}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElementaryMathStudyWebsite.Services", "..\ElementaryMathStudyWebsite.Services\ElementaryMathStudyWebsite.Services.csproj", "{46439365-74CB-4A29-A8B0-CAC999D28CDA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Services", "..\ElementaryMathStudyWebsite.Services\ElementaryMathStudyWebsite.Services.csproj", "{46439365-74CB-4A29-A8B0-CAC999D28CDA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElementaryMathStudyWebsite.Contract.UseCases", "..\ElementaryMathStudyWebsite.Contract.UseCases\ElementaryMathStudyWebsite.Contract.UseCases.csproj", "{C7A97A45-FDAD-43A2-863C-41B2983EAE03}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Contract.UseCases", "..\ElementaryMathStudyWebsite.Contract.UseCases\ElementaryMathStudyWebsite.Contract.UseCases.csproj", "{C7A97A45-FDAD-43A2-863C-41B2983EAE03}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElementaryMathStudyWebsite.Infrastructure", "..\ElementaryMathStudyWebsite.Infrastructure\ElementaryMathStudyWebsite.Infrastructure.csproj", "{006AA52F-2906-4EE6-A47F-F0F5910D4262}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Infrastructure", "..\ElementaryMathStudyWebsite.Infrastructure\ElementaryMathStudyWebsite.Infrastructure.csproj", "{006AA52F-2906-4EE6-A47F-F0F5910D4262}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.RazorPage", "..\ElementaryMathStudyWebsite.RazorPage\ElementaryMathStudyWebsite.RazorPage.csproj", "{C2246F62-B339-4D7F-A460-871C53DFDFF3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,6 +55,10 @@ Global
 		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2246F62-B339-4D7F-A460-871C53DFDFF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2246F62-B339-4D7F-A460-871C53DFDFF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2246F62-B339-4D7F-A460-871C53DFDFF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2246F62-B339-4D7F-A460-871C53DFDFF3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

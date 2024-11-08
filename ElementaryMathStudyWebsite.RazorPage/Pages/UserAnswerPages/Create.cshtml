@@ -1,0 +1,46 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages.CreateModel
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>UserAnswer</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="UserAnswer.QuestionId" class="control-label"></label>
+                <select asp-for="UserAnswer.QuestionId" class ="form-control" asp-items="ViewBag.QuestionId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="UserAnswer.UserId" class="control-label"></label>
+                <select asp-for="UserAnswer.UserId" class ="form-control" asp-items="ViewBag.UserId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="UserAnswer.OptionId" class="control-label"></label>
+                <select asp-for="UserAnswer.OptionId" class ="form-control" asp-items="ViewBag.OptionId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="UserAnswer.AttemptNumber" class="control-label"></label>
+                <input asp-for="UserAnswer.AttemptNumber" class="form-control" />
+                <span asp-validation-for="UserAnswer.AttemptNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

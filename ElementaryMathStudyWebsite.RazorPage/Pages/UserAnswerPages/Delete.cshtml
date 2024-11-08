@@ -1,0 +1,42 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages.DeleteModel
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Delete</h1>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>UserAnswer</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.UserAnswer.Question)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.UserAnswer.Question.Id)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.UserAnswer.User)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.UserAnswer.User.Id)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.UserAnswer.Option)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.UserAnswer.Option.Id)
+        </dd>
+    </dl>
+    
+    <form method="post">
+        <input type="hidden" asp-for="UserAnswer.QuestionId" />
+        <input type="hidden" asp-for="UserAnswer.UserId" />
+        <input type="hidden" asp-for="UserAnswer.AttemptNumber" />
+        <input type="submit" value="Delete" class="btn btn-danger" /> |
+        <a asp-page="./Index">Back to List</a>
+    </form>
+</div>
