@@ -1,0 +1,119 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.UserPages.CreateModel
+
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Pages/_ViewImports.cshtml";
+}
+
+<h1>Create</h1>
+
+<h4>User</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="User.FullName" class="control-label"></label>
+                <input asp-for="User.FullName" class="form-control" />
+                <span asp-validation-for="User.FullName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.PhoneNumber" class="control-label"></label>
+                <input asp-for="User.PhoneNumber" class="form-control" />
+                <span asp-validation-for="User.PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.Gender" class="control-label"></label>
+                <input asp-for="User.Gender" class="form-control" />
+                <span asp-validation-for="User.Gender" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.Email" class="control-label"></label>
+                <input asp-for="User.Email" class="form-control" />
+                <span asp-validation-for="User.Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.RoleId" class="control-label"></label>
+                <select asp-for="User.RoleId" class ="form-control" asp-items="ViewBag.RoleId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.VerificationToken" class="control-label"></label>
+                <input asp-for="User.VerificationToken" class="form-control" />
+                <span asp-validation-for="User.VerificationToken" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.PasswordResetToken" class="control-label"></label>
+                <input asp-for="User.PasswordResetToken" class="form-control" />
+                <span asp-validation-for="User.PasswordResetToken" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.ResetTokenExpiry" class="control-label"></label>
+                <input asp-for="User.ResetTokenExpiry" class="form-control" />
+                <span asp-validation-for="User.ResetTokenExpiry" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.Username" class="control-label"></label>
+                <input asp-for="User.Username" class="form-control" />
+                <span asp-validation-for="User.Username" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.Password" class="control-label"></label>
+                <input asp-for="User.Password" class="form-control" />
+                <span asp-validation-for="User.Password" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="User.Status" /> @Html.DisplayNameFor(model => model.User.Status)
+                </label>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.Id" class="control-label"></label>
+                <input asp-for="User.Id" class="form-control" />
+                <span asp-validation-for="User.Id" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.CreatedBy" class="control-label"></label>
+                <input asp-for="User.CreatedBy" class="form-control" />
+                <span asp-validation-for="User.CreatedBy" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.LastUpdatedBy" class="control-label"></label>
+                <input asp-for="User.LastUpdatedBy" class="form-control" />
+                <span asp-validation-for="User.LastUpdatedBy" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.DeletedBy" class="control-label"></label>
+                <input asp-for="User.DeletedBy" class="form-control" />
+                <span asp-validation-for="User.DeletedBy" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.CreatedTime" class="control-label"></label>
+                <input asp-for="User.CreatedTime" class="form-control" />
+                <span asp-validation-for="User.CreatedTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.LastUpdatedTime" class="control-label"></label>
+                <input asp-for="User.LastUpdatedTime" class="form-control" />
+                <span asp-validation-for="User.LastUpdatedTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="User.DeletedTime" class="control-label"></label>
+                <input asp-for="User.DeletedTime" class="form-control" />
+                <span asp-validation-for="User.DeletedTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

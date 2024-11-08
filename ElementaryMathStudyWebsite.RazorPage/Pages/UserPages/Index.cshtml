@@ -1,0 +1,133 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.UserPages.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Pages/_ViewImports.cshtml";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].FullName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].PhoneNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].Gender)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].Email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].VerificationToken)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].PasswordResetToken)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].ResetTokenExpiry)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].Username)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].Password)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].Status)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].Role)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].CreatedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].LastUpdatedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].DeletedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].CreatedTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].LastUpdatedTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User[0].DeletedTime)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.User) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.FullName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PhoneNumber)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Gender)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Email)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.VerificationToken)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PasswordResetToken)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ResetTokenExpiry)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Username)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Password)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Status)
+            </td>
+            <td>
+                @(item.Role != null ? item.Role.Id.ToString() : "N/A")
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedBy)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LastUpdatedBy)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DeletedBy)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LastUpdatedTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DeletedTime)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
