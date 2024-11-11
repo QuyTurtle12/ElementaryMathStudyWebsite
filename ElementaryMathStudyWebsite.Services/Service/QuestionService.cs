@@ -26,7 +26,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Get all questions exist
-
         public async Task<List<QuestionMainViewDto>> GetAllQuestionsMainViewDtoAsync()
         {
             // Retrieve the list of questions that are not deleted
@@ -107,8 +106,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             QuestionMainViewDto dto = _mapper.Map<QuestionMainViewDto>(question, opt =>
             {
                 // Include created and last updated user information
-                opt.Items["CreatedUser"] = createdUser;
-                opt.Items["LastUpdatedUser"] = lastUpdatedUser;
+                opt.Items["CreatedUsers"] = createdUser;
+                opt.Items["UpdatedUsers"] = lastUpdatedUser;
             });
 
             return dto; // Return the QuestionMainViewDto
@@ -266,8 +265,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return BaseResponse<string>.OkResponse($"{dtos.Count} question(s) created successfully.");
         }
 
-
-
         // Method to update an existing question
         public async Task<QuestionMainViewDto> UpdateQuestionAsync(string id, QuestionUpdateDto dto)
         {
@@ -276,12 +273,19 @@ namespace ElementaryMathStudyWebsite.Services.Service
                                 ?? throw new BaseException.NotFoundException("not_found", $"Question with Id '{id}' not found.");
 
             // Validate DTO
-            if (dto == null || string.IsNullOrWhiteSpace(dto.QuestionContext))
+            if (dto == null || string.IsNullOrWhiteSpace(dto.QuestionContext) || string.IsNullOrWhiteSpace(dto.QuizId))
             {
-                throw new BaseException.BadRequestException("invalid_arguments", "Question context cannot be null or empty.");
+                throw new BaseException.BadRequestException("invalid_arguments", "Question context or Quizid cannot be null or empty.");
             }
 
-            // If QuizId is null or empty, retain the existing QuizId
+            // Validate that the provided QuizId exists
+            Quiz? quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(dto.QuizId);
+            if (quiz == null)
+            {
+                throw new BaseException.NotFoundException("not_found", $"Quiz with Id '{dto.QuizId}' does not exist.");
+            }
+
+            // Update QuizId if provided and valid
             if (!string.IsNullOrWhiteSpace(dto.QuizId))
             {
                 question.QuizId = dto.QuizId;
@@ -309,11 +313,21 @@ namespace ElementaryMathStudyWebsite.Services.Service
                                 .GetEntitiesWithCondition(u => u.Id == question.LastUpdatedBy)
                                 .FirstOrDefaultAsync();
 
+            // Optional: Check if users were found
+            if (createdByUser == null || lastUpdatedByUser == null)
+            {
+                throw new BaseException.NotFoundException("not_found", "Some user information could not be found.");
+            }
+
+            // Fetch users who created and last updated the question
+            List<User> createdUsers = new List<User> { createdByUser };
+            List<User> updatedUsers = new List<User> { lastUpdatedByUser };
+
             // Map the updated question to QuestionMainViewDto using AutoMapper
             QuestionMainViewDto questionDto = _mapper.Map<QuestionMainViewDto>(question, opt =>
             {
-                opt.Items["CreatedUser"] = createdByUser;
-                opt.Items["LastUpdatedUser"] = lastUpdatedByUser;
+                opt.Items["CreatedUsers"] = createdUsers;
+                opt.Items["UpdatedUsers"] = updatedUsers;
             });
 
             // Return the updated question DTO
