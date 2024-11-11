@@ -27,16 +27,16 @@ namespace ElementaryMathStudyWebsite.Controllers
             return BaseResponse<List<QuestionMainViewDto>>.OkResponse(questions);
         }
 
-        [Authorize(Policy = "Admin-Content")]
-        [HttpGet("search/{questionid}")]
-        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Gets a question by its id.")]
-        public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> GetQuestionById(string questionid)
-        {
-            QuestionMainViewDto question = await _questionService.GetQuestionByIdAsync(questionid);
-            return BaseResponse<QuestionMainViewDto>.OkResponse(question);
-        }
+        //[Authorize(Policy = "Admin-Content")]
+        //[HttpGet("search/question/{questionid}")]
+        //[SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Gets a question by its id.")]
+        //public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> GetQuestionById(string questionid)
+        //{
+        //    QuestionMainViewDto question = await _questionService.GetQuestionByIdAsync(questionid);
+        //    return BaseResponse<QuestionMainViewDto>.OkResponse(question);
+        //}
 
-        [HttpGet("search/{quizId}")]
+        [HttpGet("search/quiz/{quizId}")]
         [SwaggerOperation(Summary = "Authorization: N/A", Description = "Gets all questions related to a specific quiz.")]
         public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> GetQuestionsByQuizId(string quizId)
         {
