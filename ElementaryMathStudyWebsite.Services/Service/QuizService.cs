@@ -30,6 +30,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Query all quizzes excluding deleted ones
             List<Quiz> quizzes = await GetQuizzesAsync();
 
+            if (quizzes == null)
+                throw new BaseException.NotFoundException("not_found", $"Quizzes not found.");
+
             // Map quizzes to QuizMainViewDto
             List<QuizMainViewDto> quizDtos = _mapper.Map<List<QuizMainViewDto>>(quizzes);
 
@@ -66,6 +69,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Query all quizzes excluding deleted ones
             List<Quiz> allQuizzes = await GetQuizzesAsync();
 
+            if (allQuizzes == null)
+                throw new BaseException.NotFoundException("not_found", $"Quizzes not found.");
+
             // Use AutoMapper to map quizzes to QuizMainViewDto
             List<QuizViewDto> quizDtos = _mapper.Map<List<QuizViewDto>>(allQuizzes);
 
@@ -87,6 +93,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Query all quizzes excluding deleted ones
             List<Quiz> quizzes = await GetQuizzesAsync();
 
+            if (quizzes == null)
+                throw new BaseException.NotFoundException("not_found", $"Quizzes not found.");
+
             // Check if quizName is null or empty
             if (string.IsNullOrWhiteSpace(quizName))
             {
@@ -95,10 +104,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Check if any quiz contains the specified name
             if (!quizzes.Any(q => q.QuizName.Contains(quizName, StringComparison.OrdinalIgnoreCase)))
-            {
                 // If no quiz is found, throw a BaseException
                 throw new BaseException.NotFoundException("not_found", "No quizzes found with the specified name.");
-            }
 
             // Filter quizzes where the quiz name contains the specified string (case-insensitive)
             List<Quiz> filteredQuizzes = quizzes
@@ -111,19 +118,23 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return quizDtos; // Return the list of filtered QuizViewDto
         }
 
-        // Get all quizzes that belong to a specific chapter or topic (by id conference)
-        public async Task<List<QuizViewDto>> GetQuizzesByChapterOrTopicIdAsync(string? chapterId, string? topicId)
+        // Get a quiz that belongs to a specific chapter or topic (by id conference)
+        public async Task<QuizViewDto?> GetQuizByChapterOrTopicIdAsync(string? chapterId, string? topicId)
         {
             // Query all quizzes excluding deleted ones
             List<Quiz> quizzes = await GetQuizzesAsync();
 
-            // Filter quizzes by chapterId or topicId if provided
-            quizzes = FilterQuizzesByCriteria(quizzes, chapterId, topicId);
+            // Filter the quiz by chapterId or topicId using the existing FilterQuizzesByCriteria method
+            Quiz? filteredQuiz = FilterQuizzesByCriteria(quizzes, chapterId, topicId);
 
-            // Convert Quiz entities to QuizViewDto using AutoMapper
-            List<QuizViewDto> quizDtos = _mapper.Map<List<QuizViewDto>>(quizzes);
+            // If no quiz is found, throw a NotFoundException
+            if (filteredQuiz == null)
+                throw new BaseException.NotFoundException("not_found", $"Quiz with chapterId '{chapterId}' or topicId '{topicId}' not found");
 
-            return quizDtos; // Return the list of QuizViewDto
+
+            QuizViewDto quizDto = _mapper.Map<QuizViewDto>(filteredQuiz);
+
+            return quizDto; // Return the QuizViewDto
         }
 
         // Get the name of a quiz by its Id
@@ -134,15 +145,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Check if quiz exists and throw an exception if it doesn't
             if (quiz == null)
-            {
-                throw new BaseException.NotFoundException("not_found", "Quiz not found.");
-            }
+                throw new BaseException.NotFoundException("not_found", $"Quiz with Id '{quizId}' not found.");
 
             // Return the quiz name
             return quiz.QuizName ?? string.Empty; // Return an empty string if QuizName is null
         }
 
-        // Create a new quiz
+        // Create a new quizs
         public async Task<QuizMainViewDto> AddQuizAsync(QuizCreateDto dto)
         {
             // Validate QuizName
@@ -190,6 +199,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
             Quiz quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizId)
                         ?? throw new BaseException.NotFoundException("not_found", $"Quiz with Id '{quizId}' not found.");
 
+            // Validate data
+            if (dto.Criteria <= 0 || dto.Criteria > 10)
+                throw new BaseException.BadRequestException("Invalid_arguments", "Criteria must be greater than 0 and less than or equal to 10.");
+
+            if (string.IsNullOrWhiteSpace(dto.QuizName))
+                throw new BaseException.NotFoundException("not_found", "Quiz name cannot be empty.");
+
             // Update quiz information with values from the DTO
             quiz.QuizName = dto.QuizName;
             quiz.Criteria = dto.Criteria;
@@ -218,13 +234,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
             Quiz? quiz;
 
             if (_unitOfWork.IsValid<Quiz>(quizId))
-            {
                 quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizId);
-            }
             else
-            {
                 throw new BaseException.NotFoundException("not_found", "Quiz ID not found");
-            }
 
             // Audit the quiz to mark it as deleted
             _userService.AuditFields(quiz!, false, true);
@@ -294,13 +306,14 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Method to filter quizzes by chapterId or topicId
-        private List<Quiz> FilterQuizzesByCriteria(List<Quiz> quizzes, string? chapterId, string? topicId)
+        private Quiz? FilterQuizzesByCriteria(List<Quiz> quizzes, string? chapterId, string? topicId)
         {
-            return quizzes.Where(q =>
-                (string.IsNullOrWhiteSpace(chapterId) || q.Chapter?.Id == chapterId) && // Filter by chapterId if provided
+            return quizzes.FirstOrDefault(q =>
+                (string.IsNullOrWhiteSpace(chapterId) || q.Chapter?.Id == chapterId) &&  // Filter by chapterId if provided
                 (string.IsNullOrWhiteSpace(topicId) || q.Topic?.Id == topicId)           // Filter by topicId if provided
-            ).ToList();
+            );
         }
 
-    }   
+
+    }
 }
