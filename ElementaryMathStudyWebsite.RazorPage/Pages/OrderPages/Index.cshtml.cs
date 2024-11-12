@@ -1,30 +1,42 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
+using Microsoft.AspNetCore.Mvc;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Core.Base;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.OrderPages
 {
-    public class IndexModel : PageModel
+	[Authorize(Policy = "Parent")]
+	public class IndexModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly IAppOrderServices _orderService;
+        private readonly IAppUserServices _userService;
 
-        public IndexModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+		public IndexModel(IAppOrderServices orderServices, IAppUserServices userService)
+		{
+			_orderService = orderServices;
+			_userService = userService;
+		}
+
+		public BasePaginatedList<OrderViewDto>? Orders { get; set; } = default!;
+
+		public int PageNumber { get; set; } = 1; // default page number
+		public int PageSize { get; set; } = 10; // default page size
+
+		public async Task<IActionResult> OnGetAsync()
         {
-            _context = context;
-        }
+            string currentUserId = HttpContext.Session.GetString("user_id")!;
+            User? currentUser = await _userService.GetUserByIdAsync(currentUserId);
 
-        public IList<Order> Order { get;set; } = default!;
+            if (currentUser == null)
+            {
+                return Unauthorized();
+            }
 
-        public async Task OnGetAsync()
-        {
-            Order = await _context.Order
-                .Include(o => o.User).ToListAsync();
+            Orders = await _orderService.GetOrderDtosAsync(PageNumber, PageSize, currentUser);
+            return Page();
         }
     }
 }
