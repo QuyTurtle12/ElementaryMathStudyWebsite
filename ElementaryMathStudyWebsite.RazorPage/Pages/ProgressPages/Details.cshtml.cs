@@ -1,43 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages
 {
-    public class DetailsModel : PageModel
+	public class DetailsModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+		private IAppProgressServices _progressService;
 
-        public DetailsModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public DetailsModel(IAppProgressServices progressService)
         {
-            _context = context;
+            _progressService = progressService;
         }
 
-        public Progress Progress { get; set; } = default!;
+        public IEnumerable<FinishedTopic>? FinishedTopics { get; set; } = new List<FinishedTopic>();
 
-        public async Task<IActionResult> OnGetAsync(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+		public IEnumerable<FinishedChapter>? FinishedChapters { get; set; } = new List<FinishedChapter>();
 
-            var progress = await _context.Progress.FirstOrDefaultAsync(m => m.StudentId == id);
-            if (progress == null)
-            {
-                return NotFound();
-            }
-            else
-            {
-                Progress = progress;
-            }
-            return Page();
-        }
-    }
+		public IActionResult OnGet(string studentId, string subjectId)
+		{
+            (IEnumerable<FinishedTopic> finishedTopics, IEnumerable<FinishedChapter> finishedChapters) = _progressService.GetFinishedTopicsAndChaptersModified(studentId, subjectId);
+
+            // Assign the passed collections to the properties
+            FinishedTopics = finishedTopics;
+			FinishedChapters = finishedChapters;
+
+			return Page();
+		}
+	}
 }
