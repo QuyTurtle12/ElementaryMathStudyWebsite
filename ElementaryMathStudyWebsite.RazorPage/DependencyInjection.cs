@@ -1,20 +1,18 @@
-﻿using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Services;
-using ElementaryMathStudyWebsite.Services.Service;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
+﻿using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
-using ElementaryMathStudyWebsite.Services.Service.Authentication;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ChapterMappings;
-using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ProgressMappings;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.OrderMappings;
+using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ProgressMappings;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ResultMappings;
 using ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.TopicMappings;
+using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Services;
+using ElementaryMathStudyWebsite.Services.Service;
+using ElementaryMathStudyWebsite.Services.Service.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 
 namespace ElementaryMathStudyWebsite
@@ -28,7 +26,8 @@ namespace ElementaryMathStudyWebsite
             services.AddInfrastructure(configuration);
             services.AddServices();
             services.AddMapping();
-            services.AddAuthentication(configuration);
+            services.AddSessionAuthentication(configuration);
+            //services.AddAuthentication(configuration);
             services.AddAuthorization(configuration);
             services.AddHttpContextAccessor();
         }
@@ -90,47 +89,25 @@ namespace ElementaryMathStudyWebsite
             );
         }
 
-        public static void AddAuthentication(this IServiceCollection services, IConfiguration configuration)
+        public static void AddSessionAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
-            var jwtSettings = configuration.GetSection("JwtSettings");
-            var secret = jwtSettings["Secret"] ?? throw new ArgumentNullException("JwtSettings:Secret");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+            // Add session services required for session handling
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30); // Session timeout
+                options.Cookie.HttpOnly = true; // Protects against XSS attacks
+                options.Cookie.IsEssential = true; // Required for session management
+            });
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
+            // Configure authentication using cookies
+            services.AddAuthentication("Session")
+                .AddCookie("Session", options =>
                 {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = key,
-                        ClockSkew = TimeSpan.Zero
-                    };
-
-                    // Custom response for authorization failures
-                    options.Events = new JwtBearerEvents
-                    {
-                        OnForbidden = context =>
-
-                        {
-                            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                            context.Response.ContentType = "application/json";
-                            var result = System.Text.Json.JsonSerializer.Serialize(new { message = "You do not have access to this resource." });
-                            return context.Response.WriteAsync(result);
-                        },
-
-                        OnChallenge = context =>
-                        {
-                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                            context.Response.ContentType = "application/json";
-                            var result = System.Text.Json.JsonSerializer.Serialize(new { message = "Authentication is required to access this resource." });
-                            context.HandleResponse(); // Prevents the default challenge response
-                            return context.Response.WriteAsync(result);
-                        }
-                    };
+                    options.LoginPath = "/Login"; // Redirect to login page if unauthorized
+                    options.AccessDeniedPath = "/AccessDenied"; // Redirect if access is denied
+                    options.SlidingExpiration = true; // Session expiration is updated on each request
                 });
+
         }
 
         public static void AddAuthorization(this IServiceCollection services, IConfiguration configuration)
@@ -163,8 +140,98 @@ namespace ElementaryMathStudyWebsite
             });
 
             // Register the authorization handler as scoped
-            services.AddScoped<IAuthorizationHandler, UserStatusHandler>();
-            services.AddScoped<IAuthorizationHandler, UserRoleHandler>();
+            services.AddScoped<IAuthorizationHandler, SessionStatusHandler>();
+            services.AddScoped<IAuthorizationHandler, UserSessionHandler>();
         }
+
+        public class UserSessionHandler : AuthorizationHandler<UserRoleRequirement>
+        {
+            private readonly IHttpContextAccessor _httpContextAccessor;
+
+            public UserSessionHandler(IHttpContextAccessor httpContextAccessor)
+            {
+                _httpContextAccessor = httpContextAccessor;
+            }
+
+            protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, UserRoleRequirement requirement)
+            {
+                // Retrieve user roles from session
+                var userRoles = GetUserRolesFromSession();
+
+                if (userRoles == null || userRoles.Length == 0)
+                {
+                    context.Fail();
+                    return Task.CompletedTask;
+                }
+
+                // Check if the user has any of the required roles
+                if (requirement.RequiredRoles.Any(role => userRoles.Contains(role, StringComparer.OrdinalIgnoreCase)))
+                {
+                    context.Succeed(requirement);
+                }
+                else
+                {
+                    context.Fail();
+                }
+
+                return Task.CompletedTask;
+            }
+
+            // Helper method to get roles from session
+            private string[] GetUserRolesFromSession()
+            {
+                var rolesFromSession = _httpContextAccessor.HttpContext?.Session.GetString("role_name");
+
+                if (rolesFromSession != null)
+                {
+                    return rolesFromSession.Split(','); // Return roles as an array
+                }
+
+                return new string[] { }; // Return empty array if no roles found
+            }
+        }
+
+        public class SessionStatusHandler : AuthorizationHandler<UserStatusRequirement>
+        {
+            private readonly IHttpContextAccessor _httpContextAccessor;
+            private readonly ITokenService _tokenService;
+            private readonly ILogger<SessionStatusHandler> _logger;
+
+            public SessionStatusHandler(IHttpContextAccessor httpContextAccessor, ITokenService tokenService, ILogger<SessionStatusHandler> logger)
+            {
+                _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+                _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+                _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            }
+
+            protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, UserStatusRequirement requirement)
+            {
+                var userIdFromSession = _httpContextAccessor.HttpContext?.Session.GetString("user_id");
+                var userStatusFromSession = _httpContextAccessor.HttpContext?.Session.GetString("user_status");
+
+                if (!string.IsNullOrEmpty(userIdFromSession) && !string.IsNullOrEmpty(userStatusFromSession))
+                {
+                    // Assume "user_status" is a string like "true" or "false"
+                    if (bool.TryParse(userStatusFromSession, out bool userStatus) && userStatus)
+                    {
+                        // Check if user status is true (active)
+                        context.Succeed(requirement);
+                        return Task.CompletedTask;
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Authorization failed for user {userIdFromSession}: User status is not active.");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"Authorization failed: Invalid session data for user.");
+                }
+
+                context.Fail();
+                return Task.CompletedTask;
+            }
+        }
+
     }
 }

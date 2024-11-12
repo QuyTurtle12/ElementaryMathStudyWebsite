@@ -3,6 +3,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using ElementaryMathStudyWebsite.Core.Base;
 using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -17,6 +18,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             _questionService = questionService;
         }
 
+        [Authorize(Policy = "Admin-Content")]
         [HttpGet("all")]
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Gets all available questions.")]
         public async Task<ActionResult<BaseResponse<List<QuestionMainViewDto>>>> GetAllQuestions()
@@ -25,15 +27,16 @@ namespace ElementaryMathStudyWebsite.Controllers
             return BaseResponse<List<QuestionMainViewDto>>.OkResponse(questions);
         }
 
-        [HttpGet("search/{questionid}")]
-        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Gets a question by its id.")]
-        public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> GetQuestionById(string questionid)
-        {
-            QuestionMainViewDto question = await _questionService.GetQuestionByIdAsync(questionid);
-            return BaseResponse<QuestionMainViewDto>.OkResponse(question);
-        }
+        //[Authorize(Policy = "Admin-Content")]
+        //[HttpGet("search/question/{questionid}")]
+        //[SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Gets a question by its id.")]
+        //public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> GetQuestionById(string questionid)
+        //{
+        //    QuestionMainViewDto question = await _questionService.GetQuestionByIdAsync(questionid);
+        //    return BaseResponse<QuestionMainViewDto>.OkResponse(question);
+        //}
 
-        [HttpGet("search/{quizId}")]
+        [HttpGet("search/quiz/{quizId}")]
         [SwaggerOperation(Summary = "Authorization: N/A", Description = "Gets all questions related to a specific quiz.")]
         public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> GetQuestionsByQuizId(string quizId)
         {
@@ -41,6 +44,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             return BaseResponse<List<QuestionViewDto>>.OkResponse(questions);
         }
 
+        [Authorize(Policy = "Admin-Content")]
         [HttpPost("add")]
         [SwaggerOperation(Summary = "Authorization: N/A", Description = "Adds a new question to the system.")]
         public async Task<ActionResult<BaseResponse<string>>> AddQuestionAsync(List<QuestionCreateDto> dtos)
@@ -49,14 +53,16 @@ namespace ElementaryMathStudyWebsite.Controllers
             return Ok(response);
         }
 
+        [Authorize(Policy = "Admin-Content")]
         [HttpPut("update/{id}")]
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Updates a question by its unique identifier.")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> UpdateQuestion(string id, QuestionUpdateDto dto)
         {
             QuestionMainViewDto updatedQuestion = await _questionService.UpdateQuestionAsync(id, dto);
-            return BaseResponse<QuestionMainViewDto>.OkResponse(updatedQuestion);
+            return BaseResponse<QuestionMainViewDto>.OkResponse(updatedQuestion, "Question udpated successfully");
         }
 
+        [Authorize(Policy = "Admin-Content")]
         [HttpDelete("delete/{id}")]
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Deletes a question by its unique identifier.")]
         public async Task<ActionResult<BaseResponse<string>>> DeleteQuestion(string id)
@@ -74,7 +80,7 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         [HttpGet("search")]
-        [SwaggerOperation(Summary = "Search questions by context", Description = "Searches for questions that contain the specified context.")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Searches for questions that contain the specified context.")]
         public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions(string context)
         {
             List<QuestionViewDto> questions = await _questionService.SearchQuestionsByContextAsync(context);
