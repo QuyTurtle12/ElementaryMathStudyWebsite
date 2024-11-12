@@ -22,7 +22,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<string> HandleVnPayCallback(string orderId, bool isSuccess);
 
         // Get Order list for general user
-        Task<BasePaginatedList<OrderViewDto>?> GetOrderDtosAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<OrderViewDto>?> GetOrderDtosAsync(int pageNumber, int pageSize, User currentUser);
 
         // Get Order for general user
         //Task<OrderViewDto?> GetOrderDtoByOrderIdAsync(string orderId);
