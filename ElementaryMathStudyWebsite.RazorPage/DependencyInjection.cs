@@ -103,12 +103,12 @@ namespace ElementaryMathStudyWebsite
             services.AddAuthentication("Session")
                 .AddCookie("Session", options =>
                 {
-                    options.LoginPath = "/Login"; // Redirect to login page if unauthorized
-                    options.AccessDeniedPath = "/AccessDenied"; // Redirect if access is denied
+                    options.LoginPath = "/AuthPages/Login"; // Redirect to login page if unauthorized
+                    options.AccessDeniedPath = "/AuthPages/Login"; // Ensure redirect to login if access is denied
                     options.SlidingExpiration = true; // Session expiration is updated on each request
                 });
-
         }
+
 
         public static void AddAuthorization(this IServiceCollection services, IConfiguration configuration)
         {
@@ -221,6 +221,7 @@ namespace ElementaryMathStudyWebsite
                     else
                     {
                         _logger.LogWarning($"Authorization failed for user {userIdFromSession}: User status is not active.");
+
                     }
                 }
                 else

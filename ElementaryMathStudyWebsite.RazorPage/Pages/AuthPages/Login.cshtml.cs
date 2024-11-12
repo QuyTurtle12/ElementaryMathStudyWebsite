@@ -36,7 +36,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.Login
             }
             else
             {
-                Response.Redirect("/Error");
+                ViewData["ErrorMessage"] = "Invalid username or password."; // Set error message
             }
         }
 

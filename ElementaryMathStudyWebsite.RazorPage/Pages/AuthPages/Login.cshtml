@@ -20,14 +20,15 @@
 
         <button type="submit" class="btn btn-primary">Login</button>
     </form>
-</div>
 
-@if (!string.IsNullOrEmpty(ViewData["ErrorMessage"] as string))
-{
-    <div class="alert alert-danger">
-        @ViewData["ErrorMessage"]
-    </div>
-}
+    <!-- Display error message if login fails -->
+    @if (!string.IsNullOrEmpty(ViewData["ErrorMessage"] as string))
+    {
+        <div class="alert alert-danger mt-3">
+            @ViewData["ErrorMessage"]
+        </div>
+    }
+</div>
 
 <style>
     .login-container {
