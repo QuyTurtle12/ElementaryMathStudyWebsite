@@ -76,21 +76,21 @@ namespace ElementaryMathStudyWebsite.Controllers
         // GET: api/quiz/chapter/{chapterId}
         [HttpGet("chapter/{chapterId}")]
         [SwaggerOperation(Summary = "Authorization: N/A", Description = "Retrieve all quizzes belonging to a specific chapter.")]
-        public async Task<ActionResult<BaseResponse<List<QuizViewDto>>>> GetQuizzesByChapterId(string chapterId)
+        public async Task<ActionResult<BaseResponse<QuizViewDto>>> GetQuizzesByChapterId(string chapterId)
         {
-            List<QuizViewDto> quizzes = await _quizService.GetQuizzesByChapterOrTopicIdAsync(chapterId, null);
-            return BaseResponse<List<QuizViewDto>>.OkResponse(quizzes);
+            QuizViewDto? quizzes = await _quizService.GetQuizByChapterOrTopicIdAsync(chapterId, null);
+            return BaseResponse<QuizViewDto>.OkResponse(quizzes);
         }
 
         // GET: api/quiz/topic/{topicId}
         [HttpGet("topic/{topicId}")]
         [SwaggerOperation(Summary = "Authorization: N/A", Description = "Retrieve all quizzes belonging to a specific topic.")]
-        public async Task<ActionResult<BaseResponse<List<QuizViewDto>>>> GetQuizzesByTopicId(string topicId)
+        public async Task<ActionResult<BaseResponse<QuizViewDto>>> GetQuizzesByTopicId(string topicId)
         {
-            List<QuizViewDto> quizzes = await _quizService.GetQuizzesByChapterOrTopicIdAsync(null, topicId);
-            return BaseResponse<List<QuizViewDto>>.OkResponse(quizzes);
+            QuizViewDto? quizzes = await _quizService.GetQuizByChapterOrTopicIdAsync(null, topicId);
+            return BaseResponse<QuizViewDto>.OkResponse(quizzes);
         }
-
+            
         // GET: api/quiz/search
         [HttpGet("search")]
         [SwaggerOperation(Summary = "Authorization: N/A", Description = "Search for quizzes by name.")]

@@ -23,7 +23,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Infrastructure", "..\ElementaryMathStudyWebsite.Infrastructure\ElementaryMathStudyWebsite.Infrastructure.csproj", "{006AA52F-2906-4EE6-A47F-F0F5910D4262}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.RazorPage", "..\ElementaryMathStudyWebsite.RazorPage\ElementaryMathStudyWebsite.RazorPage.csproj", "{C2246F62-B339-4D7F-A460-871C53DFDFF3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.RazorPage", "..\ElementaryMathStudyWebsite.RazorPage\ElementaryMathStudyWebsite.RazorPage.csproj", "{C2FD1E36-8489-47C2-9FAE-D55673D197C9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,10 +55,10 @@ Global
 		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C2246F62-B339-4D7F-A460-871C53DFDFF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C2246F62-B339-4D7F-A460-871C53DFDFF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C2246F62-B339-4D7F-A460-871C53DFDFF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C2246F62-B339-4D7F-A460-871C53DFDFF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2FD1E36-8489-47C2-9FAE-D55673D197C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2FD1E36-8489-47C2-9FAE-D55673D197C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2FD1E36-8489-47C2-9FAE-D55673D197C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2FD1E36-8489-47C2-9FAE-D55673D197C9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
