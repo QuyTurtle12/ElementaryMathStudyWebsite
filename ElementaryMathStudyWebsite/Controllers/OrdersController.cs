@@ -5,6 +5,8 @@ using System.ComponentModel.DataAnnotations;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Services.Service;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -14,21 +16,23 @@ namespace ElementaryMathStudyWebsite.Controllers
     {
         private readonly IAppOrderServices _orderService;
         private readonly IAppOrderDetailServices _orderDetailService;
+        private readonly IAppUserServices _userService;
 
-        public OrdersController(IAppOrderServices orderService, IAppOrderDetailServices orderDetailService)
-        {
-            _orderService = orderService;
-            _orderDetailService = orderDetailService;
-        }
+		public OrdersController(IAppOrderServices orderService, IAppOrderDetailServices orderDetailService, IAppUserServices userService)
+		{
+			_orderService = orderService;
+			_orderDetailService = orderDetailService;
+			_userService = userService;
+		}
 
-        /// <summary>
-        /// GET: api/orders/manager
-        /// Get orders for Admin & Manager 
-        /// </summary>
-        /// <param name="pageNumber"></param>
-        /// <param name="pageSize"></param>
-        /// <returns></returns>& Admin
-        [Authorize(Policy = "Admin-Manager")]
+		/// <summary>
+		/// GET: api/orders/manager
+		/// Get orders for Admin & Manager 
+		/// </summary>
+		/// <param name="pageNumber"></param>
+		/// <param name="pageSize"></param>
+		/// <returns></returns>& Admin
+		[Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("manager")]
         [SwaggerOperation(
@@ -113,7 +117,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<OrderViewDto>>>> GetOrdersForParent(int pageNumber = -1, int pageSize = -1)
         {
-            BasePaginatedList<OrderViewDto>? orders = await _orderService.GetOrderDtosAsync(pageNumber, pageSize);
+			// Get logged in User
+			User currentUser = await _userService.GetCurrentUserAsync();
+			BasePaginatedList<OrderViewDto>? orders = await _orderService.GetOrderDtosAsync(pageNumber, pageSize, currentUser);
             var response = BaseResponse<BasePaginatedList<OrderViewDto>>.OkResponse(orders);
             return response;
         }
