@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Base;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.OrderPages
 {
-    public class IndexModel : PageModel
+	[Authorize(Policy = "Parent")]
+	public class IndexModel : PageModel
     {
         private readonly IAppOrderServices _orderService;
         private readonly IAppUserServices _userService;
