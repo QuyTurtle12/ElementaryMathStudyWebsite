@@ -9,6 +9,7 @@ using ElementaryMathStudyWebsite.Core.Store;
 using System.Text.RegularExpressions;
 using ElementaryMathStudyWebsite.Core.Entity;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -21,27 +22,29 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IAppProgressServices _progressService;
         private readonly IAppQuizServices _quizService;
         private readonly IMapper _mapper;
+		private readonly IHttpContextAccessor _httpContextAccessor;
 
-        // Constructor
-        public OrderService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppOrderDetailServices orderDetailService, IAppSubjectServices subjectService, IAppProgressServices progressService, IAppQuizServices quizService, IMapper mapper)
-        {
-            _unitOfWork = unitOfWork;
-            _userService = userService;
-            _orderDetailService = orderDetailService;
-            _subjectService = subjectService;
-            _progressService = progressService;
-            _quizService = quizService;
-            _mapper = mapper;
-        }
+		// Constructor
+		public OrderService(IUnitOfWork unitOfWork, IAppUserServices userService, IAppOrderDetailServices orderDetailService, IAppSubjectServices subjectService, IAppProgressServices progressService, IAppQuizServices quizService, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+		{
+			_unitOfWork = unitOfWork;
+			_userService = userService;
+			_orderDetailService = orderDetailService;
+			_subjectService = subjectService;
+			_progressService = progressService;
+			_quizService = quizService;
+			_mapper = mapper;
+			_httpContextAccessor = httpContextAccessor;
+		}
 
-        /// <summary>
-        /// Add new order to databasez
-        /// </summary>
-        /// <param name="cartCreateDto"></param>
-        /// <returns></returns>
-        /// <exception cref="BaseException.BadRequestException"></exception>
-        /// <exception cref="BaseException.CoreException"></exception>
-        public async Task<OrderViewDto> AddItemsToCart(CartCreateDto cartCreateDto)
+		/// <summary>
+		/// Add new order to databasez
+		/// </summary>
+		/// <param name="cartCreateDto"></param>
+		/// <returns></returns>
+		/// <exception cref="BaseException.BadRequestException"></exception>
+		/// <exception cref="BaseException.CoreException"></exception>
+		public async Task<OrderViewDto> AddItemsToCart(CartCreateDto cartCreateDto)
         {
             if (!cartCreateDto.SubjectStudents.Any()) throw new BaseException.BadRequestException(
                 "empty_cart",
@@ -286,14 +289,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <param name="pageSize"></param>
         /// <returns></returns>
         /// <exception cref="BaseException.NotFoundException"></exception>
-        public async Task<BasePaginatedList<OrderViewDto>?> GetOrderDtosAsync(int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<OrderViewDto>?> GetOrderDtosAsync(int pageNumber, int pageSize, User currentUser)
         {
 
-            // Get logged in User
-            User currentUser = await _userService.GetCurrentUserAsync();
-
-            // Get all logged user's orders from the database
-            IQueryable<Order> query = _unitOfWork.GetRepository<Order>()
+			// Get all logged user's orders from the database
+			IQueryable<Order> query = _unitOfWork.GetRepository<Order>()
                                                     .GetEntitiesWithCondition(o => o.CustomerId.Equals(currentUser.Id) &&
                                                                                     string.IsNullOrWhiteSpace(o.DeletedBy));
             // Asynchronously fetch all orders    
