@@ -32,12 +32,14 @@ namespace ElementaryMathStudyWebsite.RazorPage
 
 
             // Enable session middleware
-            app.UseSession();
+            
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
+            app.UseSession();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapRazorPages();

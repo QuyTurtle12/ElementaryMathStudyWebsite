@@ -107,8 +107,13 @@ namespace ElementaryMathStudyWebsite
                     options.AccessDeniedPath = "/AuthPages/Login"; // Ensure redirect to login if access is denied
                     options.SlidingExpiration = true; // Session expiration is updated on each request
                 });
-        }
 
+            services.AddAuthorization(options =>
+            {
+                
+
+            });
+        }
 
         public static void AddAuthorization(this IServiceCollection services, IConfiguration configuration)
         {
@@ -147,25 +152,31 @@ namespace ElementaryMathStudyWebsite
         public class UserSessionHandler : AuthorizationHandler<UserRoleRequirement>
         {
             private readonly IHttpContextAccessor _httpContextAccessor;
+            private readonly IAppUserServices _userService;
 
-            public UserSessionHandler(IHttpContextAccessor httpContextAccessor)
+            public UserSessionHandler(IHttpContextAccessor httpContextAccessor, IAppUserServices userService)
             {
                 _httpContextAccessor = httpContextAccessor;
+                _userService = userService;
             }
 
-            protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, UserRoleRequirement requirement)
+            protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, UserRoleRequirement requirement)
             {
-                // Retrieve user roles from session
-                var userRoles = GetUserRolesFromSession();
-
-                if (userRoles == null || userRoles.Length == 0)
+                var userId = _httpContextAccessor.HttpContext?.Session.GetString("user_id");
+                if (userId == null)
                 {
                     context.Fail();
-                    return Task.CompletedTask;
+                    return;
+                }
+                var user = await _userService.GetUserByIdAsync(userId);
+                if (user == null || user.Role == null || string.IsNullOrEmpty(user.Role.RoleName))
+                {
+                    context.Fail();
+                    return;
                 }
 
-                // Check if the user has any of the required roles
-                if (requirement.RequiredRoles.Any(role => userRoles.Contains(role, StringComparer.OrdinalIgnoreCase)))
+                // Check if the user has one of the required roles
+                if (requirement.RequiredRoles.Contains(user.Role.RoleName, StringComparer.OrdinalIgnoreCase))
                 {
                     context.Succeed(requirement);
                 }
@@ -174,21 +185,9 @@ namespace ElementaryMathStudyWebsite
                     context.Fail();
                 }
 
-                return Task.CompletedTask;
+                return;
             }
 
-            // Helper method to get roles from session
-            private string[] GetUserRolesFromSession()
-            {
-                var rolesFromSession = _httpContextAccessor.HttpContext?.Session.GetString("role_name");
-
-                if (rolesFromSession != null)
-                {
-                    return rolesFromSession.Split(','); // Return roles as an array
-                }
-
-                return new string[] { }; // Return empty array if no roles found
-            }
         }
 
         public class SessionStatusHandler : AuthorizationHandler<UserStatusRequirement>
