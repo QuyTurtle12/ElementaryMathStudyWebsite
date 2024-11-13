@@ -11,6 +11,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
     public interface IVnPayService
     {
         Task<string> CreatePaymentUrl(HttpContext context);
-        VnPayResponseDto PaymentExecute(IQueryCollection collections);
+		Task<string> CreatePaymentUrl(string userId, HttpContext context);
+
+		VnPayResponseDto PaymentExecute(IQueryCollection collections);
     }
 }
