@@ -15,12 +15,6 @@ namespace ElementaryMathStudyWebsite.RazorPage
 
             // Add services to the container.
             builder.Services.AddRazorPages();
-            builder.Services.AddSession(options =>
-            {
-                options.IdleTimeout = TimeSpan.FromMinutes(30); // Set session timeout
-                options.Cookie.HttpOnly = true;
-                options.Cookie.IsEssential = true;
-            });
 
             builder.Services.AddConfig(builder.Configuration);
             builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
@@ -38,12 +32,14 @@ namespace ElementaryMathStudyWebsite.RazorPage
 
 
             // Enable session middleware
-            app.UseSession();
+            
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
+            app.UseSession();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapRazorPages();

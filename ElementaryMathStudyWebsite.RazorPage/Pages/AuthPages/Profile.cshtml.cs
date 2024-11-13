@@ -2,27 +2,28 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using Microsoft.AspNetCore.Authorization;
 
-namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
+namespace ElementaryMathStudyWebsite.RazorPage.Pages.AuthPages
 {
-    [Authorize(Policy = "Admin-Manager")]
-    public class DetailsModel : PageModel
+    public class ProfileModel : PageModel
     {
         private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
 
-        public DetailsModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public ProfileModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
         {
             _context = context;
         }
 
         public new User User { get; set; } = default!;
 
-        public async Task<IActionResult> OnGetAsync(string id)
+
+        public async Task<IActionResult> OnGetAsync()
         {
-            if (id == null)
+            string id = HttpContext.Session.GetString("user_id") ?? "";
+
+            if (string.IsNullOrEmpty(id)) // Check if user_id is set in the session
             {
-                return NotFound();
+                return RedirectToPage("/AuthPages/Login"); // Redirect to login if session is missing
             }
 
             var user = await _context.User.Include(u => u.Role).FirstOrDefaultAsync(m => m.Id == id);
@@ -34,6 +35,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
             {
                 User = user;
             }
+
             return Page();
         }
     }

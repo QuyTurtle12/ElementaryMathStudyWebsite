@@ -6,10 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
 {
+    [Authorize(Policy = "Admin-Manager")]
     public class DeleteModel : PageModel
     {
         private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
