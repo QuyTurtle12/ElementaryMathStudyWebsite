@@ -27,13 +27,13 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
                 return NotFound();
             }
 
-            var user =  await _context.User.FirstOrDefaultAsync(m => m.Id == id);
+            var user =  await _context.User.Include(u => u.Role).FirstOrDefaultAsync(m => m.Id == id);
             if (user == null)
             {
                 return NotFound();
             }
             User = user;
-           ViewData["RoleId"] = new SelectList(_context.Role, "Id", "Id");
+           ViewData["RoleId"] = new SelectList(_context.Role, "Id", "RoleName");
             return Page();
         }
 
