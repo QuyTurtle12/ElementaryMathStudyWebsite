@@ -23,7 +23,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Infrastructure", "ElementaryMathStudyWebsite.Infrastructure\ElementaryMathStudyWebsite.Infrastructure.csproj", "{006AA52F-2906-4EE6-A47F-F0F5910D4262}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElementaryMathStudyWebsite.RazorPage", "ElementaryMathStudyWebsite.RazorPage\ElementaryMathStudyWebsite.RazorPage.csproj", "{B0936B57-0DC7-4EE5-952C-AE0E2742556F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.RazorPage", "ElementaryMathStudyWebsite.RazorPage\ElementaryMathStudyWebsite.RazorPage.csproj", "{B0936B57-0DC7-4EE5-952C-AE0E2742556F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

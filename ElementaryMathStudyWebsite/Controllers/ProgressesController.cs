@@ -52,8 +52,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ProgressViewDto>>>> GetStudentProgressForStudent(int pageNumber = -1, int pageSize = -1)
         {
+            User currentUser = await _userService.GetCurrentUserAsync();
 
-            BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetStudentProgressesDtoForStudentAsync(pageNumber, pageSize);
+            BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetStudentProgressesDtoForStudentAsync(pageNumber, pageSize, currentUser);
 
             var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
 

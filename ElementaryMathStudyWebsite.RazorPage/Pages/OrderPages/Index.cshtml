@@ -6,11 +6,8 @@
 	int orderNumber = 1; // Initialize the counter
 }
 
-<h1>Order</h1>
+<h1>Đơn hàng</h1>
 
-<p>
-	<a asp-page="Create">Create New</a>
-</p>
 <table class="table">
 	<thead>
 		<tr>
@@ -18,10 +15,10 @@
 				Số thứ tự
 			</th>
 			<th>
-				Sản phẩm
+				Sản phẩm - Học sinh
 			</th>
 			<th>
-				Ngày mua khóa học
+				Ngày mua môn học
 			</th>
 			<th>
 				Tổng tiền
@@ -31,9 +28,6 @@
 			</th>
 			<th>
 				Trạng thái đơn hàng
-			</th>
-			<th>
-				Hành động
 			</th>
 		</tr>
 	</thead>
@@ -48,7 +42,7 @@
 				<td>
 					@foreach (var detail in item.Details!)
 					{
-						<div>@detail.SubjectName</div>
+						<div>@detail.SubjectName - @detail.StudentName</div>
 					}
 				</td>
 				<td>
@@ -63,11 +57,6 @@
 				<td>
 					@Html.DisplayFor(modelItem => item.Status)
 				</td>
-				<td>
-					<a asp-page="./Edit" asp-route-id="@item.OrderId">Chỉnh sửa</a> |
-					<a asp-page="./Details" asp-route-id="@item.OrderId">Chi tiết</a> |
-					<a asp-page="./Delete" asp-route-id="@item.OrderId">Xóa</a>
-				</td>
 			</tr>
 			orderNumber++;
 		}
@@ -77,13 +66,13 @@
 <div class="pagination">
 	@if (Model.Orders.CurrentPage > 1)
 	{
-		<a asp-page="./Index" asp-route-pageNumber="@(Model.Orders.CurrentPage - 1)">Previous</a>
+		<a asp-page="./Index" asp-route-pageNumber="@(Model.Orders.CurrentPage - 1)">Trước</a>
 	}
 
 	<span>Page @Model.Orders.CurrentPage of @Model.Orders.TotalPages</span>
 
 	@if (Model.Orders.CurrentPage < Model.Orders.TotalPages)
 	{
-		<a asp-page="./Index" asp-route-pageNumber="@(Model.Orders.CurrentPage + 1)">Next</a>
+		<a asp-page="./Index" asp-route-pageNumber="@(Model.Orders.CurrentPage + 1)">Sau</a>
 	}
 </div>

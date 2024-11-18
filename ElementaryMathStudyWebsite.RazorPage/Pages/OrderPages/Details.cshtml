@@ -5,26 +5,26 @@
     ViewData["Title"] = "Details";
 }
 
-<h1>Details</h1>
+<h1>Chi tiết</h1>
 
 <div>
     <h4>Order</h4>
     <hr />
     <dl class="row">
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Order.TotalPrice)
+            Tổng tiền
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Order.TotalPrice)
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Order.PaymentMethod)
+            Phương thức thanh toán
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Order.PaymentMethod)
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Order.Status)
+            Trạng thái
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Order.Status)
@@ -40,18 +40,6 @@
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Order.CreatedBy)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Order.LastUpdatedBy)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Order.LastUpdatedBy)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Order.DeletedBy)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Order.DeletedBy)
         </dd>
         <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Order.CreatedTime)
