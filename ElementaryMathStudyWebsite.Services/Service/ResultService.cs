@@ -126,14 +126,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Get a list of student grade of specific quiz
-        public async Task<BasePaginatedList<ResultViewDto>> GetStudentResultListAsync(string quizId, int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<ResultViewDto>> GetStudentResultListAsync(User currentUser, string quizId, int pageNumber, int pageSize)
         {
             // Check if quiz Id is valid
             _ = await _unitOfWork.GetRepository<Quiz>().FindByConditionAsync(q => !q.DeletedTime.HasValue && q.Id.Equals(quizId))
                 ?? throw new BaseException.BadRequestException("invalid_argument", $"The quiz Id {quizId} is not existed");
-
-            // Get current logged in user info
-            User currentUser = await _userServices.GetCurrentUserAsync();
 
             // Get student results from database
             IQueryable<Result> resultQuery = _unitOfWork.GetRepository<Result>().GetEntitiesWithCondition(
@@ -141,6 +138,9 @@ namespace ElementaryMathStudyWebsite.Services.Service
                         r => r.Quiz!,                                                       // Include Quiz
                         r => r.Student!                                                     // Include Student
                     );
+
+            // Apply sorting by DateTaken in descending order (latest attempts first)
+            resultQuery = resultQuery.OrderByDescending(r => r.DateTaken);
 
             IEnumerable<Result> studentResultList = await resultQuery.ToListAsync();
 
@@ -334,5 +334,42 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return resultParentViewDto;
         }
 
+        public async Task<string> GetQuizIdByChapterOrTopicId(string chapterOrTopicId)
+        {
+            // Get chapter
+            Chapter? chapter = await _unitOfWork.GetRepository<Chapter>()
+                .Entities
+                .Where(c => c.Id.Equals(chapterOrTopicId))
+                .FirstOrDefaultAsync();
+
+            if (chapter != null)
+            {
+                if (string.IsNullOrWhiteSpace(chapter.QuizId)) 
+                {
+                    throw new BaseException.CoreException("error", "this chapter does not contain a quiz");
+                }
+
+                return chapter.QuizId;
+            }
+
+            // Get topic
+            Topic? topic = await _unitOfWork.GetRepository<Topic>()
+                .Entities
+                .Where(t => t.Id.Equals(chapterOrTopicId))
+                .FirstOrDefaultAsync ();
+
+            if (topic != null)
+            {
+                if (string.IsNullOrWhiteSpace(topic.QuizId))
+                {
+                    throw new BaseException.CoreException("error", "this topic does not contain a quiz");
+                }
+
+                return topic.QuizId;
+            }
+
+            // Throw error if both chapter and topic are null
+            throw new BaseException.BadRequestException("invalid_argument", "chapter or topic Id not existed!");
+        }
     }
 }

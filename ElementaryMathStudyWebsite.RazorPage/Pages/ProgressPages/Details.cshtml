@@ -11,7 +11,7 @@
 <ul>
     @foreach (var chapter in Model.FinishedChapters!)
     {
-        <li>@chapter.Name</li>
+        <a asp-page="/ResultPages/Student" asp-route-chapterOrTopicId="@chapter.Id">@chapter.Name</a>
     }
 </ul>
 
@@ -19,7 +19,7 @@
 <ul>
     @foreach (var topic in Model.FinishedTopics!)
     {
-        <li>@topic.Name</li>
+        <a asp-page="/ResultPages/Student" asp-route-chapterOrTopicId="@topic.Id">@topic.Name</a>
     }
 </ul>
 
