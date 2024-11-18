@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages
 {
+    [Authorize(Policy = "Admin-Content")] //authorize for admin and content manager
     public class IndexModel : PageModel
     {
         private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;

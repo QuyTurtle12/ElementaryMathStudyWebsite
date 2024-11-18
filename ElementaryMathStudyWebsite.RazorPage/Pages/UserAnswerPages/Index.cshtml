@@ -9,7 +9,9 @@
 
 <p>
     <a asp-page="Create">Create New</a>
+    <a asp-page="GetAnswers" class="btn btn-info">Get User Answer By Quiz Id</a>
 </p>
+
 <table class="table">
     <thead>
         <tr>
@@ -38,9 +40,7 @@
                 @Html.DisplayFor(modelItem => item.Option.Id)
             </td>
             <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ })
             </td>
         </tr>
 }
