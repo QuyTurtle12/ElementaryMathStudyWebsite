@@ -184,28 +184,21 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
 
             // Only update properties if they are not null
-            if (dto.FullName != null)
+            if (!string.IsNullOrWhiteSpace(dto.FullName))
             {
                 user.FullName = dto.FullName;
             }
 
-            if (dto.PhoneNumber != null)
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
             {
                 user.PhoneNumber = dto.PhoneNumber;
             }
 
-            if (dto.Gender != null)
+            if (!string.IsNullOrWhiteSpace(dto.Gender))
             {
                 user.Gender = dto.Gender;
             }
 
-            if (dto.Username != null && dto.Username != user.Username)
-            {
-                if (!await CheckExistingUserName(dto.Username))
-                {
-                    user.Username = dto.Username;
-                }
-            }
 
             AuditFields(user);
 

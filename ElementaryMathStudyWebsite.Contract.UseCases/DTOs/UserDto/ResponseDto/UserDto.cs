@@ -29,13 +29,9 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto
     public class UpdateProfileDto
     {
         public string Id { get; set; } = string.Empty;
-        [Required]
         public string FullName { get; set; } = string.Empty;
-        [Required]
-        [RegularExpression(@"^0\d{9,10}$", ErrorMessage = "Phone number must start with '0' and be 10 to 11 digits.")]
         public string PhoneNumber { get; set; } = string.Empty;
-        [Required]
-        [GenderValidation(ErrorMessage = "Gender must be Male, Female, or Other.")]
+
         public string Gender { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public RoleDto? Role { get; set; }
