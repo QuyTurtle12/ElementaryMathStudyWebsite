@@ -7,42 +7,56 @@
 
 <h1>Index</h1>
 
-<p>
-    <a asp-page="Create">Create New</a>
-    <a asp-page="GetAnswers" class="btn btn-info">Get User Answer By Quiz Id</a>
-</p>
-
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.UserAnswer[0].Question)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UserAnswer[0].User)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UserAnswer[0].Option)
-            </th>
-            <th></th>
+            <th>Question</th>
+            <th>Option Answer</th>
+            <th>Attempt Number</th>
+            <th>User</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model.UserAnswer) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Question.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.User.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Option.Id)
-            </td>
-            <td>
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ })
-            </td>
-        </tr>
-}
+        @foreach (var item in Model.UserAnswers)
+        {
+            <tr>
+                <td>
+                    @{
+                        // Transform the HTML content to plain text with bold formatting
+                        string formattedQuestionContent = HtmlToPlainText(item.QuestionContent ?? "");
+                    }
+                    <span>@Html.Raw(formattedQuestionContent)</span>
+                </td>
+                <td>@item.OptionAnswer</td>
+                <td>@item.AttemptNumber</td>
+                <td>@item.UserFullName</td>
+            </tr>
+        }
     </tbody>
 </table>
+
+@functions {
+    public string HtmlToPlainText(string htmlContent)
+    {
+        if (string.IsNullOrWhiteSpace(htmlContent))
+            return string.Empty;
+
+        // Decode HTML entities
+        string plainText = System.Net.WebUtility.HtmlDecode(htmlContent);
+
+        // Replace <p> and </p> with newlines
+        plainText = plainText.Replace("<p>", "").Replace("</p>", "\n");
+
+        // Apply bold formatting for text between *
+        plainText = System.Text.RegularExpressions.Regex.Replace(
+            plainText,
+            @"\*(.*?)\*",
+            "<b>$1</b>"
+        );
+
+        // Replace newlines with <br/> for proper HTML rendering
+        plainText = plainText.Replace("\n", "<br/>");
+
+        return plainText;
+    }
+}
