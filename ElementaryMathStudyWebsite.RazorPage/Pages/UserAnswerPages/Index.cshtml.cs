@@ -24,29 +24,55 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages
         public bool IsLoggedIn { get; private set; } = false;
         public string UserId { get; private set; } = string.Empty;
 
+        [BindProperty(SupportsGet = true)]
+        public string SearchKeyword { get; set; } = string.Empty;
+
+        [BindProperty(SupportsGet = true)]
+        public int PageNumber { get; set; } = 1;
+
+        public int TotalPages { get; private set; }
+        public int CurrentPage { get; private set; }
+
+        private const int PageSize = 10;
+
         public async Task<IActionResult> OnGetAsync()
         {
             // Retrieve session information
             UserId = HttpContext.Session.GetString("user_id");
             UserRole = HttpContext.Session.GetString("role_name");
+            IsLoggedIn = !string.IsNullOrEmpty(UserId);
 
-            IsLoggedIn = true;
-
+            // Base query
             IQueryable<UserAnswer> query = _context.UserAnswer
-                .Include(u => u.Question) // Include related Question entity
-                .Include(u => u.Option)   // Include related Option entity
-                .Include(u => u.User);    // Include related User entity
+                .Include(u => u.Question)
+                .Include(u => u.Option)
+                .Include(u => u.User);
 
-            // Fetch all user answers and map to DTO
+            // Apply search filter if keyword is provided
+            if (!string.IsNullOrEmpty(SearchKeyword))
+            {
+                query = query.Where(u => EF.Functions.Like(u.Question.QuestionContext, $"%{SearchKeyword}%"));
+            }
+
+            // Count total items for pagination
+            int totalItems = await query.CountAsync();
+
+            // Calculate total pages
+            TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
+            CurrentPage = PageNumber;
+
+            // Fetch paginated results
             UserAnswers = await query
+                .Skip((PageNumber - 1) * PageSize)
+                .Take(PageSize)
                 .Select(u => new UserAnswerWithDetailsDTO
                 {
                     QuestionId = u.QuestionId,
-                    QuestionContent = u.Question.QuestionContext,  // Map QuestionContent
+                    QuestionContent = u.Question.QuestionContext,
                     UserId = u.UserId,
-                    UserFullName = u.User.FullName,       // Map UserFullName
+                    UserFullName = u.User.FullName,
                     OptionId = u.OptionId,
-                    OptionAnswer = u.Option.Answer,      // Map OptionAnswer
+                    OptionAnswer = u.Option.Answer,
                     AttemptNumber = u.AttemptNumber
                 })
                 .ToListAsync();

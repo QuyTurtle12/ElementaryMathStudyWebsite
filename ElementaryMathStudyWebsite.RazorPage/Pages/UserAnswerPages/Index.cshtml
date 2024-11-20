@@ -2,12 +2,24 @@
 @model ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages.IndexModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "User Answers";
 }
 
-<h1>Index</h1>
+<h1>User Answers</h1>
 
-<table class="table">
+<p>
+    <a asp-page="Create"><button type="submit" class="btn btn-primary mt-2">Create New</button></a>
+</p>
+
+<form method="get">
+    <div class="form-group">
+        <label for="searchKeyword">Search Question:</label>
+        <input type="text" id="searchKeyword" name="SearchKeyword" value="@Model.SearchKeyword" class="form-control" placeholder="Enter keyword..." />
+        <button type="submit" class="btn btn-primary mt-2">Search</button>
+    </div>
+</form>
+
+<table class="table mt-3">
     <thead>
         <tr>
             <th>Question</th>
@@ -20,13 +32,7 @@
         @foreach (var item in Model.UserAnswers)
         {
             <tr>
-                <td>
-                    @{
-                        // Transform the HTML content to plain text with bold formatting
-                        string formattedQuestionContent = HtmlToPlainText(item.QuestionContent ?? "");
-                    }
-                    <span>@Html.Raw(formattedQuestionContent)</span>
-                </td>
+                <td>@Html.Raw(HtmlToPlainText(item.QuestionContent ?? ""))</td>
                 <td>@item.OptionAnswer</td>
                 <td>@item.AttemptNumber</td>
                 <td>@item.UserFullName</td>
@@ -35,26 +41,27 @@
     </tbody>
 </table>
 
+<div class="pagination-controls d-flex justify-content-center align-items-center mt-3">
+    @if (Model.CurrentPage > 1)
+    {
+        <a asp-page="./Index" asp-route-SearchKeyword="@Model.SearchKeyword" asp-route-pageNumber="@(Model.CurrentPage - 1)" class="btn btn-secondary">Previous</a>
+    }
+    <span>Page @Model.CurrentPage of @Model.TotalPages</span>
+    @if (Model.CurrentPage < Model.TotalPages)
+    {
+        <a asp-page="./Index" asp-route-SearchKeyword="@Model.SearchKeyword" asp-route-pageNumber="@(Model.CurrentPage + 1)" class="btn btn-secondary">Next</a>
+    }
+</div>
+
 @functions {
     public string HtmlToPlainText(string htmlContent)
     {
         if (string.IsNullOrWhiteSpace(htmlContent))
             return string.Empty;
 
-        // Decode HTML entities
         string plainText = System.Net.WebUtility.HtmlDecode(htmlContent);
-
-        // Replace <p> and </p> with newlines
         plainText = plainText.Replace("<p>", "").Replace("</p>", "\n");
-
-        // Apply bold formatting for text between *
-        plainText = System.Text.RegularExpressions.Regex.Replace(
-            plainText,
-            @"\*(.*?)\*",
-            "<b>$1</b>"
-        );
-
-        // Replace newlines with <br/> for proper HTML rendering
+        plainText = System.Text.RegularExpressions.Regex.Replace(plainText, @"\*(.*?)\*", "<b>$1</b>");
         plainText = plainText.Replace("\n", "<br/>");
 
         return plainText;
