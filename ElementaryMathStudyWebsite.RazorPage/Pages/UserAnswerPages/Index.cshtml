@@ -7,51 +7,71 @@
 
 <h1>User Answers</h1>
 
-<p>
-    <a asp-page="Create"><button type="submit" class="btn btn-primary mt-2">Create New</button></a>
-</p>
+@if (Model.IsValidRole)
+{
+    @if (Model.UserRole == "Student")
+    {
+        <p>
+            <a asp-page="Create"><button type="submit" class="btn btn-primary mt-2">Create New</button></a>
+        </p>
+    }
 
-<form method="get">
-    <div class="form-group">
-        <label for="searchKeyword">Search Question:</label>
-        <input type="text" id="searchKeyword" name="SearchKeyword" value="@Model.SearchKeyword" class="form-control" placeholder="Enter keyword..." />
-        <button type="submit" class="btn btn-primary mt-2">Search</button>
-    </div>
-</form>
+    <form method="get">
+        <div class="form-group">
+            <label for="searchKeyword">Search Question:</label>
+            <input type="text" id="searchKeyword" name="SearchKeyword" value="@Model.SearchKeyword" class="form-control" placeholder="Enter keyword..." />
+            <button type="submit" class="btn btn-primary mt-2">Search</button>
+        </div>
+    </form>
 
-<table class="table mt-3">
-    <thead>
-        <tr>
-            <th>Question</th>
-            <th>Option Answer</th>
-            <th>Attempt Number</th>
-            <th>User</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.UserAnswers)
-        {
+    <table class="table mt-3">
+        <thead>
             <tr>
-                <td>@Html.Raw(HtmlToPlainText(item.QuestionContent ?? ""))</td>
-                <td>@item.OptionAnswer</td>
-                <td>@item.AttemptNumber</td>
-                <td>@item.UserFullName</td>
+                <th>Question</th>
+                <th>Option Answer</th>
+                <th>Attempt Number</th>
+                <th>User</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.UserAnswers)
+            {
+                <tr>
+                    <td>
+                        <div class="wrap-text">
+                            @Html.Raw(HtmlToPlainText(item.QuestionContent ?? ""))
+                        </div>
+                    </td>
+                    <td>
+                        <div class="wrap-text">
+                            @item.OptionAnswer
+                        </div>
+                    </td>
+                    <td>@item.AttemptNumber</td>
+                    <td>@item.UserFullName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 
-<div class="pagination-controls d-flex justify-content-center align-items-center mt-3">
-    @if (Model.CurrentPage > 1)
-    {
-        <a asp-page="./Index" asp-route-SearchKeyword="@Model.SearchKeyword" asp-route-pageNumber="@(Model.CurrentPage - 1)" class="btn btn-secondary">Previous</a>
-    }
-    <span>Page @Model.CurrentPage of @Model.TotalPages</span>
-    @if (Model.CurrentPage < Model.TotalPages)
-    {
-        <a asp-page="./Index" asp-route-SearchKeyword="@Model.SearchKeyword" asp-route-pageNumber="@(Model.CurrentPage + 1)" class="btn btn-secondary">Next</a>
-    }
-</div>
+    <div class="pagination-controls d-flex justify-content-center align-items-center mt-3">
+        @if (Model.CurrentPage > 1)
+        {
+            <a asp-page="./Index" asp-route-SearchKeyword="@Model.SearchKeyword" asp-route-pageNumber="@(Model.CurrentPage - 1)" class="btn btn-secondary">Previous</a>
+        }
+        <span>Page @Model.CurrentPage of @Model.TotalPages</span>
+        @if (Model.CurrentPage < Model.TotalPages)
+        {
+            <a asp-page="./Index" asp-route-SearchKeyword="@Model.SearchKeyword" asp-route-pageNumber="@(Model.CurrentPage + 1)" class="btn btn-secondary">Next</a>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-danger">
+        You cannot view this unless you are an admin, content manager, manager or a student.
+    </div>
+}
 
 @functions {
     public string HtmlToPlainText(string htmlContent)
@@ -67,3 +87,12 @@
         return plainText;
     }
 }
+
+<style>
+    .wrap-text {
+        word-wrap: break-word; /* Allows breaking long words to the next line */
+        word-break: break-word; /* Ensures long strings break properly */
+        max-width: 300px; /* Optional: Set a max width for better layout control */
+        white-space: normal; /* Ensures content wraps to the next line */
+    }
+</style>

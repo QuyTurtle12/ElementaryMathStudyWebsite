@@ -23,6 +23,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages
         public string UserRole { get; private set; } = string.Empty;
         public bool IsLoggedIn { get; private set; } = false;
         public string UserId { get; private set; } = string.Empty;
+        public bool IsValidRole { get; private set; } = false;
 
         [BindProperty(SupportsGet = true)]
         public string SearchKeyword { get; set; } = string.Empty;
@@ -42,11 +43,25 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages
             UserRole = HttpContext.Session.GetString("role_name");
             IsLoggedIn = !string.IsNullOrEmpty(UserId);
 
+            // Determine if the user role is valid
+            IsValidRole = UserRole == "Student" || UserRole == "Admin" || UserRole == "Manager" || UserRole == "Content Manager";
+
+            if (!IsValidRole)
+            {
+                return Page(); // Show the alert message
+            }
+
             // Base query
             IQueryable<UserAnswer> query = _context.UserAnswer
                 .Include(u => u.Question)
                 .Include(u => u.Option)
                 .Include(u => u.User);
+
+            // If the user is a student, filter answers by their UserId
+            if (UserRole == "Student")
+            {
+                query = query.Where(u => u.UserId == UserId);
+            }
 
             // Apply search filter if keyword is provided
             if (!string.IsNullOrEmpty(SearchKeyword))
