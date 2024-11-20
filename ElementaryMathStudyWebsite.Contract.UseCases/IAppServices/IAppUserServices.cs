@@ -36,10 +36,12 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         /// </summary>
         void AuditFields(BaseEntity entity, bool isCreating = false, bool isDisable = false);
 
-        /// <summary>
-        /// Retrieves the ID of the user performing the action.
-        /// </summary>
-        string GetActionUserId();
+		void AuditFields(string userId, BaseEntity entity, bool isCreating = false, bool isDisable = false);
+
+		/// <summary>
+		/// Retrieves the ID of the user performing the action.
+		/// </summary>
+		string GetActionUserId();
 
         /// <summary>
         /// Retrieves a paginated list of all users.
