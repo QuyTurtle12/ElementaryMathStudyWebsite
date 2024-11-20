@@ -4,9 +4,11 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Base;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.ResultPages
 {
+    [Authorize(Policy = "Student")]
     public class StudentModel : PageModel
     {
         private readonly IAppUserServices _userService;
