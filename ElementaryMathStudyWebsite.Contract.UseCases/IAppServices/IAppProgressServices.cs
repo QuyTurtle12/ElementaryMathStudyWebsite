@@ -10,7 +10,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<BasePaginatedList<ProgressViewDto>> GetStudentProgressesDtoAsync(string studentId, int pageNumber, int pageSize);
 
         // Get a list of subject progress that student currently studying
-        Task<BasePaginatedList<ProgressViewDto>> GetStudentProgressesDtoForStudentAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<ProgressViewDto>> GetStudentProgressesDtoForStudentAsync(int pageNumber, int pageSize, User currentUser);
 
         // Get a list of subject progress that all students of one parent currently studying
         Task<BasePaginatedList<ProgressViewDto>> GetAllStudentProgressesDtoAsync(string parentId, int pageNumber, int pageSize);
@@ -33,5 +33,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         // Get a list of assigned subject of specific student
         Task<BasePaginatedList<AssignedSubjectDto>?> GetAssignedSubjectListAsync(int pageNumber, int pageSize);
 
+        // Get finished chapters and topics
+        public (IEnumerable<FinishedTopic>, IEnumerable<FinishedChapter>) GetFinishedTopicsAndChaptersModified(string studentId, string subjectId);
     }
 }

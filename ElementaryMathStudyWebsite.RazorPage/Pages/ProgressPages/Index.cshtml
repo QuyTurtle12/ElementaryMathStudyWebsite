@@ -2,41 +2,49 @@
 @model ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages.IndexModel
 
 @{
-    ViewData["Title"] = "Index";
+	ViewData["Title"] = "Index";
+	int number = 1;
 }
 
-<h1>Index</h1>
+<h1>Tiến độ học tập</h1>
 
-<p>
-    <a asp-page="Create">Create New</a>
-</p>
 <table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Progress[0].Quiz)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Progress[0].Subject)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model.Progress) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Quiz!.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Subject!.Id)
-            </td>
-            <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
-            </td>
-        </tr>
-}
-    </tbody>
+	<thead>
+		<tr>
+			<th>
+				Số thứ tự
+			</th>
+			<th>
+				Tên môn học
+			</th>
+			<th>
+				Tiến độ
+			</th>
+			<th>
+				Hành Động
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var item in Model.Progresses!.Items)
+		{
+			<tr>
+				<td>
+					@number
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.SubjectName)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.SubjectPercentage)
+				</td>
+				<td>
+					<a asp-page="./Details"
+					   asp-route-studentId="@item.StudentId"
+					   asp-route-subjectId="@item.SubjectId">Chi tiết</a>
+				</td>
+			</tr>
+			number++;
+		}
+	</tbody>
 </table>
