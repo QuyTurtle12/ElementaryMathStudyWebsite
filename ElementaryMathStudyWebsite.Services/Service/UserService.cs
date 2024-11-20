@@ -444,7 +444,33 @@ namespace ElementaryMathStudyWebsite.Services.Service
             
         }
 
-        public async Task<BasePaginatedList<User>> GetChildrenOfParentAsync(string parentId, int pageNumber, int pageSize)
+		public void AuditFields(string userId, BaseEntity entity, bool isCreating = false, bool isDisable = false)
+		{
+
+			// If creating a new entity, set the CreatedBy field
+			if (isCreating)
+			{
+				entity.CreatedBy = userId.ToUpper(); // Set the creator's ID
+			}
+
+			if (isDisable)
+			{
+				entity.DeletedBy = userId.ToUpper(); // Set the creator's ID
+				entity.DeletedTime = CoreHelper.SystemTimeNow;
+			}
+
+			// Always set LastUpdatedBy and LastUpdatedTime fields
+			entity.LastUpdatedBy = userId.ToUpper(); // Set the current user's ID
+
+			// If is not created then update LastUpdatedTime
+			if (isCreating is false)
+			{
+				entity.LastUpdatedTime = CoreHelper.SystemTimeNow;
+			}
+
+		}
+
+		public async Task<BasePaginatedList<User>> GetChildrenOfParentAsync(string parentId, int pageNumber, int pageSize)
         {
             // Validate pageNumber and pageSize
             if (pageNumber <= 0) pageNumber = 1;
