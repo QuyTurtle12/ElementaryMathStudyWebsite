@@ -102,7 +102,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <param name="studentId"></param>
         /// <param name="subjectId"></param>
         /// <returns></returns>
-        private (IEnumerable<FinishedTopic>, IEnumerable<FinishedChapter>) GetFinishedTopicsAndChaptersModified(string studentId, string subjectId)
+        public (IEnumerable<FinishedTopic>, IEnumerable<FinishedChapter>) GetFinishedTopicsAndChaptersModified(string studentId, string subjectId)
         {
             // Get the list of progress records for the student
             IQueryable<Progress> progressQuery = _unitOfWork.GetRepository<Progress>().GetEntitiesWithCondition(p => p.StudentId.Equals(studentId));
@@ -704,10 +704,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <param name="pageSize"></param>
         /// <returns></returns>
         /// <exception cref="BaseException.NotFoundException"></exception>
-        public async Task<BasePaginatedList<ProgressViewDto>> GetStudentProgressesDtoForStudentAsync(int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<ProgressViewDto>> GetStudentProgressesDtoForStudentAsync(int pageNumber, int pageSize, User currentUser)
         {
-            // Get current logged in user info
-            User currentUser = await _userService.GetCurrentUserAsync();
 
             // Get all orders that have "SUCCESS" status
             IQueryable<string> ordersQuery = _unitOfWork.GetRepository<Order>().Entities
@@ -729,6 +727,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 Progress? progressEntity = _unitOfWork.GetRepository<Progress>()
                     .Entities
                     .Where(p => p.SubjectId == prog.SubjectId && p.StudentId == currentUser.Id)
+                    .Include(p => p.Subject)
                     .FirstOrDefault();
 
                 ProgressViewDto dto;

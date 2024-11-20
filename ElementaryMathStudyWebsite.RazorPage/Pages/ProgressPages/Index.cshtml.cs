@@ -1,31 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages
 {
+    [Authorize(Policy = "Student")]
     public class IndexModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+		private readonly IAppUserServices _userService;
+		private readonly IAppProgressServices _progressService;
 
-        public IndexModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+		public IndexModel(IAppUserServices userService, IAppProgressServices progressService)
+		{
+			_userService = userService;
+			_progressService = progressService;
+		}
+
+		public BasePaginatedList<ProgressViewDto>? Progresses { get; set; } = default!;
+		public int PageNumber { get; set; } = 1; // default page number
+		public int PageSize { get; set; } = 10; // default page size
+
+		public async Task<IActionResult> OnGetAsync()
         {
-            _context = context;
-        }
+			string currentUserId = HttpContext.Session.GetString("user_id")!;
+			User? currentUser = await _userService.GetUserByIdAsync(currentUserId);
+			if (currentUser == null)
+			{
+				return Unauthorized();
+			}
 
-        public IList<Progress> Progress { get;set; } = default!;
-
-        public async Task OnGetAsync()
-        {
-            Progress = await _context.Progress
-                .Include(p => p.Quiz)
-                .Include(p => p.Subject).ToListAsync();
-        }
+			Progresses = await _progressService.GetStudentProgressesDtoForStudentAsync(PageNumber, PageSize, currentUser);
+			return Page();
+		}
     }
 }
