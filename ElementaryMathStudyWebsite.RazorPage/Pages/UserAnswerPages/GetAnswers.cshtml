@@ -1,0 +1,45 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages.GetAnswersModel
+@{
+    ViewData["Title"] = "Get User Answers by Quiz Id";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<form method="post">
+    <div class="form-group">
+        <label for="QuizId">Enter Quiz ID:</label>
+        <input type="text" class="form-control" id="QuizId" name="QuizId" value="@Model.QuizId" />
+    </div>
+    <button type="submit" class="btn btn-primary">Fetch Answers</button>
+</form>
+
+@if (Model.UserAnswers != null && Model.UserAnswers.Any())
+{
+    <h2>Answers for Quiz: @Model.QuizId</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Question</th>
+                <th>User</th>
+                <th>Option Answer</th>
+                <th>Attempt</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var answer in Model.UserAnswers)
+            {
+                <tr>
+                    <td>@answer.QuestionContent</td>
+                    <td>@answer.UserFullName</td>
+                    <td>@answer.OptionAnswer</td>
+                    <td>@answer.AttemptNumber</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
