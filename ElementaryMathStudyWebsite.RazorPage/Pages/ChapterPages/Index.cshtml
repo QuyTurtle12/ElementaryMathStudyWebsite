@@ -1,15 +1,15 @@
-﻿@page
+﻿@page "{subjectId}"
 @model ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages.IndexModel
 
 @{
     ViewData["Title"] = "Index";
+    var subjectId = ((string)RouteData.Values["subjectId"]!).ToUpper();
 }
-
 <h1>Index</h1>
 
-<p>
+@* <p>
     <a asp-page="Create">Create New</a>
-</p>
+</p> *@
 <table class="table">
     <thead>
         <tr>
@@ -22,13 +22,13 @@
             <th>
                 @Html.DisplayNameFor(model => model.Chapter[0].Status)
             </th>
-            <th>
+            @* <th>
                 @Html.DisplayNameFor(model => model.Chapter[0].Subject)
-            </th>
+            </th> *@
             <th>
                 @Html.DisplayNameFor(model => model.Chapter[0].Quiz)
             </th>
-            <th>
+            @* <th>
                 @Html.DisplayNameFor(model => model.Chapter[0].CreatedBy)
             </th>
             <th>
@@ -45,12 +45,13 @@
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.Chapter[0].DeletedTime)
-            </th>
+            </th> *@
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model.Chapter) {
+        @foreach (var item in Model.Chapter.Where(c => c.SubjectId.ToUpper() == subjectId))
+        {
         <tr>
             <td>
                 @Html.DisplayFor(modelItem => item.Number)
@@ -61,13 +62,20 @@
             <td>
                 @Html.DisplayFor(modelItem => item.Status)
             </td>
+            @* <td>
+                @Html.DisplayFor(modelItem => item.SubjectId)
+            </td> *@
             <td>
-                @Html.DisplayFor(modelItem => item.Subject.Id)
+                    @if (item.Quiz != null)
+                    {
+                        @Html.DisplayFor(modelItem => item.Quiz.QuizName)
+                    }
+                    else
+                    {
+                        <span>N/A</span>
+                    }
             </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Quiz.Id)
-            </td>
-            <td>
+            @* <td>
                 @Html.DisplayFor(modelItem => item.CreatedBy)
             </td>
             <td>
@@ -84,12 +92,12 @@
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.DeletedTime)
-            </td>
-            <td>
+            </td> 
+             <td>
                 <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
                 <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
                 <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
+            </td> *@
         </tr>
 }
     </tbody>
