@@ -1,112 +1,88 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
 using Microsoft.AspNetCore.Authorization;
-using System.Collections.Generic;
-using ElementaryMathStudyWebsite.Core.Entity;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages
 {
     [Authorize(Policy = "Student")]
     public class CreateModel : PageModel
     {
-        private readonly DatabaseContext _context;
+        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
 
-        public CreateModel(DatabaseContext context)
+        public CreateModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
         {
             _context = context;
-        }
-
-        public string CurrentUserId { get; private set; } = string.Empty;
-
-        public List<QuestionViewModel> Questions { get; set; } = new();
-        public List<OptionViewModel> Options { get; set; } = new();
-
-        public IActionResult OnGet()
-        {
-            // Retrieve the current user ID
-            CurrentUserId = HttpContext.Session.GetString("user_id");
-
-            // Preload all questions
-            Questions = _context.Question
-                .Select(q => new QuestionViewModel
-                {
-                    Id = q.Id,
-                    QuestionContext = q.QuestionContext
-                })
-                .ToList();
-
-            // Preload all options
-            Options = _context.Option
-                .Select(o => new OptionViewModel
-                {
-                    Id = o.Id,
-                    QuestionId = o.QuestionId,
-                    Answer = o.Answer
-                })
-                .ToList();
-
-            return Page();
         }
 
         [BindProperty]
         public UserAnswer UserAnswer { get; set; } = default!;
 
-        public async Task<IActionResult> OnPostAsync()
+        public IActionResult OnGet(string? questionId = null)
+        {
+            // Get the current user ID from the session
+            string userId = HttpContext.Session.GetString("user_id") ?? "";
+
+            // Retrieve the user's full name
+            string? userName = _context.User.FirstOrDefault(u => u.Id == userId)?.FullName;
+
+            // Store the user's name in ViewData for display
+            ViewData["CurrentUserName"] = userName ?? "Unknown User";
+
+            // Populate the question dropdown
+            var questions = _context.Question.ToList();
+            ViewData["QuestionContext"] = new SelectList(questions, "Id", "QuestionContext", questionId);
+
+            // Ensure questionId is set to the current or default value
+            questionId ??= questions.FirstOrDefault()?.Id;
+
+            // Filter options for the specific question
+            ViewData["OptionId"] = new SelectList(
+                _context.Option
+                    .Where(o => o.QuestionId == questionId)
+                    .Select(o => new { Id = o.Id, Display = o.Answer }),
+                "Id",
+                "Display");
+
+            // Set the selected question in the model
+            UserAnswer = new UserAnswer {
+                UserId = userId,
+                QuestionId = questionId 
+            };
+
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostAsync(string? questionId = null)
         {
             if (!ModelState.IsValid)
             {
-                // Repopulate dropdowns in case of validation failure
-                Questions = _context.Question
-                    .Select(q => new QuestionViewModel
-                    {
-                        Id = q.Id,
-                        QuestionContext = q.QuestionContext
-                    })
-                    .ToList();
+                // Re-populate dropdowns to maintain state
+                var questions = _context.Question.ToList();
+                ViewData["QuestionContext"] = new SelectList(questions, "Id", "QuestionContext", questionId);
+                questionId ??= questions.FirstOrDefault()?.Id;
 
-                Options = _context.Option
-                    .Select(o => new OptionViewModel
-                    {
-                        Id = o.Id,
-                        QuestionId = o.QuestionId,
-                        Answer = o.Answer
-                    })
-                    .ToList();
-
-                if (!Options.Any())
-                {
-                    Console.Write("error option");
-                }
+                ViewData["OptionId"] = new SelectList(
+                    _context.Option
+                        .Where(o => o.QuestionId == questionId)
+                        .Select(o => new { Id = o.Id, Display = o.Answer }),
+                    "Id",
+                    "Display");
+                ViewData["UserFullName"] = new SelectList(_context.User, "Id", "FullName");
 
                 return Page();
             }
 
-            // Ensure UserId is set to the current user
-            UserAnswer.UserId = HttpContext.Session.GetString("user_id");
-
-            // Add new UserAnswer entry
+            // Add the new UserAnswer entry
             _context.UserAnswer.Add(UserAnswer);
             await _context.SaveChangesAsync();
 
             return RedirectToPage("./Index");
-        }
-
-        public class QuestionViewModel
-        {
-            public string Id { get; set; }
-            public string QuestionContext { get; set; }
-        }
-
-        public class OptionViewModel
-        {
-            public string Id { get; set; }
-            public string QuestionId { get; set; }
-            public string Answer { get; set; }
         }
     }
 }
