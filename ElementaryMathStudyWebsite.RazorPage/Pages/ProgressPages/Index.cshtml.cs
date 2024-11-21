@@ -21,10 +21,8 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages
 		}
 
 		public BasePaginatedList<ProgressViewDto>? Progresses { get; set; } = default!;
-		public int PageNumber { get; set; } = 1; // default page number
-		public int PageSize { get; set; } = 10; // default page size
 
-		public async Task<IActionResult> OnGetAsync()
+		public async Task<IActionResult> OnGetAsync(int pageNumber = 1, int pageSize = 10)
         {
 			string currentUserId = HttpContext.Session.GetString("user_id")!;
 			User? currentUser = await _userService.GetUserByIdAsync(currentUserId);
@@ -33,7 +31,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages
 				return Unauthorized();
 			}
 
-			Progresses = await _progressService.GetStudentProgressesDtoForStudentAsync(PageNumber, PageSize, currentUser);
+			Progresses = await _progressService.GetStudentProgressesDtoForStudentAsync(pageNumber, pageSize, currentUser);
 			return Page();
 		}
     }

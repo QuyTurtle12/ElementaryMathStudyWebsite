@@ -1,0 +1,50 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages.ParentModel
+
+@{
+    ViewData["Title"] = "Parent";
+	int number = 1;
+}
+
+<h1>Tiến độ học tập</h1>
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>
+				Số thứ tự
+			</th>
+			<th>
+				Tên môn học
+			</th>
+			<th>
+				Tiến độ
+			</th>
+			<th>
+				Hành Động
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var item in Model.Progresses!.Items)
+		{
+			<tr>
+				<td>
+					@number
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.SubjectName)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.SubjectPercentage)
+				</td>
+				<td>
+					<a asp-page="./Details"
+					   asp-route-studentId="@item.StudentId"
+					   asp-route-subjectId="@item.SubjectId">Chi tiết</a>
+				</td>
+			</tr>
+			number++;
+		}
+	</tbody>
+</table>

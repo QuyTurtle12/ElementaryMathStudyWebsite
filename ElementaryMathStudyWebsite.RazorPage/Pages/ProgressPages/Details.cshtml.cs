@@ -9,6 +9,8 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages
     {
 		private IAppProgressServices _progressService;
 
+        public string StudentId { get; set; } = string.Empty;
+
         public DetailsModel(IAppProgressServices progressService)
         {
             _progressService = progressService;
@@ -20,6 +22,9 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages
 
 		public IActionResult OnGet(string studentId, string subjectId)
 		{
+            // Receive student Id from the previous page
+            StudentId = studentId;
+
             (IEnumerable<FinishedTopic> finishedTopics, IEnumerable<FinishedChapter> finishedChapters) = _progressService.GetFinishedTopicsAndChaptersModified(studentId, subjectId);
 
             // Assign the passed collections to the properties

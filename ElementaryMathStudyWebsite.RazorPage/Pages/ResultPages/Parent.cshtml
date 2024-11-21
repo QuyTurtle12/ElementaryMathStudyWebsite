@@ -1,0 +1,70 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.ResultPages.ParentModel
+
+@{
+    ViewData["Title"] = "Parent";
+    int resultNumber = 1;
+}
+
+<h1>Parent</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                STT
+            </th>
+            <th>
+                Tên bài kiểm tra
+            </th>
+            <th>
+                Điểm
+            </th>
+            <th>
+                Lần Thử
+            </th>
+            <th>
+                Ngày thực hiện
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Results.Items)
+        {
+            <tr>
+                <td>
+                    @resultNumber
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.QuizName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Score)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Attempt)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DateTaken)
+                </td>
+                @*                 <td>
+                    @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+                </td> *@
+            </tr>
+            resultNumber++;
+        }
+    </tbody>
+</table>
+<div class="pagination">
+    @if (Model.Results.CurrentPage > 1)
+    {
+        <a asp-page="./Student" asp-route-pageNumber="@(Model.Results.CurrentPage - 1)">Trước</a>
+    }
+
+    <span>Page @Model.Results.CurrentPage of @Model.Results.TotalPages</span>
+
+    @if (Model.Results.CurrentPage < Model.Results.TotalPages)
+    {
+        <a asp-page="./Student" asp-route-pageNumber="@(Model.Results.CurrentPage + 1)">Sau</a>
+    }
+</div>

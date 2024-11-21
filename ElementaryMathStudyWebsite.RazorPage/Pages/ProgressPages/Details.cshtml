@@ -3,25 +3,40 @@
 
 @{
     ViewData["Title"] = "Details";
+    string? userRole = HttpContext.Session.GetString("role_name");
+    string? targetPage = userRole == "Student" ? "/ResultPages/Student" :
+                         userRole == "Parent" ? "/ResultPages/Parent" : null;
+    string? studentId = Model.StudentId;
 }
 
 <h1>Chi tiết</h1>
 
-<h3>Các chương đã hoàn thành</h3>
-<ul>
-    @foreach (var chapter in Model.FinishedChapters!)
-    {
-        <a asp-page="/ResultPages/Student" asp-route-chapterOrTopicId="@chapter.Id">@chapter.Name</a>
-    }
-</ul>
+@if (targetPage != null)
+{
+    <h3>Các chương đã hoàn thành</h3>
+    <ul>
+        @foreach (var chapter in Model.FinishedChapters!)
+        {
+            <a asp-page="@targetPage" 
+                asp-route-chapterOrTopicId="@chapter.Id"
+                asp-route-studentId="@(userRole == "Parent" ? studentId : null)">@chapter.Name</a>
+        }
+    </ul>
 
-<h3>Các chủ đề đã hoàn thành</h3>
-<ul>
-    @foreach (var topic in Model.FinishedTopics!)
-    {
-        <a asp-page="/ResultPages/Student" asp-route-chapterOrTopicId="@topic.Id">@topic.Name</a>
-    }
-</ul>
+    <h3>Các chủ đề đã hoàn thành</h3>
+    <ul>
+        @foreach (var topic in Model.FinishedTopics!)
+        {
+            <a asp-page="@targetPage" 
+                asp-route-chapterOrTopicId="@topic.Id"
+                asp-route-studentId="@(userRole == "Parent" ? studentId : null)">@topic.Name</a>
+        }
+    </ul>
+}
+else
+{
+    <p>Cannot determine user role or unauthorized access.</p>
+}
 
 <div>
     <a asp-page="./Index">Trở lại</a>
