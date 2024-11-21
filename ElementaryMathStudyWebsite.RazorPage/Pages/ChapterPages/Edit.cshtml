@@ -1,0 +1,85 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages.EditModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Chapter</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Chapter.Number" class="control-label"></label>
+                <input asp-for="Chapter.Number" class="form-control" />
+                <span asp-validation-for="Chapter.Number" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Chapter.ChapterName" class="control-label"></label>
+                <input asp-for="Chapter.ChapterName" class="form-control" />
+                <span asp-validation-for="Chapter.ChapterName" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="Chapter.Status" /> @Html.DisplayNameFor(model => model.Chapter.Status)
+                </label>
+            </div>
+            <div class="form-group">
+                <label asp-for="Chapter.SubjectId" class="control-label"></label>
+                <select asp-for="Chapter.SubjectId" class="form-control" asp-items="ViewBag.SubjectId"></select>
+                <span asp-validation-for="Chapter.SubjectId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Chapter.QuizId" class="control-label"></label>
+                <select asp-for="Chapter.QuizId" class="form-control" asp-items="ViewBag.QuizId"></select>
+                <span asp-validation-for="Chapter.QuizId" class="text-danger"></span>
+            </div>
+            <input type="hidden" asp-for="Chapter.Id" />
+            <div class="form-group">
+                <label asp-for="Chapter.CreatedBy" class="control-label"></label>
+                <input asp-for="Chapter.CreatedBy" class="form-control" />
+                <span asp-validation-for="Chapter.CreatedBy" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Chapter.LastUpdatedBy" class="control-label"></label>
+                <input asp-for="Chapter.LastUpdatedBy" class="form-control" />
+                <span asp-validation-for="Chapter.LastUpdatedBy" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Chapter.DeletedBy" class="control-label"></label>
+                <input asp-for="Chapter.DeletedBy" class="form-control" />
+                <span asp-validation-for="Chapter.DeletedBy" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Chapter.CreatedTime" class="control-label"></label>
+                <input asp-for="Chapter.CreatedTime" class="form-control" />
+                <span asp-validation-for="Chapter.CreatedTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Chapter.LastUpdatedTime" class="control-label"></label>
+                <input asp-for="Chapter.LastUpdatedTime" class="form-control" />
+                <span asp-validation-for="Chapter.LastUpdatedTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Chapter.DeletedTime" class="control-label"></label>
+                <input asp-for="Chapter.DeletedTime" class="form-control" />
+                <span asp-validation-for="Chapter.DeletedTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="./Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -22,7 +22,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.Login
             string? username = Request.Form["txtUserName"];
             string? password = Request.Form["txtPassword"];
 
-            User? user = await _authenticationService.ValidateUserCredentialsAsync(username, password);
+            User? user = await _authenticationService.ValidateUserCredentialsAsync(username ?? "", password ?? "");
             if (user != null)
             {
                 string? roleId = user.RoleId ?? string.Empty;
@@ -36,7 +36,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.Login
             }
             else
             {
-                Response.Redirect("/Error");
+                ViewData["ErrorMessage"] = "Invalid username or password."; // Set error message
             }
         }
 

@@ -1,0 +1,102 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Topic[0].Number)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Topic[0].TopicName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Topic[0].TopicContext)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Topic[0].Status)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Topic[0].Chapter)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Topic[0].Quiz)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Topic[0].CreatedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Topic[0].LastUpdatedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Topic[0].DeletedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Topic[0].CreatedTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Topic[0].LastUpdatedTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Topic[0].DeletedTime)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Topic) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Number)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TopicName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TopicContext)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Status)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Chapter.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Quiz.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedBy)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LastUpdatedBy)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DeletedBy)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LastUpdatedTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DeletedTime)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
