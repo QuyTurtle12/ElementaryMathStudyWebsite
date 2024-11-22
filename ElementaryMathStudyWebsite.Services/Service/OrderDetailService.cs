@@ -81,34 +81,23 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Validate if the subject has been assigned before 
         public async Task<bool> IsValidStudentSubjectBeforeCreateOrder(CartCreateDto orderCreateDto)
         {
-            // Check for duplicates in the SubjectStudents list
-            List<(string SubjectId, string StudentId)> uniqueSubjectStudents = orderCreateDto.SubjectStudents
-                .GroupBy(s => (s.SubjectId, s.StudentId))
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key)
-                .ToList();
-
-            if (uniqueSubjectStudents.Any())
-            {
-                // Return false or throw an exception if duplicates are found
-                return false;
-            }
+            // No need for a duplicate check since each CartCreateDto now represents a single Subject-Student pair
 
             // Validation process
-            foreach (SubjectStudentDto newSubject in orderCreateDto.SubjectStudents)
-            {
-                // Get student assigned subject
-                IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>().Entities
-                    .Include(d => d.Order)
-                    .Where(d => d.StudentId.Equals(newSubject.StudentId) && d.Order!.Status != PaymentStatusHelper.FAILED.ToString());
-                List<OrderDetail> studentCurrentLearningSubject = await query.ToListAsync();
+            // Get student assigned subject
+            IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>().Entities
+                .Include(d => d.Order)
+                .Where(d => d.StudentId.Equals(orderCreateDto.StudentId)
+                            && d.Order!.Status == PaymentStatusHelper.SUCCESS.ToString());
 
-                foreach (OrderDetail studentSubject in studentCurrentLearningSubject)
+            List<OrderDetail> studentCurrentLearningSubjects = await query.ToListAsync();
+
+            // Check if the student already has the subject assigned
+            foreach (OrderDetail studentSubject in studentCurrentLearningSubjects)
+            {
+                if (studentSubject.SubjectId.Equals(orderCreateDto.SubjectId))
                 {
-                    if (studentSubject.SubjectId.Equals(newSubject.SubjectId))
-                    {
-                        return false; // Subject has been assigned
-                    }
+                    return false; // Subject has already been assigned to the student
                 }
             }
 

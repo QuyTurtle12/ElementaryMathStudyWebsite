@@ -1,5 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
@@ -9,7 +10,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<double> CalculateLatestStudentScoreAsync(string quizId, string studentId);
 
         // Get a list of student grade of specific quiz
-        Task<BasePaginatedList<ResultViewDto>> GetStudentResultListAsync(string quizId, int pageNumber, int pageSize);
+        Task<BasePaginatedList<ResultViewDto>> GetStudentResultListAsync(User currentUser, string quizId, int pageNumber, int pageSize);
 
         // Check if the student passed the quiz
         Task<bool> IsPassedTheQuizAsync(string quizId, string studentId);
@@ -20,5 +21,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         // Get the children latest result of assigned subject
         Task<ResultParentViewDto> GetChildrenLatestResultAsync(string studentId);
 
+        // Get a quiz id by chapter or topic Id 
+        Task<string> GetQuizIdByChapterOrTopicId(string chapterOrTopicId);
     }
 }

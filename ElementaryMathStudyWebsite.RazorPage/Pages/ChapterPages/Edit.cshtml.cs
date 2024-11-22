@@ -1,13 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Infrastructure.Context;
 
-namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
+namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 {
-    [Authorize(Policy = "Admin-Manager")]
     public class EditModel : PageModel
     {
         private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
@@ -18,7 +21,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
         }
 
         [BindProperty]
-        public new User User { get; set; } = default!;
+        public Chapter Chapter { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -27,13 +30,14 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
                 return NotFound();
             }
 
-            var user =  await _context.User.Include(u => u.Role).FirstOrDefaultAsync(m => m.Id == id);
-            if (user == null)
+            var chapter =  await _context.Chapter.FirstOrDefaultAsync(m => m.Id == id);
+            if (chapter == null)
             {
                 return NotFound();
             }
-            User = user;
-           ViewData["RoleId"] = new SelectList(_context.Role, "Id", "RoleName");
+            Chapter = chapter;
+           ViewData["QuizId"] = new SelectList(_context.Quiz, "Id", "Id");
+           ViewData["SubjectId"] = new SelectList(_context.Subject, "Id", "Id");
             return Page();
         }
 
@@ -46,7 +50,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
                 return Page();
             }
 
-            _context.Attach(User).State = EntityState.Modified;
+            _context.Attach(Chapter).State = EntityState.Modified;
 
             try
             {
@@ -54,7 +58,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserExists(User.Id))
+                if (!ChapterExists(Chapter.Id))
                 {
                     return NotFound();
                 }
@@ -67,9 +71,9 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
             return RedirectToPage("./Index");
         }
 
-        private bool UserExists(string id)
+        private bool ChapterExists(string id)
         {
-            return _context.User.Any(e => e.Id == id);
+            return _context.Chapter.Any(e => e.Id == id);
         }
     }
 }

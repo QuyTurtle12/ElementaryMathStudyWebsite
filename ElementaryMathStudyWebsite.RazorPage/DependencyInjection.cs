@@ -103,8 +103,8 @@ namespace ElementaryMathStudyWebsite
             services.AddAuthentication("Session")
                 .AddCookie("Session", options =>
                 {
-                    options.LoginPath = "/AuthPages/Login"; // Redirect to login page if unauthorized
-                    options.AccessDeniedPath = "/AuthPages/Login"; // Ensure redirect to login if access is denied
+                    options.LoginPath = "/AuthPages/LoginError"; // Redirect to login page if unauthorized
+                    options.AccessDeniedPath = "/AuthPages/LoginError"; // Ensure redirect to login if access is denied
                     options.SlidingExpiration = true; // Session expiration is updated on each request
                 });
 

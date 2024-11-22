@@ -21,15 +21,16 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.AuthPages
         {
             string id = HttpContext.Session.GetString("user_id") ?? "";
 
-            if (string.IsNullOrEmpty(id)) // Check if user_id is set in the session
+            if (string.IsNullOrWhiteSpace(id)) // Check if user_id is set in the session
             {
-                return RedirectToPage("/AuthPages/Login"); // Redirect to login if session is missing
+                return RedirectToPage("/AuthPages/LoginError"); // Redirect to login if session is missing
             }
+            
 
             var user = await _context.User.Include(u => u.Role).FirstOrDefaultAsync(m => m.Id == id);
             if (user == null)
             {
-                return NotFound();
+                return RedirectToPage("/AuthPages/LoginError");
             }
             else
             {
