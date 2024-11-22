@@ -106,7 +106,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 subjectId = await _unitOfWork.GetRepository<Topic>()
                     .Entities
                     .Where(t => t.QuizId == quizId)
-                    .Select(t => t.Chapter.SubjectId)
+                    .Select(t => t.Chapter!.SubjectId)
                     .FirstOrDefaultAsync();
             }
 

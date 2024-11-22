@@ -1,6 +1,8 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Services.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -13,6 +15,7 @@ namespace ElementaryMathStudyWebsite.Controllers
     public class ResultsController : ControllerBase
     {
         private readonly IAppResultService _resultService;
+        private readonly IAppUserServices _userServices;
 
         // Constructor
         public ResultsController(IAppResultService resultService)
@@ -82,7 +85,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ResultViewDto>>>> GetQuizResult([Required] string quizId, int pageSize = -1, int pageNumber = -1)
         {
-            BasePaginatedList<ResultViewDto> results = await _resultService.GetStudentResultListAsync(quizId, pageNumber, pageSize);
+            // Get current logged in user info
+            User currentUser = await _userServices.GetCurrentUserAsync();
+
+            BasePaginatedList<ResultViewDto> results = await _resultService.GetStudentResultListAsync(currentUser, quizId, pageNumber, pageSize);
 
             var response = BaseResponse<BasePaginatedList<ResultViewDto>>.OkResponse(results);
             return response;

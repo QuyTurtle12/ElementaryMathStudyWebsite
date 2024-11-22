@@ -37,41 +37,44 @@ namespace ElementaryMathStudyWebsite.Services.Service
 			_httpContextAccessor = httpContextAccessor;
 		}
 
-		/// <summary>
-		/// Add new order to databasez
-		/// </summary>
-		/// <param name="cartCreateDto"></param>
-		/// <returns></returns>
-		/// <exception cref="BaseException.BadRequestException"></exception>
-		/// <exception cref="BaseException.CoreException"></exception>
-		public async Task<OrderViewDto> AddItemsToCart(CartCreateDto cartCreateDto)
+        /// <summary>
+        /// Add new order to databasez
+        /// </summary>
+        /// <param name="cartCreateDto"></param>
+        /// <returns></returns>
+        /// <exception cref="BaseException.BadRequestException"></exception>
+        /// <exception cref="BaseException.CoreException"></exception>
+        public async Task<OrderViewDto> AddItemsToCart(CartCreateDto cartCreateDto)
         {
-            if (!cartCreateDto.SubjectStudents.Any()) throw new BaseException.BadRequestException(
-                "empty_cart",
-                "You proceed to select something"
-            );
+            if (string.IsNullOrWhiteSpace(cartCreateDto.SubjectId) || string.IsNullOrWhiteSpace(cartCreateDto.StudentId))
+                throw new BaseException.BadRequestException(
+                    "empty_cart",
+                    "You proceed to select something"
+                );
+
             // Get logged in User
             User currentUser = await _userService.GetCurrentUserAsync();
 
             IQueryable<Order> query = _unitOfWork.GetRepository<Order>().GetEntitiesWithCondition(
-                            o => o.CustomerId == currentUser.Id &&
-                            o.Status == PaymentStatusHelper.CART.ToString() &&
-                            string.IsNullOrWhiteSpace(o.DeletedBy)
-                            );
-
-            if (query.Any()) throw new BaseException.BadRequestException(
-                "invalid_argument",
-                "You already have something in your cart, please discard your current cart or proceed to checkout"
+                o => o.CustomerId == currentUser.Id &&
+                     o.Status == PaymentStatusHelper.CART.ToString() &&
+                     string.IsNullOrWhiteSpace(o.DeletedBy)
             );
 
-            // General Validation for each Subject-Student pair
-            foreach (var subjectStudent in cartCreateDto.SubjectStudents)
+            if (query.Any())
+                throw new BaseException.BadRequestException(
+                    "invalid_argument",
+                    "You already have something in your cart, please discard your current cart or proceed to checkout"
+                );
+
+            // General Validation for the Subject-Student pair
+            string? error = await IsGenerallyValidatedAsync(cartCreateDto.SubjectId, cartCreateDto.StudentId, cartCreateDto);
+            if (!string.IsNullOrWhiteSpace(error))
             {
-                string? error = await IsGenerallyValidatedAsync(subjectStudent.SubjectId, subjectStudent.StudentId, cartCreateDto);
-                if (!string.IsNullOrWhiteSpace(error)) throw new BaseException.BadRequestException("invalid_argument", error); // Error message
+                throw new BaseException.BadRequestException("invalid_argument", error); // Error message
             }
 
-            // Calculate total price
+            // Calculate total price (for the single subject-student pair)
             double totalPrice = await CalculateTotalPrice(cartCreateDto);
 
             Order order = new()
@@ -89,24 +92,22 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             bool result = true; // Check create order detail result
 
-            List<OrderDetailViewDto> detailDtos = [];
+            List<OrderDetailViewDto> detailDtos = new();
 
-            // Add order details for each subject-student pair
-            foreach (var subjectStudent in cartCreateDto.SubjectStudents)
+            // Add the order detail for the single subject-student pair
+            OrderDetail orderDetail = new()
             {
-                OrderDetail orderDetail = new()
-                {
-                    OrderId = order.Id,
-                    SubjectId = subjectStudent.SubjectId,
-                    StudentId = subjectStudent.StudentId
-                };
+                OrderId = order.Id,
+                SubjectId = cartCreateDto.SubjectId,
+                StudentId = cartCreateDto.StudentId
+            };
 
-                detailDtos.Add(_mapper.Map<OrderDetailViewDto>(orderDetail));
+            // Map and add to the detailDtos list
+            detailDtos.Add(_mapper.Map<OrderDetailViewDto>(orderDetail));
 
-                // Add order detail in database
-                bool IsAddedNewOrderDetail = await _orderDetailService.AddOrderDetailAsync(orderDetail);
-                result = IsAddedNewOrderDetail;
-            }
+            // Add order detail in database
+            bool IsAddedNewOrderDetail = await _orderDetailService.AddOrderDetailAsync(orderDetail);
+            result = IsAddedNewOrderDetail;
 
             if (result is false)
             {
@@ -120,12 +121,76 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return orderViewDto; // Show that create order process is completed
         }
 
-        /// <summary>
-        /// Remove the cart and items within the cart
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="BaseException.NotFoundException"></exception>
-        public async Task<bool> RemoveCart()
+		public async Task<OrderViewDto> AddItemsToCart(string userId, CartCreateDto cartCreateDto)
+		{
+
+            IQueryable<Order> query = _unitOfWork.GetRepository<Order>().GetEntitiesWithCondition(
+                o => o.CustomerId == userId &&
+                     o.Status == PaymentStatusHelper.CART.ToString() &&
+                     string.IsNullOrWhiteSpace(o.DeletedBy)
+            );
+
+            if (query.Any())
+            {
+                await RemoveCart(userId);
+            }
+
+            if (!await _orderDetailService.IsValidStudentSubjectBeforeCreateOrder(cartCreateDto))
+				throw new BaseException.BadRequestException("invalid_argument", "This subject has been assigned to this student or assigned twice");
+
+			// Calculate total price (for the single subject-student pair)
+			double totalPrice = await CalculateTotalPrice(cartCreateDto);
+
+			Order order = new()
+			{
+				CustomerId = userId,
+				TotalPrice = totalPrice,
+				Status = PaymentStatusHelper.CART.ToString()
+			};
+
+			// Audit field in new order
+			_userService.AuditFields(userId, order, true);
+
+			await _unitOfWork.GetRepository<Order>().InsertAsync(order);
+			await _unitOfWork.SaveAsync();
+
+			bool result = true; // Check create order detail result
+
+			List<OrderDetailViewDto> detailDtos = new();
+
+			// Add the order detail for the single subject-student pair
+			OrderDetail orderDetail = new()
+			{
+				OrderId = order.Id,
+				SubjectId = cartCreateDto.SubjectId,
+				StudentId = cartCreateDto.StudentId
+			};
+
+			// Map and add to the detailDtos list
+			detailDtos.Add(_mapper.Map<OrderDetailViewDto>(orderDetail));
+
+			// Add order detail in database
+			bool IsAddedNewOrderDetail = await _orderDetailService.AddOrderDetailAsync(orderDetail);
+			result = IsAddedNewOrderDetail;
+
+			if (result is false)
+			{
+				throw new BaseException.CoreException("server_error", "Failed to create order detail");
+			}
+
+			OrderViewDto orderViewDto = _mapper.Map<OrderViewDto>(order);
+
+			orderViewDto.PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null;
+
+			return orderViewDto; // Show that create order process is completed
+		}
+
+		/// <summary>
+		/// Remove the cart and items within the cart
+		/// </summary>
+		/// <returns></returns>
+		/// <exception cref="BaseException.NotFoundException"></exception>
+		public async Task<bool> RemoveCart()
         {
             // Get logged in User
             User currentUser = await _userService.GetCurrentUserAsync();
@@ -162,12 +227,42 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return true;
         }
 
-        /// <summary>
-        /// Check cart inventory
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="BaseException.NotFoundException"></exception>
-        public async Task<OrderViewDto> ViewCart()
+		public async Task<bool> RemoveCart(string userId)
+		{
+
+			// Get the cart (order) from Order table 
+			IQueryable<Order> orderQuery = _unitOfWork.GetRepository<Order>().GetEntitiesWithCondition(
+							o => o.CustomerId == userId &&
+							o.Status == PaymentStatusHelper.CART.ToString() &&
+							string.IsNullOrWhiteSpace(o.DeletedBy)
+							);
+
+			Order cart = orderQuery.First();
+
+			// Get cart items (order detail)
+			IQueryable<OrderDetail> orderDetailQuery = _unitOfWork.GetRepository<OrderDetail>().Entities
+				.Where(od => od.OrderId == cart.Id);
+
+			// Remove item in cart
+			foreach (var orderDetail in orderDetailQuery)
+			{
+				_unitOfWork.GetRepository<OrderDetail>().Delete(orderDetail);
+			}
+
+			// Remove cart
+			_unitOfWork.GetRepository<Order>().Delete(cart);
+
+			await _unitOfWork.SaveAsync();
+			return true;
+		}
+
+
+		/// <summary>
+		/// Check cart inventory
+		/// </summary>
+		/// <returns></returns>
+		/// <exception cref="BaseException.NotFoundException"></exception>
+		public async Task<OrderViewDto> ViewCart()
         {
             // Get logged in User
             User currentUser = await _userService.GetCurrentUserAsync();
@@ -194,7 +289,32 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return _mapper.Map<OrderViewDto>(cart);
         }
 
-        public async Task<string> HandleVnPayCallback(string orderId, bool isSuccess)
+		public async Task<OrderViewDto> ViewCart(string userId)
+		{
+
+			IQueryable<Order> orderQuery = _unitOfWork.GetRepository<Order>().GetEntitiesWithCondition(
+							o => o.CustomerId == userId &&
+							o.Status == PaymentStatusHelper.CART.ToString() &&
+							string.IsNullOrWhiteSpace(o.DeletedBy)
+							);
+
+			if (!orderQuery.Any()) throw new BaseException.NotFoundException(
+				"not_found",
+				"You have no items in your cart"
+			);
+
+			Order cart = orderQuery.First();
+
+			OrderViewDto orderViewDto = _mapper.Map<OrderViewDto>(cart);
+
+			BasePaginatedList<OrderDetailViewDto>? detailList = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(-1, -1, cart.Id);
+			orderViewDto.Details = detailList.Items;
+
+			orderViewDto.PurchaseDate = (cart.Status == PaymentStatusHelper.SUCCESS.ToString()) ? cart.LastUpdatedTime : null;
+			return _mapper.Map<OrderViewDto>(cart);
+		}
+
+		public async Task<string> HandleVnPayCallback(string orderId, bool isSuccess)
         {
             Order? order = await _unitOfWork.GetRepository<Order>().GetByIdAsync(orderId);
             if (order == null)
@@ -224,16 +344,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private async Task<double> CalculateTotalPrice(CartCreateDto dto)
         {
             double totalPrice = 0;
-            foreach (SubjectStudentDto subject in dto.SubjectStudents)
-            {
 
-                Subject boughtSubject = await _unitOfWork.GetRepository<Subject>()
-                                                            .FindByConditionAsync(s => s.Id == subject.SubjectId)
-                                                            ?? throw new BaseException.NotFoundException("not_found", $"subject with Id {subject.SubjectId} is not existed");
+            // Only one Subject-Student pair now
+            Subject boughtSubject = await _unitOfWork.GetRepository<Subject>()
+                .FindByConditionAsync(s => s.Id == dto.SubjectId)
+                ?? throw new BaseException.NotFoundException("not_found", $"Subject with Id {dto.SubjectId} does not exist");
 
-                totalPrice += boughtSubject.Price;
-            }
-            return (double)totalPrice;
+            totalPrice += boughtSubject.Price;
+
+            return totalPrice;
         }
 
         //// Get one order with all properties

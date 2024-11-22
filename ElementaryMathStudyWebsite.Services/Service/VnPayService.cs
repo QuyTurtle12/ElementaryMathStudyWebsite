@@ -68,8 +68,48 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return paymentUrl;
         }
+		public async Task<string> CreatePaymentUrl(string userId, HttpContext context)
+		{
 
-        public VnPayResponseDto PaymentExecute(IQueryCollection collections)
+			IQueryable<Order> query = _unitOfWork.GetRepository<Order>().Entities.Where(o => o.CustomerId == userId && o.Status == PaymentStatusHelper.CART.ToString());
+
+			if (!query.Any()) throw new BaseException.BadRequestException("invalid_argument", "You have no items in your cart");
+
+			var cart = query.First();
+
+			var tick = DateTime.Now.Ticks.ToString();
+
+			VnPayHelper vnpay = new();
+
+
+			vnpay.AddRequestData("vnp_Version", _config["VnPay:Version"]!);
+			vnpay.AddRequestData("vnp_Command", _config["VnPay:Command"]!);
+			vnpay.AddRequestData("vnp_TmnCode", _config["VnPay:TmnCode"]!);
+			vnpay.AddRequestData("vnp_Amount", (cart.TotalPrice * 100).ToString());
+			//Số tiền thanh toán. Số tiền không 
+			//mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND
+			//(một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần(khử phần thập phân), sau đó gửi sang VNPAY
+			//là: 10000000
+
+			vnpay.AddRequestData("vnp_CreateDate", CoreHelper.SystemTimeNow.ToString("yyyyMMddHHmmss"));
+			vnpay.AddRequestData("vnp_CurrCode", _config["VnPay:CurrCode"]!);
+			vnpay.AddRequestData("vnp_IpAddr", Utils.GetIpAddress(context));
+			vnpay.AddRequestData("vnp_Locale", _config["VnPay:Locale"]!);
+			vnpay.AddRequestData("vnp_OrderInfo", cart.Id);
+			vnpay.AddRequestData("vnp_OrderType", "other");
+			vnpay.AddRequestData("vnp_ReturnUrl", _config["VnPay:ReturnUrl"]!);
+			vnpay.AddRequestData("vnp_ExpireDate", CoreHelper.SystemTimeNow.AddMinutes(5).ToString("yyyyMMddHHmmss"));
+			vnpay.AddRequestData("vnp_TxnRef", $"{tick}");
+
+			cart.Status = PaymentStatusHelper.PENDING.ToString();
+			cart.PaymentMethod = "VnPay";
+			await _unitOfWork.SaveAsync();
+
+			var paymentUrl = vnpay.CreateRequestUrl(_config["VnPay:BaseUrl"]!, _config["VnPay:HashSecret"]!);
+
+			return paymentUrl;
+		}
+		public VnPayResponseDto PaymentExecute(IQueryCollection collections)
         {
             VnPayHelper vnpay = new();
             foreach (var (key, value) in collections)
