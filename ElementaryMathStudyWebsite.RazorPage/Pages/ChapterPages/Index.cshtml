@@ -1,9 +1,8 @@
-﻿@page "{subjectId}"
+﻿@page 
 @model ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages.IndexModel
 
 @{
     ViewData["Title"] = "Index";
-    var subjectId = ((string)RouteData.Values["subjectId"]!).ToUpper();
 }
 <h1>Index</h1>
 
@@ -50,7 +49,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.Chapter.Where(c => c.SubjectId.ToUpper() == subjectId))
+        @foreach (var item in Model.Chapter)
         {
         <tr>
             <td>
