@@ -50,9 +50,10 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages
                 "Display");
 
             // Set the selected question in the model
-            UserAnswer = new UserAnswer {
+            UserAnswer = new UserAnswer
+            {
                 UserId = userId,
-                QuestionId = questionId 
+                QuestionId = questionId
             };
 
             return Page();
@@ -77,6 +78,19 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages
 
                 return Page();
             }
+
+            // Get the current user ID from the session
+            string userId = HttpContext.Session.GetString("user_id") ?? "";
+
+            // Check if the user has already answered this question
+            var existingAnswers = _context.UserAnswer
+                .Where(ua => ua.UserId == userId && ua.QuestionId == UserAnswer.QuestionId)
+                .OrderByDescending(ua => ua.AttemptNumber)
+                .FirstOrDefault();
+
+            // Set the attempt number for this answer
+            UserAnswer.UserId = userId;
+            UserAnswer.AttemptNumber = existingAnswers == null ? 0 : existingAnswers.AttemptNumber + 1;
 
             // Add the new UserAnswer entry
             _context.UserAnswer.Add(UserAnswer);
