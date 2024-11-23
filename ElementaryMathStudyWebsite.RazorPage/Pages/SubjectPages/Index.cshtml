@@ -71,7 +71,7 @@
                 @Html.DisplayFor(modelItem => item.LastUpdatedTime)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.DeletedTime)
+                @(item.DeletedTime.HasValue ? item.DeletedTime.Value.ToString() : "None")
             </td>
             <td>
                 <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |

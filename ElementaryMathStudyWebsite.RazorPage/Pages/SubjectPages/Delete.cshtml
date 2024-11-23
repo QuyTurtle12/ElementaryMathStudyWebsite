@@ -25,49 +25,31 @@
             @Html.DisplayFor(model => model.Subject.Price)
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.Status)
+            Created By
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.Status)
+            @Model.CreatedByName
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.CreatedBy)
+            Last Updated By
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.CreatedBy)
+            @Model.LastUpdatedByName
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.LastUpdatedBy)
+            Deleted By
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.LastUpdatedBy)
+            @Model.DeletedByName
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.DeletedBy)
+            Deleted Time
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.DeletedBy)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.CreatedTime)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.CreatedTime)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.LastUpdatedTime)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.LastUpdatedTime)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.DeletedTime)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.DeletedTime)
+            @(Model.Subject.DeletedTime.HasValue ? Model.Subject.DeletedTime.Value.ToString() : "None")
         </dd>
     </dl>
-    
+
     <form method="post">
         <input type="hidden" asp-for="Subject.Id" />
         <input type="submit" value="Delete" class="btn btn-danger" /> |

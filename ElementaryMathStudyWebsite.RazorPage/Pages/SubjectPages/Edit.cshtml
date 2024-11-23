@@ -2,65 +2,42 @@
 @model ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages.EditModel
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edit Subject";
 }
 
-<h1>Edit</h1>
-
-<h4>Subject</h4>
+<h1>Edit Subject</h1>
 <hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <form method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Subject Name -->
             <div class="form-group">
                 <label asp-for="Subject.SubjectName" class="control-label"></label>
                 <input asp-for="Subject.SubjectName" class="form-control" />
                 <span asp-validation-for="Subject.SubjectName" class="text-danger"></span>
             </div>
+
+            <!-- Price -->
             <div class="form-group">
                 <label asp-for="Subject.Price" class="control-label"></label>
                 <input asp-for="Subject.Price" class="form-control" />
                 <span asp-validation-for="Subject.Price" class="text-danger"></span>
             </div>
+
+            <!-- Status -->
             <div class="form-group form-check">
                 <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Subject.Status" /> @Html.DisplayNameFor(model => model.Subject.Status)
+                    <input class="form-check-input" asp-for="Subject.Status" />
+                    @Html.DisplayNameFor(model => model.Subject.Status)
                 </label>
             </div>
+
+            <!-- Submit -->
             <input type="hidden" asp-for="Subject.Id" />
             <div class="form-group">
-                <label asp-for="Subject.CreatedBy" class="control-label"></label>
-                <input asp-for="Subject.CreatedBy" class="form-control" />
-                <span asp-validation-for="Subject.CreatedBy" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Subject.LastUpdatedBy" class="control-label"></label>
-                <input asp-for="Subject.LastUpdatedBy" class="form-control" />
-                <span asp-validation-for="Subject.LastUpdatedBy" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Subject.DeletedBy" class="control-label"></label>
-                <input asp-for="Subject.DeletedBy" class="form-control" />
-                <span asp-validation-for="Subject.DeletedBy" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Subject.CreatedTime" class="control-label"></label>
-                <input asp-for="Subject.CreatedTime" class="form-control" />
-                <span asp-validation-for="Subject.CreatedTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Subject.LastUpdatedTime" class="control-label"></label>
-                <input asp-for="Subject.LastUpdatedTime" class="form-control" />
-                <span asp-validation-for="Subject.LastUpdatedTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Subject.DeletedTime" class="control-label"></label>
-                <input asp-for="Subject.DeletedTime" class="form-control" />
-                <span asp-validation-for="Subject.DeletedTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+                <input type="submit" value="Save Changes" class="btn btn-primary" />
             </div>
         </form>
     </div>
@@ -71,5 +48,7 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

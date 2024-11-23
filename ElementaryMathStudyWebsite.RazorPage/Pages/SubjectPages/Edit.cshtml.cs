@@ -1,21 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Services;
+using ElementaryMathStudyWebsite.Services.Service;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
 {
     public class EditModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly DatabaseContext _context;
 
-        public EditModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public EditModel(DatabaseContext context)
         {
             _context = context;
         }
@@ -30,17 +30,16 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
                 return NotFound();
             }
 
-            var subject =  await _context.Subject.FirstOrDefaultAsync(m => m.Id == id);
+            var subject = await _context.Subject.FirstOrDefaultAsync(m => m.Id == id);
             if (subject == null)
             {
                 return NotFound();
             }
+
             Subject = subject;
             return Page();
         }
 
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
@@ -48,7 +47,22 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
                 return Page();
             }
 
-            _context.Attach(Subject).State = EntityState.Modified;
+            var existingSubject = await _context.Subject.FindAsync(Subject.Id);
+            if (existingSubject == null)
+            {
+                return NotFound();
+            }
+
+            // Update fields
+            existingSubject.SubjectName = Subject.SubjectName;
+            existingSubject.Price = Subject.Price;
+            existingSubject.Status = Subject.Status;
+
+            // Update audit fields
+            // Get the current logged-in user's ID
+            string currentUserId = HttpContext.Session.GetString("user_id") ?? "Unknown";
+            existingSubject.LastUpdatedBy = currentUserId.ToUpper();
+            existingSubject.LastUpdatedTime = DateTime.UtcNow;
 
             try
             {
