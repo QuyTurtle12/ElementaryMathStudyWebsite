@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 {
@@ -18,7 +18,6 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
         {
             _context = context;
         }
-
         public IList<Chapter> Chapter { get;set; } = default!;
 
         public async Task OnGetAsync()
@@ -26,6 +25,8 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             Chapter = await _context.Chapter
                 .Include(c => c.Quiz)
                 .Include(c => c.Subject).ToListAsync();
+
+
         }
     }
 }
