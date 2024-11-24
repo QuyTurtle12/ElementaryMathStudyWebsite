@@ -2,83 +2,93 @@
 @model ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages.IndexModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Subjects";
+    var canManageSubjects = Model.UserRole == "Admin" || Model.UserRole == "Content Manager";
 }
 
-<h1>Index</h1>
+<h1>Subjects</h1>
 
-<p>
-    <a asp-page="Create">Create New</a>
-</p>
-<table class="table">
+@if (canManageSubjects)
+{
+    <p>
+        <a asp-page="Create" class="btn btn-primary">Create New</a>
+    </p>
+}
+
+<!-- Search Section -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <label for="search-name" class="form-label">Subject Name</label>
+        <input type="text" id="search-name" class="form-control" placeholder="Search by name" value="@Model.SearchName">
+    </div>
+    <div class="col-md-4">
+        <label for="price-range" class="form-label">Price Range</label>
+        <div class="input-group">
+            <input type="number" id="min-price" class="form-control" placeholder="Min" value="@Model.MinPrice" />
+            <input type="number" id="max-price" class="form-control" placeholder="Max" value="@Model.MaxPrice" />
+        </div>
+    </div>
+    <div class="col-md-4 align-self-end">
+        <button id="search-btn" class="btn btn-primary">Search</button>
+    </div>
+</div>
+
+<!-- Subjects Table -->
+<table class="table table-striped">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].SubjectName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].Price)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].Status)
-            </th>
-            <th>
-                @Html.DisplayName("Created By")
-            </th>
-            <th>
-                @Html.DisplayName("Last Updated By")
-            </th>
-            <th>
-                @Html.DisplayName("Deleted By")
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].CreatedTime)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].LastUpdatedTime)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].DeletedTime)
-            </th>
-            <th></th>
+            <th>Subject Name</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Created By</th>
+            <th>Last Updated By</th>
+            <th>Deleted By</th>
+            <th>Created Time</th>
+            <th>Last Updated Time</th>
+            <th>Deleted Time</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model.Subject) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.SubjectName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Price)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedBy)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LastUpdatedBy)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DeletedBy)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedTime)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LastUpdatedTime)
-            </td>
-            <td>
-                @(item.DeletedTime.HasValue ? item.DeletedTime.Value.ToString() : "None")
-            </td>
-            <td>
-                <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var subject in Model.Subject)
+        {
+            <tr>
+                <td>@subject.SubjectName</td>
+                <td>@subject.Price</td>
+                <td>@subject.Status</td>
+                <td>@(subject.CreatedBy ?? "Unknown")</td>
+                <td>@(subject.LastUpdatedBy ?? "Unknown")</td>
+                <td>@(subject.DeletedBy ?? "Unknown")</td>
+                <td>@subject.CreatedTime.ToString("g")</td>
+                <td>@subject.LastUpdatedTime.ToString("g")</td>
+                <td>@(subject.DeletedTime.HasValue ? subject.DeletedTime.Value.ToString("g") : "N/A")</td>
+                <td>
+                    <a asp-page="./Details" asp-route-id="@subject.Id" class="btn btn-info btn-sm">Details</a>
+                    @if (canManageSubjects)
+                    {
+                        <a asp-page="./Edit" asp-route-id="@subject.Id" class="btn btn-warning btn-sm">Edit</a>
+                        <a asp-page="./Delete" asp-route-id="@subject.Id" class="btn btn-danger btn-sm">Delete</a>
+                    }
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
+
+@section Scripts {
+    <script>
+        document.getElementById("search-btn").addEventListener("click", function () {
+            const name = document.getElementById("search-name").value;
+            const minPrice = document.getElementById("min-price").value;
+            const maxPrice = document.getElementById("max-price").value;
+
+            const queryParams = new URLSearchParams({
+                searchName: name,
+                minPrice: minPrice,
+                maxPrice: maxPrice
+            });
+
+            window.location.href = `?${queryParams.toString()}`;
+        });
+    </script>
+}

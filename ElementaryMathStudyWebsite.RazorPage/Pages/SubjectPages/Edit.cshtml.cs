@@ -47,6 +47,13 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
                 return Page();
             }
 
+            // Additional server-side validation
+            if (Subject.Price <= 0)
+            {
+                ModelState.AddModelError("Subject.Price", "Price must be a positive integer.");
+                return Page();
+            }
+
             var existingSubject = await _context.Subject.FindAsync(Subject.Id);
             if (existingSubject == null)
             {

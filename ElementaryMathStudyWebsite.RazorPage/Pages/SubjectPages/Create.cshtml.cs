@@ -35,6 +35,13 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
                 return Page();
             }
 
+            // Additional server-side validation
+            if (Subject.Price <= 0)
+            {
+                ModelState.AddModelError("Subject.Price", "Price must be a positive integer.");
+                return Page();
+            }
+
             // Perform auditing
             await AuditFields(Subject, isCreating: true);
 
@@ -44,6 +51,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
 
             return RedirectToPage("./Index");
         }
+
 
         private async Task AuditFields(BaseEntity entity, bool isCreating = false)
         {
