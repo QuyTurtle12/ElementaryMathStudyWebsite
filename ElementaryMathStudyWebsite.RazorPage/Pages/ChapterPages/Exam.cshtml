@@ -1,4 +1,4 @@
-﻿@page "{id:guid}"
+﻿@page "/Exam/{quizId}/{subjectId}"
 @model ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages.ExamModel
 
 @{
@@ -7,6 +7,18 @@
 
 <h1>Exam</h1>
 
+@if (TempData["AlertMessage"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        @TempData["AlertMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div>
+        <a asp-page="Index">Back to List</a>
+    </div>
+}
+else
+{ 
 <form method="post">
     <input type="hidden" asp-for="QuizId" />
 
@@ -39,7 +51,7 @@
 
     <button type="submit" class="btn btn-primary mt-2">Finish</button>
 </form>
-
+}
 @functions {
     // Method to format the question content
     public static string FormatQuestionContext(string context)

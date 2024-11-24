@@ -25,19 +25,37 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 
         public IList<Question> Questions { get; set; } = default!;
 
-        public async Task<IActionResult> OnGetAsync(string id)
+        public async Task<IActionResult> OnGetAsync(string quizId, string subjectId)
         {
-            QuizId = id;
+            var userId = HttpContext.Session.GetString("user_id");
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["AlertMessage"] = "You must be logged in to access the exam.";
+                return Page();
+            }
 
-            // Fetch questions and options for the quiz using GUID
+            // Check if the user has access to this subject
+            var hasAccess = await _context.OrderDetail
+                .AnyAsync(od => od.StudentId == userId && od.SubjectId == subjectId);
+
+            if (!hasAccess)
+            {
+                TempData["AlertMessage"] = "You do not have access to this chapter or exam.";
+                return Page();
+            }
+
+            QuizId = quizId;
+
+            // Fetch questions and options for the quiz
             Questions = await _context.Question
-                .Where(q => q.QuizId == id)
+                .Where(q => q.QuizId == quizId)
                 .Include(q => q.Options)
                 .ToListAsync();
 
             if (Questions == null || !Questions.Any())
             {
-                return NotFound("No questions found for the specified quiz.");
+                TempData["AlertMessage"] = "No questions found for the specified quiz.";
+                return Page();
             }
 
             return Page();
@@ -123,12 +141,29 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             var totalPoints = (correctAnswersCount / (float)totalQuestions) * 10;
             var formattedScore = $"{correctAnswersCount}/{totalQuestions}";
 
-            // Store the formatted score and points as strings in TempData
-            TempData["Score"] = formattedScore;
-            TempData["Points"] = totalPoints.ToString("F1"); // Format as string with 1 decimal place
+            // Add progress if the score is above 8
+            if (totalPoints > 8)
+            {
+                var subjectId = Request.Query["subjectId"].ToString(); // Retrieve subjectId from query string
+                if (Guid.TryParse(subjectId, out Guid parsedSubjectId))
+                {
+                    var progress = new Progress
+                    {
+                        StudentId = userId, // Assuming userId can be converted to Guid
+                        QuizId = QuizId, // Assuming QuizId is stored as string and convertible to Guid
+                        SubjectId = subjectId
+                    };
+
+                    _context.Progress.AddRange(progress);
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+                // Store the formatted score and points as strings in TempData
+                TempData["Score"] = formattedScore;
+                TempData["Points"] = totalPoints.ToString("F1"); // Format as string with 1 decimal place
 
             return RedirectToPage("./ExamResult", new { score = formattedScore });
         }
-
     }
 }
