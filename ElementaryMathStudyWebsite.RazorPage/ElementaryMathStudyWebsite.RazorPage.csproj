@@ -35,4 +35,11 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Contract.UseCases\ElementaryMathStudyWebsite.Contract.UseCases.csproj" />
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Core\ElementaryMathStudyWebsite.Core.csproj" />
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Infrastructure\ElementaryMathStudyWebsite.Infrastructure.csproj" />
+    <ProjectReference Include="..\ElementaryMathStudyWebsite.Services\ElementaryMathStudyWebsite.Services.csproj" />
+  </ItemGroup>
+
 </Project>
