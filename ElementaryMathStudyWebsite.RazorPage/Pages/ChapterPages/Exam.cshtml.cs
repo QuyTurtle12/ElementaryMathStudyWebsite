@@ -48,33 +48,68 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             var userId = HttpContext.Session.GetString("user_id");
             if (string.IsNullOrEmpty(userId))
             {
-                // Redirect to an Unauthorized page or show an error message
                 ModelState.AddModelError(string.Empty, "You must be logged in to take the exam.");
                 return Page();
             }
+
+            // Fetch questions again since Questions is not persisted between requests
+            Questions = await _context.Question
+                .Where(q => q.QuizId == QuizId)
+                .Include(q => q.Options)
+                .ToListAsync();
+
+            if (Questions == null || !Questions.Any())
+            {
+                ModelState.AddModelError(string.Empty, "No questions found for the specified quiz.");
+                return Page();
+            }
+
+            // Materialize Question IDs into a list
+            var questionIds = Questions.Select(q => q.Id).ToList();
+
+            // Load user answers for the current quiz into memory
+            var userAnswers = await _context.UserAnswer
+                .Where(ua => ua.UserId == userId && questionIds.Contains(ua.QuestionId))
+                .ToListAsync();
+
+            // Calculate the max attempt number for this user and quiz
+            var maxAttemptNumber = userAnswers.Any()
+                ? userAnswers.Max(ua => ua.AttemptNumber)
+                : 0;
 
             var answers = new List<UserAnswer>();
             var correctAnswersCount = 0;
 
             foreach (var question in Questions)
             {
-                var selectedOptionId = Request.Form[$"Answer_{question.Id}"];
-                if (Guid.TryParse(selectedOptionId, out Guid optionId))
-                {
-                    var option = await _context.Option.FindAsync(optionId);
-                    if (option != null)
-                    {
-                        answers.Add(new UserAnswer
-                        {
-                            UserId = userId,
-                            QuestionId = question.Id,
-                            OptionId = option.Id
-                        });
+                var selectedOptionValue = Request.Form[$"Answer_{question.Id}"];
 
-                        if (option.IsCorrect)
-                        {
-                            correctAnswersCount++;
-                        }
+                // Convert the value to a string
+                var selectedOptionId = selectedOptionValue.FirstOrDefault();
+                if (string.IsNullOrEmpty(selectedOptionId)) // Check if an answer was provided
+                {
+                    ModelState.AddModelError(string.Empty, $"Please answer question {Questions.IndexOf(question) + 1}.");
+                    return Page(); // Reload the page with the error message
+                }
+
+                // Query the database using the string ID
+                var option = await _context.Option
+                    .Where(o => o.Id == selectedOptionId)
+                    .FirstOrDefaultAsync();
+
+                if (option != null)
+                {
+                    answers.Add(new UserAnswer
+                    {
+                        UserId = userId,
+                        QuestionId = question.Id,
+                        OptionId = option.Id,
+                        AttemptNumber = maxAttemptNumber + 1 // Increment the attempt number
+                    });
+
+                    if (option.IsCorrect)
+                    {
+                        correctAnswersCount++;
                     }
                 }
             }
@@ -83,12 +118,17 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             _context.UserAnswer.AddRange(answers);
             await _context.SaveChangesAsync();
 
-            // Calculate score
+            // Calculate and format the score
             var totalQuestions = Questions.Count;
             var totalPoints = (correctAnswersCount / (float)totalQuestions) * 10;
+            var formattedScore = $"{correctAnswersCount}/{totalQuestions}";
 
-            TempData["Score"] = totalPoints;
-            return RedirectToPage("./ExamResult", new { score = totalPoints });
+            // Store the formatted score and points as strings in TempData
+            TempData["Score"] = formattedScore;
+            TempData["Points"] = totalPoints.ToString("F1"); // Format as string with 1 decimal place
+
+            return RedirectToPage("./ExamResult", new { score = formattedScore });
         }
+
     }
 }

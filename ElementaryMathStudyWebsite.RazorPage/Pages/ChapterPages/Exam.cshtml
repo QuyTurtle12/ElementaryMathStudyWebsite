@@ -10,23 +10,36 @@
 <form method="post">
     <input type="hidden" asp-for="QuizId" />
 
-    @foreach (var question in Model.Questions.Select((value, index) => new { value, index }))
+    @if (!ViewData.ModelState.IsValid)
     {
-        <div>
-            <h3 style="display: inline-block;">@(question.index + 1). </h3>
-            <h5 style="display: inline-block; vertical-align: top;">@Html.Raw(FormatQuestionContext(question.value.QuestionContext))</h5>
-            @foreach (var option in question.value.Options)
-            {
-                <div>
-                    <input type="radio" name="Answer_@question.value.Id" value="@option.Id" id="Option_@option.Id" />
-                    <label for="Option_@option.Id">@option.Answer</label>
-                </div>
-            }
-        </div>
+            <div class="alert alert-danger mt-3">
+                <ul>
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                            <li>@error.ErrorMessage</li>
+                }
+                </ul>
+            </div>
     }
 
-    <a asp-page="Create"><button type="submit" class="btn btn-primary mt-2">Finish</button></a>
+    @foreach (var question in Model.Questions.Select((value, index) => new { value, index }))
+    {
+            <div>
+                <h3 style="display: inline-block;">@(question.index + 1). </h3>
+                <h5 style="display: inline-block; vertical-align: top;">@Html.Raw(FormatQuestionContext(question.value.QuestionContext))</h5>
+            @foreach (var option in question.value.Options)
+            {
+                        <div>
+                            <input type="radio" name="Answer_@question.value.Id" value="@option.Id" id="Option_@option.Id" />
+                            <label for="Option_@option.Id">@option.Answer</label>
+                        </div>
+            }
+            </div>
+    }
+
+    <button type="submit" class="btn btn-primary mt-2">Finish</button>
 </form>
+
 @functions {
     // Method to format the question content
     public static string FormatQuestionContext(string context)
