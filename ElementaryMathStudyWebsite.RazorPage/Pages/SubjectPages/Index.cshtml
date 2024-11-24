@@ -90,10 +90,10 @@
 
 @section Scripts {
     <script>
-        document.getElementById("search-btn").addEventListener("click", function () {
+                document.getElementById("search-btn").addEventListener("click", function () {
             const name = document.getElementById("search-name").value;
-            const minPrice = document.getElementById("min-price").value;
-            const maxPrice = document.getElementById("max-price").value;
+            const minPrice = document.getElementById("min-price").value || -1;
+            const maxPrice = document.getElementById("max-price").value || -1;
 
             const queryParams = new URLSearchParams({
                 searchName: name,
@@ -103,5 +103,6 @@
 
             window.location.href = `?${queryParams.toString()}`;
         });
+
     </script>
 }
