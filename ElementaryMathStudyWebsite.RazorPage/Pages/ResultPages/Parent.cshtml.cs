@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Core.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.ResultPages
 {
+    [Authorize(Policy = "Parent")]
     public class ParentModel : PageModel
     {
         private readonly IAppUserServices _userService;
@@ -27,12 +22,15 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ResultPages
 
         public BasePaginatedList<ResultViewDto> Results { get; set; } = default!;
         static string localChapterOrTopicId { get; set; } = string.Empty;
+        static string localstudentId { get; set; } = string.Empty;
 
         public async Task<IActionResult> OnGetAsync(string studentId, string chapterOrTopicId, int pageNumber = 1, int pageSize = 5)
         {
-            User? currentUser = await _userService.GetUserByIdAsync(studentId);
+            if (!string.IsNullOrWhiteSpace(studentId)) localstudentId = studentId;
 
-            if (currentUser == null)
+            User? currentStudent = await _userService.GetUserByIdAsync(localstudentId);
+
+            if (currentStudent == null)
             {
                 return RedirectToPage("/AccessDenied");
             }
@@ -41,7 +39,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ResultPages
 
             string quizId = await _resultService.GetQuizIdByChapterOrTopicId(localChapterOrTopicId);
 
-            Results = await _resultService.GetStudentResultListAsync(currentUser, quizId, pageNumber, pageSize);
+            Results = await _resultService.GetStudentResultListAsync(currentStudent, quizId, pageNumber, pageSize);
 
             return Page();
         }

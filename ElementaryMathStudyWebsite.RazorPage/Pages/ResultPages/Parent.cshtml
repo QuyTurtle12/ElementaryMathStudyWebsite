@@ -58,13 +58,13 @@
 <div class="pagination">
     @if (Model.Results.CurrentPage > 1)
     {
-        <a asp-page="./Student" asp-route-pageNumber="@(Model.Results.CurrentPage - 1)">Trước</a>
+        <a asp-page="./Parent" asp-route-pageNumber="@(Model.Results.CurrentPage - 1)">Trước</a>
     }
 
     <span>Page @Model.Results.CurrentPage of @Model.Results.TotalPages</span>
 
     @if (Model.Results.CurrentPage < Model.Results.TotalPages)
     {
-        <a asp-page="./Student" asp-route-pageNumber="@(Model.Results.CurrentPage + 1)">Sau</a>
+        <a asp-page="./Parent" asp-route-pageNumber="@(Model.Results.CurrentPage + 1)">Sau</a>
     }
 </div>
