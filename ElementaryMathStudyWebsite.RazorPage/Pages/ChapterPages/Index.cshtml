@@ -2,113 +2,64 @@
 @model ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages.IndexModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Trang chủ";
 }
-<h1>Index</h1>
-
-@* <p>
-    <a asp-page="Create">Create New</a>
-</p> *@
-
+<h1>Trang chủ</h1>
 <form method="get">
-    <div class="form-group">
-        <label for="searchKeyword">Search Chapter:</label>
-        <input type="text" id="searchKeyword" name="SearchKeyword" value="@Model.SearchKeyword" class="form-control" placeholder="Enter keyword..." />
-        <button type="submit" class="btn btn-primary mt-2">Search</button>
+    <div class="form-group d-flex align-items-center gap-2">
+        <div class="col-4">
+            <input type="text" 
+                   id="searchKeyword" 
+                   name="SearchKeyword" 
+                   value="@Model.SearchKeyword" 
+                   class="form-control" 
+                   placeholder="Enter keyword..." />
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-search"></i> Search
+        </button>
     </div>
 </form>
+<div class="mb-3 mt-3">
+    <a asp-page="Create" class="btn btn-success">
+        <i class="fas fa-plus"></i> Tạo mới
+    </a>
+</div>
 
 <table class="table">
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Chapter[0].Number)
+                Số thứ tự
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Chapter[0].ChapterName)
+                Tên chương
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Chapter[0].Status)
+                Tên câu hỏi
             </th>
-            @* <th>
-            @Html.DisplayNameFor(model => model.Chapter[0].Subject)
-            </th> *@
-            <th>
-                @Html.DisplayNameFor(model => model.Chapter[0].QuizName)
-            </th>
-            @* <th>
-            @Html.DisplayNameFor(model => model.Chapter[0].CreatedBy)
-            </th>
-            <th>
-            @Html.DisplayNameFor(model => model.Chapter[0].LastUpdatedBy)
-            </th>
-            <th>
-            @Html.DisplayNameFor(model => model.Chapter[0].DeletedBy)
-            </th>
-            <th>
-            @Html.DisplayNameFor(model => model.Chapter[0].CreatedTime)
-            </th>
-            <th>
-            @Html.DisplayNameFor(model => model.Chapter[0].LastUpdatedTime)
-            </th>
-            <th>
-            @Html.DisplayNameFor(model => model.Chapter[0].DeletedTime)
-            </th> *@
-            <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.Chapter)
+        @foreach (var item in Model.Chapter.OrderBy(c => c.Number))
         {
             <tr>
+                <td>@Html.DisplayFor(modelItem => item.Number)</td>
+                <td>@Html.DisplayFor(modelItem => item.ChapterName)</td>
+                <td>@Html.DisplayFor(modelItem => item.QuizName)</td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.Number)
+                    <div class="btn-group" role="group">
+                        <a asp-page="./Edit" asp-route-id="@item.Id" class="btn btn-warning me-2">
+                            <i class="fas fa-edit"></i> Chỉnh sửa
+                        </a>
+                        <a asp-page="./Details" asp-route-id="@item.Id" class="btn btn-info me-2">
+                            <i class="fas fa-info-circle"></i> Chi tiết
+                        </a>
+                        <a asp-page="./Delete" asp-route-id="@item.Id" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Xóa
+                        </a>
+                    </div>
                 </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.ChapterName)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Status)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.QuizName)
-                </td>
-                @* <td>
-            @Html.DisplayFor(modelItem => item.SubjectId)
-            </td> *@
-                @* <td>
-            @if (item.Quiz != null)
-            {
-            @Html.DisplayFor(modelItem => item.Quiz.QuizName)
-            }
-            else
-            {
-            <span>N/A</span>
-            }
-            </td> *@
-                @* <td>
-            @Html.DisplayFor(modelItem => item.CreatedBy)
-            </td>
-            <td>
-            @Html.DisplayFor(modelItem => item.LastUpdatedBy)
-            </td>
-            <td>
-            @Html.DisplayFor(modelItem => item.DeletedBy)
-            </td>
-            <td>
-            @Html.DisplayFor(modelItem => item.CreatedTime)
-            </td>
-            <td>
-            @Html.DisplayFor(modelItem => item.LastUpdatedTime)
-            </td>
-            <td>
-            @Html.DisplayFor(modelItem => item.DeletedTime)
-            </td>
-            <td>
-            <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
-            <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
-            <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
-            </td> *@
             </tr>
         }
     </tbody>
@@ -125,27 +76,3 @@
         <a asp-page="./Index" asp-route-SearchKeyword="@Model.SearchKeyword" asp-route-pageNumber="@(Model.CurrentPage + 1)" class="btn btn-secondary">Next</a>
     }
 </div>
-
-@functions {
-    public string HtmlToPlainText(string htmlContent)
-    {
-        if (string.IsNullOrWhiteSpace(htmlContent))
-            return string.Empty;
-
-        string plainText = System.Net.WebUtility.HtmlDecode(htmlContent);
-        plainText = plainText.Replace("<p>", "").Replace("</p>", "\n");
-        plainText = System.Text.RegularExpressions.Regex.Replace(plainText, @"\*(.*?)\*", "<b>$1</b>");
-        plainText = plainText.Replace("\n", "<br/>");
-
-        return plainText;
-    }
-}
-
-<style>
-    .wrap-text {
-        word-wrap: break-word; /* Allows breaking long words to the next line */
-        word-break: break-word; /* Ensures long strings break properly */
-        max-width: 300px; /* Optional: Set a max width for better layout control */
-        white-space: normal; /* Ensures content wraps to the next line */
-    }
-</style>

@@ -57,21 +57,21 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             CurrentPage = PageNumber;
 
             //Fetch paginated results
-           Chapter = await query
-               .Skip((PageNumber - 1) * PageSize)
-               .Take(PageSize)
-               .Select(u => new ChapterViewDto
-               {
-                   Id = u.Id,
-                   Number = u.Number,
-                   ChapterName = u.ChapterName,
-                   Status = u.Status,
-                   SubjectId = u.SubjectId,
-                   SubjectName = u.Subject!.SubjectName,
-                   QuizId = u.QuizId,
-                   QuizName = u.Quiz!.QuizName
-               })
-               .ToListAsync();
+            Chapter = await query
+                .Skip((PageNumber - 1) * PageSize)
+                .Take(PageSize)
+                .Select(u => new ChapterViewDto
+                {
+                    Id = u.Id,
+                    Number = u.Number,
+                    ChapterName = u.ChapterName,
+                    Status = u.Status,
+                    SubjectId = u.SubjectId,
+                    SubjectName = u.Subject!.SubjectName,
+                    QuizId = u.QuizId,
+                    QuizName = u.Quiz!.QuizName
+                })
+                .ToListAsync();
 
             return Page();
         }

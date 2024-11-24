@@ -26,7 +26,6 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
                 .Include(c => c.Quiz)
                 .Include(c => c.Subject).ToListAsync();
 
-
         }
     }
 }

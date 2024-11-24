@@ -21,6 +21,10 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 
         [BindProperty]
         public Chapter Chapter { get; set; } = default!;
+        public string SubjectName { get; set; } = default!;
+        public string QuizName { get; set; } = default!;
+        public string CreatedByName { get; set; } = default!;
+        public string LastUpdatedByName { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -29,16 +33,26 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
                 return NotFound();
             }
 
-            var chapter = await _context.Chapter.FirstOrDefaultAsync(m => m.Id == id);
+            var chapter = await _context.Chapter
+                .Include(c => c.Subject)
+                .Include(c => c.Quiz)
+                .FirstOrDefaultAsync(m => m.Id == id);
 
             if (chapter == null)
             {
                 return NotFound();
             }
-            else
-            {
-                Chapter = chapter;
-            }
+
+            Chapter = chapter;
+            SubjectName = chapter.Subject?.SubjectName ?? "";
+            QuizName = chapter.Quiz?.QuizName ?? "";
+
+            var createdByUser = await _context.User.FindAsync(chapter.CreatedBy);
+            CreatedByName = createdByUser?.FullName ?? "";
+
+            var lastUpdatedByUser = await _context.User.FindAsync(chapter.LastUpdatedBy);
+            LastUpdatedByName = lastUpdatedByUser?.FullName ?? "";
+
             return Page();
         }
 

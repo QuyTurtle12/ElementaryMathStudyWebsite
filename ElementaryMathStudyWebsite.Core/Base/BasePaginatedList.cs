@@ -39,5 +39,10 @@ namespace ElementaryMathStudyWebsite.Core.Base
         {
             throw new NotImplementedException();
         }
+
+        public static implicit operator BasePaginatedList<T>(BasePaginatedList<object> v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
