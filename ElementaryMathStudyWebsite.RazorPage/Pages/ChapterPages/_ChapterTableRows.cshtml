@@ -1,0 +1,39 @@
+@model ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages.IndexModel
+@{
+    var isFromSubject = !string.IsNullOrEmpty(Model.SubjectId);
+}
+
+@foreach (var item in Model.Chapters)
+{
+    <tr>
+        <td>@item.Number</td>
+        <td>@item.ChapterName</td>
+        @if (!isFromSubject)
+        {
+            <td>
+                <a asp-page="./Index" 
+                   asp-route-subjectId="@item.SubjectId" 
+                   class="text-decoration-none">
+                    @item.SubjectName
+                </a>
+            </td>
+        }
+        <td>@item.QuizName</td>
+        @if (!isFromSubject)
+        {
+            <td>
+                <div class="btn-group" role="group">
+                    <a asp-page="./Edit" asp-route-id="@item.Id" class="btn btn-warning me-2">
+                        <i class="fas fa-edit"></i> Chỉnh sửa
+                    </a>
+                    <a asp-page="./Details" asp-route-id="@item.Id" class="btn btn-info me-2">
+                        <i class="fas fa-info-circle"></i> Chi tiết
+                    </a>
+                    <a asp-page="./Delete" asp-route-id="@item.Id" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Xóa
+                    </a>
+                </div>
+            </td>
+        }
+    </tr>
+}
