@@ -1,5 +1,6 @@
 ﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto
 {
+    using global::ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
     using System.ComponentModel.DataAnnotations;
     using System.Reflection;
 
@@ -49,13 +50,16 @@
         [AtLeastOneFieldRequired]
         public class RequestUpdateProfileDto
         {
+            [RegularExpression(@"^\S.*$", ErrorMessage = "Full name cannot be empty or whitespace.")]
             public string? FullName { get; set; }
 
+            [RegularExpression(@"^0\d{9,10}$", ErrorMessage = "Phone number must start with '0' and be 10 to 11 digits.")]
             public string? PhoneNumber { get; set; }
 
+            [GenderValidation(ErrorMessage = "Gender must be Male, Female, or Other.")]
             public string? Gender { get; set; }
 
-            public string? Username { get; set; }
+            //public string? Username { get; set; }
 
             // Password is optional
             // public string? Password { get; set; } // Optional, only if you want to update the password
