@@ -208,6 +208,45 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return new BasePaginatedList<QuestionViewDto>(questionDtos, totalQuestionsCount, pageNumber, pageSize);
         }
 
+        // Get questions with pagination
+        public async Task<BasePaginatedList<QuestionViewDto>> GetQuestionsByQuizIdAsync(string id, int pageNumber, int pageSize)
+        {
+            if (pageNumber <= 0)
+            {
+                throw new BaseException.BadRequestException("invalid_page_number", "Page number must be greater than 0.");
+            }
+
+            if (pageSize <= 0)
+            {
+                throw new BaseException.BadRequestException("invalid_page_size", "Page size must be greater than 0.");
+            }
+
+            IQueryable<Question> query = _unitOfWork.GetRepository<Question>().Entities
+                .Where(q => q.QuizId == id && string.IsNullOrWhiteSpace(q.DeletedBy)) 
+                .Include(q => q.Quiz); 
+
+            // Get the total count of questions for pagination
+            int totalQuestionsCount = await query.CountAsync();
+
+            // Fetch the paginated questions
+            List<Question> paginatedQuestions = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Check if there are any results after pagination
+            if (!paginatedQuestions.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "No questions found for the given page.");
+            }
+
+            // Use AutoMapper to map questions to QuestionViewDto
+            List<QuestionViewDto> questionDtos = _mapper.Map<List<QuestionViewDto>>(paginatedQuestions);
+
+            // Return paginated results
+            return new BasePaginatedList<QuestionViewDto>(questionDtos, totalQuestionsCount, pageNumber, pageSize);
+        }
+
         //=============================================================================================================
 
         // Method to add one or more questions

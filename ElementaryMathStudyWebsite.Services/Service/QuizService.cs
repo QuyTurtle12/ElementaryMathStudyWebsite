@@ -24,29 +24,35 @@ namespace ElementaryMathStudyWebsite.Services.Service
             _mapper = mapper;
         }
 
-        // Get All Quiz with full properties
+        // Get All Quizzes exist without deleted
         public async Task<List<QuizMainViewDto>> GetAllQuizzesAsync()
         {
-            // Query all quizzes excluding deleted ones
-            List<Quiz> quizzes = await GetQuizzesAsync();
+            // Query all quizzes, excluding deleted ones
+            List<Quiz> quizzes = await _unitOfWork.GetRepository<Quiz>()
+                .GetEntitiesWithCondition(q => string.IsNullOrWhiteSpace(q.DeletedBy))
+                .ToListAsync();
 
-            if (quizzes == null)
-                throw new BaseException.NotFoundException("not_found", $"Quizzes not found.");
+            // If no quizzes are found, throw an exception
+            if (quizzes == null || quizzes.Count == 0)
+                throw new BaseException.NotFoundException("not_found", "Quizzes not found.");
 
-            // Map quizzes to QuizMainViewDto
-            List<QuizMainViewDto> quizDtos = _mapper.Map<List<QuizMainViewDto>>(quizzes);
+            // Map quizzes to DTOs, including user information for creators and last-updated users
+            List<QuizMainViewDto> quizDtos = await MapQuizzesToDto(quizzes);
 
-            // Enrich DTOs with additional information
-            await EnrichDtosAsync(quizDtos, quizzes);
-
+            // Return the mapped quiz DTOs
             return quizDtos;
         }
 
         // Get Quiz by its quizId
         public async Task<QuizMainViewDto> GetQuizByQuizIdAsync(string quizId)
         {
-            // Fetch the quiz by its Id
-            Quiz? quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizId);
+            // Fetch the quiz by its Id using Where
+            Quiz? quiz = await _unitOfWork.GetRepository<Quiz>().Entities
+                .Where(q => q.Id == quizId)
+                .Include(q => q.Chapter)
+                .Include(q => q.Topic)
+                .FirstOrDefaultAsync();
+
 
             // Check if quiz exists or has been deleted
             if (quiz == null || !string.IsNullOrWhiteSpace(quiz.DeletedBy))
@@ -54,13 +60,13 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.NotFoundException("not_found", $"Quiz ID {quizId} not found");
             }
 
-            // Map the Quiz entity to QuizMainViewDto
-            QuizMainViewDto dto = _mapper.Map<QuizMainViewDto>(quiz);
+            // Create a list with the single quiz since the MapQuizzesToDto method works with a list of quizzes
+            List<Quiz> quizzes = new List<Quiz> { quiz };
 
-            // Enrich the DTO with additional information
-            await EnrichDtoAsync(dto, quiz);
+            // Map the Quiz entity to QuizMainViewDto using the mapping function
+            List<QuizMainViewDto> quizDtos = await MapQuizzesToDto(quizzes);
 
-            return dto; // Return the populated QuizMainViewDto
+            return quizDtos.First(); // Return the populated QuizMainViewDto
         }
 
         // Get quizzes with pagination
@@ -85,6 +91,28 @@ namespace ElementaryMathStudyWebsite.Services.Service
             List<QuizViewDto> paginatedQuizzesDto = quizDtos.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
 
             return new BasePaginatedList<QuizViewDto>(paginatedQuizzesDto, quizDtos.Count, pageNumber, pageSize);
+        }
+        public async Task<BasePaginatedList<QuizMainViewDto>> GetQuizzesMainViewAsync(int pageNumber, int pageSize)
+        {
+            // Query all quizzes excluding deleted ones
+            List<Quiz> allQuizzes = await GetQuizzesAsync();
+
+            if (allQuizzes == null)
+                throw new BaseException.NotFoundException("not_found", $"Quizzes not found.");
+
+            // Use AutoMapper to map quizzes to QuizMainViewDto
+            List<QuizMainViewDto> quizDtos = await MapQuizzesToDto(allQuizzes);
+
+            // If pageNumber or pageSize are 0 or negative, return all quizzes without pagination
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                return new BasePaginatedList<QuizMainViewDto>(quizDtos, quizDtos.Count, 1, quizDtos.Count);
+            }
+
+            // Paginate the list of quizzes
+            List<QuizMainViewDto> paginatedQuizzesDto = quizDtos.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new BasePaginatedList<QuizMainViewDto>(paginatedQuizzesDto, quizDtos.Count, pageNumber, pageSize);
         }
 
         // Search for quizzes where the quiz name contains a specified string
@@ -157,11 +185,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Validate QuizName
             if (string.IsNullOrWhiteSpace(dto.QuizName))
             {
-                throw new BaseException.BadRequestException("Invalid_arguments", "Quizname and cannot be null or empty.");
+                throw new BaseException.NotFoundException("Invalid_arguments", "Quizname and cannot be null or empty.");
             }
 
-            if (dto.Criteria > 10 || dto.Criteria < 0)
-                throw new BaseException.BadRequestException("Invalid_arguments", "Criteria must be less than or equal to 10.");
+            // Validate data
+            if (dto.Criteria <= 0 || dto.Criteria > 10)
+                throw new BaseException.ValidationException("Invalid_arguments", "Criteria must be greater than 0 and less than or equal to 10.");
+
+            if (string.IsNullOrWhiteSpace(dto.QuizName))
+                throw new BaseException.ValidationException("Invalid_arguments", "Quiz name cannot be empty.");
 
             // Get the current user for auditing purposes
             User currentUser = await _userService.GetCurrentUserAsync();
@@ -183,13 +215,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
             await _unitOfWork.SaveAsync();
 
             // Map the newly created quiz to QuizMainViewDto
-            QuizMainViewDto quizDto = _mapper.Map<QuizMainViewDto>(quiz);
-
-            // Enrich the DTO with additional information
-            await EnrichDtoAsync(quizDto, quiz);
+            List<Quiz> quizzes = new List<Quiz> { quiz };
+            List<QuizMainViewDto> quizDtos = await MapQuizzesToDto(quizzes);
 
             // Return the created quiz DTO
-            return quizDto;
+            return quizDtos.First();
         }
 
         // Update an existing quiz
@@ -201,10 +231,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Validate data
             if (dto.Criteria <= 0 || dto.Criteria > 10)
-                throw new BaseException.BadRequestException("Invalid_arguments", "Criteria must be greater than 0 and less than or equal to 10.");
+                throw new BaseException.ValidationException("Invalid_arguments", "Criteria must be greater than 0 and less than or equal to 10.");
 
             if (string.IsNullOrWhiteSpace(dto.QuizName))
-                throw new BaseException.NotFoundException("not_found", "Quiz name cannot be empty.");
+                throw new BaseException.ValidationException("Invalid_arguments", "Quiz name cannot be empty.");
 
             // Update quiz information with values from the DTO
             quiz.QuizName = dto.QuizName;
@@ -218,14 +248,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Save changes to the database
             await _unitOfWork.SaveAsync();
 
-            // Map the updated quiz to QuizMainViewDto
-            QuizMainViewDto quizDto = _mapper.Map<QuizMainViewDto>(quiz);
+            // Map the newly created quiz to QuizMainViewDto
+            List<Quiz> quizzes = new List<Quiz> { quiz };
+            List<QuizMainViewDto> quizDtos = await MapQuizzesToDto(quizzes);
 
-            // Enrich the DTO with additional information
-            await EnrichDtoAsync(quizDto, quiz);
-
-            // Return the updated quiz DTO
-            return quizDto;
+            // Return the created quiz DTO
+            return quizDtos.First();
         }
 
         // Delete a quiz
@@ -257,6 +285,38 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         //===================================================================================================
 
+        public async Task<List<QuizMainViewDto>> MapQuizzesToDto(IEnumerable<Quiz> quizzes)
+        {
+            // Get distinct IDs of users who created and last updated the quizzes
+            List<string?> createdByIds = quizzes.Select(q => q.CreatedBy).Distinct().ToList();
+            List<string?> lastUpdatedByIds = quizzes.Select(q => q.LastUpdatedBy).Distinct().ToList();
+
+            // Retrieve user information based on the IDs of creators and last-updated users
+            List<User> createdUsers = await _unitOfWork.GetRepository<User>()
+                .GetEntitiesWithCondition(u => createdByIds.Contains(u.Id))
+                .ToListAsync();
+
+            List<User> updatedUsers = await _unitOfWork.GetRepository<User>()
+                .GetEntitiesWithCondition(u => lastUpdatedByIds.Contains(u.Id))
+                .ToListAsync();
+
+            // Check if the user information could not be found and throw an exception if so
+            if (createdUsers == null || updatedUsers == null)
+            {
+                throw new BaseException.NotFoundException("not_found", "Some user information could not be found.");
+            }
+
+            // Map the quiz data to the DTO format and map the creator and updater user information to the DTO
+            List<QuizMainViewDto> quizDtos = _mapper.Map<List<QuizMainViewDto>>(quizzes, opts =>
+            {
+                opts.Items["CreatedUser"] = createdUsers;
+                opts.Items["UpdatedUser"] = updatedUsers;
+            });
+
+            // Return the mapped quiz DTOs
+            return quizDtos;
+        }
+
         // Method to query quizzes from the repository
         private async Task<List<Quiz>> GetQuizzesAsync()
         {
@@ -265,44 +325,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 .Include(q => q.Chapter)
                 .Include(q => q.Topic)
                 .ToListAsync();
-        }
-
-        // Method to enrich DTOs with additional information
-        private async Task EnrichDtosAsync(List<QuizMainViewDto> quizDtos, List<Quiz> quizzes)
-        {
-            foreach (Quiz quiz in quizzes)
-            {
-                QuizMainViewDto? dto = quizDtos.FirstOrDefault(q => q.Id == quiz.Id);
-
-                if (dto != null)
-                {
-                    await EnrichDtoAsync(dto, quiz);
-                }
-                else
-                {
-                    throw new BaseException.NotFoundException("not_found", $"Quiz ID {quiz.Id} not found");
-                }
-            }
-        }
-
-        // Method to enrich a single QuizMainViewDto
-        private async Task EnrichDtoAsync(QuizMainViewDto dto, Quiz quiz)
-        {
-            // Fetch creator and last updated person info
-            User? creator = await _userService.GetUserByIdAsync(quiz.CreatedBy!);
-            User? lastUpdatedPerson = await _userService.GetUserByIdAsync(quiz.LastUpdatedBy!);
-
-            // Assign additional information manually after mapping
-            dto.CreatedBy = quiz.CreatedBy ?? string.Empty;
-            dto.CreatorName = creator?.FullName ?? string.Empty;
-            dto.CreatorPhone = creator?.PhoneNumber ?? string.Empty;
-
-            dto.LastUpdatedBy = quiz.LastUpdatedBy ?? string.Empty;
-            dto.LastUpdatedPersonName = lastUpdatedPerson?.FullName ?? string.Empty;
-            dto.LastUpdatedPersonPhone = lastUpdatedPerson?.PhoneNumber ?? string.Empty;
-
-            dto.CreatedTime = quiz.CreatedTime;
-            dto.LastUpdatedTime = quiz.LastUpdatedTime;
         }
 
         // Method to filter quizzes by chapterId or topicId

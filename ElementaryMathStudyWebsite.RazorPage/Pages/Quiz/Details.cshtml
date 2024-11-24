@@ -1,0 +1,107 @@
+﻿@page
+@using ElementaryMathStudyWebsite.Contract.UseCases.DTOs
+@model ElementaryMathStudyWebsite.RazorPage.Pages.Quiz.DetailsModel
+
+@{
+    ViewData["Title"] = "Details";
+    List<QuestionViewDto> questions = (List<QuestionViewDto>)ViewData["Questions"]!;
+}
+
+<h1 class="text-center mb-5 text-primary">Quiz Details</h1>
+
+<div class="card shadow-lg border-light rounded">
+    <div class="card-body">
+        <h4 class="text-center mb-4">Quiz Information</h4>
+        <hr class="my-3">
+
+        <table class="table table-striped table-hover table-bordered">
+            <tbody>
+                <tr>
+                    <th scope="row" class="font-weight-bold text-primary">Quiz Name</th>
+                    <td>@Html.DisplayFor(model => model.Quiz.QuizName)</td>
+                </tr>
+                <tr>
+                    <th scope="row" class="font-weight-bold text-primary">Criteria</th>
+                    <td>@Html.DisplayFor(model => model.Quiz.Criteria)</td>
+                </tr>
+                <tr>
+                    <th scope="row" class="font-weight-bold text-primary">Created By</th>
+                    <td>@Html.DisplayFor(model => model.Quiz.CreatorName)</td>
+                </tr>
+                <tr>
+                    <th scope="row" class="font-weight-bold text-primary">Last Updated By</th>
+                    <td>@Html.DisplayFor(model => model.Quiz.LastUpdatedPersonName)</td>
+                </tr>
+                <tr>
+
+                    @if (!string.IsNullOrEmpty(Model.Quiz.ChapterName))
+                    {
+                        <th scope="row" class="font-weight-bold text-primary">Chapter</th>
+                        <td>@Model.Quiz.ChapterName</td>
+                    }
+                    else if (!string.IsNullOrEmpty(Model.Quiz.TopicName))
+                    {
+                        <th scope="row" class="font-weight-bold text-primary">Topic</th>
+                        <td>@Model.Quiz.TopicName</td>
+                    }
+                    else
+                    {
+                        <th> scope = "row" class="font-weight-bold text-primary">Chapter or Topic</th>
+                        <td><span>No Chapter or Topic available</span></td>
+                    }
+                </tr>
+                <tr>
+                    <th scope="row" class="font-weight-bold text-primary">Status</th>
+                    <td>
+                        <span class="badge @((Model.Quiz.Status) ? "bg-success" : "bg-danger")">
+                            @((Model.Quiz.Status) ? "Active" : "Inactive")
+                        </span>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+
+        <h5 class="mt-5">List Questions</h5>
+
+        @if (Model.PaginatedQuestions?.Items != null && Model.PaginatedQuestions.Items.Any())
+        {
+            <ul class="list-group">
+                @foreach (var question in Model.PaginatedQuestions.Items)
+                {
+                    <li class="list-group-item">
+                        <strong>@Html.Raw(question.QuestionContext)</strong>
+                    </li>
+                }
+            </ul>
+
+            <!-- Pagination for Questions -->
+            <div class="pagination mt-3">
+                @if (Model.PaginatedQuestions.HasPreviousPage)
+                {
+                    <a asp-page="./Details" asp-route-id="@Model.Quiz.Id" asp-route-pageNumber="@(Model.PaginatedQuestions.CurrentPage - 1)" class="btn btn-outline-primary">
+                        Previous
+                    </a>
+                }
+
+                <span class="mx-2">Page @Model.PaginatedQuestions.CurrentPage of @Model.PaginatedQuestions.TotalPages</span>
+
+                @if (Model.PaginatedQuestions.HasNextPage)
+                {
+                    <a asp-page="./Details" asp-route-id="@Model.Quiz.Id" asp-route-pageNumber="@(Model.PaginatedQuestions.CurrentPage + 1)" class="btn btn-outline-primary">
+                        Next
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <p>No questions available for this quiz.</p>
+        }
+
+
+        <div class="text-center mt-4">
+            <a asp-page="./Index" class="btn btn-secondary btn-lg ml-3 shadow-sm">Back to List</a>
+        </div>
+    </div>
+</div>

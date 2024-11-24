@@ -1,0 +1,47 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.Quiz.CreateModel
+@{
+    ViewData["Title"] = "Create Quiz";
+}
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Create Quiz</h2>
+
+    <!-- Display success or error messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <form method="post">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <!-- Quiz Name -->
+                <div class="form-group mb-3">
+                    <label for="QuizName" class="form-label">Quiz Name</label>
+                    <input type="text" class="form-control" id="QuizName" name="Quiz.QuizName" value="@Model.Quiz.QuizName" required placeholder="Enter quiz name" />
+                </div>
+
+                <!-- Criteria -->
+                <div class="form-group mb-3">
+                    <label for="Criteria" class="form-label">Criteria</label>
+                    <input type="number" class="form-control" id="Criteria" name="Quiz.Criteria" value="@Model.Quiz.Criteria" required placeholder="Enter criteria" />
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-primary">Create Quiz</button>
+                    <a href="@Url.Page("./Index")" class="btn btn-secondary">Back to List</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

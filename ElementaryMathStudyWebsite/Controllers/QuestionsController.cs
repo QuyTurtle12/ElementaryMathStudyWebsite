@@ -53,7 +53,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             return Ok(response);
         }
 
-        [Authorize(Policy = "Admin-Content")]
+        //[Authorize(Policy = "Admin-Content")]
         [HttpPut("update/{id}")]
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Updates a question by its unique identifier.")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> UpdateQuestion(string id, QuestionUpdateDto dto)
