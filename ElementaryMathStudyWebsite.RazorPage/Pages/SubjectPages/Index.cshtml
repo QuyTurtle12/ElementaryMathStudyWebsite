@@ -40,37 +40,50 @@
             <th>Subject Name</th>
             <th>Price</th>
             <th>Status</th>
-            <th>Created By</th>
-            <th>Last Updated By</th>
-            <th>Deleted By</th>
-            <th>Created Time</th>
-            <th>Last Updated Time</th>
-            <th>Deleted Time</th>
+            @if (canManageSubjects)
+            {
+                <th>Created By</th>
+                <th>Last Updated By</th>
+                <th>Created Time</th>
+                <th>Last Updated Time</th>
+            }
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var subject in Model.Subject)
+        @if (canManageSubjects)
         {
-            <tr>
-                <td>@subject.SubjectName</td>
-                <td>@subject.Price</td>
-                <td>@subject.Status</td>
-                <td>@(subject.CreatedBy ?? "Unknown")</td>
-                <td>@(subject.LastUpdatedBy ?? "Unknown")</td>
-                <td>@(subject.DeletedBy ?? "Unknown")</td>
-                <td>@subject.CreatedTime.ToString("g")</td>
-                <td>@subject.LastUpdatedTime.ToString("g")</td>
-                <td>@(subject.DeletedTime.HasValue ? subject.DeletedTime.Value.ToString("g") : "N/A")</td>
-                <td>
-                    <a asp-page="./Details" asp-route-id="@subject.Id" class="btn btn-info btn-sm">Details</a>
-                    @if (canManageSubjects)
-                    {
+            @foreach (var subject in Model.AdminSubjects)
+            {
+                <tr>
+                    <td>@subject.SubjectName</td>
+                    <td>@subject.Price</td>
+                    <td>@subject.Status</td>
+                    <td>@(subject.CreatedBy)</td>
+                    <td>@(subject.LastUpdatedBy)</td>
+                    <td>@(subject.CreatedTime)</td>
+                    <td>@(subject.LastUpdatedTime)</td>
+                    <td>
+                        <a asp-page="./Details" asp-route-id="@subject.Id" class="btn btn-info btn-sm">Details</a>
                         <a asp-page="./Edit" asp-route-id="@subject.Id" class="btn btn-warning btn-sm">Edit</a>
                         <a asp-page="./Delete" asp-route-id="@subject.Id" class="btn btn-danger btn-sm">Delete</a>
-                    }
-                </td>
-            </tr>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            @foreach (var subject in Model.UserSubjects)
+            {
+                <tr>
+                    <td>@subject.SubjectName</td>
+                    <td>@subject.Price</td>
+                    <td>@subject.Status</td>
+                    <td>
+                        <a asp-page="./Details" asp-route-id="@subject.Id" class="btn btn-info btn-sm">Details</a>
+                    </td>
+                </tr>
+            }
         }
     </tbody>
 </table>
