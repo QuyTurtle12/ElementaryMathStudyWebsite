@@ -22,16 +22,8 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.Quiz
         [BindProperty]
         public QuizMainViewDto Quiz { get; set; } = default!;
 
-        [BindProperty(SupportsGet = true)]
-        public int PageNumber { get; set; } = 1;
-
-        [BindProperty(SupportsGet = true)]
-        public int PageSize { get; set; } = 5;
-
-        public QuizViewDto Quizdto { get; set; }
-        public BasePaginatedList<QuestionViewDto> PaginatedQuestions { get; set; }
-
-        public async Task<IActionResult> OnGetAsync(string id)
+        public BasePaginatedList<QuestionViewDto> PaginatedQuestions { get; set; } = new BasePaginatedList<QuestionViewDto>(new List<QuestionViewDto>(), 0, 1, 5);
+        public async Task<IActionResult> OnGetAsync(string id, int pageNumber = 1, int pageSize = 5)
         {
             if (string.IsNullOrEmpty(id))
             {
@@ -42,7 +34,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.Quiz
             Quiz = await _quizService.GetQuizByQuizIdAsync(id);
 
             // Fetch paginated questions for the quiz
-            PaginatedQuestions = await _questionService.GetQuestionsByQuizIdAsync(id, PageNumber, PageSize);
+            PaginatedQuestions = await _questionService.GetQuestionsByQuizIdAsync(id, pageNumber, pageSize);
 
             // If no quiz or questions are found, return NotFound
             if (Quiz == null || PaginatedQuestions == null)

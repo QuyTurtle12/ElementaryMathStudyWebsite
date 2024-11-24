@@ -145,6 +145,38 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return quizDtos; // Return the list of filtered QuizViewDto
         }
+        public async Task<BasePaginatedList<QuizMainViewDto>> SearchQuizzesMainViewByNameAsync(string quizName, int pageNumber, int pageSize)
+        {
+            // Lấy tất cả các quiz (ngoại trừ những quiz đã bị xóa)
+            List<Quiz> quizzes = await GetQuizzesAsync();
+
+            // Kiểm tra nếu danh sách quiz bị null hoặc rỗng
+            if (quizzes == null || !quizzes.Any())
+                throw new BaseException.NotFoundException("not_found", "No quizzes found.");
+
+            // Lọc các quiz chứa tên tương ứng (không phân biệt chữ hoa/thường)
+            List<Quiz> filteredQuizzes = quizzes
+                .Where(q => q.QuizName.Contains(quizName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            // Nếu không có quiz nào phù hợp, ném ngoại lệ
+            if (!filteredQuizzes.Any())
+                throw new BaseException.NotFoundException("not_found", $"No quizzes found matching the name '{quizName}'.");
+
+            // Use AutoMapper to map quizzes to QuizMainViewDto
+            List<QuizMainViewDto> quizDtos = await MapQuizzesToDto(filteredQuizzes);
+
+            // If pageNumber or pageSize are 0 or negative, return all quizzes without pagination
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                return new BasePaginatedList<QuizMainViewDto>(quizDtos, quizDtos.Count, 1, quizDtos.Count);
+            }
+
+            // Paginate the list of quizzes
+            List<QuizMainViewDto> paginatedQuizzesDto = quizDtos.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new BasePaginatedList<QuizMainViewDto>(paginatedQuizzesDto, quizDtos.Count, pageNumber, pageSize);
+        }
 
         // Get a quiz that belongs to a specific chapter or topic (by id conference)
         public async Task<QuizViewDto?> GetQuizByChapterOrTopicIdAsync(string? chapterId, string? topicId)

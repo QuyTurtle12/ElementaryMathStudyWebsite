@@ -50,9 +50,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.ProgressM
                 .ForMember(dest => dest.CreatedTime, opt => opt.MapFrom(src => src.CreatedTime))
                 .ForMember(dest => dest.LastUpdatedTime, opt => opt.MapFrom(src => src.LastUpdatedTime));
 
-
-
-
             CreateMap<Quiz, QuizViewDto>()
                 .ForMember(dest => dest.ChapterName, opt => opt.MapFrom(src => src.Chapter != null ? src.Chapter.ChapterName : string.Empty))
                 .ForMember(dest => dest.TopicName, opt => opt.MapFrom(src => src.Topic != null ? src.Topic.TopicName : string.Empty));

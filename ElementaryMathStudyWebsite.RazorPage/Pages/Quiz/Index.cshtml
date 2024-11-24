@@ -5,6 +5,14 @@
     ViewData["Title"] = "Quiz Index";
 }
 
+@if (TempData["NotFoundMessage"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        @TempData["NotFoundMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="text-primary">Quiz List</h1>
     <a asp-page="Create" class="btn btn-success btn-lg">
@@ -12,6 +20,19 @@
     </a>
 </div>
 
+<!-- Form tìm kiếm -->
+<form method="get" asp-page-handler="SearchByName">
+    <div class="d-flex justify-content-between mb-3">
+        <div class="input-group w-50">
+            <input type="text" class="form-control" name="quizName" placeholder="Search by quiz name" />
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-search"></i> Search
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Hiển thị bảng quiz -->
 <div class="table-responsive">
     <table class="table table-bordered table-hover text-left">
         <thead class="table-dark">
@@ -54,6 +75,7 @@
     </table>
 </div>
 
+<!-- Pagination -->
 <div class="pagination mt-3">
     @if (Model.QuizDtos.HasPreviousPage)
     {
