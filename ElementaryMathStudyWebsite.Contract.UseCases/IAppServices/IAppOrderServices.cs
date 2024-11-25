@@ -41,6 +41,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         Task<BasePaginatedList<OrderAdminViewDto>> GetOrderAdminDtosAsync(int pageNumber, int pageSize);
 
+        Task<OrderAdminViewDto> GetOrderAdminDtoASync(string orderId);
+
         //Task<Order?> GetOrderByOrderIdAsync(string orderId);
     }
 }

@@ -21,10 +21,13 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages
         }
 
         public BasePaginatedList<ProgressViewDto>? Progresses { get; set; } = default!;
+        static string localstudentId { get; set; } = string.Empty;
 
         public async Task<IActionResult> OnGetAsync(string studentId, int pageNumber = 1, int pageSize = 5)
         {
-            User? currentUser = await _userService.GetUserByIdAsync(studentId);
+            if (!string.IsNullOrWhiteSpace(studentId)) localstudentId = studentId;
+
+            User? currentUser = await _userService.GetUserByIdAsync(localstudentId);
 
             if (currentUser == null)
             {

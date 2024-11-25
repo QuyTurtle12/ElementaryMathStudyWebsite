@@ -20,12 +20,19 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages
 
 		public IEnumerable<FinishedChapter>? FinishedChapters { get; set; } = new List<FinishedChapter>();
 
-		public IActionResult OnGet(string studentId, string subjectId)
-		{
-            // Receive student Id from the previous page
-            StudentId = studentId;
+        static string localstudentId { get; set; } = string.Empty;
+        static string localsubjectId { get; set; } = string.Empty;
 
-            (IEnumerable<FinishedTopic> finishedTopics, IEnumerable<FinishedChapter> finishedChapters) = _progressService.GetFinishedTopicsAndChaptersModified(studentId, subjectId);
+        public IActionResult OnGet(string studentId, string subjectId)
+		{
+            // Prevent session delete student Id and subject Id when move to next page
+            if (!string.IsNullOrWhiteSpace(studentId)) localstudentId = studentId;
+            if (!string.IsNullOrWhiteSpace(subjectId)) localsubjectId = subjectId;
+
+            // Receive student Id from the previous page
+            StudentId = localstudentId;
+
+            (IEnumerable<FinishedTopic> finishedTopics, IEnumerable<FinishedChapter> finishedChapters) = _progressService.GetFinishedTopicsAndChaptersModified(localstudentId, localsubjectId);
 
             // Assign the passed collections to the properties
             FinishedTopics = finishedTopics;
