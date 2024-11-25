@@ -1,31 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.ResultPages
 {
     public class IndexModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly IAppUserServices _userService;
 
-        public IndexModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public IndexModel(IAppUserServices userService)
         {
-            _context = context;
+            _userService = userService;
         }
 
         public IList<Result> Result { get;set; } = default!;
 
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
-            Result = await _context.Result
-                .Include(r => r.Quiz)
-                .Include(r => r.Student).ToListAsync();
+            string currentUserId = HttpContext.Session.GetString("user_id")!;
+            User? currentUser = await _userService.GetUserByIdAsync(currentUserId);
+
+            if (currentUser!.Role!.RoleName.Equals("Student"))
+            {
+                return RedirectToPage("ResultPages/Student");
+            }
+            //else if (currentUser!.Role!.RoleName.Equals("Parent"))
+            //{
+            //    return RedirectToPage("/ResultPages/Parent");
+            //}
+
+            return RedirectToPage("/AccessDenied");
         }
+
     }
 }
