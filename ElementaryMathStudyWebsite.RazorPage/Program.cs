@@ -1,3 +1,6 @@
+using ElementaryMathStudyWebsite.Infrastructure.Context;
+using Microsoft.EntityFrameworkCore;
+
 namespace ElementaryMathStudyWebsite.RazorPage
 {
     public class Program
@@ -14,6 +17,7 @@ namespace ElementaryMathStudyWebsite.RazorPage
                 .AddEnvironmentVariables();
 
             // Add services to the container.
+
             builder.Services.AddRazorPages();
 
             builder.Services.AddConfig(builder.Configuration);

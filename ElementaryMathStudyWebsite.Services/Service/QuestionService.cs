@@ -6,6 +6,7 @@ using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
 namespace ElementaryMathStudyWebsite.Services.Service
@@ -78,41 +79,50 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("invalid_question_id", "Question ID cannot be null or empty.");
             }
 
-            // Fetch the question by its Id along with related users
+            // Retrieve the list of questions that are not deleted
             Question? question = await _unitOfWork.GetRepository<Question>().Entities
+                .Where(q => q.Id == questionId)
                 .Include(q => q.Quiz)
-                .FirstOrDefaultAsync(q => q.Id == questionId && string.IsNullOrWhiteSpace(q.DeletedBy));
+                .FirstOrDefaultAsync();
 
-            // Check if the question exists
-            if (question == null)
+            // Check if quiz exists or has been deleted
+            if (question == null || !string.IsNullOrWhiteSpace(question.DeletedBy))
             {
                 throw new BaseException.NotFoundException("not_found", $"Question ID {questionId} not found");
             }
 
-            // Fetch user information for created and last updated users if they exist
-            User? createdUser = null;
-            if (!string.IsNullOrWhiteSpace(question.CreatedBy))
+            List<Question> questions = new List<Question> { question };
+
+            // Get distinct IDs of users who created and last updated the questions
+            List<string?> createdByIds = questions.Select(q => q.CreatedBy).Distinct().ToList();
+            List<string?> lastUpdatedByIds = questions.Select(q => q.LastUpdatedBy).Distinct().ToList();
+
+            // Retrieve user information based on the IDs
+            List<User> createdUsers = await _unitOfWork.GetRepository<User>()
+                .GetEntitiesWithCondition(u => createdByIds.Contains(u.Id))
+                .ToListAsync();
+
+            List<User> updatedUsers = await _unitOfWork.GetRepository<User>()
+                .GetEntitiesWithCondition(u => lastUpdatedByIds.Contains(u.Id))
+                .ToListAsync();
+
+            // Optional: Check if users were found
+            if (createdUsers == null || updatedUsers == null)
             {
-                createdUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(question.CreatedBy);
+                throw new BaseException.NotFoundException("not_found", "Some user information could not be found.");
             }
 
-            User? lastUpdatedUser = null;
-            if (!string.IsNullOrWhiteSpace(question.LastUpdatedBy))
+            // Use AutoMapper to map the Question entities to DTOs
+            List<QuestionMainViewDto> questionDtos = _mapper.Map<List<QuestionMainViewDto>>(questions, opt =>
             {
-                lastUpdatedUser = await _unitOfWork.GetRepository<User>().GetByIdAsync(question.LastUpdatedBy);
-            }
-
-            // Map question to QuestionMainViewDto
-            QuestionMainViewDto dto = _mapper.Map<QuestionMainViewDto>(question, opt =>
-            {
-                // Include created and last updated user information
-                opt.Items["CreatedUsers"] = createdUser;
-                opt.Items["UpdatedUsers"] = lastUpdatedUser;
+                opt.Items["CreatedUsers"] = createdUsers;
+                opt.Items["UpdatedUsers"] = updatedUsers;
             });
 
-            return dto; // Return the QuestionMainViewDto
+            return questionDtos.First(); // Return the QuestionMainViewDto
         }
 
+        //=====================================================================================================================================
         // Search for questions where the question context contains a specified string
         public async Task<List<QuestionViewDto>> SearchQuestionsByContextAsync(string questionContext)
         {
@@ -140,6 +150,51 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return questionDtos;
         }
+        public async Task<BasePaginatedList<QuestionMainViewDto>> SearchQuestionsByContextMainViewAsync(string questionContext, int pageNumber, int pageSize)
+        {
+            // Validate input
+            if (string.IsNullOrWhiteSpace(questionContext))
+            {
+                throw new BaseException.NotFoundException("not_found", "Search term cannot be null or empty.");
+            }
+
+            // Query all questions excluding deleted ones
+            IQueryable<Question> questions = _unitOfWork.GetRepository<Question>().Entities
+                .Where(q => q.QuestionContext.Contains(questionContext) && string.IsNullOrWhiteSpace(q.DeletedBy))
+                .Include(q => q.Quiz);
+
+            // Get distinct IDs of users who created and last updated the questions
+            List<string?> createdByIds = questions.Select(q => q.CreatedBy).Distinct().ToList();
+            List<string?> lastUpdatedByIds = questions.Select(q => q.LastUpdatedBy).Distinct().ToList();
+
+            // Retrieve user information based on the IDs
+            List<User> createdUsers = await _unitOfWork.GetRepository<User>()
+                .GetEntitiesWithCondition(u => createdByIds.Contains(u.Id))
+                .ToListAsync();
+
+            List<User> updatedUsers = await _unitOfWork.GetRepository<User>()
+                .GetEntitiesWithCondition(u => lastUpdatedByIds.Contains(u.Id))
+                .ToListAsync();
+
+            // Get the total count of questions for pagination
+            int totalQuestionsCount = await questions.CountAsync();
+
+            // Check if any questions were found
+            if (questions == null || !questions.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "No questions found matching the specified context.");
+            }
+
+            List<QuestionMainViewDto> questionDtos = _mapper.Map<List<QuestionMainViewDto>>(questions, opt =>
+            {
+                opt.Items["CreatedUsers"] = createdUsers;
+                opt.Items["UpdatedUsers"] = updatedUsers;
+            });
+
+            // Return paginated results
+            return new BasePaginatedList<QuestionMainViewDto>(questionDtos, totalQuestionsCount, pageNumber, pageSize);
+        }
+
 
         // Get all questions that belong to a specific quiz (by quizId)
         public async Task<List<QuestionViewDto>> GetQuestionsByQuizIdAsync(string quizId)
@@ -167,7 +222,101 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return questionDtos;
         }
+        public async Task<BasePaginatedList<QuestionViewDto>> GetQuestionsByQuizIdAsync(string id, int pageNumber, int pageSize)
+        {
+            if (pageNumber <= 0)
+            {
+                throw new BaseException.BadRequestException("invalid_page_number", "Page number must be greater than 0.");
+            }
 
+            if (pageSize <= 0)
+            {
+                throw new BaseException.BadRequestException("invalid_page_size", "Page size must be greater than 0.");
+            }
+
+            IQueryable<Question> query = _unitOfWork.GetRepository<Question>().Entities
+                .Where(q => q.QuizId == id && string.IsNullOrWhiteSpace(q.DeletedBy))
+                .Include(q => q.Quiz);
+
+            // Get the total count of questions for pagination
+            int totalQuestionsCount = await query.CountAsync();
+
+            // Fetch the paginated questions
+            List<Question> paginatedQuestions = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Check if there are any results after pagination
+            if (!paginatedQuestions.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "No questions found for the given page.");
+            }
+
+            // Use AutoMapper to map questions to QuestionViewDto
+            List<QuestionViewDto> questionDtos = _mapper.Map<List<QuestionViewDto>>(paginatedQuestions);
+
+            // Return paginated results
+            return new BasePaginatedList<QuestionViewDto>(questionDtos, totalQuestionsCount, pageNumber, pageSize);
+        }
+        public async Task<BasePaginatedList<QuestionMainViewDto>> GetQuestionsMainViewByQuizIdAsync(string id, int pageNumber, int pageSize)
+        {
+            if (pageNumber <= 0)
+            {
+                throw new BaseException.BadRequestException("invalid_page_number", "Page number must be greater than 0.");
+            }
+
+            if (pageSize <= 0)
+            {
+                throw new BaseException.BadRequestException("invalid_page_size", "Page size must be greater than 0.");
+            }
+
+            IQueryable<Question> query = _unitOfWork.GetRepository<Question>().Entities
+                .Where(q => q.QuizId == id && string.IsNullOrWhiteSpace(q.DeletedBy))
+                .Include(q => q.Quiz);
+
+            // Get distinct IDs of users who created and last updated the questions
+            List<string?> createdByIds = query.Select(q => q.CreatedBy).Distinct().ToList();
+            List<string?> lastUpdatedByIds = query.Select(q => q.LastUpdatedBy).Distinct().ToList();
+
+            // Retrieve user information based on the IDs
+            List<User> createdUsers = await _unitOfWork.GetRepository<User>()
+                .GetEntitiesWithCondition(u => createdByIds.Contains(u.Id))
+                .ToListAsync();
+
+            List<User> updatedUsers = await _unitOfWork.GetRepository<User>()
+                .GetEntitiesWithCondition(u => lastUpdatedByIds.Contains(u.Id))
+                .ToListAsync();
+
+
+            // Get the total count of questions for pagination
+            int totalQuestionsCount = await query.CountAsync();
+
+            // Fetch the paginated questions
+            List<Question> paginatedQuestions = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Check if there are any results after pagination
+            if (!paginatedQuestions.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "No questions found for the given page.");
+            }
+
+            // Use AutoMapper to map the Question entities to DTOs
+            List<QuestionMainViewDto> questionDtos = _mapper.Map<List<QuestionMainViewDto>>(paginatedQuestions, opt =>
+            {
+                opt.Items["CreatedUsers"] = createdUsers;
+                opt.Items["UpdatedUsers"] = updatedUsers;
+            });
+
+
+            // Return paginated results
+            return new BasePaginatedList<QuestionMainViewDto>(questionDtos, totalQuestionsCount, pageNumber, pageSize);
+        }
+
+        //=====================================================================================================================================
         // Get questions with pagination
         public async Task<BasePaginatedList<QuestionViewDto>> GetQuestionsAsync(int pageNumber, int pageSize)
         {
@@ -207,8 +356,63 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Return paginated results
             return new BasePaginatedList<QuestionViewDto>(questionDtos, totalQuestionsCount, pageNumber, pageSize);
         }
+        public async Task<BasePaginatedList<QuestionMainViewDto>> GetQuestionsMainViewAsync(int pageNumber, int pageSize)
+        {
+            if (pageNumber <= 0)
+            {
+                throw new BaseException.BadRequestException("invalid_page_number", "Page number must be greater than 0.");
+            }
 
-        //=============================================================================================================
+            if (pageSize <= 0)
+            {
+                throw new BaseException.BadRequestException("invalid_page_size", "Page size must be greater than 0.");
+            }
+
+            // Query all questions excluding deleted ones
+            IQueryable<Question> query = _unitOfWork.GetRepository<Question>().Entities
+                .Where(q => string.IsNullOrWhiteSpace(q.DeletedBy))
+                .Include(q => q.Quiz);
+
+            // Get distinct IDs of users who created and last updated the questions
+            List<string?> createdByIds = query.Select(q => q.CreatedBy).Distinct().ToList();
+            List<string?> lastUpdatedByIds = query.Select(q => q.LastUpdatedBy).Distinct().ToList();
+
+            // Retrieve user information based on the IDs
+            List<User> createdUsers = await _unitOfWork.GetRepository<User>()
+                .GetEntitiesWithCondition(u => createdByIds.Contains(u.Id))
+                .ToListAsync();
+
+            List<User> updatedUsers = await _unitOfWork.GetRepository<User>()
+                .GetEntitiesWithCondition(u => lastUpdatedByIds.Contains(u.Id))
+                .ToListAsync();
+
+            // Get the total count of questions for pagination
+            int totalQuestionsCount = await query.CountAsync();
+
+            // Fetch the paginated questions
+            List<Question> paginatedQuestions = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Check if there are any results after pagination
+            if (!paginatedQuestions.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", "No questions found for the given page.");
+            }
+
+            // Use AutoMapper to map the Question entities to DTOs
+            List<QuestionMainViewDto> questionDtos = _mapper.Map<List<QuestionMainViewDto>>(paginatedQuestions, opt =>
+            {
+                opt.Items["CreatedUsers"] = createdUsers;
+                opt.Items["UpdatedUsers"] = updatedUsers;
+            });
+
+            // Return paginated results
+            return new BasePaginatedList<QuestionMainViewDto>(questionDtos, totalQuestionsCount, pageNumber, pageSize);
+        }
+
+        //=====================================================================================================================================
 
         // Method to add one or more questions
         public async Task<BaseResponse<string>> AddQuestionAsync(List<QuestionCreateDto> dtos)
@@ -366,5 +570,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return BaseResponse<string>.OkResponse("Question deleted successfully.");
         }
+
     }
 }
