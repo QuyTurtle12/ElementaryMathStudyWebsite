@@ -188,15 +188,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<object>> SearchSubjectAsync(string searchTerm, double lowestPrice,
                     double highestPrice, int pageNumber, int pageSize)
         {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-            {
-                throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
-            }
+            //if (string.IsNullOrWhiteSpace(searchTerm))
+            //{
+            //    throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
+            //}
 
-            if (searchTerm.Length < 2)
-            {
-                throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
-            }
+            //if (searchTerm.Length < 2)
+            //{
+            //    throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
+            //}
 
             var query = _unitOfWork.GetRepository<Subject>().Entities.Where(s => s.Status == true);
 
@@ -223,10 +223,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 List<Subject> allSubjects = await query.ToListAsync();
                 List<SubjectDTO> subjectDtos = _mapper.Map<List<SubjectDTO>>(allSubjects);
 
-                if (subjectDtos.Count == 0)
-                {
-                    throw new BaseException.NotFoundException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
-                }
+                //if (subjectDtos.Count == 0)
+                //{
+                //    throw new BaseException.NotFoundException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
+                //}
 
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
@@ -234,10 +234,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
             BasePaginatedList<Subject> paginatedSubjects = await _unitOfWork.GetRepository<Subject>().GetPagging(query, pageNumber, pageSize);
             List<SubjectDTO> subjectDtosPaginated = _mapper.Map<List<SubjectDTO>>(paginatedSubjects.Items);
 
-            if (subjectDtosPaginated.Count == 0)
-            {
-                throw new BaseException.NotFoundException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
-            }
+            //if (subjectDtosPaginated.Count == 0)
+            //{
+            //    throw new BaseException.NotFoundException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
+            //}
 
             return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count, pageNumber, pageSize);
         }
@@ -245,15 +245,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
         public async Task<BasePaginatedList<object>> SearchSubjectAdminAsync(string searchTerm, double lowestPrice,
                     double highestPrice, bool? status, int pageNumber, int pageSize)
         {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-            {
-                throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
-            }
+            //if (string.IsNullOrWhiteSpace(searchTerm))
+            //{
+            //    throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
+            //}
 
-            if (searchTerm.Length < 2)
-            {
-                throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
-            }
+            //if (searchTerm.Length < 2)
+            //{
+            //    throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
+            //}
 
             var query = _unitOfWork.GetRepository<Subject>().Entities.AsQueryable();
 
@@ -298,10 +298,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     return (ISubjectBaseDTO)subjectAdminViewDTO;
                 }).ToList();
 
-                if (subjectDtos.Count == 0)
-                {
-                    throw new BaseException.NotFoundException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
-                }
+                //if (subjectDtos.Count == 0)
+                //{
+                //    throw new BaseException.NotFoundException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
+                //}
 
                 return new BasePaginatedList<object>(subjectDtos, subjectDtos.Count, 1, subjectDtos.Count);
             }
@@ -321,10 +321,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 return (ISubjectBaseDTO)subjectAdminViewDTO; 
             }).ToList();
 
-            if (subjectDtosPaginated.Count == 0)
-            {
-                throw new BaseException.NotFoundException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
-            }
+            //if (subjectDtosPaginated.Count == 0)
+            //{
+            //    throw new BaseException.NotFoundException("key_not_found", $"No subjects found with name containing '{searchTerm}'.");
+            //}
 
             return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count, pageNumber, pageSize);
         }

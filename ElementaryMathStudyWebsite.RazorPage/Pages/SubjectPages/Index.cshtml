@@ -53,35 +53,51 @@
     <tbody>
         @if (canManageSubjects)
         {
-            @foreach (var subject in Model.AdminSubjects)
+            if (Model.AdminSubjects != null && Model.AdminSubjects.Any())
             {
+                @foreach (var subject in Model.AdminSubjects)
+                {
+                    <tr>
+                        <td>@subject.SubjectName</td>
+                        <td>@subject.Price</td>
+                        <td>@subject.Status</td>
+                        <td>@(subject.CreaterName)</td>
+                        <td>@(subject.UpdaterName)</td>
+                        <td>@(subject.CreatedTime)</td>
+                        <td>@(subject.LastUpdatedTime)</td>
+                        <td>
+                            <a asp-page="./Details" asp-route-id="@subject.Id" class="btn btn-info btn-sm">Details</a>
+                            <a asp-page="./Edit" asp-route-id="@subject.Id" class="btn btn-warning btn-sm">Edit</a>
+                            <a asp-page="./Delete" asp-route-id="@subject.Id" class="btn btn-danger btn-sm">Delete</a>
+                        </td>
+                    </tr>
+                }
+            }else{
                 <tr>
-                    <td>@subject.SubjectName</td>
-                    <td>@subject.Price</td>
-                    <td>@subject.Status</td>
-                    <td>@(subject.CreaterName)</td>
-                    <td>@(subject.UpdaterName)</td>
-                    <td>@(subject.CreatedTime)</td>
-                    <td>@(subject.LastUpdatedTime)</td>
-                    <td>
-                        <a asp-page="./Details" asp-route-id="@subject.Id" class="btn btn-info btn-sm">Details</a>
-                        <a asp-page="./Edit" asp-route-id="@subject.Id" class="btn btn-warning btn-sm">Edit</a>
-                        <a asp-page="./Delete" asp-route-id="@subject.Id" class="btn btn-danger btn-sm">Delete</a>
-                    </td>
+                    <td colspan="8" class="text-center">No subjects found.</td>
                 </tr>
             }
         }
         else
         {
-            @foreach (var subject in Model.UserSubjects)
+            if (Model.UserSubjects != null && Model.UserSubjects.Any())
+            {
+                @foreach (var subject in Model.UserSubjects)
+                {
+                    <tr>
+                        <td>@subject.SubjectName</td>
+                        <td>@subject.Price</td>
+                        <td>@subject.Status</td>
+                        <td>
+                            <a asp-page="./Details" asp-route-id="@subject.Id" class="btn btn-info btn-sm">Details</a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
             {
                 <tr>
-                    <td>@subject.SubjectName</td>
-                    <td>@subject.Price</td>
-                    <td>@subject.Status</td>
-                    <td>
-                        <a asp-page="./Details" asp-route-id="@subject.Id" class="btn btn-info btn-sm">Details</a>
-                    </td>
+                    <td colspan="8" class="text-center">No subjects found.</td>
                 </tr>
             }
         }

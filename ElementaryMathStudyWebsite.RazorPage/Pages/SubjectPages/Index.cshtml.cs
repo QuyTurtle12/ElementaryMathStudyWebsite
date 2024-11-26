@@ -52,7 +52,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
             // Check if the request contains search parameters
             bool isSearchRequest = !string.IsNullOrEmpty(SearchName) || MinPrice.HasValue || MaxPrice.HasValue;
 
-            if (!isSearchRequest || string.IsNullOrEmpty(SearchName))
+            if (!isSearchRequest)
             {
                 // If not a search request, load default data (e.g., all subjects or paginated data)
                 if (IsValidRole)
@@ -73,15 +73,22 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
             if (!MinPrice.HasValue) MinPrice = -1;
             if (!MaxPrice.HasValue) MaxPrice = -1;
 
-            if (IsValidRole)
+            try
             {
-                var paginatedSubjects = await _appSubjectServices.SearchSubjectAdminAsync(SearchName, (double)MinPrice, (double)MaxPrice, null, -1, -1);
-                AdminSubjects = paginatedSubjects.Items.OfType<SubjectAdminViewDTO>().ToList();
+                if (IsValidRole)
+                {
+                    var paginatedSubjects = await _appSubjectServices.SearchSubjectAdminAsync(SearchName, (double)MinPrice, (double)MaxPrice, null, -1, -1);
+                    AdminSubjects = paginatedSubjects.Items.OfType<SubjectAdminViewDTO>().ToList();
+                }
+                else
+                {
+                    var paginatedSubjects = await _appSubjectServices.SearchSubjectAsync(SearchName, (double)MinPrice, (double)MaxPrice, -1, -1);
+                    UserSubjects = paginatedSubjects.Items.OfType<SubjectDTO>().ToList();
+                }
             }
-            else
+            catch(Exception ex)
             {
-                var paginatedSubjects = await _appSubjectServices.SearchSubjectAsync(SearchName, (double)MinPrice, (double)MaxPrice, -1, -1);
-                UserSubjects = paginatedSubjects.Items.OfType<SubjectDTO>().ToList();
+                Console.WriteLine(ex);
             }
 
             return Page();
