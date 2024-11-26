@@ -7,16 +7,19 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
+using System.Security.Claims;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 {
     public class DeleteModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly DatabaseContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public DeleteModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public DeleteModel(DatabaseContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [BindProperty]
@@ -25,6 +28,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
         public string QuizName { get; set; } = default!;
         public string CreatedByName { get; set; } = default!;
         public string LastUpdatedByName { get; set; } = default!;
+        public string DeletedByName { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -53,25 +57,53 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             var lastUpdatedByUser = await _context.User.FindAsync(chapter.LastUpdatedBy);
             LastUpdatedByName = lastUpdatedByUser?.FullName ?? "";
 
+            if (!string.IsNullOrEmpty(chapter.DeletedBy))
+            {
+                var deletedByUser = await _context.User.FindAsync(chapter.DeletedBy);
+                DeletedByName = deletedByUser?.FullName ?? "";
+            }
+
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(string id)
         {
-            if (id == null)
+            try 
             {
-                return NotFound();
-            }
+                if (id == null)
+                {
+                    return NotFound();
+                }
 
-            var chapter = await _context.Chapter.FindAsync(id);
-            if (chapter != null)
-            {
-                Chapter = chapter;
-                _context.Chapter.Remove(Chapter);
+                var chapter = await _context.Chapter.FindAsync(id);
+                if (chapter == null)
+                {
+                    return NotFound();
+                }
+
+                // Lấy userId từ Claims
+                var userId = HttpContext.Session.GetString("user_id");
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return RedirectToPage("/AuthPages/Login");
+                }
+
+                // Thực hiện soft delete
+                chapter.DeletedBy = userId;
+                chapter.DeletedTime = DateTime.Now;
+                chapter.LastUpdatedBy = userId;
+                chapter.LastUpdatedTime = DateTime.Now;
+
+                _context.Chapter.Update(chapter);
                 await _context.SaveChangesAsync();
-            }
 
-            return RedirectToPage("./Index");
+                return RedirectToPage("./Index");
+            }
+            catch
+            {
+                // Log lỗi nếu cần
+                return RedirectToPage("./Error");
+            }
         }
     }
 }
