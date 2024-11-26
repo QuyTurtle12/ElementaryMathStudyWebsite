@@ -1,27 +1,29 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using ElementaryMathStudyWebsite.Core.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
-using ElementaryMathStudyWebsite.Services;
-using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Services.Service;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
+using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Utils;
+using ElementaryMathStudyWebsite.Core.Entity;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
 {
     public class CreateModel : PageModel
     {
-        private readonly DatabaseContext _context;
+        private readonly IAppSubjectServices _appSubjectService;
+        private readonly IAppUserServices _userService;
 
-        public CreateModel(DatabaseContext context)
+        public CreateModel(IAppSubjectServices appSubjectService, IAppUserServices userService)
         {
-            _context = context;
+            _appSubjectService = appSubjectService;
+            _userService = userService;
         }
 
         [BindProperty]
-        public Subject Subject { get; set; } = default!;
+        public SubjectCreateDTO Subject { get; set; } = new();
 
         public IActionResult OnGet()
         {
@@ -35,37 +37,37 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
                 return Page();
             }
 
-            // Additional server-side validation
-            if (Subject.Price <= 0)
+            try
             {
-                ModelState.AddModelError("Subject.Price", "Price must be a positive integer.");
-                return Page();
+                // Create a new subject
+                var createdSubject = await _appSubjectService.CreateSubjectAsync(new SubjectDTO
+                {
+                    Id = string.Empty, // Let the service handle ID generation
+                    SubjectName = Subject.SubjectName,
+                    Price = Subject.Price,
+                    Status = true
+                });
+
+                var updateSubject = await _appSubjectService.SearchSubjectExactAsync(createdSubject.SubjectName);
+                var userId = HttpContext.Session.GetString("user_id");
+                await _appSubjectService.AuditSubjectAsync(updateSubject, userId, true);
+
+                TempData["SuccessMessage"] = "Subject created successfully!";
+                return RedirectToPage("./Index");
+            }
+            catch (BaseException.BadRequestException ex)
+            {
+                // Handle duplicate name or other validation errors
+                ModelState.AddModelError(string.Empty, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // Handle generic errors
+                ModelState.AddModelError(string.Empty, "An unexpected error occurred: " + ex.Message);
             }
 
-            // Perform auditing
-            await AuditFields(Subject, isCreating: true);
-
-            // Add the new subject to the database
-            _context.Subject.Add(Subject);
-            await _context.SaveChangesAsync();
-
-            return RedirectToPage("./Index");
-        }
-
-
-        private async Task AuditFields(BaseEntity entity, bool isCreating = false)
-        {
-            // Get the current logged-in user's ID
-            string currentUserId = HttpContext.Session.GetString("user_id") ?? "Unknown";
-
-            if (isCreating)
-            {
-                entity.CreatedBy = currentUserId.ToUpper();
-                entity.CreatedTime = DateTime.UtcNow; // Set the creation time
-            }
-
-            entity.LastUpdatedBy = currentUserId.ToUpper();
-            entity.LastUpdatedTime = DateTime.UtcNow; // Always update this field
+            // Return to the same page with error messages displayed
+            return Page();
         }
     }
 }

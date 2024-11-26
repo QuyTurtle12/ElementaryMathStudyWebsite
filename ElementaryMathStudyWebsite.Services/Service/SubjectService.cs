@@ -63,7 +63,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 Status = subjectDTO.Status,
             };
 
-            AuditFields(subject, isCreating: true);
+            //AuditFields(subject, isCreating: true);
 
             await _unitOfWork.GetRepository<Subject>().InsertAsync(subject);
             await _unitOfWork.SaveAsync();
@@ -329,6 +329,33 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return new BasePaginatedList<object>(subjectDtosPaginated, subjectDtosPaginated.Count, pageNumber, pageSize);
         }
 
+        public async Task<Subject> SearchSubjectExactAsync(string searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                throw new BaseException.BadRequestException("search_term_error", "Search term cannot be empty.");
+            }
+
+            if (searchTerm.Length < 2)
+            {
+                throw new BaseException.BadRequestException("search_term_error", "Search term must be at least 2 characters long.");
+            }
+
+            // Base query for active and non-deleted subjects
+            var query = _unitOfWork.GetRepository<Subject>().Entities
+                .Where(s => s.Status == true && string.IsNullOrWhiteSpace(s.DeletedBy));
+
+            // Filter by exact match of the search term
+            var subject = await query.FirstOrDefaultAsync(s => s.SubjectName == searchTerm);
+
+            if (subject == null)
+            {
+                throw new BaseException.NotFoundException("key_not_found", $"No subject found with the name '{searchTerm}'.");
+            }
+
+            return subject;
+        }
+
         // Update subject and set LastUpdatedTime to current time
         public async Task<SubjectAdminViewDTO> UpdateSubjectAsync(string id, SubjectUpdateDTO subjectUpdateDTO)
         {
@@ -373,6 +400,33 @@ namespace ElementaryMathStudyWebsite.Services.Service
             });
             return subjectAdminViewDTO;
         }
+
+        public async Task AuditSubjectAsync(Subject subject, string currentUserId, bool isCreated)
+        {
+            if (subject == null)
+                throw new ArgumentNullException(nameof(subject));
+
+            var repository = _unitOfWork.GetRepository<Subject>();
+
+            try
+            {
+                if (isCreated)
+                {
+                    subject.CreatedBy = currentUserId;
+                    subject.CreatedTime = CoreHelper.SystemTimeNow;
+                }
+                subject.LastUpdatedBy = currentUserId;
+                subject.LastUpdatedTime = CoreHelper.SystemTimeNow;
+
+                repository.Update(subject);
+                await _unitOfWork.SaveAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                throw new InvalidOperationException("The entity has been modified or deleted since it was last read.", ex);
+            }
+        }
+
 
         // Change subject status and set LastUpdatedTime to current time
         public async Task<SubjectAdminViewDTO> ChangeSubjectStatusAsync(string id)

@@ -39,5 +39,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<bool> CheckCompleteQuizExistAsync(string subjectId, string quizId);
         Task SoftDeleteSubjectAsync(string id);
         Task RestoreSubjectAsync(string id);
+        Task AuditSubjectAsync(Subject subject, string currentUserId, bool isCreated);
+        Task<Subject> SearchSubjectExactAsync(string searchTerm);
     }
 }
