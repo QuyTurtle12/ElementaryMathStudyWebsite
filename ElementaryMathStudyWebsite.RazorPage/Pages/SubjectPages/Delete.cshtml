@@ -16,58 +16,28 @@
             @Html.DisplayNameFor(model => model.Subject.SubjectName)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.SubjectName)
+            @Model.SubjectName
         </dd>
         <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Subject.Price)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.Price)
+            @Model.Price
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.Status)
+            Created By
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.Status)
+            @Model.CreatedByName
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.CreatedBy)
+            Last Updated By
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.CreatedBy)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.LastUpdatedBy)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.LastUpdatedBy)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.DeletedBy)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.DeletedBy)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.CreatedTime)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.CreatedTime)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.LastUpdatedTime)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.LastUpdatedTime)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject.DeletedTime)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject.DeletedTime)
+            @Model.LastUpdatedByName
         </dd>
     </dl>
-    
+
     <form method="post">
         <input type="hidden" asp-for="Subject.Id" />
         <input type="submit" value="Delete" class="btn btn-danger" /> |
