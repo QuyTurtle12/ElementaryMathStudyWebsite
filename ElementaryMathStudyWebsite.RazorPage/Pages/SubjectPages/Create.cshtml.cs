@@ -57,8 +57,16 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
             }
             catch (BaseException.BadRequestException ex)
             {
-                // Handle duplicate name or other validation errors
-                ModelState.AddModelError(string.Empty, ex.Message);
+                var existSubject = await _appSubjectService.SearchSubjectExactAsync(Subject.SubjectName);
+                if (existSubject != null)
+                {
+                    ModelState.AddModelError(string.Empty, "Subject name existed!");
+                }
+
+                if(Subject.Price <= 0)
+                {
+                    ModelState.AddModelError(string.Empty, "Price must be greater than 0");
+                }
             }
             catch (Exception ex)
             {
