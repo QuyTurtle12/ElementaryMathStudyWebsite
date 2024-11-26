@@ -36,6 +36,9 @@
             <th>
                 @Html.DisplayNameFor(model => model.Chapter[0].QuizName)
             </th>
+            <th>
+                Action
+            </th>
             @* <th>
             @Html.DisplayNameFor(model => model.Chapter[0].CreatedBy)
             </th>
@@ -71,6 +74,11 @@
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.QuizName)
+                </td>
+                <td>
+                    <button class="btn btn-info mt-2">
+                        <a asp-page="./Exam" asp-route-quizId="@item.QuizId" asp-route-subjectId="@item.SubjectId">Take Exam</a>
+                    </button>
                 </td>
                 @* <td>
             @Html.DisplayFor(modelItem => item.SubjectId)
