@@ -370,7 +370,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             subject.Price = subjectUpdateDTO.Price;
             subject.Status = subjectUpdateDTO.Status;
 
-            AuditFields(subject, isCreating: false);
+            //AuditFields(subject, isCreating: false);
 
             _unitOfWork.GetRepository<Subject>().Update(subject);
             await _unitOfWork.SaveAsync();
