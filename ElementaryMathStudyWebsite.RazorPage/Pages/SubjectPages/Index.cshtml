@@ -68,7 +68,16 @@
                         <td>
                             <a asp-page="./Details" asp-route-id="@subject.Id" class="btn btn-info btn-sm">Details</a>
                             <a asp-page="./Edit" asp-route-id="@subject.Id" class="btn btn-warning btn-sm">Edit</a>
-                            <a asp-page="./Delete" asp-route-id="@subject.Id" class="btn btn-danger btn-sm">Delete</a>
+                            <a asp-page="./Delete"
+                               asp-route-id="@subject.Id"
+                               asp-route-subjectName="@subject.SubjectName"
+                               asp-route-price="@subject.Price"
+                               asp-route-createdByName="@subject.CreaterName"
+                               asp-route-lastUpdatedByName="@subject.UpdaterName"
+                               asp-route-createdTime="@subject.CreatedTime?.ToString("o")"
+                               asp-route-lastUpdatedTime="@subject.LastUpdatedTime?.ToString("o")"
+                               class="btn btn-danger btn-sm">Delete</a>
+
                         </td>
                     </tr>
                 }

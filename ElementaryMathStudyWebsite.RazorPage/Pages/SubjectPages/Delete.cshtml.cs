@@ -3,56 +3,50 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Services.Service;
+using Microsoft.EntityFrameworkCore;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
 {
     public class DeleteModel : PageModel
     {
-        private readonly DatabaseContext _context;
+        private readonly IAppSubjectServices _appSubjectService;
 
-        public DeleteModel(DatabaseContext context)
+        public DeleteModel(IAppSubjectServices subjectService)
         {
-            _context = context;
+            _appSubjectService = subjectService;
         }
 
         [BindProperty]
         public Subject Subject { get; set; } = default!;
+        public string? SubjectName { get; set; }
+        public double? Price { get; set; }
         public string? CreatedByName { get; set; }
         public string? LastUpdatedByName { get; set; }
-        public string? DeletedByName { get; set; }
+        public DateTime? CreatedTime { get; set; }
+        public DateTime? LastUpdatedTime { get; set; }
 
-        public async Task<IActionResult> OnGetAsync(string id)
+        public IActionResult OnGet(string id, string? subjectName, double? price, string? createdByName, string? lastUpdatedByName,
+                                   string? createdTime, string? lastUpdatedTime)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var subject = await _context.Subject.FirstOrDefaultAsync(m => m.Id == id);
-            if (subject == null)
-            {
-                return NotFound();
-            }
+            SubjectName = subjectName ?? "No name";
+            Price = price ?? 0.0;
 
-            // Fetch user names
-            var userIds = new[] { subject.CreatedBy, subject.LastUpdatedBy, subject.DeletedBy }
-                .Where(id => !string.IsNullOrEmpty(id))
-                .Distinct()
-                .ToList();
+            // Assign values from route parameters to properties
+            CreatedByName = createdByName ?? "Unknown";
+            LastUpdatedByName = lastUpdatedByName ?? "Unknown";
 
-            var users = await _context.User
-                .Where(u => userIds.Contains(u.Id))
-                .ToDictionaryAsync(u => u.Id, u => u.FullName);
+            CreatedTime = DateTime.TryParse(createdTime, out var parsedCreatedTime) ? parsedCreatedTime : null;
+            LastUpdatedTime = DateTime.TryParse(lastUpdatedTime, out var parsedLastUpdatedTime) ? parsedLastUpdatedTime : null;
 
-            // Map IDs to user names
-            CreatedByName = !string.IsNullOrEmpty(subject.CreatedBy) ? users.GetValueOrDefault(subject.CreatedBy, "Unknown") : "Unknown";
-            LastUpdatedByName = !string.IsNullOrEmpty(subject.LastUpdatedBy) ? users.GetValueOrDefault(subject.LastUpdatedBy, "Unknown") : "Unknown";
-            DeletedByName = !string.IsNullOrEmpty(subject.DeletedBy) ? users.GetValueOrDefault(subject.DeletedBy, "Unknown") : "Unknown";
-
-            Subject = subject;
             return Page();
         }
 
@@ -63,11 +57,16 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
                 return NotFound();
             }
 
-            var subject = await _context.Subject.FindAsync(id);
-            if (subject != null)
+            try
             {
-                _context.Subject.Remove(subject);
-                await _context.SaveChangesAsync();
+                // Use the soft delete service
+                await _appSubjectService.SoftDeleteSubjectAsync(id);
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions (e.g., not found or validation errors)
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return Page();
             }
 
             return RedirectToPage("./Index");
