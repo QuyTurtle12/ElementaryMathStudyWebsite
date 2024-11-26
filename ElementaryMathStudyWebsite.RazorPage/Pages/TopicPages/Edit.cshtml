@@ -28,41 +28,41 @@
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/fb4ca64bcd17de23568fe7ac9162c40597c3e50575595222fdde9ce9a96fa41b?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/Index">TRANG CHỦ</a></div>
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/Index">HOME</a></div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/153e23238f9840133cd8013501ca44096f73cd7e89189831a1c810324a69892d?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/SubjectPages/Index">MÔN HỌC</a></div>
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/SubjectPages/Index">SUBJECT</a></div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/f0dd31a77f56063a479c0894c2e581f96ba293578a27f87af6497d527a12245d?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/ChapterPages/Index">CHƯƠNG</a></div>
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/ChapterPages/Index">CHAPTER</a></div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/c1d54a19c8f6f62353f217982854a9199db870b90ecca5e84b635ad160d7fca6?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/TopicPages/Index">CHỦ ĐỀ</a></div>
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/TopicPages/Index">TOPIC</a></div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/f0458f7647e2a07cbcaae27d49a451553ae489681cbdf01a5c78bb9a52ce88e4?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text">KIỂM TRA</div>
+            <div class="sidebar-item-text">QUIZ</div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/ed22e0d881d58079eefb2207bdf684c7e14b53adbad1bf7bc73b59df88c5794d?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text">CÂU HỎI</div>
+            <div class="sidebar-item-text">QUESTION</div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/6fe503ef66f6596f249ce77be5f7f4ab4b3a6d7e0df86066b08ea969915fe75b?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/OrderPages/Index">ĐƠN HÀNG</a></div>
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/OrderPages/Index">ORDER</a></div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/70bb38c8d61e1b5e5517d031471c4003b8178282b8d7ecd91bf6719eb10da215?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text"> <a class="nav-link text-dark" asp-area="" asp-page="/ProgressPages/Index">TIẾN TRÌNH</a></div>
+            <div class="sidebar-item-text"> <a class="nav-link text-dark" asp-area="" asp-page="/ProgressPages/Index">PROCESS</a></div>
         </div>
-        <div class="sidebar-item">THOÁT</div>
+        <div class="sidebar-item">LOG OUT</div>
     </aside>
 
     <section class="create-topic-container">
-        <h1 class="topic-title">Chỉnh Sửa Chủ Đề</h1>
+        <h1 class="topic-title">EDIT TOPIC</h1>
         <form method="post">
             <div class="form-group">
                 <label asp-for="Topic.TopicName"></label>
@@ -80,20 +80,20 @@
             <div class="form-group">
                 <label asp-for="Topic.ChapterId"></label>
                 <select asp-for="Topic.ChapterId" asp-items="@(ViewData["ChapterId"] as SelectList)" class="form-control">
-                    <option value="">-- Chọn chương --</option>
+                    <option value="">-- Chapter --</option>
                 </select>
             </div>
             <div class="form-group">
                 <label asp-for="Topic.QuizId"></label>
                 <select asp-for="Topic.QuizId" asp-items="@(ViewData["QuizId"] as SelectList)" class="form-control">
-                    <option value="">-- Chọn quiz --</option>
+                    <option value="">-- Quiz --</option>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">Cập Nhật Chủ Đề</button>
+            <button type="submit" class="btn btn-primary">Update</button>
         </form>
     </section>
     <div>
-        <a asp-page="Index">Quay lại trang trước </a>
+        <a asp-page="Index">Back </a>
     </div>
 </main>
 <footer class="border-top footer text-muted">

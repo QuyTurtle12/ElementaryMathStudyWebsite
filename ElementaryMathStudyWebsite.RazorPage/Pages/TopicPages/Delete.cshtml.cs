@@ -67,6 +67,9 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
             var topicCreateAllDto = new TopicCreateAllDto
             {
                 Id = id,
+                
+                LastUpdatedByUser = currentUserId,
+                LastUpdatedTime = DateTime.Now,
                 DeletedById = currentUserId,
                 DeletedTime = DateTime.UtcNow
             };

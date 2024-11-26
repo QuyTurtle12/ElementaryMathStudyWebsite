@@ -25,16 +25,24 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
         public string UserRole { get; private set; } = string.Empty;
         public BasePaginatedList<TopicViewDto>? Topics { get; set; } = default!;
         public List<string> ChapterNames { get; set; } = new List<string>(); // Danh sách tên chương
+        public string? ChapterId { get; set; } // Thêm ChapterId
 
-        public async Task<IActionResult> OnGetAsync(int pageNumber = 1, int pageSize = 10, string searchString = null, string chapterName = null)
+        public async Task<IActionResult> OnGetAsync(int pageNumber = 1, int pageSize = 10, string searchString = null, string chapterName = null, string chapterId = null)
         {
             string currentUserId = HttpContext.Session.GetString("user_id")!;
             UserRole = HttpContext.Session.GetString("role_name");
 
             ChapterNames = await _topicService.GetChapterNamesAsync();
+            ChapterId = chapterId;
+
+            // Lọc theo chapterId nếu có
+            if (!string.IsNullOrEmpty(chapterId))
+            {
+                Topics = await _topicService.GetTopicsByChapterIdAsync(chapterId, pageNumber, pageSize);
+            }
 
             // Lọc theo tên chương nếu có
-            if (!string.IsNullOrEmpty(chapterName))
+            else if (!string.IsNullOrEmpty(chapterName))
             {
                 Topics = await _topicService.GetTopicsByChapterNameAsync(chapterName, pageNumber, pageSize);
             }

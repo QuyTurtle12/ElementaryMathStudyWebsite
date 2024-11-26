@@ -395,19 +395,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Lấy danh sách Topic theo ChapterId
-        // Lấy danh sách Topic theo ChapterId
-        public async Task<List<TopicViewDto>> GetTopicsByChapterIdAsync(string chapterId)
+        public async Task<BasePaginatedList<TopicViewDto>> GetTopicsByChapterIdAsync(string chapterId, int pageNumber, int pageSize)
         {
             ValidateChapterId(chapterId);
 
-            // Kiểm tra xem chapter có tồn tại không
+            // Check if the chapter exists
             var chapterExists = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(chapterId);
             if (chapterExists == null)
             {
                 throw new BaseException.NotFoundException("not_found", $"Chapter with ID '{chapterId}' not found.");
             }
 
-            // Fetch all active topics asynchronously
+            // Fetch all active topics for the specified chapter
             var topics = await _unitOfWork.GetRepository<Topic>()
                 .Entities
                 .Where(t => t.ChapterId == chapterId && t.Status)
@@ -421,9 +420,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.NotFoundException("not_found", "cannot find any topics");
             }
 
-            // Create a list to hold TopicViewDto objects
-            var tp = topics.Select(topic => _mapper.Map<TopicViewDto>(topic)).ToList();
-            return tp;
+            // Map to TopicViewDto
+            var topicViewDtos = topics.Select(topic => _mapper.Map<TopicViewDto>(topic)).ToList();
+
+            // Validate and adjust pagination parameters
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                return new BasePaginatedList<TopicViewDto>(topicViewDtos, topicViewDtos.Count, 1, topicViewDtos.Count);
+            }
+
+            // Adjust page number for valid pagination
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, topicViewDtos.Count, pageSize);
+
+            // Paginate the result
+            var paginatedTopics = topicViewDtos
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new BasePaginatedList<TopicViewDto>(paginatedTopics, topicViewDtos.Count, pageNumber, pageSize);
         }
 
         // Tạo 1 Topic ( Nếu New Topic trùng Number với Old Topic thì Number từ Old Topic trở về sau sẽ tự động +1) 
@@ -1019,6 +1034,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
             existingTopic.Status = false;
             existingTopic.LastUpdatedBy = topicCreateAllDto.LastUpdatedByUser; // Nếu có trường LastUpdatedBy trong DTO
             existingTopic.LastUpdatedTime = DateTime.UtcNow;
+            existingTopic.DeletedBy = topicCreateAllDto.LastUpdatedByUser; // Nếu có trường LastUpdatedBy trong DTO
+            existingTopic.DeletedTime = DateTime.UtcNow;
 
             // Lưu thay đổi vào cơ sở dữ liệu
             _unitOfWork.GetRepository<Topic>().Update(existingTopic);

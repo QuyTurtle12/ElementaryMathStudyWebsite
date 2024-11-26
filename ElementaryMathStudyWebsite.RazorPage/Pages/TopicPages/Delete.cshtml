@@ -29,68 +29,68 @@
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/fb4ca64bcd17de23568fe7ac9162c40597c3e50575595222fdde9ce9a96fa41b?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/Index">TRANG CHỦ</a></div>
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/Index">HOME</a></div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/153e23238f9840133cd8013501ca44096f73cd7e89189831a1c810324a69892d?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/SubjectPages/Index">MÔN HỌC</a></div>
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/SubjectPages/Index">SUBJECT</a></div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/f0dd31a77f56063a479c0894c2e581f96ba293578a27f87af6497d527a12245d?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/ChapterPages/Index">CHƯƠNG</a></div>
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/ChapterPages/Index">CHAPTER</a></div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/c1d54a19c8f6f62353f217982854a9199db870b90ecca5e84b635ad160d7fca6?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/TopicPages/Index">CHỦ ĐỀ</a></div>
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/TopicPages/Index">TOPIC</a></div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/f0458f7647e2a07cbcaae27d49a451553ae489681cbdf01a5c78bb9a52ce88e4?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text">KIỂM TRA</div>
+            <div class="sidebar-item-text">QUIZ</div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/ed22e0d881d58079eefb2207bdf684c7e14b53adbad1bf7bc73b59df88c5794d?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text">CÂU HỎI</div>
+            <div class="sidebar-item-text">QUESTION</div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/6fe503ef66f6596f249ce77be5f7f4ab4b3a6d7e0df86066b08ea969915fe75b?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/OrderPages/Index">ĐƠN HÀNG</a></div>
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/OrderPages/Index">ORDER</a></div>
         </div>
         <div class="sidebar-item">
             <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/70bb38c8d61e1b5e5517d031471c4003b8178282b8d7ecd91bf6719eb10da215?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
-            <div class="sidebar-item-text"> <a class="nav-link text-dark" asp-area="" asp-page="/ProgressPages/Index">TIẾN TRÌNH</a></div>
+            <div class="sidebar-item-text"> <a class="nav-link text-dark" asp-area="" asp-page="/ProgressPages/Index">PROCESS</a></div>
         </div>
-        <div class="sidebar-item">THOÁT</div>
+        <div class="sidebar-item">LOG OUT</div>
     </aside>
     <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px;">
 
         <section style="background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); padding: 20px; max-width: 600px; margin: auto;">
-            <h1 style="text-align: center; color: #333;">Xóa Chủ Đề</h1>
+            <h1 style="text-align: center; color: #333;">DELETE TOPIC</h1>
             <div style="margin-top: 20px;">
                 <div style="margin-bottom: 15px;">
-                    <label for="topicName" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">Tên Chủ Đề :</label>
+                    <label for="topicName" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">Topic Name :</label>
                     @Html.DisplayFor(model => model.Topic.TopicName)
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label for="topicNumber" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">Số Thứ Tự :</label>
+                    <label for="topicNumber" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">Number :</label>
                     @Html.DisplayFor(model => model.Topic.Number)
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label for="quizSelect" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">Bài Kiểm Tra :</label>
+                    <label for="quizSelect" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">Quiz :</label>
                     @Html.DisplayFor(model => model.Topic.Quiz.QuizName)
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label for="chapterSelect" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">Chương :</label>
+                    <label for="chapterSelect" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">Chapter :</label>
                     @Html.DisplayFor(model => model.Topic.Chapter.ChapterName)
                 </div>
 
                 <div style="margin-bottom: 15px;">
-                    <label for="content" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">Nội Dung :</label>
+                    <label for="content" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">Context :</label>
                     @Html.DisplayFor(model => model.Topic.TopicContext)
                 </div>
                 <form method="post" style="margin-bottom: 15px;">
                     <input type="hidden" asp-for="Topic.Id" />
                     <input type="submit" value="Xóa" style="background-color: #d9534f; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 16px;" />
-                    <a asp-page="./Index" style="color: #5bc0de; text-decoration: none; margin-left: 10px;">Quay lại danh sách</a>
+                    <a asp-page="./Index" style="color: #5bc0de; text-decoration: none; margin-left: 10px;">Back</a>
                 </form>
             </div>
         </section>

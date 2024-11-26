@@ -15,7 +15,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<TopicDeleteDto> DeleteTopicAsync(string id);
         Task<TopicDeleteDto> RollBackTopicDeletedAsync(string Id);
         Task SwapTopicNumbersAsync(string topicId1, string topicId2);
-        Task<List<TopicViewDto>> GetTopicsByChapterIdAsync(string chapterId); // Lấy danh sách chủ đề theo ChapterId
+        Task<BasePaginatedList<TopicViewDto>> GetTopicsByChapterIdAsync(string chapterId, int pageNumber, int pageSize); // Lấy danh sách chủ đề theo ChapterId
         Task<BasePaginatedList<TopicViewDto>> SearchTopicByNameAsync(string searchTerm, int pageNumber, int pageSize);
         Task<BasePaginatedList<TopicViewDto>> GetTopicsByChapterNameAsync(string chapterName, int pageNumber, int pageSize);
         Task<BasePaginatedList<TopicAdminViewDto>> GetAllExistTopicsAsync(int pageNumber, int pageSize); // Lấy danh sách Topic
