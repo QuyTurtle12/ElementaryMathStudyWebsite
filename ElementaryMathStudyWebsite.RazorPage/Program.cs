@@ -33,6 +33,8 @@ namespace ElementaryMathStudyWebsite.RazorPage
 
 
             // Enable session middleware
+
+            //app.UseMiddleware<ElementaryMathStudyWebsite.RazorPage.Middleware.ExceptionMiddleware>();
             
             app.UseHttpsRedirection();
             app.UseStaticFiles();
