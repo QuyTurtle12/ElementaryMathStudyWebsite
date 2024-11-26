@@ -97,6 +97,10 @@
                 <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
                 <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
             </td> *@
+            <td>
+                    <a asp-page="/TopicPages/Index" asp-route-subjectId="@item.Id">Topic</a>
+            </td>
+                
         </tr>
 }
     </tbody>

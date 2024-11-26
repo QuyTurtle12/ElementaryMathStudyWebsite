@@ -3,6 +3,7 @@
 
 @{
     ViewData["Title"] = "Index";
+    var currentUserId = Model.UserRole == "Admin" || Model.UserRole == "Content Manager";
 }
 
 <head>
@@ -66,77 +67,116 @@
             <div class="header-left">
                 <div class="chapter-selector">
                     <form method="get">
-                        <select name="selectedChapterId" onchange="this.form.submit()">
-                            <option value="">Chọn chương:</option>
-@*                             @if (Model.Chapters != null)
+                        <select name="chapterName" id="chapterSelect">
+                            <option value="">-- Chọn chương --</option>
+                            @foreach (var chapterName in Model.ChapterNames)
                             {
-                                foreach (var chapter in Model.Chapters)
-                                {
-                                    <option value="@chapter.Value" selected="@(chapter.Selected ? "selected" : null)"> @chapter.Text </option>
-                                }
+                                <option value="@chapterName">@chapterName</option>
                             }
-                            else
-                            {
-                                <option value="">Không có chương nào để hiển thị</option>
-                            } *@
                         </select>
-                        <input type="text" name="searchString" value="@Model.SearchString" placeholder="Tìm kiếm topic..." />
+                        <input type="text" name="searchString" value="@Request.Query["searchString"]" placeholder="Tìm kiếm topic..." />
                         <button type="submit">Tìm kiếm</button>
                     </form>
                 </div>
             </div>
-            <div class="add-button">
-                <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/63a37e8dc4ceb3683e81d53c95a8c2bac5f01943c08e2adec970308c2a43b148?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="add-icon" />
-                <div class="add-text"> <a asp-page="Create">Add</a></div>
-            </div>
         </div>
-
-        <div class="content-table">
-            <div class="table-container">
-                <div class="table-header">
-                    <div class="header-content">
-                        <div class="header-row">
-                            <div class="header-cell">Số Thứ Tự</div>
-                            <div class="header-cell">Tên Chủ Đề</div>
-                            <div class="header-cell">Tình Trạng</div>
-                            <div class="header-cell-wide">Tác Động</div>
+        @if (currentUserId)
+        {
+            <div class="content-header">
+                <div class="add-button">
+                    <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/63a37e8dc4ceb3683e81d53c95a8c2bac5f01943c08e2adec970308c2a43b148?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="add-icon" />
+                    <div class="add-text"> <a asp-page="Create">Add</a></div>
+                </div>
+            </div>
+            <div class="content-table">
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="header-content">
+                            <div class="header-row">
+                                <div class="header-cell">Số Thứ Tự</div>
+                                <div class="header-cell">Tên Chủ Đề</div>
+                                <div class="header-cell">Tình Trạng</div>
+                                <div class="header-cell-wide">Tác Động</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="table-body">
-                    @foreach (var item in Model.Topic)
-                    {
-                        <div class="table-row">
-                            <div class="row-cell">@Html.DisplayFor(modelItem => item.Number)</div>
-                            <div class="row-cell">@Html.DisplayFor(modelItem => item.TopicName)</div>
-                            <div class="status-cell">
-                                <div class="status-true">@Html.DisplayFor(modelItem => item.Status)</div>
-                            </div>
-                            <div class="action-cell">
-                                <div class="action-buttons">
-                                    <div class="action-button">
-                                        <div class="action-button-content">
-                                            <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/7b264e567c90ea1c81e046e198f43b4f106bfaeb17ac42b6ea37ad151fac9c57?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" class="action-icon" alt="Edit icon" />
-                                            <a asp-page="./Edit" asp-route-id="@item.Id" class="action-text">Edit</a>
+                    <div class="table-body">
+                        @foreach (var item in Model.Topics!.Items)
+                        {
+                            <div class="table-row">
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.Number)</div>
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.TopicName)</div>
+@*                                 <div class="row-cell">@Html.DisplayFor(modelItem => item.ChapterName)</div>
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.QuizName)</div> *@
+
+                                @* <div class="status-cell"> *@
+                                @*     <div class="status-true">@Html.DisplayFor(modelItem => item.Status)</div> *@
+                                @* </div> *@
+                                <div class="action-cell">
+                                    <div class="action-buttons">
+                                        <div class="action-button">
+                                            <div class="action-button-content">
+                                                <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/7b264e567c90ea1c81e046e198f43b4f106bfaeb17ac42b6ea37ad151fac9c57?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" class="action-icon" alt="Edit icon" />
+                                                <a asp-page="./Edit" asp-route-id="@item.Id" class="action-text">Edit</a>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="action-button">
-                                        <div class="action-button-content">
-                                            <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/18d32b41cd37c7e6610f4da9e3879f1a24f3a30bf067b8a561aeb91581df3b6c?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" class="action-icon" alt="Delete icon" />
-                                            <a asp-page="./Delete" asp-route-id="@item.Id" class="action-text">Delete</a>
+                                        <div class="action-button">
+                                            <div class="action-button-content">
+                                                <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/18d32b41cd37c7e6610f4da9e3879f1a24f3a30bf067b8a561aeb91581df3b6c?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" class="action-icon" alt="Delete icon" />
+                                                <a asp-page="./Delete" asp-route-id="@item.Id" class="action-text">Delete</a>
+                                            </div>
+                                        </div>
+                                        <div class="action-button">
+                                            <div class="action-button-content">
+                                                <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/18d32b41cd37c7e6610f4da9e3879f1a24f3a30bf067b8a561aeb91581df3b6c?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" class="action-icon" alt="Detail icon" />
+                                                <a asp-page="./Details" asp-route-id="@item.Id" class="action-text">Detail</a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    }
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
+        }
+        else
+        {
+            <div class="content-table">
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="header-content">
+                            <div class="header-row">
+                                <div class="header-cell">Số Thứ Tự</div>
+                                <div class="header-cell">Tên Chủ Đề</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-body">
+                        @foreach (var item in Model.Topics!.Items)
+                        {
+                            <div class="table-row">
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.Number)</div>
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.TopicName)</div>
+@*                                 <div class="row-cell">@Html.DisplayFor(modelItem => item.ChapterName)</div>
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.QuizName)</div> *@
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
         <div class="pagination">
-            @for (int i = 1; i <= Model.TotalPages; i++)
+            @if (Model.Topics.CurrentPage > 1)
             {
-                <a asp-page="./Index" asp-route-pageIndex="@i" class="@(i == Model.PageIndex ? "active" : "")">@i</a>
+                <a asp-page="./Index" asp-route-pageNumber="@(Model.Topics.CurrentPage - 1)">Trước</a>
+            }
+
+            <span>Page @Model.Topics.CurrentPage of @Model.Topics.TotalPages</span>
+
+            @if (Model.Topics.CurrentPage < Model.Topics.TotalPages)
+            {
+                <a asp-page="./Index" asp-route-pageNumber="@(Model.Topics.CurrentPage + 1)">Sau</a>
             }
         </div>
     </section>

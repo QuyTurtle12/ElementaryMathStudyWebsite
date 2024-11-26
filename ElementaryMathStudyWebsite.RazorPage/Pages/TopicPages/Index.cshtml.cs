@@ -1,67 +1,55 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Entity;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Services.Service;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
 {
     public class IndexModel : PageModel
     {
-        private readonly DatabaseContext _context;
+        private readonly IAppTopicServices _topicService;
+        private readonly IAppChapterServices _chapterService;
+        private readonly IAppUserServices _userService;
 
-        public IndexModel(DatabaseContext context)
+        public IndexModel(IAppTopicServices topicService, IAppChapterServices chapterService, IAppUserServices userService)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _topicService = topicService ?? throw new ArgumentNullException(nameof(topicService));
+            _chapterService = chapterService ?? throw new ArgumentNullException(nameof(chapterService));
+            _userService = userService;
         }
+        public string UserRole { get; private set; } = string.Empty;
+        public BasePaginatedList<TopicViewDto>? Topics { get; set; } = default!;
+        public List<string> ChapterNames { get; set; } = new List<string>(); // Danh sách tên chương
 
-        public IList<Topic> Topic { get; set; } = default!;
-        public string? SearchString { get; set; }
-        public string? SelectedChapterId { get; set; } // Thêm thuộc tính cho chương đã chọn
-        public SelectList Chapters { get; set; } = default!; // Danh sách chương
-
-        // Phân trang
-        public int TotalPages { get; set; }
-        public int PageIndex { get; set; } = 1;
-        public int PageSize { get; set; } = 10;
-
-        public async Task OnGetAsync(string? searchString, string? selectedChapterId, int pageIndex = 1)
+        public async Task<IActionResult> OnGetAsync(int pageNumber = 1, int pageSize = 10, string searchString = null, string chapterName = null)
         {
-            PageIndex = pageIndex;
-            SearchString = searchString;
-            SelectedChapterId = selectedChapterId;
+            string currentUserId = HttpContext.Session.GetString("user_id")!;
+            UserRole = HttpContext.Session.GetString("role_name");
 
-            // Lấy danh sách chương từ cơ sở dữ liệu
-            var chaptersList = await _context.Chapter.ToListAsync();
-            Chapters = new SelectList(chaptersList, "Id", "Name", SelectedChapterId);
+            ChapterNames = await _topicService.GetChapterNamesAsync();
 
-            // Khởi tạo truy vấn cho topics
-            var topicsQuery = _context.Topic.Include(t => t.Chapter).AsQueryable();
-
-            // Nếu có searchString thì lọc theo tên chủ đề
-            if (!string.IsNullOrEmpty(SearchString))
+            // Lọc theo tên chương nếu có
+            if (!string.IsNullOrEmpty(chapterName))
             {
-                topicsQuery = topicsQuery.Where(s => s.TopicName.Contains(SearchString));
+                Topics = await _topicService.GetTopicsByChapterNameAsync(chapterName, pageNumber, pageSize);
+            }
+            // Nếu có searchString, tìm kiếm theo tên topic
+            else if (!string.IsNullOrEmpty(searchString))
+            {
+                Topics = await _topicService.SearchTopicByNameAsync(searchString, pageNumber, pageSize);
+            }
+            else
+            {
+                Topics = await _topicService.GetAllTopicsAsync(pageNumber, pageSize);
             }
 
-            // Nếu không có selectedChapterId, hiển thị tất cả các chủ đề
-            // Nếu có selectedChapterId, lọc theo ChapterId
-            if (!string.IsNullOrEmpty(SelectedChapterId))
-            {
-                topicsQuery = topicsQuery.Where(t => t.ChapterId == SelectedChapterId);
-            }
 
-            // Đếm số lượng chủ đề
-            var count = await topicsQuery.CountAsync();
-            TotalPages = (int)Math.Ceiling(count / (double)PageSize);
-
-            // Lấy danh sách chủ đề theo phân trang
-            Topic = await topicsQuery.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToListAsync();
+            return Page();
         }
     }
 }

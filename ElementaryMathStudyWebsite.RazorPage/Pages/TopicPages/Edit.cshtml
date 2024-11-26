@@ -2,89 +2,126 @@
 @model ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages.EditModel
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edit Topic";
 }
 
-<h1>Edit</h1>
-
-<h4>Topic</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Topic.Number" class="control-label"></label>
-                <input asp-for="Topic.Number" class="form-control" />
-                <span asp-validation-for="Topic.Number" class="text-danger"></span>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ElementaryMathStudyWebsite.RazorPage</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ElementaryMathStudyWebsite.RazorPage.styles.css" asp-append-version="true" />
+</head>
+<main class="main-content">
+    <aside class="sidebar">
+        <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/0e252c5141b9627c616edbab19df1f601c2c8e6a7d22b97d33235b111a6b70ab?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-icon" />
+        <div class="user-profile">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/1af14519efcbf329804ac80e195ed2b130eef1684fadc0ac79b4f0485a90a0ed?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="profile-image" />
+            <div class="profile-info">
+                John Smith
+                <span style="font-size: 10px; letter-spacing: 0.5px; color: #000;">
+                    johnsmith@gmail.com
+                </span>
             </div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/fb4ca64bcd17de23568fe7ac9162c40597c3e50575595222fdde9ce9a96fa41b?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/Index">TRANG CHỦ</a></div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/153e23238f9840133cd8013501ca44096f73cd7e89189831a1c810324a69892d?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/SubjectPages/Index">MÔN HỌC</a></div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/f0dd31a77f56063a479c0894c2e581f96ba293578a27f87af6497d527a12245d?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/ChapterPages/Index">CHƯƠNG</a></div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/c1d54a19c8f6f62353f217982854a9199db870b90ecca5e84b635ad160d7fca6?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/TopicPages/Index">CHỦ ĐỀ</a></div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/f0458f7647e2a07cbcaae27d49a451553ae489681cbdf01a5c78bb9a52ce88e4?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text">KIỂM TRA</div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/ed22e0d881d58079eefb2207bdf684c7e14b53adbad1bf7bc73b59df88c5794d?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text">CÂU HỎI</div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/6fe503ef66f6596f249ce77be5f7f4ab4b3a6d7e0df86066b08ea969915fe75b?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/OrderPages/Index">ĐƠN HÀNG</a></div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/70bb38c8d61e1b5e5517d031471c4003b8178282b8d7ecd91bf6719eb10da215?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text"> <a class="nav-link text-dark" asp-area="" asp-page="/ProgressPages/Index">TIẾN TRÌNH</a></div>
+        </div>
+        <div class="sidebar-item">THOÁT</div>
+    </aside>
+
+    <section class="create-topic-container">
+        <h1 class="topic-title">Chỉnh Sửa Chủ Đề</h1>
+        <form method="post">
             <div class="form-group">
-                <label asp-for="Topic.TopicName" class="control-label"></label>
+                <label asp-for="Topic.TopicName"></label>
                 <input asp-for="Topic.TopicName" class="form-control" />
                 <span asp-validation-for="Topic.TopicName" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Topic.TopicContext" class="control-label"></label>
-                <input asp-for="Topic.TopicContext" class="form-control" />
-                <span asp-validation-for="Topic.TopicContext" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Topic.Status" /> @Html.DisplayNameFor(model => model.Topic.Status)
-                </label>
+                <label asp-for="Topic.TopicContext"></label>
+                <textarea asp-for="Topic.TopicContext" class="form-control"></textarea>
             </div>
             <div class="form-group">
-                <label asp-for="Topic.QuizId" class="control-label"></label>
-                <select asp-for="Topic.QuizId" class="form-control" asp-items="ViewBag.QuizId"></select>
-                <span asp-validation-for="Topic.QuizId" class="text-danger"></span>
+                <label asp-for="Topic.Number"></label>
+                <input asp-for="Topic.Number" type="number" class="form-control" />
             </div>
             <div class="form-group">
-                <label asp-for="Topic.ChapterId" class="control-label"></label>
-                <select asp-for="Topic.ChapterId" class="form-control" asp-items="ViewBag.ChapterId"></select>
-                <span asp-validation-for="Topic.ChapterId" class="text-danger"></span>
-            </div>
-            <input type="hidden" asp-for="Topic.Id" />
-            <div class="form-group">
-                <label asp-for="Topic.CreatedBy" class="control-label"></label>
-                <input asp-for="Topic.CreatedBy" class="form-control" />
-                <span asp-validation-for="Topic.CreatedBy" class="text-danger"></span>
+                <label asp-for="Topic.ChapterId"></label>
+                <select asp-for="Topic.ChapterId" asp-items="@(ViewData["ChapterId"] as SelectList)" class="form-control">
+                    <option value="">-- Chọn chương --</option>
+                </select>
             </div>
             <div class="form-group">
-                <label asp-for="Topic.LastUpdatedBy" class="control-label"></label>
-                <input asp-for="Topic.LastUpdatedBy" class="form-control" />
-                <span asp-validation-for="Topic.LastUpdatedBy" class="text-danger"></span>
+                <label asp-for="Topic.QuizId"></label>
+                <select asp-for="Topic.QuizId" asp-items="@(ViewData["QuizId"] as SelectList)" class="form-control">
+                    <option value="">-- Chọn quiz --</option>
+                </select>
             </div>
-            <div class="form-group">
-                <label asp-for="Topic.DeletedBy" class="control-label"></label>
-                <input asp-for="Topic.DeletedBy" class="form-control" />
-                <span asp-validation-for="Topic.DeletedBy" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Topic.CreatedTime" class="control-label"></label>
-                <input asp-for="Topic.CreatedTime" class="form-control" />
-                <span asp-validation-for="Topic.CreatedTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Topic.LastUpdatedTime" class="control-label"></label>
-                <input asp-for="Topic.LastUpdatedTime" class="form-control" />
-                <span asp-validation-for="Topic.LastUpdatedTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Topic.DeletedTime" class="control-label"></label>
-                <input asp-for="Topic.DeletedTime" class="form-control" />
-                <span asp-validation-for="Topic.DeletedTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
+            <button type="submit" class="btn btn-primary">Cập Nhật Chủ Đề</button>
         </form>
+    </section>
+    <div>
+        <a asp-page="Index">Quay lại trang trước </a>
     </div>
-</div>
-
-<div>
-    <a asp-page="./Index">Back to List</a>
-</div>
+</main>
+<footer class="border-top footer text-muted">
+    <div class="footer-column">
+        Contact Information<br />
+        Address:<br />
+        Phone:<br />
+        Email:
+    </div>
+    <div class="footer-column-wide">
+        Support<br />
+        Frequently asked questions<br />
+        Instructions for use<br />
+        Payment instructions
+    </div>
+    <div class="contact-form">
+        <div class="form-text">
+            If you have any questions that need to be resolved, please send them to us.
+        </div>
+        <div class="form-input-group">
+            <input type="text" class="form-input" aria-label="Enter your question" />
+            <button class="form-submit">SEND</button>
+        </div>
+    </div>
+</footer>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

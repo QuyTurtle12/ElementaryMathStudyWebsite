@@ -10,6 +10,8 @@ using System.Text.RegularExpressions;
 using ElementaryMathStudyWebsite.Core.Entity;
 using AutoMapper;
 using EllipticCurve.Utils;
+using SendGrid.Helpers.Mail;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto;
 
 namespace ElementaryMathStudyWebsite.Services.Service
 {
@@ -306,10 +308,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             {
                 query = query.Where(t => EF.Functions.Like(t.TopicName, $"%{searchTerm}%"));
             }
+
             var allTopics = await query
                 .Include(t => t.Quiz)
                 .Include(t => t.Chapter)
                 .ToListAsync();
+
             // If no topics found, throw an exception
             if (!allTopics.Any())
             {
@@ -345,6 +349,49 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Return paginated results
             return new BasePaginatedList<TopicViewDto>(paginatedTopics, validTopicViewDtos.Count, pageNumber, pageSize);
+        }
+
+        public async Task<BasePaginatedList<TopicViewDto>> GetTopicsByChapterNameAsync(string chapterName, int pageNumber, int pageSize)
+        {
+            if (string.IsNullOrWhiteSpace(chapterName))
+            {
+                throw new BaseException.BadRequestException("Invalid!", "Chapter name cannot be empty.");
+            }
+
+            // Fetch the chapter based on the provided chapter name
+            var chapter = await _unitOfWork.GetRepository<Chapter>().Entities
+            .FirstOrDefaultAsync(c => c.ChapterName.ToLower().Contains(chapterName.ToLower()));
+
+            if (chapter == null)
+            {
+                throw new BaseException.NotFoundException("not_found", $"Chapter with name '{chapterName}' not found.");
+            }
+
+            // Fetch all active topics for the found chapter
+            var topics = await _unitOfWork.GetRepository<Topic>().Entities
+                .Where(t => t.ChapterId == chapter.Id && t.Status)
+                .Include(t => t.Quiz)
+                .ToListAsync();
+
+            // Map to TopicViewDto
+            var topicViewDtos = topics.Select(topic => _mapper.Map<TopicViewDto>(topic)).ToList();
+
+            // Validate pagination parameters
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                return new BasePaginatedList<TopicViewDto>(topicViewDtos, topicViewDtos.Count, 1, topicViewDtos.Count);
+            }
+
+            // Adjust page number
+            pageNumber = PaginationHelper.ValidateAndAdjustPageNumber(pageNumber, topicViewDtos.Count, pageSize);
+
+            // Paginate results
+            var paginatedTopics = topicViewDtos
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new BasePaginatedList<TopicViewDto>(paginatedTopics, topicViewDtos.Count, pageNumber, pageSize);
         }
 
         // Lấy danh sách Topic theo ChapterId
@@ -443,8 +490,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                     throw new BaseException.BadRequestException("Invalid!", $"A topic with the same QuizId already exists in this chapter.");
                 }
             }
-
-
 
             User currentUser = await _userService.GetCurrentUserAsync();
 
@@ -705,6 +750,26 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return topicDeleteDto;
         }
 
+        public async Task<List<ChapterIdNameDto>> GetChaptersAllAsync()
+        {
+            // Lấy danh sách các chương chưa bị xóa
+            var chapters = await _unitOfWork.GetRepository<Chapter>().Entities
+                .Where(c => string.IsNullOrWhiteSpace(c.DeletedBy))
+                .ToListAsync();
+
+            // Ánh xạ từ Chapter sang ChapterDto
+            var chapterDtos = chapters.Select(c => new ChapterIdNameDto
+            {
+                Id = c.Id,
+                ChapterName = c.ChapterName,
+                // Thêm các thuộc tính khác nếu cần
+                // Ví dụ:
+                // SubjectId = c.SubjectId,
+                // CreatedTime = c.CreatedTime
+            }).ToList();
+
+            return chapterDtos;
+        }
         // Rollback Topic đã xóa
         public async Task<TopicDeleteDto> RollBackTopicDeletedAsync(string id)
         {
@@ -786,6 +851,184 @@ namespace ElementaryMathStudyWebsite.Services.Service
             await _unitOfWork.SaveAsync();
         }
 
+        public async Task<List<string>> GetChapterNamesAsync()
+        {
+            var chapters = await _unitOfWork.GetRepository<Chapter>().GetAllAsync();
+            return chapters.Select(c => c.ChapterName).ToList();
+        }
+
+        public async Task<List<Quiz>> GetQuizzesWithoutChapterOrTopicAsync()
+        {
+            var quizIdsWithTopics = await _unitOfWork.GetRepository<Topic>()
+                .Entities
+                .Where(t => t.Status) // chỉ lấy những topic còn hoạt động
+                .Select(t => t.QuizId)
+                .Distinct()
+                .ToListAsync();
+
+            var quizIdsWithChapters = await _unitOfWork.GetRepository<Chapter>()
+                .Entities
+                .Select(c => c.QuizId) // giả sử có trường QuizId trong Chapter
+                .Distinct()
+                .ToListAsync();
+
+            var excludedQuizIds = quizIdsWithTopics.Concat(quizIdsWithChapters).Distinct();
+
+            var quizzes = await _unitOfWork.GetRepository<Quiz>()
+                .Entities
+                .Where(q => !excludedQuizIds.Contains(q.Id))
+                .ToListAsync();
+
+            return quizzes;
+        }
+
+        public async Task<Topic> AddTopicAllAsync(TopicCreateAllDto topicCreateAllDto)
+        {
+            // Validate the input DTO
+            if (string.IsNullOrWhiteSpace(topicCreateAllDto.TopicName))
+            {
+                throw new BaseException.BadRequestException("Invalid!", "Topic name cannot be empty.");
+            }
+
+            // Check if the chapter exists
+            var chapter = await _unitOfWork.GetRepository<Chapter>().GetByIdAsync(topicCreateAllDto.ChapterId);
+            if (chapter == null)
+            {
+                throw new BaseException.NotFoundException("not_found", $"Chapter with ID '{topicCreateAllDto.ChapterId}' not found.");
+            }
+
+            // Check for existing topics in the chapter
+            var existingTopics = await _unitOfWork.GetRepository<Topic>().Entities
+                .Where(t => t.ChapterId == topicCreateAllDto.ChapterId && t.Status)
+                .ToListAsync();
+
+            // Check if the number is already taken
+            Topic? existingTopicWithSameNumber = existingTopics
+                .FirstOrDefault(t => t.Number == topicCreateAllDto.Number);
+
+            if (existingTopicWithSameNumber != null)
+            {
+                // Increment the number for existing topics
+                foreach (Topic existingTopic1 in existingTopics.Where(t => t.Number >= topicCreateAllDto.Number))
+                {
+                    existingTopic1.Number += 1;
+                    _unitOfWork.GetRepository<Topic>().Update(existingTopic1);
+                }
+
+                // Save changes before adding the new topic
+                await _unitOfWork.SaveAsync();
+            }
+
+            // Check if a topic with the same name already exists
+            var existingTopic = await _unitOfWork.GetRepository<Topic>().Entities
+                .FirstOrDefaultAsync(t => t.TopicName == topicCreateAllDto.TopicName &&
+                                           t.ChapterId == topicCreateAllDto.ChapterId &&
+                                           t.Status);
+            if (existingTopic != null)
+            {
+                throw new BaseException.BadRequestException("Invalid!", $"A topic with the name '{topicCreateAllDto.TopicName}' already exists in this chapter.");
+            }
+
+            // Create a new topic object
+            var newTopic = new Topic
+            {
+                TopicName = topicCreateAllDto.TopicName,
+                TopicContext = topicCreateAllDto.TopicContext,
+                Number = topicCreateAllDto.Number,
+                ChapterId = topicCreateAllDto.ChapterId,
+                QuizId = topicCreateAllDto.QuizId,
+                CreatedBy = topicCreateAllDto.CreatedByUser,
+                CreatedTime = DateTime.UtcNow,
+                Status = true
+            };
+
+            // Insert the new topic asynchronously
+            await _unitOfWork.GetRepository<Topic>().InsertAsync(newTopic);
+            await _unitOfWork.SaveAsync(); // Save changes to the database
+
+            return newTopic; // Return the newly created Topic object
+        }
+
+        public async Task<TopicAdminViewDto> UpdateTopicAllAsync(string id, TopicCreateAllDto topicCreateAllDto)
+        {
+            // Kiểm tra xem chủ đề có tồn tại không
+            var existingTopic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(id);
+            if (existingTopic == null)
+            {
+                throw new BaseException.NotFoundException("not_found", $"Chủ đề với ID '{id}' không tồn tại.");
+            }
+
+            // Kiểm tra xem tên chủ đề có bị trùng không
+            var existingTopicByName = await _unitOfWork.GetRepository<Topic>().Entities
+                .FirstOrDefaultAsync(t => t.TopicName == topicCreateAllDto.TopicName && t.Id != id);
+
+            if (existingTopicByName != null)
+            {
+                throw new BaseException.BadRequestException("Invalid!", $"Chủ đề với tên '{topicCreateAllDto.TopicName}' đã tồn tại.");
+            }
+
+            // Kiểm tra xem số thứ tự có bị trùng trong cùng một chương không
+            var existingTopicByNumber = await _unitOfWork.GetRepository<Topic>().Entities
+                .FirstOrDefaultAsync(t => t.Number == topicCreateAllDto.Number && t.Id != id && t.ChapterId == topicCreateAllDto.ChapterId);
+
+            if (existingTopicByNumber != null)
+            {
+                // Đổi số thứ tự giữa hai chủ đề
+                var tempNumber = existingTopic.Number;
+                existingTopic.Number = existingTopicByNumber.Number; // Gán số của chủ đề bị trùng cho chủ đề hiện tại
+                existingTopicByNumber.Number = tempNumber; // Đổi lại số cho chủ đề bị trùng
+                _unitOfWork.GetRepository<Topic>().Update(existingTopicByNumber); // Cập nhật chủ đề bị trùng
+            }
+
+            // Cập nhật thông tin cho chủ đề hiện tại
+            existingTopic.TopicName = topicCreateAllDto.TopicName;
+            existingTopic.TopicContext = topicCreateAllDto.TopicContext;
+            existingTopic.ChapterId = topicCreateAllDto.ChapterId;
+            existingTopic.QuizId = topicCreateAllDto.QuizId;
+            existingTopic.LastUpdatedBy = topicCreateAllDto.LastUpdatedByUser; // Nếu có trường LastUpdatedBy trong DTO
+            existingTopic.LastUpdatedTime = DateTime.UtcNow;
+
+            // Lưu thay đổi vào cơ sở dữ liệu
+            _unitOfWork.GetRepository<Topic>().Update(existingTopic);
+            await _unitOfWork.SaveAsync();
+
+            // Ánh xạ chủ đề đã cập nhật sang DTO để trả về
+            var updatedTopicDto = _mapper.Map<TopicAdminViewDto>(existingTopic);
+            return updatedTopicDto;
+        }
+
+        public async Task<TopicAdminViewDto> DeleteTopicRazorAsync(string id, TopicCreateAllDto topicCreateAllDto)
+        {
+            // Kiểm tra xem chủ đề có tồn tại không
+            var existingTopic = await _unitOfWork.GetRepository<Topic>().GetByIdAsync(id);
+            if (existingTopic == null)
+            {
+                throw new BaseException.NotFoundException("not_found", $"Chủ đề với ID '{id}' không tồn tại.");
+            }
+
+            // Kiểm tra xem tên chủ đề có bị trùng không
+            var existingTopicByName = await _unitOfWork.GetRepository<Topic>().Entities
+                .FirstOrDefaultAsync(t => t.TopicName == topicCreateAllDto.TopicName && t.Id != id);
+
+            if (existingTopicByName != null)
+            {
+                throw new BaseException.BadRequestException("Invalid!", $"Chủ đề với tên '{topicCreateAllDto.TopicName}' đã tồn tại.");
+            }
+
+            // Cập nhật thông tin cho chủ đề
+            existingTopic.Status = false;
+            existingTopic.LastUpdatedBy = topicCreateAllDto.LastUpdatedByUser; // Nếu có trường LastUpdatedBy trong DTO
+            existingTopic.LastUpdatedTime = DateTime.UtcNow;
+
+            // Lưu thay đổi vào cơ sở dữ liệu
+            _unitOfWork.GetRepository<Topic>().Update(existingTopic);
+            await _unitOfWork.SaveAsync();
+
+            // Ánh xạ chủ đề đã cập nhật sang DTO để trả về
+            var updatedTopicDto = _mapper.Map<TopicAdminViewDto>(existingTopic);
+            return updatedTopicDto;
+        }
+
         //private async Task<int?> GetNextNumberAsync(string chapterId)
         //{
         //    var topics = await _unitOfWork.GetRepository<Topic>().GetAllAsync();
@@ -837,5 +1080,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 throw new BaseException.BadRequestException("Invalid!", "Chapter ID cannot be empty.");
             }
         }
+
     }
 }
