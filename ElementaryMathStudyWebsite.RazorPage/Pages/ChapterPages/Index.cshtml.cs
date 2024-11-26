@@ -55,7 +55,10 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 
             if (!string.IsNullOrEmpty(SearchKeyword))
             {
-                query = query.Where(c => EF.Functions.Like(c.ChapterName, $"%{SearchKeyword}%"));
+                var searchKeywordLower = SearchKeyword.ToLower();
+                query = query.Where(c => c.ChapterName.ToLower().Contains(searchKeywordLower) ||
+                                        c.Subject.SubjectName.ToLower().Contains(searchKeywordLower) ||
+                                        c.Quiz.QuizName.ToLower().Contains(searchKeywordLower));
             }
 
             // Đếm tổng số items
@@ -68,9 +71,10 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             CurrentPage = PaginationHelper.ValidateAndAdjustPageNumber(PageNumber, TotalItems, PageSize);
 
             // Lấy dữ liệu theo trang
+            var skip = (CurrentPage - 1) * PageSize;
             Chapters = await query
                 .OrderBy(c => c.Number)
-                .Skip((CurrentPage - 1) * PageSize)
+                .Skip(skip)
                 .Take(PageSize)
                 .Select(c => new ChapterViewDto
                 {
@@ -85,17 +89,16 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
                 })
                 .ToListAsync();
 
-            // Xử lý request AJAX
+            // Xử lý AJAX request
+            // Sửa phần xử lý AJAX request
             if (!string.IsNullOrEmpty(handler))
             {
-                if (handler == "search")
+                return handler.ToLower() switch
                 {
-                    return Partial("_ChapterTableRows", this);
-                }
-                else if (handler == "pagination")
-                {
-                    return Partial("_Pagination", this);
-                }
+                    "search" => Partial("_ChapterTableRows", this),  // Sửa tên partial view
+                    "pagination" => Partial("_Pagination", this),    // Sửa tên partial view
+                    _ => Page()
+                };
             }
 
             return Page();

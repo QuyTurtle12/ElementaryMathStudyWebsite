@@ -24,7 +24,19 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 
         public IActionResult OnGet()
         {
-            ViewData["QuizId"] = new SelectList(_context.Quiz, "Id", "QuizName");
+            // Lấy danh sách Quiz chưa được gắn
+            var usedQuizIds = _context.Chapter
+                .Where(c => c.QuizId != null)
+                .Select(c => c.QuizId)
+                .Union(_context.Topic
+                    .Where(t => t.QuizId != null)
+                    .Select(t => t.QuizId));
+
+            var availableQuizzes = _context.Quiz
+                .Where(q => !usedQuizIds.Contains(q.Id))
+                .OrderBy(q => q.QuizName);
+
+            ViewData["QuizId"] = new SelectList(availableQuizzes, "Id", "QuizName");
             ViewData["SubjectId"] = new SelectList(_context.Subject, "Id", "SubjectName");
             return Page();
         }
@@ -52,25 +64,29 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
                 return Page();
             }
 
-            // Kiểm tra xem QuizName đã được gắn cho một Chapter hoặc Topic nào chưa
-            var existingChapter = await _context.Chapter
-                .FirstOrDefaultAsync(c => c.QuizId == Chapter.QuizId);
-            var existingTopic = await _context.Topic
-                .FirstOrDefaultAsync(t => t.QuizId == Chapter.QuizId);
-
-            if (existingChapter != null || existingTopic != null)
+            // Chỉ kiểm tra QuizId nếu nó được chọn
+            if (!string.IsNullOrEmpty(Chapter.QuizId))
             {
-                ModelState.AddModelError(string.Empty, "Quiz này đã được gắn cho một Chapter hoặc Topic khác.");
-                ViewData["QuizId"] = new SelectList(_context.Quiz, "Id", "QuizName");
-                ViewData["SubjectId"] = new SelectList(_context.Subject, "Id", "SubjectName");
-                return Page();
+                // Kiểm tra xem QuizName đã được gắn cho một Chapter hoặc Topic nào chưa
+                var existingChapter = await _context.Chapter
+                    .FirstOrDefaultAsync(c => c.QuizId == Chapter.QuizId);
+                var existingTopic = await _context.Topic
+                    .FirstOrDefaultAsync(t => t.QuizId == Chapter.QuizId);
+
+                if (existingChapter != null || existingTopic != null)
+                {
+                    ModelState.AddModelError(string.Empty, "Quiz này đã được gắn cho một Chapter hoặc Topic khác.");
+                    ViewData["QuizId"] = new SelectList(_context.Quiz, "Id", "QuizName");
+                    ViewData["SubjectId"] = new SelectList(_context.Subject, "Id", "SubjectName");
+                    return Page();
+                }
             }
 
             // Tự động tăng số thứ tự và kiểm tra trùng lặp
             int number = await GetNextAvailableNumberAsync(Chapter.SubjectId);
             Chapter.Number = number;
 
-            AuditFields(Chapter, isCreating: true); 
+            AuditFields(Chapter, isCreating: true);
 
             _context.Chapter.Add(Chapter);
             await _context.SaveChangesAsync();

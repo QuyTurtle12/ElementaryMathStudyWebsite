@@ -18,48 +18,64 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
-            let timeoutId;
+            let searchTimeout;
             
-            // Xử lý tìm kiếm real-time
+            // Xử lý tìm kiếm realtime
             $("#searchKeyword").on('input', function () {
-                clearTimeout(timeoutId);
-                const keyword = $(this).val();
-                const subjectId = $("#subjectId").val();
-
-                // Đợi người dùng ngừng gõ 300ms mới thực hiện tìm kiếm
-                timeoutId = setTimeout(function() {
-                    performSearch(keyword, subjectId);
-                }, 300);
+                clearTimeout(searchTimeout);
+                
+                // Đợi người dùng ngừng gõ 500ms
+                searchTimeout = setTimeout(() => {
+                    performSearch(1);
+                }, 500);
             });
 
-            // Xử lý khi click nút tìm kiếm
+            // Xử lý form submit
             $("#searchForm").on('submit', function(e) {
                 e.preventDefault();
-                const keyword = $("#searchKeyword").val();
-                const subjectId = $("#subjectId").val();
-                performSearch(keyword, subjectId);
+                performSearch(1);
             });
         });
 
-        function performSearch(keyword, subjectId) {
-            $.get('/ChapterPages/Index', {
-                handler: 'search',
-                searchKeyword: keyword,
-                subjectId: subjectId
-            })
-            .done(function (data) {
-                $("#chapterTableBody").html(data);
-                updatePagination();
+        function performSearch(page) {
+            $.ajax({
+                url: window.location.pathname,
+                data: {
+                    handler: 'search',
+                    pageNumber: page,
+                    searchKeyword: $("#searchKeyword").val(),
+                    subjectId: $("#subjectId").val()
+                },
+                success: function(response) {
+                    $("#chapterTableBody").html(response);
+                    updatePagination(page);
+                },
+                error: function(error) {
+                    console.error('Search error:', error);
+                }
             });
         }
 
-        function updatePagination() {
-            $.get('/ChapterPages/Index', {
-                handler: 'pagination'
-            })
-            .done(function (data) {
-                $("#paginationContainer").html(data);
+        function updatePagination(page) {
+            $.ajax({
+                url: window.location.pathname,
+                data: {
+                    handler: 'pagination',
+                    pageNumber: page,
+                    searchKeyword: $("#searchKeyword").val(),
+                    subjectId: $("#subjectId").val()
+                },
+                success: function(response) {
+                    $("#paginationContainer").html(response);
+                },
+                error: function(error) {
+                    console.error('Pagination error:', error);
+                }
             });
+        }
+
+        function changePage(page) {
+            performSearch(page);
         }
     </script>
 }
@@ -73,7 +89,7 @@
                    name="SearchKeyword" 
                    value="@Model.SearchKeyword" 
                    class="form-control" 
-                   placeholder="Nhập để tìm kiếm..." 
+                   placeholder="Enter to search..." 
                    autocomplete="off" />
             @if (isFromSubject)
             {
@@ -81,7 +97,7 @@
             }
         </div>
         <button type="submit" class="btn btn-primary">
-            <i class="fas fa-search"></i> Tìm kiếm
+            <i class="fas fa-search"></i> Search
         </button>
     </div>
 </form>
@@ -90,7 +106,7 @@
 {
     <div class="mb-3">
         <a asp-page="Create" class="btn btn-success">
-            <i class="fas fa-plus"></i> Tạo mới
+            <i class="fas fa-plus"></i> Create
         </a>
     </div>
 }
@@ -100,88 +116,32 @@
     <table class="table">
         <thead>
             <tr>
-                <th>Số thứ tự</th>
-                <th>Tên chương</th>
+                <th>Number</th>
+                <th>Chapter Name</th>
                 @if (!isFromSubject)
                 {
-                    <th>Tên môn học</th>
+                    <th>Subject Name</th>
                 }
-                <th>Tên câu hỏi</th>
+                <th>Quiz Name</th>
                 @if (!isFromSubject)
                 {
-                    <th>Thao tác</th>
+                    <th>Action</th>
                 }
             </tr>
         </thead>
-        <tbody>
-            @foreach (var item in Model.Chapters)
-            {
-                <tr>
-                    <td>@item.Number</td>
-                    <td>@item.ChapterName</td>
-                    @if (!isFromSubject)
-                    {
-                        <td>
-                            @item.SubjectName
-                        </td>
-                    }
-                    <td>@item.QuizName</td>
-                    @if (!isFromSubject)
-                    {
-                        <td>
-                            <div class="btn-group" role="group">
-                                <a asp-page="./Edit" asp-route-id="@item.Id" class="btn btn-warning me-2">
-                                    <i class="fas fa-edit"></i> Chỉnh sửa
-                                </a>
-                                <a asp-page="./Details" asp-route-id="@item.Id" class="btn btn-info me-2">
-                                    <i class="fas fa-info-circle"></i> Chi tiết
-                                </a>
-                                <a asp-page="./Delete" asp-route-id="@item.Id" class="btn btn-danger">
-                                    <i class="fas fa-trash"></i> Xóa
-                                </a>
-                            </div>
-                        </td>
-                    }
-                </tr>
-            }
+        <tbody id="chapterTableBody">
+            @await Html.PartialAsync("_ChapterTableRows", Model)
         </tbody>
     </table>
 
-    <div class="d-flex justify-content-between align-items-center mt-4">
-        <div>
-            Tổng số: @Model.TotalItems chương
-        </div>
-        <div class="d-flex gap-3 align-items-center">
-            @if (Model.CurrentPage > 1)
-            {
-                <a asp-page="./Index" 
-                   asp-route-pageNumber="@(Model.CurrentPage - 1)"
-                   asp-route-searchKeyword="@Model.SearchKeyword"
-                   asp-route-subjectId="@Model.SubjectId"
-                   class="btn btn-secondary">
-                    <i class="fas fa-chevron-left"></i> Trang trước
-                </a>
-            }
-            <span>
-                Trang @Model.CurrentPage / @Model.TotalPages
-            </span>
-            @if (Model.CurrentPage < Model.TotalPages)
-            {
-                <a asp-page="./Index" 
-                   asp-route-pageNumber="@(Model.CurrentPage + 1)"
-                   asp-route-searchKeyword="@Model.SearchKeyword"
-                   asp-route-subjectId="@Model.SubjectId"
-                   class="btn btn-secondary">
-                    Trang sau <i class="fas fa-chevron-right"></i>
-                </a>
-            }
-        </div>
+    <div id="paginationContainer">
+        @await Html.PartialAsync("_Pagination", Model)
     </div>
 }
 else
 {
     <div class="alert alert-info">
-        Không tìm thấy chương nào.
+        No chapters found.
     </div>
 }
 
@@ -189,7 +149,7 @@ else
 {
     <div class="mb-3">
         <a asp-page="/SubjectPages/Index" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Quay lại danh sách môn học
+            <i class="fas fa-arrow-left"></i> Back to subject list
         </a>
     </div>
 }

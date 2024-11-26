@@ -3,28 +3,48 @@
 
 @{
     ViewData["Title"] = "Tạo mới";
+    var quizList = ViewData["QuizId"] as SelectList;
+    var hasAvailableQuizzes = quizList != null && quizList.Any();
 }
 
 <h1>Tạo mới</h1>
-
 <h4>Chương</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <form method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label asp-for="Chapter.ChapterName" class="control-label">Tên chương</label>
                 <input asp-for="Chapter.ChapterName" class="form-control" />
                 <span asp-validation-for="Chapter.ChapterName" class="text-danger"></span>
             </div>
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label asp-for="Chapter.SubjectId" class="control-label">Tên môn học</label>
-                <select asp-for="Chapter.SubjectId" class="form-control" asp-items="ViewBag.SubjectId"></select>
+                <select asp-for="Chapter.SubjectId" class="form-control" asp-items="ViewBag.SubjectId">
+                    <option value="">-- Chọn môn học --</option>
+                </select>
+                <span asp-validation-for="Chapter.SubjectId" class="text-danger"></span>
             </div>
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label asp-for="Chapter.QuizId" class="control-label">Tên câu hỏi</label>
-                <select asp-for="Chapter.QuizId" class="form-control" asp-items="ViewBag.QuizId"></select>
+                <select asp-for="Chapter.QuizId" class="form-control" asp-items="ViewBag.QuizId">
+                    <option value="">-- Không có câu hỏi --</option>
+                </select>
+                @if (!hasAvailableQuizzes)
+                {
+                    <small class="text-muted d-block mt-1">
+                        <i class="fas fa-info-circle"></i>
+                        Tất cả các Quiz đã được gắn vào Chapter hoặc Topic
+                    </small>
+                }
+                else
+                {
+                    <small class="text-muted d-block mt-1">
+                        <i class="fas fa-info-circle"></i>
+                        Chỉ hiển thị các Quiz chưa được gắn vào Chapter hoặc Topic
+                    </small>
+                }
             </div>
             <div class="form-group mt-3">
                 <div class="d-flex gap-2">
@@ -41,7 +61,5 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
