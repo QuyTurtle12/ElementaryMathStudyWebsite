@@ -26,7 +26,10 @@
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary">Login</button>
+        <div class="d-flex justify-content-between align-items-center">
+            <button type="submit" class="btn btn-primary">Login</button>
+            <a href="/AuthPages/Register" class="btn btn-secondary">Register</a>
+        </div>
     </form>
 
     <!-- Display error message if login fails -->
@@ -92,4 +95,25 @@
     .is-invalid {
         border-color: red;
     }
+
+    .d-flex {
+        display: flex;
+    }
+
+    .justify-content-between {
+        justify-content: space-between;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+        text-decoration: none;
+        border: none;
+        padding: 0.5em 1em;
+        cursor: pointer;
+    }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
 </style>

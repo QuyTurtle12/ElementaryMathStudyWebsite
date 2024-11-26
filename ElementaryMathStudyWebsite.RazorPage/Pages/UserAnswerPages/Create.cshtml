@@ -1,4 +1,4 @@
-﻿@page
+﻿@page "{questionId?}"
 @model ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages.CreateModel
 
 @{
@@ -14,27 +14,22 @@
         <form method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-            <!-- Question Selection -->
             <div class="form-group">
                 <label asp-for="UserAnswer.QuestionId" class="control-label">Question</label>
-                <select asp-for="UserAnswer.QuestionId" id="question-select" class="form-control">
-                    <option value="">-- Select a Question --</option>
-                    @foreach (var question in Model.Questions)
-                    {
-                        <option value="@question.Id">@question.QuestionContext</option>
-                    }
+                <select asp-for="UserAnswer.QuestionId" class="form-control" asp-items="ViewBag.QuestionContext"
+                        onchange="filterOptions()">
                 </select>
             </div>
 
-            <!-- User ID (Hidden) -->
-            <input type="hidden" asp-for="UserAnswer.UserId" value="@Model.CurrentUserId" />
-
-            <!-- Options (Filtered by Question) -->
             <div class="form-group">
                 <label asp-for="UserAnswer.OptionId" class="control-label">Option</label>
-                <select asp-for="UserAnswer.OptionId" id="option-select" class="form-control">
-                    <option value="">-- Select an Option --</option>
-                </select>
+                <select asp-for="UserAnswer.OptionId" class="form-control" asp-items="ViewBag.OptionId"></select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="UserAnswer.UserId" class="control-label">User</label>
+                <input type="text" class="form-control" value="@ViewData["CurrentUserName"]" readonly />
+                <input type="hidden" asp-for="UserAnswer.UserId" />
             </div>
 
             <div class="form-group">
@@ -49,30 +44,13 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @await Html.PartialAsync("_ValidationScriptsPartial")
 
     <script>
-        // Preload all options grouped by question
-        const allOptions = @Html.Raw(Json.Serialize(Model.Options));
-
-        // Event Listener: Update options when a question is selected
-        document.getElementById("question-select").addEventListener("change", function () {
-            const questionId = this.value;
-            const optionSelect = document.getElementById("option-select");
-            optionSelect.innerHTML = '<option value="">-- Select an Option --</option>'; // Clear options
-
-            if (!questionId) return; // No question selected
-
-            // Filter options by selected question
-            const options = allOptions.filter(option => option.QuestionId === questionId);
-            options.forEach(option => {
-                const opt = document.createElement("option");
-                opt.value = option.Id;
-                opt.textContent = option.Answer;
-                optionSelect.appendChild(opt);
-            });
-        });
+        function filterOptions() {
+            const selectedQuestionId = document.querySelector('[name="UserAnswer.QuestionId"]').value;
+            const url = `@Url.Page("./Create")?questionId=${selectedQuestionId}`;
+            window.location.href = url;
+        }
     </script>
 }

@@ -1,37 +1,26 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.OrderPages
 {
-	public class DetailsModel : PageModel
+    public class DetailsModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
-
-        public DetailsModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        private readonly IAppOrderServices _orderService;
+        public IEnumerable<OrderDetailViewDto> orderDetails;
+        public DetailsModel(IAppOrderServices orderService)
         {
-            _context = context;
+            _orderService = orderService;
         }
 
-        public Order Order { get; set; } = default!;
+        public OrderAdminViewDto Order { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var order = await _context.Order.FirstOrDefaultAsync(m => m.Id == id);
-            if (order == null)
-            {
-                return NotFound();
-            }
-            else
-            {
-                Order = order;
-            }
+            Order = await _orderService.GetOrderAdminDtoASync(id);
+            orderDetails = Order.Details ?? new List<OrderDetailViewDto>();
             return Page();
         }
     }

@@ -1,0 +1,12 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.AuthPages.VerifyEmailModel
+@{
+    ViewData["Title"] = "Verify Email";
+}
+
+<h1>Email Verification</h1>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <p>@Model.Message</p>
+}

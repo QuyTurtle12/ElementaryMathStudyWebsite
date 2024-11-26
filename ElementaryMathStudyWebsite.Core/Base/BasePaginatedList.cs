@@ -40,9 +40,11 @@ namespace ElementaryMathStudyWebsite.Core.Base
             throw new NotImplementedException();
         }
 
-        public static implicit operator BasePaginatedList<T>(BasePaginatedList<object> v)
+        public static BasePaginatedList<T> Create(IEnumerable<T> source, int pageNumber, int pageSize)
         {
-            throw new NotImplementedException();
+            var count = source.Count(); // Tổng số phần tử
+            var items = source.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList(); // Lấy dữ liệu theo trang
+            return new BasePaginatedList<T>(items, count, pageNumber, pageSize);
         }
     }
 }

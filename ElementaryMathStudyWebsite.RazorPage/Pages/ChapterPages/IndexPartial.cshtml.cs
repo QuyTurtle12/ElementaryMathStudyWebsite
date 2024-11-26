@@ -25,7 +25,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
         public List<ChapterViewDto> Chapters { get; set; } = new();
         public string SubjectName { get; set; } = string.Empty;
         public int CurrentPage { get; set; }
-         public string SubjectId { get; set; } = string.Empty; 
+        public string SubjectId { get; set; } = string.Empty;
         public int TotalPages { get; set; }
         public int TotalItems { get; set; }
 
@@ -57,7 +57,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             if (!string.IsNullOrEmpty(SearchKeyword))
             {
                 var searchKeywordLower = SearchKeyword.ToLower();
-                query = query.Where(c => 
+                query = query.Where(c =>
                     (c.ChapterName != null && c.ChapterName.ToLower().Contains(searchKeywordLower)) ||
                     (c.Quiz != null && c.Quiz.QuizName != null && c.Quiz.QuizName.ToLower().Contains(searchKeywordLower)));
             }

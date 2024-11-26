@@ -28,13 +28,13 @@ namespace ElementaryMathStudyWebsite.Controllers
         }
 
         //[Authorize(Policy = "Admin-Content")]
-        //[HttpGet("search/question/{questionid}")]
-        //[SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Gets a question by its id.")]
-        //public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> GetQuestionById(string questionid)
-        //{
-        //    QuestionMainViewDto question = await _questionService.GetQuestionByIdAsync(questionid);
-        //    return BaseResponse<QuestionMainViewDto>.OkResponse(question);
-        //}
+        [HttpGet("search/question/{questionid}")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Gets a question by its id.")]
+        public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> GetQuestionById(string questionid)
+        {
+            QuestionMainViewDto question = await _questionService.GetQuestionByIdAsync(questionid);
+            return BaseResponse<QuestionMainViewDto>.OkResponse(question);
+        }
 
         [HttpGet("search/quiz/{quizId}")]
         [SwaggerOperation(Summary = "Authorization: N/A", Description = "Gets all questions related to a specific quiz.")]
@@ -53,7 +53,7 @@ namespace ElementaryMathStudyWebsite.Controllers
             return Ok(response);
         }
 
-        [Authorize(Policy = "Admin-Content")]
+        //[Authorize(Policy = "Admin-Content")]
         [HttpPut("update/{id}")]
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Updates a question by its unique identifier.")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> UpdateQuestion(string id, QuestionUpdateDto dto)

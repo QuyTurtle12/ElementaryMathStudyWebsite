@@ -117,11 +117,11 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 
             if (isCreating)
             {
-                entity.CreatedBy = currentUserId; 
+                entity.CreatedBy = currentUserId;
                 entity.CreatedTime = DateTime.UtcNow;
             }
 
-            entity.LastUpdatedBy = currentUserId; 
+            entity.LastUpdatedBy = currentUserId;
             entity.LastUpdatedTime = DateTime.UtcNow;
         }
     }

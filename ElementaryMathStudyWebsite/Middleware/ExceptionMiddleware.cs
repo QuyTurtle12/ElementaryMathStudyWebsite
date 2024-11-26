@@ -1,4 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Base;
+using Microsoft.AspNetCore.Http;
 using System.Text.Json;
 
 namespace ElementaryMathStudyWebsite.Middleware
@@ -57,6 +58,21 @@ namespace ElementaryMathStudyWebsite.Middleware
                     errorMessage = unAuthEx.ErrorDetail.ErrorMessage
                 });
             }
+            catch (BaseException.ValidationException validationEx)
+            {
+                _logger.LogError(validationEx, "Validation Invalid.");
+                context.Response.StatusCode = validationEx.StatusCode;
+                context.Response.ContentType = "application/json";
+                var errorResponse = new
+                {
+                    errorCode = validationEx.ErrorDetail?.ErrorCode,
+                    errorMessage = validationEx.ErrorDetail?.ErrorMessage
+                };
+
+                await HandleExceptionAsync(context, validationEx.StatusCode, errorResponse);
+            }
+
+
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An unexpected exception occurred.");

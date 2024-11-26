@@ -1,0 +1,88 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages.IndexModel
+
+@{
+    ViewData["Title"] = "Question Index";
+}
+
+@if (TempData["NotFoundMessage"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        @TempData["NotFoundMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="text-primary">Question List</h1>
+    <a asp-page="Create" class="btn btn-success btn-lg">
+        <i class="bi bi-plus-circle"></i> Create New
+    </a>
+</div>
+
+<!-- Form tìm kiếm -->
+<form method="get">
+    <div class="d-flex justify-content-between mb-3">
+        <div class="input-group w-50">
+            <input type="text" class="form-control" name="questionName" value="@Model.CurrentQuestionName" placeholder="Search by question name" />
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-search"></i> Search
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Hiển thị bảng câu hỏi -->
+<div class="table-responsive">
+    <table class="table table-bordered table-hover text-left">
+        <thead class="table-dark">
+            <tr>
+                <th>Question Name</th>
+                <th>Created By</th>
+                <th>Last Updated By</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var question in Model.QuestionDtos.Items)
+            {
+                <tr>
+                    <td>@Html.Raw(@question.QuestionContext)</td>
+                    <td style="white-space: nowrap;">@question.CreatorName</td>
+                    <td style="white-space: nowrap;">@question.LastUpdatedPersonName</td>
+
+                    <td class="d-flex gap-2">
+                        <a asp-page="Edit" asp-route-id="@question.Id" class="btn btn-warning btn-sm">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <a asp-page="Details" asp-route-id="@question.Id" class="btn btn-info btn-sm text-white">
+                            <i class="bi bi-eye"></i> Details
+                        </a>
+                        <a asp-page="Delete" asp-route-id="@question.Id" class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash"></i> Delete
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+<div class="pagination mt-3">
+    @if (Model.QuestionDtos.HasPreviousPage)
+    {
+        <a asp-page="./Index" asp-route-pageNumber="@(Model.QuestionDtos.CurrentPage - 1)" asp-route-questionName="@Model.CurrentQuestionName" class="btn btn-outline-primary">
+            Previous
+        </a>
+    }
+
+    <span class="mx-2">Page @Model.QuestionDtos.CurrentPage of @Model.QuestionDtos.TotalPages</span>
+
+    @if (Model.QuestionDtos.HasNextPage)
+    {
+        <a asp-page="./Index" asp-route-pageNumber="@(Model.QuestionDtos.CurrentPage + 1)" asp-route-questionName="@Model.CurrentQuestionName" class="btn btn-outline-primary">
+            Next
+        </a>
+    }
+</div>

@@ -1,27 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Core.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Services.Service;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
 {
     public class EditModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly IAppSubjectServices _appSubjectService;
 
-        public EditModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public EditModel(IAppSubjectServices subjectService)
         {
-            _context = context;
+            _appSubjectService = subjectService;
         }
 
         [BindProperty]
-        public Subject Subject { get; set; } = default!;
+        public SubjectUpdateDTO Subject { get; set; } = new SubjectUpdateDTO();
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -30,48 +27,50 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
                 return NotFound();
             }
 
-            var subject =  await _context.Subject.FirstOrDefaultAsync(m => m.Id == id);
+            var subject = await _appSubjectService.GetSubjectByIDAsync(id);
             if (subject == null)
             {
                 return NotFound();
             }
-            Subject = subject;
+
+            Subject = new SubjectUpdateDTO
+            {
+                SubjectName = subject.SubjectName,
+                Price = subject.Price,
+                Status = subject.Status
+            };
+
             return Page();
         }
 
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more information, see https://aka.ms/RazorPagesCRUD.
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(string id)
         {
             if (!ModelState.IsValid)
             {
                 return Page();
             }
 
-            _context.Attach(Subject).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _appSubjectService.UpdateSubjectAsync(id, Subject);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!SubjectExists(Subject.Id))
+                var existSubject = await _appSubjectService.SearchSubjectExactAsync(Subject.SubjectName);
+                if (existSubject != null)
                 {
-                    return NotFound();
+                    ModelState.AddModelError(string.Empty, "Subject name existed!");
                 }
-                else
+
+                if (Subject.Price <= 0)
                 {
-                    throw;
+                    ModelState.AddModelError("Subject.Price", "Price must be a positive number.");
+                    return Page();
                 }
+                return Page();
             }
 
             return RedirectToPage("./Index");
-        }
-
-        private bool SubjectExists(string id)
-        {
-            return _context.Subject.Any(e => e.Id == id);
         }
     }
 }

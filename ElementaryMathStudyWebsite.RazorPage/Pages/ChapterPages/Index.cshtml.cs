@@ -60,7 +60,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             if (!string.IsNullOrEmpty(SearchKeyword))
             {
                 var searchKeywordLower = SearchKeyword.ToLower();
-                query = query.Where(c => 
+                query = query.Where(c =>
                     (c.ChapterName != null && c.ChapterName.ToLower().Contains(searchKeywordLower)) ||
                     (c.Subject != null && c.Subject.SubjectName != null && c.Subject.SubjectName.ToLower().Contains(searchKeywordLower)) ||
                     (c.Quiz != null && c.Quiz.QuizName != null && c.Quiz.QuizName.ToLower().Contains(searchKeywordLower)));
@@ -68,9 +68,9 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             // Thêm đoạn code lấy danh sách subjects vào đầu method
             Subjects = await _context.Subject
                 .Where(s => string.IsNullOrEmpty(s.DeletedBy))
-                .Select(s => new SubjectDTO 
-                { 
-                    Id = s.Id, 
+                .Select(s => new SubjectDTO
+                {
+                    Id = s.Id,
                     SubjectName = s.SubjectName,
                     Price = s.Price,
                     Status = s.Status

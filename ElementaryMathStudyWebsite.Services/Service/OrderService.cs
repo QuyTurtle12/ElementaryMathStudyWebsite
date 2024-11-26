@@ -964,5 +964,37 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return true;
         }
 
+        public async Task<OrderAdminViewDto> GetOrderAdminDtoASync(string orderId)
+        {
+            Order? order = await _unitOfWork.GetRepository<Order>()
+                .Entities
+                .Where(o => o.Id.Equals(orderId))
+                .Include(o => o.User)
+                .FirstOrDefaultAsync();
+
+            if (order == null)
+            {
+                throw new BaseException.NotFoundException("not_found", "the system cannot find this order");
+            }
+
+            // Map entities data to dto
+            OrderAdminViewDto dto = _mapper.Map<OrderAdminViewDto>(order);
+
+            // Get list of detail info about an order
+            IEnumerable<OrderDetail> orderDetails = _unitOfWork.GetRepository<OrderDetail>()
+                                                        .GetEntitiesWithCondition(
+                                                            od => od.OrderId.Equals(order.Id),   // Condition
+                                                            od => od.Subject!,                  // Include the Subject
+                                                            od => od.User!                      // Include the User
+                                                            )
+                                                        .ToList();
+
+            dto.Details = _mapper.Map<IEnumerable<OrderDetailViewDto>>(orderDetails);
+
+            // Get the purchase date
+            dto.PurchaseDate = (order.Status == PaymentStatusHelper.SUCCESS.ToString()) ? order.LastUpdatedTime : null;
+
+            return dto;
+        }
     }
 }

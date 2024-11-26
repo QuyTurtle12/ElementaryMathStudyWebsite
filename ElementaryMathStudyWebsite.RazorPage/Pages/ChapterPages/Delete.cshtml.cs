@@ -68,7 +68,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 
         public async Task<IActionResult> OnPostAsync(string id)
         {
-            try 
+            try
             {
                 if (id == null)
                 {

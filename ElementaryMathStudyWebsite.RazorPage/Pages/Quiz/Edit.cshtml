@@ -1,0 +1,68 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.Quiz.EditModel
+
+@{
+    ViewData["Title"] = "Edit Quiz";
+}
+
+<h1 class="text-center mb-4">Edit Quiz</h1>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            <div class="form-group">
+                <label for="QuizName">Quiz Name</label>
+                <input type="text" id="QuizName" name="QuizName" class="form-control" value="@Model.Quiz.QuizName" placeholder="Enter quiz name" required />
+            </div>
+
+            <div class="form-group">
+                <label for="Criteria">Criteria (1 - 10)</label>
+                <input type="number" id="Criteria" name="Criteria" class="form-control" value="@Model.Quiz.Criteria" min="1" max="10" required />
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <div>
+                    <!-- Radio button for Active status -->
+                    <div class="form-check form-check-inline">
+                        <input type="radio" id="active" name="Status" value="true" class="form-check-input"
+                        @if (Model.Quiz.Status)
+                        {
+                            @:checked
+                        } />
+                        <label class="form-check-label" for="active">Active</label>
+                    </div>
+
+                    <!-- Radio button for Inactive status -->
+                    <div class="form-check form-check-inline">
+                        <input type="radio" id="inactive" name="Status" value="false" class="form-check-input"
+                        @if (!Model.Quiz.Status)
+                        {
+                            @:checked
+                        } />
+                        <label class="form-check-label" for="inactive">Inactive</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group text-center">
+                <button type="submit" class="btn btn-success btn-lg">Save Changes</button>
+                <a href="@Url.Page("./Index")" class="btn btn-secondary btn-lg ml-3">Cancel</a>
+            </div>
+        </form>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success mt-4">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (!ModelState.IsValid)
+        {
+            <div class="alert alert-danger mt-4">
+                <strong>Error:</strong> Please check the form for errors.
+            </div>
+        }
+    </div>
+</div>

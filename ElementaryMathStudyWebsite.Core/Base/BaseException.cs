@@ -13,7 +13,6 @@ namespace ElementaryMathStudyWebsite.Core.Base
                 StatusCode = statusCode;
             }
 
-
             public string Code { get; }
 
             public int StatusCode { get; set; }

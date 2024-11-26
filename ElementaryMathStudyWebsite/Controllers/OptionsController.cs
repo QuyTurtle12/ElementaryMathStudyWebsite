@@ -78,6 +78,5 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             return Ok(BaseResponse<OptionViewDto>.OkResponse(response));
         }
-
     }
 }

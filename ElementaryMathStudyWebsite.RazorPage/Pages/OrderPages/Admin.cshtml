@@ -1,0 +1,112 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.OrderPages.AdminModel
+
+@{
+    ViewData["Title"] = "Admin";
+    int orderNumber = 1; // Initialize the counter
+}
+
+<style>
+    body {
+        background-color: #f4f4f9;
+        margin: 0;
+    }
+
+    h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 1rem;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+        .table th,
+        .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: #007BFF;
+            color: white;
+            font-weight: bold;
+        }
+
+        .table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .table td div {
+            margin: 5px 0;
+        }
+
+    .pagination {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+        .pagination a {
+            margin: 0 5px;
+            padding: 8px 12px;
+            text-decoration: none;
+            background-color: #007BFF;
+            color: white;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+            .pagination a:hover {
+                background-color: #0056b3;
+            }
+
+        .pagination span {
+            margin: 0 5px;
+            font-weight: bold;
+            color: #555;
+        }
+</style>
+
+<h1>Order</h1>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>No.</th>
+            <th>Customer</th>
+            <th>Order Date</th>
+            <th>Total Amount</th>
+            <th>Payment Method</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Orders.Items) {
+        <tr>
+                <td>@orderNumber</td>
+                <td>@Html.DisplayFor(modelItem => item.CustomerName)</td>
+                <td>@Html.DisplayFor(modelItem => item.OrderDate)</td>
+                <td>@Html.DisplayFor(modelItem => item.TotalPrice)</td>
+                <td>@Html.DisplayFor(modelItem => item.PaymentMethod)</td>
+                <td>@Html.DisplayFor(modelItem => item.Status)</td>
+            <td>
+                <a asp-page="./Details" asp-route-id="@item.OrderId">Details</a>
+            </td>
+        </tr>
+            orderNumber++;
+}
+    </tbody>
+</table>

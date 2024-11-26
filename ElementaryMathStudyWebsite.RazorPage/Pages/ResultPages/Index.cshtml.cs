@@ -26,10 +26,10 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ResultPages
             {
                 return RedirectToPage("ResultPages/Student");
             }
-            //else if (currentUser!.Role!.RoleName.Equals("Parent"))
-            //{
-            //    return RedirectToPage("/ResultPages/Parent");
-            //}
+            else if (currentUser!.Role!.RoleName.Equals("Parent"))
+            {
+                return RedirectToPage("/ResultPages/Parent");
+            }
 
             return RedirectToPage("/AccessDenied");
         }

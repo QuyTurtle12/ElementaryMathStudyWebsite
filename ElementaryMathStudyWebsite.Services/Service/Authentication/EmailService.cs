@@ -47,6 +47,40 @@ namespace ElementaryMathStudyWebsite.Services.Service.Authentication
             await SendEmailAsync(email, subject, body);
         }
 
+        //for razor page
+        public async Task SendVerificationEmailAsyncV2(string email, string verificationToken)
+        {
+            // Retrieve the web link from appsettings.json
+            string? webLink = _configuration["AppSettings:WebLink"];
+            if (string.IsNullOrWhiteSpace(webLink))
+            {
+                throw new InvalidOperationException("WebLink is not configured.");
+            }
+
+            string verificationUrl = $"{webLink}/authpages/verifyemail?token={verificationToken}";
+
+            // Email subject and body
+            string subject = "Email Verification";
+            string body = $@"
+    <div style='font-family: Arial, sans-serif; line-height: 1.5;'>
+        <h2 style='color: #4CAF50;'>Email Verification</h2>
+        <p>Dear user,</p>
+        <p>Please verify your email by clicking the button below:</p>
+        <a href='{verificationUrl}' 
+           style='display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; 
+                  text-decoration: none; border-radius: 5px; font-weight: bold;'>
+           Verify Email
+        </a>
+        <p>If the button does not work, copy and paste the following link into your browser:</p>
+        <p><a href='{verificationUrl}'>{verificationUrl}</a></p>
+        <p>Thank you!</p>
+    </div>";
+
+
+            // Send email using SendGrid
+            await SendEmailAsync(email, subject, body);
+        }
+
         // Send password reset email
         public async Task SendPasswordResetEmailAsync(string email, string resetToken)
         {

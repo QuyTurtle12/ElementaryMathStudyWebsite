@@ -1,44 +1,52 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Services.Service;
+using Microsoft.EntityFrameworkCore;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
 {
     public class DeleteModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly IAppSubjectServices _appSubjectService;
 
-        public DeleteModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public DeleteModel(IAppSubjectServices subjectService)
         {
-            _context = context;
+            _appSubjectService = subjectService;
         }
 
         [BindProperty]
         public Subject Subject { get; set; } = default!;
+        public string? SubjectName { get; set; }
+        public double? Price { get; set; }
+        public string? CreatedByName { get; set; }
+        public string? LastUpdatedByName { get; set; }
+        public DateTime? CreatedTime { get; set; }
+        public DateTime? LastUpdatedTime { get; set; }
 
-        public async Task<IActionResult> OnGetAsync(string id)
+        public IActionResult OnGet(string id, string? subjectName, double? price, string? createdByName, string? lastUpdatedByName,
+                                   string? createdTime, string? lastUpdatedTime)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var subject = await _context.Subject.FirstOrDefaultAsync(m => m.Id == id);
+            SubjectName = subjectName ?? "No name";
+            Price = price ?? 0.0;
 
-            if (subject == null)
-            {
-                return NotFound();
-            }
-            else
-            {
-                Subject = subject;
-            }
+            // Assign values from route parameters to properties
+            CreatedByName = createdByName ?? "Unknown";
+            LastUpdatedByName = lastUpdatedByName ?? "Unknown";
+
+            CreatedTime = DateTime.TryParse(createdTime, out var parsedCreatedTime) ? parsedCreatedTime : null;
+            LastUpdatedTime = DateTime.TryParse(lastUpdatedTime, out var parsedLastUpdatedTime) ? parsedLastUpdatedTime : null;
+
             return Page();
         }
 
@@ -49,12 +57,16 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
                 return NotFound();
             }
 
-            var subject = await _context.Subject.FindAsync(id);
-            if (subject != null)
+            try
             {
-                Subject = subject;
-                _context.Subject.Remove(Subject);
-                await _context.SaveChangesAsync();
+                // Use the soft delete service
+                await _appSubjectService.SoftDeleteSubjectAsync(id);
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions (e.g., not found or validation errors)
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return Page();
             }
 
             return RedirectToPage("./Index");

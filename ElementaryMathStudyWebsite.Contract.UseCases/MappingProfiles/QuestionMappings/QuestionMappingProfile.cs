@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Core.Utils;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.MappingProfiles.QuestionMappings
 {
