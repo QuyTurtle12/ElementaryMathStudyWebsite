@@ -1,0 +1,75 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages.EditModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Option</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Option.QuestionId" class="control-label"></label>
+                <select asp-for="Option.QuestionId" class="form-control" asp-items="ViewBag.QuestionId"></select>
+                <span asp-validation-for="Option.QuestionId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Option.Answer" class="control-label"></label>
+                <input asp-for="Option.Answer" class="form-control" />
+                <span asp-validation-for="Option.Answer" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="Option.IsCorrect" /> @Html.DisplayNameFor(model => model.Option.IsCorrect)
+                </label>
+            </div>
+            <input type="hidden" asp-for="Option.Id" />
+            <div class="form-group">
+                <label asp-for="Option.CreatedBy" class="control-label"></label>
+                <input asp-for="Option.CreatedBy" class="form-control" />
+                <span asp-validation-for="Option.CreatedBy" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Option.LastUpdatedBy" class="control-label"></label>
+                <input asp-for="Option.LastUpdatedBy" class="form-control" />
+                <span asp-validation-for="Option.LastUpdatedBy" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Option.DeletedBy" class="control-label"></label>
+                <input asp-for="Option.DeletedBy" class="form-control" />
+                <span asp-validation-for="Option.DeletedBy" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Option.CreatedTime" class="control-label"></label>
+                <input asp-for="Option.CreatedTime" class="form-control" />
+                <span asp-validation-for="Option.CreatedTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Option.LastUpdatedTime" class="control-label"></label>
+                <input asp-for="Option.LastUpdatedTime" class="form-control" />
+                <span asp-validation-for="Option.LastUpdatedTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Option.DeletedTime" class="control-label"></label>
+                <input asp-for="Option.DeletedTime" class="form-control" />
+                <span asp-validation-for="Option.DeletedTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="./Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

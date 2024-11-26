@@ -39,7 +39,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.PurchasePages
 			}
 			catch (Exception) 
             {
-                TempData["ErrorMessage"] = "Giỏ hàng trống";
+                TempData["ErrorMessage"] = "Empty cart";
             }
             
             return Page();
