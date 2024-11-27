@@ -2,84 +2,62 @@
 @model ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages.CreateModel
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Tạo mới";
+    var quizList = ViewData["QuizId"] as SelectList;
+    var hasAvailableQuizzes = quizList != null && quizList.Any();
 }
 
-<h1>Create</h1>
-
-<h4>Chapter</h4>
+<h1>Tạo mới</h1>
+<h4>Chương</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <form method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Chapter.Number" class="control-label"></label>
-                <input asp-for="Chapter.Number" class="form-control" />
-                <span asp-validation-for="Chapter.Number" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Chapter.ChapterName" class="control-label"></label>
+            <div class="form-group mb-3">
+                <label asp-for="Chapter.ChapterName" class="control-label">Tên chương</label>
                 <input asp-for="Chapter.ChapterName" class="form-control" />
                 <span asp-validation-for="Chapter.ChapterName" class="text-danger"></span>
             </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Chapter.Status" /> @Html.DisplayNameFor(model => model.Chapter.Status)
-                </label>
+            <div class="form-group mb-3">
+                <label asp-for="Chapter.SubjectId" class="control-label">Tên môn học</label>
+                <select asp-for="Chapter.SubjectId" class="form-control" asp-items="ViewBag.SubjectId">
+                    <option value="">-- Chọn môn học --</option>
+                </select>
+                <span asp-validation-for="Chapter.SubjectId" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Chapter.SubjectId" class="control-label"></label>
-                <select asp-for="Chapter.SubjectId" class ="form-control" asp-items="ViewBag.SubjectId"></select>
+            <div class="form-group mb-3">
+                <label asp-for="Chapter.QuizId" class="control-label">Tên câu hỏi</label>
+                <select asp-for="Chapter.QuizId" class="form-control" asp-items="ViewBag.QuizId">
+                    <option value="">-- Không có câu hỏi --</option>
+                </select>
+                @if (!hasAvailableQuizzes)
+                {
+                    <small class="text-muted d-block mt-1">
+                        <i class="fas fa-info-circle"></i>
+                        Tất cả các Quiz đã được gắn vào Chapter hoặc Topic
+                    </small>
+                }
+                else
+                {
+                    <small class="text-muted d-block mt-1">
+                        <i class="fas fa-info-circle"></i>
+                        Chỉ hiển thị các Quiz chưa được gắn vào Chapter hoặc Topic
+                    </small>
+                }
             </div>
-            <div class="form-group">
-                <label asp-for="Chapter.QuizId" class="control-label"></label>
-                <select asp-for="Chapter.QuizId" class ="form-control" asp-items="ViewBag.QuizId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="Chapter.Id" class="control-label"></label>
-                <input asp-for="Chapter.Id" class="form-control" />
-                <span asp-validation-for="Chapter.Id" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Chapter.CreatedBy" class="control-label"></label>
-                <input asp-for="Chapter.CreatedBy" class="form-control" />
-                <span asp-validation-for="Chapter.CreatedBy" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Chapter.LastUpdatedBy" class="control-label"></label>
-                <input asp-for="Chapter.LastUpdatedBy" class="form-control" />
-                <span asp-validation-for="Chapter.LastUpdatedBy" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Chapter.DeletedBy" class="control-label"></label>
-                <input asp-for="Chapter.DeletedBy" class="form-control" />
-                <span asp-validation-for="Chapter.DeletedBy" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Chapter.CreatedTime" class="control-label"></label>
-                <input asp-for="Chapter.CreatedTime" class="form-control" />
-                <span asp-validation-for="Chapter.CreatedTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Chapter.LastUpdatedTime" class="control-label"></label>
-                <input asp-for="Chapter.LastUpdatedTime" class="form-control" />
-                <span asp-validation-for="Chapter.LastUpdatedTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Chapter.DeletedTime" class="control-label"></label>
-                <input asp-for="Chapter.DeletedTime" class="form-control" />
-                <span asp-validation-for="Chapter.DeletedTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+            <div class="form-group mt-3">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Tạo mới
+                    </button>
+                    <a asp-page="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+                    </a>
+                </div>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-page="Index">Back to List</a>
 </div>
 
 @section Scripts {

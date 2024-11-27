@@ -684,54 +684,92 @@ namespace ElementaryMathStudyWebsite.Services.Service
         /// <param name="pageNumber"></param>
         /// <param name="pageSize"></param>
         /// <returns></returns>
-        public async Task<BasePaginatedList<object>> GetChapterDtosAsync(int pageNumber, int pageSize)
+        public async Task<BasePaginatedList<ChapterViewDto>> GetChapterDtosAsync(int pageNumber, int pageSize, string? searchKeyword = null)
         {
-            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => String.IsNullOrWhiteSpace(c.DeletedBy) && c.Status == true);
+            // Tạo query cơ bản
+            IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities
+                .Include(c => c.Quiz)
+                .Include(c => c.Subject)
+                .Where(c => String.IsNullOrWhiteSpace(c.DeletedBy) && c.Status == true);
 
-            //Kiểm tra và xử lý phân trang
-            if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
+            // Thêm điều kiện tìm kiếm nếu có
+            if (!string.IsNullOrEmpty(searchKeyword))
             {
-                List<Chapter> allChapters = query.ToList();
-                var chapterViewTasks = allChapters.Select(chapter =>
-                {
-                    if (chapter != null)
-                    {
-                        Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
-                        Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
-
-                        return _mapper.Map<ChapterViewDto>(chapter, opts =>
-                        {
-                            opts.Items["Subject"] = subject;
-                            opts.Items["Quiz"] = quiz;
-                        });
-                    }
-                    return null;
-                }).ToList();
-
-                return new BasePaginatedList<object>(chapterViewTasks!, chapterViewTasks.Count, 1, chapterViewTasks.Count);
+                query = query.Where(c => EF.Functions.Like(c.ChapterName, $"%{searchKeyword}%"));
             }
 
-            //Thực hiện phân trang tự động
-            var paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
-            var paginatedChapterViewTasks = paginatedChapters.Items.Select(chapter =>
-            {
-                if (chapter != null)
-                {
-                    Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
-                    Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+            // Đếm tổng số items để phân trang
+            int totalItems = await query.CountAsync();
 
-                    return _mapper.Map<ChapterViewDto>(chapter, opts =>
-                    {
-                        opts.Items["Subject"] = subject;
-                        opts.Items["Quiz"] = quiz;
-                    });
-                }
-                return null;
+            // Lấy dữ liệu theo trang
+            var chapters = await query
+                .OrderBy(c => c.Number)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Map sang DTO sử dụng AutoMapper
+            var chapterDtos = chapters.Select(chapter =>
+            {
+                return _mapper.Map<ChapterViewDto>(chapter, opts =>
+                {
+                    opts.Items["Subject"] = chapter.Subject;
+                    opts.Items["Quiz"] = chapter.Quiz;
+                });
             }).ToList();
 
-            return new BasePaginatedList<object>(paginatedChapterViewTasks!, paginatedChapterViewTasks.Count, pageNumber, pageSize);
-
+            // Trả về kết quả đã phân trang
+            return new BasePaginatedList<ChapterViewDto>(chapterDtos, totalItems, pageNumber, pageSize);
         }
+
+        //public async Task<BasePaginatedList<object>> GetChapterDtosAsync(int pageNumber, int pageSize)
+        //{
+        //    IQueryable<Chapter> query = _unitOfWork.GetRepository<Chapter>().Entities.Where(c => String.IsNullOrWhiteSpace(c.DeletedBy) && c.Status == true);
+
+        //    //Kiểm tra và xử lý phân trang
+        //    if (pageSize == -1 || pageNumber <= 0 || pageSize <= 0)
+        //    {
+        //        List<Chapter> allChapters = query.ToList();
+        //        var chapterViewTasks = allChapters.Select(chapter =>
+        //        {
+        //            if (chapter != null)
+        //            {
+        //                Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
+        //                Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+
+        //                return _mapper.Map<ChapterViewDto>(chapter, opts =>
+        //                {
+        //                    opts.Items["Subject"] = subject;
+        //                    opts.Items["Quiz"] = quiz;
+        //                });
+        //            }
+        //            return null;
+        //        }).ToList();
+
+        //        return new BasePaginatedList<object>(chapterViewTasks!, chapterViewTasks.Count, 1, chapterViewTasks.Count);
+        //    }
+
+        //    //Thực hiện phân trang tự động
+        //    var paginatedChapters = await _unitOfWork.GetRepository<Chapter>().GetPagging(query, pageNumber, pageSize);
+        //    var paginatedChapterViewTasks = paginatedChapters.Items.Select(chapter =>
+        //    {
+        //        if (chapter != null)
+        //        {
+        //            Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
+        //            Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
+
+        //            return _mapper.Map<ChapterViewDto>(chapter, opts =>
+        //            {
+        //                opts.Items["Subject"] = subject;
+        //                opts.Items["Quiz"] = quiz;
+        //            });
+        //        }
+        //        return null;
+        //    }).ToList();
+
+        //    return new BasePaginatedList<object>(paginatedChapterViewTasks!, paginatedChapterViewTasks.Count, pageNumber, pageSize);
+
+        //}
 
         /// <summary>
         /// Assign a quizId to an available chapter
