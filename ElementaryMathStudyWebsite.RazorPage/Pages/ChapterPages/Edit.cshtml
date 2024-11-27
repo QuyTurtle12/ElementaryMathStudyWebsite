@@ -1,0 +1,40 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages.EditModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa";
+}
+
+<h1>Chỉnh sửa</h1>
+
+<h4>Chương</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Chapter.ChapterName" class="control-label">Tên chương</label>
+                <input asp-for="Chapter.ChapterName" class="form-control" />
+                <span asp-validation-for="Chapter.ChapterName" class="text-danger"></span>
+            </div>
+            <input type="hidden" asp-for="Chapter.Id" />
+            <div class="form-group mt-3">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+                    <a asp-page="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

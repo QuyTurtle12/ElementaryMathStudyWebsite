@@ -1,0 +1,103 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages.DetailsModel
+
+@{
+    ViewData["Title"] = "Details";
+    string? userRole = HttpContext.Session.GetString("role_name");
+    string? targetPage = userRole == "Student" ? "/ResultPages/Student" :
+                         userRole == "Parent" ? "/ResultPages/Parent" : null;
+    string? studentId = Model.StudentId;
+}
+
+<style>
+    body {
+    background-color: #f4f4f9;
+    margin: 0;
+    }
+
+    h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 2rem;
+    }
+
+    h3 {
+    color: #555;
+    margin-top: 30px;
+    font-size: 1.5rem;
+    text-align: left;
+    }
+
+    ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 10px 0;
+    }
+
+    ul li {
+    margin: 5px 0;
+    }
+
+    ul li a {
+    color: #0066cc;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    }
+
+    ul li a:hover {
+    color: #004099;
+    text-decoration: underline;
+    }
+
+    div a {
+    color: #0066cc;
+    text-decoration: none;
+    }
+
+</style>
+
+<h1>Detail</h1>
+
+@if (targetPage != null)
+{
+    <h3>Finished Chapters</h3>
+    <ul>
+        @foreach (var chapter in Model.FinishedChapters!)
+        {
+            <li>
+                <a asp-page="@targetPage"
+                asp-route-chapterOrTopicId="@chapter.Id"
+                asp-route-studentId="@(userRole == "Parent" ? studentId : null)">@chapter.Name</a>
+            </li>
+        }
+    </ul>
+
+    <h3>Finished Topics</h3>
+    <ul>
+        @foreach (var topic in Model.FinishedTopics!)
+        {
+            <li>
+                <a asp-page="@targetPage"
+                asp-route-chapterOrTopicId="@topic.Id"
+                asp-route-studentId="@(userRole == "Parent" ? studentId : null)">@topic.Name</a>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>Cannot determine user role or unauthorized access.</p>
+}
+
+<div>
+    @if (userRole == "Student")
+    {
+        <a asp-page="./Index">Back</a>
+    }
+    else if (userRole == "Parent")
+    {
+        <a asp-page="./Parent">Back</a>
+    }
+
+</div>

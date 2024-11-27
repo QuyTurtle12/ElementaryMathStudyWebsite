@@ -1,0 +1,73 @@
+﻿@page
+@using System.Globalization
+@model ElementaryMathStudyWebsite.RazorPage.Pages.PurchasePages.CartModel
+@{
+	ViewData["Title"] = "Cart";
+}
+@if (Model.student != null && Model.subject != null)
+{
+
+	<form method="post">
+
+		<div class="cart-list">
+			<div class="cart-item">
+				<h3>@Model.student.FullName</h3>
+			</div>
+			<div class="cart-item">
+				<h3>@Model.subject.SubjectName</h3>
+				<p>Price: @Model.subject.Price.ToString("C", new CultureInfo("vi-VN"))</p>  <!-- Format as VND -->
+			</div>
+
+
+		</div>
+		<button id="continueButton" class="btn btn-primary">Continue</button>
+	</form>
+}
+else
+{
+	<h3>@TempData["ErrorMessage"]</h3>
+}
+
+<style>
+	.cart-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 20px;
+	}
+
+	.cart-item {
+		border: 1px solid #ddd;
+		padding: 15px;
+		border-radius: 5px;
+		width: 250px;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+	}
+
+		.cart-item:hover {
+			background-color: #f0f0f0;
+		}
+
+		.cart-item.selected {
+			background-color: #cce5ff;
+			border-color: #007bff;
+		}
+
+		.cart-item h3 {
+			font-size: 1.2em;
+			margin-bottom: 10px;
+		}
+
+		.cart-item p {
+			margin-bottom: 8px;
+		}
+
+	.btn-primary {
+		background-color: #007bff;
+		color: #fff;
+		border: none;
+		padding: 10px 15px;
+		border-radius: 5px;
+		margin-top: 20px;
+	}
+</style>

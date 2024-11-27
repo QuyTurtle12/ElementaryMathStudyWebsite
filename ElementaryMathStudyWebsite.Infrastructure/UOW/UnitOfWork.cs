@@ -1,6 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
 
 namespace ElementaryMathStudyWebsite.Infrastructure.UOW

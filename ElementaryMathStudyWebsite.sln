@@ -1,0 +1,76 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1.INTERFACE ADAPTERS", "1.INTERFACE ADAPTERS", "{D8BC4421-0767-40F0-855C-982802A09D1E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.INFRASTRUCTURE", "2.INFRASTRUCTURE", "{7F5CA52A-D207-4C45-9496-E7E1E972CCB8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.SERVICES", "3.SERVICES", "{90ABB2B4-EDCD-4499-AE6A-CAB97AABE9F4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.CORE", "4.CORE", "{9B5E4897-588B-495E-B060-ADE1FFCBEFBB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite", "ElementaryMathStudyWebsite\ElementaryMathStudyWebsite.csproj", "{58AB491B-F041-460D-9B53-245DB7D1C8F3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Core", "ElementaryMathStudyWebsite.Core\ElementaryMathStudyWebsite.Core.csproj", "{4E314843-7C51-4CEA-BDCA-C93A23969EA4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Contract.Core", "ElementaryMathStudyWebsite.Contract.Core\ElementaryMathStudyWebsite.Contract.Core.csproj", "{D66E30AC-60F0-404D-9014-AFD33C212F66}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Services", "ElementaryMathStudyWebsite.Services\ElementaryMathStudyWebsite.Services.csproj", "{46439365-74CB-4A29-A8B0-CAC999D28CDA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Contract.UseCases", "ElementaryMathStudyWebsite.Contract.UseCases\ElementaryMathStudyWebsite.Contract.UseCases.csproj", "{C7A97A45-FDAD-43A2-863C-41B2983EAE03}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Infrastructure", "ElementaryMathStudyWebsite.Infrastructure\ElementaryMathStudyWebsite.Infrastructure.csproj", "{006AA52F-2906-4EE6-A47F-F0F5910D4262}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.RazorPage", "ElementaryMathStudyWebsite.RazorPage\ElementaryMathStudyWebsite.RazorPage.csproj", "{B0936B57-0DC7-4EE5-952C-AE0E2742556F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{58AB491B-F041-460D-9B53-245DB7D1C8F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58AB491B-F041-460D-9B53-245DB7D1C8F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58AB491B-F041-460D-9B53-245DB7D1C8F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58AB491B-F041-460D-9B53-245DB7D1C8F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E314843-7C51-4CEA-BDCA-C93A23969EA4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E314843-7C51-4CEA-BDCA-C93A23969EA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E314843-7C51-4CEA-BDCA-C93A23969EA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E314843-7C51-4CEA-BDCA-C93A23969EA4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D66E30AC-60F0-404D-9014-AFD33C212F66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D66E30AC-60F0-404D-9014-AFD33C212F66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D66E30AC-60F0-404D-9014-AFD33C212F66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D66E30AC-60F0-404D-9014-AFD33C212F66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46439365-74CB-4A29-A8B0-CAC999D28CDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46439365-74CB-4A29-A8B0-CAC999D28CDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46439365-74CB-4A29-A8B0-CAC999D28CDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46439365-74CB-4A29-A8B0-CAC999D28CDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7A97A45-FDAD-43A2-863C-41B2983EAE03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7A97A45-FDAD-43A2-863C-41B2983EAE03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7A97A45-FDAD-43A2-863C-41B2983EAE03}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7A97A45-FDAD-43A2-863C-41B2983EAE03}.Release|Any CPU.Build.0 = Release|Any CPU
+		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{006AA52F-2906-4EE6-A47F-F0F5910D4262}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0936B57-0DC7-4EE5-952C-AE0E2742556F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0936B57-0DC7-4EE5-952C-AE0E2742556F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0936B57-0DC7-4EE5-952C-AE0E2742556F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0936B57-0DC7-4EE5-952C-AE0E2742556F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4E314843-7C51-4CEA-BDCA-C93A23969EA4} = {9B5E4897-588B-495E-B060-ADE1FFCBEFBB}
+		{D66E30AC-60F0-404D-9014-AFD33C212F66} = {9B5E4897-588B-495E-B060-ADE1FFCBEFBB}
+		{46439365-74CB-4A29-A8B0-CAC999D28CDA} = {90ABB2B4-EDCD-4499-AE6A-CAB97AABE9F4}
+		{C7A97A45-FDAD-43A2-863C-41B2983EAE03} = {90ABB2B4-EDCD-4499-AE6A-CAB97AABE9F4}
+		{006AA52F-2906-4EE6-A47F-F0F5910D4262} = {7F5CA52A-D207-4C45-9496-E7E1E972CCB8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {60178E0C-411E-44BE-BD77-DBB65C0B0578}
+	EndGlobalSection
+EndGlobal

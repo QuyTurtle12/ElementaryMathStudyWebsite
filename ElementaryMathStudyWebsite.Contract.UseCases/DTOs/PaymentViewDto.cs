@@ -14,7 +14,7 @@
 
     public class PaymentSubjectStudent
     {
-        public string SubjectName { get; set; }
-        public string StudentName { get; set; }
+        public string SubjectName { get; set; } = string.Empty;
+        public string StudentName { get; set; } = string.Empty;
     }
 }

@@ -25,7 +25,7 @@ namespace ElementaryMathStudyWebsite.Core.Base
             TotalItems = count;
             CurrentPage = pageNumber;
             PageSize = pageSize;
-            TotalPages = (int)Math.Ceiling(count / (double)pageSize);
+            TotalPages = (pageSize > 0) ? (int)Math.Ceiling(count / (double)pageSize) : (count > 0 ? 1 : 0);
             Items = items;
         }
 
@@ -38,6 +38,13 @@ namespace ElementaryMathStudyWebsite.Core.Base
         public static implicit operator BasePaginatedList<T>(BasePaginatedList<Topic?> v)
         {
             throw new NotImplementedException();
+        }
+
+        public static BasePaginatedList<T> Create(IEnumerable<T> source, int pageNumber, int pageSize)
+        {
+            var count = source.Count(); // Tổng số phần tử
+            var items = source.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList(); // Lấy dữ liệu theo trang
+            return new BasePaginatedList<T>(items, count, pageNumber, pageSize);
         }
     }
 }

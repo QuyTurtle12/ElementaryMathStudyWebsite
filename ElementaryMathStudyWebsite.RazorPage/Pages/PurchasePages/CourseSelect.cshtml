@@ -1,0 +1,103 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.CheckoutPages.CourseSelectModel
+@using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos
+@using System.Globalization
+@{
+	ViewData["Title"] = "Get a new course";
+	var errorMessage = TempData["ErrorMessage"] as string;
+}
+
+<h2>Select a course:</h2>
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+	<div class="alert alert-danger" role="alert">
+		@errorMessage
+	</div>
+}
+<form method="post">
+
+	<div class="course-list">
+		@if (Model.subjects is not null && Model.subjects.Items.Any())
+		{
+			foreach (SubjectDTO subject in Model.subjects.Items)
+			{
+				<div class="course-item" onclick="selectSubject('@subject.Id', this)">
+					<h3>@subject.SubjectName</h3>
+					<p>Price: @subject.Price.ToString("C", new CultureInfo("vi-VN"))</p>  <!-- Format as VND -->
+				</div>
+			}
+		}
+		else
+		{
+			<p>There are no available courses at the moment.</p>
+		}
+	</div>
+	<input type="hidden" id="selectedSubjectId" name="SelectedSubjectId" />
+
+	<button id="continueButton" class="btn btn-primary" disabled>Continue to payment</button>
+</form>
+<style>
+	.course-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 20px;
+	}
+
+	.course-item {
+		border: 1px solid #ddd;
+		padding: 15px;
+		border-radius: 5px;
+		width: 250px;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+	}
+
+		.course-item:hover {
+			background-color: #f0f0f0;
+		}
+
+		.course-item.selected {
+			background-color: #cce5ff;
+			border-color: #007bff;
+		}
+
+		.course-item h3 {
+			font-size: 1.2em;
+			margin-bottom: 10px;
+		}
+
+		.course-item p {
+			margin-bottom: 8px;
+		}
+
+	.btn-primary {
+		background-color: #007bff;
+		color: #fff;
+		border: none;
+		padding: 10px 15px;
+		border-radius: 5px;
+		margin-top: 20px;
+	}
+</style>
+
+<script>
+	let selectedSubjectId = null;
+
+	function selectSubject(subjectId, element) {
+		// Deselect any previously selected item
+		const previouslySelected = document.querySelector('.course-item.selected');
+		if (previouslySelected) {
+			previouslySelected.classList.remove('selected');
+		}
+
+		// Select the current item
+		element.classList.add('selected');
+
+		// Set the selected subject's ID in the hidden input field
+		document.getElementById('selectedSubjectId').value = subjectId;
+
+		// Enable the Continue button
+		document.getElementById('continueButton').disabled = false;
+	}
+
+</script>

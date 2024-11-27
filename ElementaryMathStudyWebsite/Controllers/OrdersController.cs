@@ -5,6 +5,8 @@ using System.ComponentModel.DataAnnotations;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Services.Service;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -14,16 +16,23 @@ namespace ElementaryMathStudyWebsite.Controllers
     {
         private readonly IAppOrderServices _orderService;
         private readonly IAppOrderDetailServices _orderDetailService;
+        private readonly IAppUserServices _userService;
 
-        public OrdersController(IAppOrderServices orderService, IAppOrderDetailServices orderDetailService)
-        {
-            _orderService = orderService;
-            _orderDetailService = orderDetailService;
-        }
+		public OrdersController(IAppOrderServices orderService, IAppOrderDetailServices orderDetailService, IAppUserServices userService)
+		{
+			_orderService = orderService;
+			_orderDetailService = orderDetailService;
+			_userService = userService;
+		}
 
-        // GET: api/orders/manager
-        // Get orders for Manager & Admin
-        [Authorize(Policy = "Admin-Manager")]
+		/// <summary>
+		/// GET: api/orders/manager
+		/// Get orders for Admin & Manager 
+		/// </summary>
+		/// <param name="pageNumber"></param>
+		/// <param name="pageSize"></param>
+		/// <returns></returns>& Admin
+		[Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("manager")]
         [SwaggerOperation(
@@ -32,40 +41,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<OrderAdminViewDto>>>> GetOrders(int pageNumber = -1, int pageSize = -1)
         {
-            try
-            {
-                BasePaginatedList<OrderAdminViewDto> orders = await _orderService.GetOrderAdminDtosAsync(pageNumber, pageSize);
-                var response = BaseResponse<BasePaginatedList<OrderAdminViewDto>>.OkResponse(orders);
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            BasePaginatedList<OrderAdminViewDto> orders = await _orderService.GetOrderAdminDtosAsync(pageNumber, pageSize);
+            var response = BaseResponse<BasePaginatedList<OrderAdminViewDto>>.OkResponse(orders);
+            return response;
         }
 
         //// GET: api/orders/manager/{id}
@@ -121,6 +99,16 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/orders
         // Get orders for general user
+
+        //// GET: api/orders/manager/{id}
+        //// Get orders for Manager & Admin
+        /// <summary>
+        /// GET: api/orders
+        /// Get orders for Parent
+        /// </summary>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
         [HttpGet]
         [Authorize(Policy = "Parent")]
         [SwaggerOperation(
@@ -129,40 +117,11 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<OrderViewDto>>>> GetOrdersForParent(int pageNumber = -1, int pageSize = -1)
         {
-            try
-            {
-                BasePaginatedList<OrderViewDto>? orders = await _orderService.GetOrderDtosAsync(pageNumber, pageSize);
-                var response = BaseResponse<BasePaginatedList<OrderViewDto>>.OkResponse(orders);
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+			// Get logged in User
+			User currentUser = await _userService.GetCurrentUserAsync();
+			BasePaginatedList<OrderViewDto>? orders = await _orderService.GetOrderDtosAsync(pageNumber, pageSize, currentUser);
+            var response = BaseResponse<BasePaginatedList<OrderViewDto>>.OkResponse(orders);
+            return response;
         }
 
         //// POST: api/orders/
@@ -199,6 +158,15 @@ namespace ElementaryMathStudyWebsite.Controllers
 
         // GET: api/orders/detail
         // Get order detail list of order for parent
+
+        /// <summary>
+        /// GET: api/orders/detail
+        /// Get orders for Admin & Manager & Parent
+        /// </summary>
+        /// <param name="orderId"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
         [Authorize(Policy = "Admin-Manager-Parent")]
         [HttpGet]
         [Route("detail")]
@@ -208,36 +176,22 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<OrderDetailViewDto>>>> GetOrderDetailsDto([Required] string orderId, int pageNumber = 1, int pageSize = 10)
         {
-            try
-            {
-                BasePaginatedList<OrderDetailViewDto>? detail = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(pageNumber, pageSize, orderId);
-                var response = BaseResponse<BasePaginatedList<OrderDetailViewDto>>.OkResponse(detail);
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            BasePaginatedList<OrderDetailViewDto>? detail = await _orderDetailService.GetOrderDetailDtoListByOrderIdAsync(pageNumber, pageSize, orderId);
+            var response = BaseResponse<BasePaginatedList<OrderDetailViewDto>>.OkResponse(detail);
+            return response;
         }
 
 
-        // GET: api/orders/search
-        // Search order dto list by filter
+        /// <summary>
+        /// GET: api/orders/search
+        /// Search order dto list by filter
+        /// </summary>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="firstInputValue"></param>
+        /// <param name="secondInputValue"></param>
+        /// <param name="filter"></param>
+        /// <returns></returns>
         [Authorize(Policy = "Admin-Manager")]
         [HttpGet]
         [Route("search")]
@@ -250,40 +204,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<OrderViewDto>>>> SearchOrders(int pageNumber = 1, int pageSize = 5, string? firstInputValue = null, string? secondInputValue = null, string filter = "customer phone")
         {
-            try
-            {
-                BasePaginatedList<OrderViewDto> viewDtos = await _orderService.searchOrderDtosAsync(pageNumber, pageSize, firstInputValue, secondInputValue, filter);
-                var response = BaseResponse<BasePaginatedList<OrderViewDto>>.OkResponse(viewDtos);
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle general CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle general BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            BasePaginatedList<OrderViewDto> viewDtos = await _orderService.searchOrderDtosAsync(pageNumber, pageSize, firstInputValue, secondInputValue, filter);
+            var response = BaseResponse<BasePaginatedList<OrderViewDto>>.OkResponse(viewDtos);
+            return response;
         }
     }
 }

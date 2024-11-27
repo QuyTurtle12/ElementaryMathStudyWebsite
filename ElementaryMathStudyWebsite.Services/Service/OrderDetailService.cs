@@ -4,6 +4,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Store;
 using ElementaryMathStudyWebsite.Core.Utils;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,25 +42,28 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Get Order Detail list by order Id 
         public async Task<BasePaginatedList<OrderDetailViewDto>> GetOrderDetailDtoListByOrderIdAsync(int pageNumber, int pageSize, string orderId)
         {
+            // Validate the orderId input
+            if (string.IsNullOrWhiteSpace(orderId))
+            {
+                throw new BaseException.BadRequestException("invalid_order_id", "Order ID cannot be null or empty.");
+            }
+
             // Get all order details from database
             // If null then return empty collection
             IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>()
-                .Entities
-                .Where(od => od.OrderId.Equals(orderId))
-                .Include(od => od.Subject)
-                .Include(od => od.User);
+                .GetEntitiesWithCondition(
+                    od => od.OrderId.Equals(orderId),   // Condition
+                    od => od.Subject!,                  // Include the Subject
+                    od => od.User!                      // Include the User
+                    );
 
-            IList<OrderDetailViewDto> detailDtos = new List<OrderDetailViewDto>();
+            IEnumerable<OrderDetail> allDetails = await query.ToListAsync();
 
-            var allDetails = await query.ToListAsync();
+            // Throw error if nothing was found
+            if (!allDetails.Any()) throw new BaseException.NotFoundException("not_found", $"the system didn't find any detail of order {orderId}");
 
-            // Map orders to OrderViewDto
-            foreach (var detail in allDetails)
-            {
-                var dto = _mapper.Map<OrderDetailViewDto>(detail);
-
-                detailDtos.Add(dto);
-            }
+            // Map orders to OrderDetailViewDto
+            ICollection<OrderDetailViewDto> detailDtos = allDetails.Select(detail => _mapper.Map<OrderDetailViewDto>(detail)).ToList();
 
             // If pageNumber or pageSize are 0 or negative, show all order details without pagination
             if (pageNumber <= 0 || pageSize <= 0)
@@ -77,32 +81,23 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Validate if the subject has been assigned before 
         public async Task<bool> IsValidStudentSubjectBeforeCreateOrder(CartCreateDto orderCreateDto)
         {
-            // Check for duplicates in the SubjectStudents list
-            var uniqueSubjectStudents = orderCreateDto.SubjectStudents
-                .GroupBy(s => new { s.SubjectId, s.StudentId })
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key)
-                .ToList();
-
-            if (uniqueSubjectStudents.Any())
-            {
-                // Return false or throw an exception if duplicates are found
-                return false;
-            }
+            // No need for a duplicate check since each CartCreateDto now represents a single Subject-Student pair
 
             // Validation process
-            foreach (var newSubject in orderCreateDto.SubjectStudents)
-            {
-                // Get student assigned subject
-                IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>().Entities.Where(d => d.StudentId.Equals(newSubject.StudentId));
-                var studentCurrentLearningSubject = await query.ToListAsync();
+            // Get student assigned subject
+            IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>().Entities
+                .Include(d => d.Order)
+                .Where(d => d.StudentId.Equals(orderCreateDto.StudentId)
+                            && d.Order!.Status == PaymentStatusHelper.SUCCESS.ToString());
 
-                foreach (var studentSubject in studentCurrentLearningSubject)
+            List<OrderDetail> studentCurrentLearningSubjects = await query.ToListAsync();
+
+            // Check if the student already has the subject assigned
+            foreach (OrderDetail studentSubject in studentCurrentLearningSubjects)
+            {
+                if (studentSubject.SubjectId.Equals(orderCreateDto.SubjectId))
                 {
-                    if (studentSubject.SubjectId.Equals(newSubject.SubjectId))
-                    {
-                        return false; // Subject has been assigned
-                    }
+                    return false; // Subject has already been assigned to the student
                 }
             }
 

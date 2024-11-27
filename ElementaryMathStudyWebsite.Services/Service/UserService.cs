@@ -36,7 +36,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-                user => user.Role // Include the Role navigation property
+                user => user.Role! // Include the Role navigation property
             };
 
             // Get all users with their roles
@@ -81,7 +81,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-                user => user.Role // Include the Role navigation property
+                user => user.Role! // Include the Role navigation property
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
@@ -106,7 +106,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
                 condition,
-                u => u.Role // Include the Role if needed
+                u => u.Role! // Include the Role if needed
                 // Add other includes here if needed
             );
 
@@ -172,7 +172,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
                 condition,
-                u => u.Role // Include the Role if needed
+                u => u.Role! // Include the Role if needed
                 // Add other includes here if needed
             );
 
@@ -184,28 +184,21 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
 
             // Only update properties if they are not null
-            if (dto.FullName != null)
+            if (!string.IsNullOrWhiteSpace(dto.FullName))
             {
                 user.FullName = dto.FullName;
             }
 
-            if (dto.PhoneNumber != null)
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
             {
                 user.PhoneNumber = dto.PhoneNumber;
             }
 
-            if (dto.Gender != null)
+            if (!string.IsNullOrWhiteSpace(dto.Gender))
             {
                 user.Gender = dto.Gender;
             }
 
-            if (dto.Username != null && dto.Username != user.Username)
-            {
-                if (!await CheckExistingUserName(dto.Username))
-                {
-                    user.Username = dto.Username;
-                }
-            }
 
             AuditFields(user);
 
@@ -234,7 +227,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Optionally include related entities, if needed
             var user = await _unitOfWork.GetRepository<User>().FindByConditionWithIncludesAsync(
                 condition,
-                u => u.Role // Include the Role if needed
+                u => u.Role! // Include the Role if needed
                 // Add other includes here if needed
             );
             if (user == null)
@@ -256,6 +249,28 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             // Set the user's status to false to disable the user
             user.Status = false;
+
+            // Set audit fields
+            AuditFields(user);
+
+            // Update the user in the repository
+            _unitOfWork.GetRepository<User>().Update(user);
+            await _unitOfWork.SaveAsync();
+
+            return true; // Return true if the user was successfully disabled
+        }
+
+        public async Task<bool> EnableUserAsync(string userId)
+        {
+            // Fetch the user by ID
+            var user = await _unitOfWork.GetRepository<User>().GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new BaseException.NotFoundException("not_found", "User not found");
+            }
+
+            // Set the user's status to false to disable the user
+            user.Status = true;
 
             // Set audit fields
             AuditFields(user);
@@ -340,11 +355,17 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define includes to eagerly load the Role navigation property
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-                user => user.Role // Include the Role navigation property
+                user => user.Role! // Include the Role navigation property
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users
             IQueryable<User> query = _unitOfWork.GetRepository<User>().GetEntitiesWithCondition(condition, includes);
+
+
+            var query1 = 
+                _unitOfWork
+                .GetRepository<User>()
+                .GetEntitiesWithConditionAndSelect(condition, u => new{ u.Id, u.FullName, u.Role!.RoleName } ,includes);
 
             // Apply filters if the corresponding parameters are provided
             if (!string.IsNullOrEmpty(name))
@@ -416,7 +437,33 @@ namespace ElementaryMathStudyWebsite.Services.Service
             
         }
 
-        public async Task<BasePaginatedList<User>> GetChildrenOfParentAsync(string parentId, int pageNumber, int pageSize)
+		public void AuditFields(string userId, BaseEntity entity, bool isCreating = false, bool isDisable = false)
+		{
+
+			// If creating a new entity, set the CreatedBy field
+			if (isCreating)
+			{
+				entity.CreatedBy = userId.ToUpper(); // Set the creator's ID
+			}
+
+			if (isDisable)
+			{
+				entity.DeletedBy = userId.ToUpper(); // Set the creator's ID
+				entity.DeletedTime = CoreHelper.SystemTimeNow;
+			}
+
+			// Always set LastUpdatedBy and LastUpdatedTime fields
+			entity.LastUpdatedBy = userId.ToUpper(); // Set the current user's ID
+
+			// If is not created then update LastUpdatedTime
+			if (isCreating is false)
+			{
+				entity.LastUpdatedTime = CoreHelper.SystemTimeNow;
+			}
+
+		}
+
+		public async Task<BasePaginatedList<User>> GetChildrenOfParentAsync(string parentId, int pageNumber, int pageSize)
         {
             // Validate pageNumber and pageSize
             if (pageNumber <= 0) pageNumber = 1;
@@ -429,7 +476,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
             // Define includes to eagerly load the Role navigation property, if needed
             Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
             {
-                user => user.Role // Include the Role navigation property if necessary
+                user => user.Role! // Include the Role navigation property if necessary
             };
 
             // Use GetEntitiesWithCondition with includes to get the queryable set of users

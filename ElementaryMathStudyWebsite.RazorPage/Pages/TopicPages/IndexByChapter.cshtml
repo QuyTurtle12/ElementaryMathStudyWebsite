@@ -1,0 +1,62 @@
+﻿@page "{chapterId}"
+@model IndexModel
+
+<h1>Danh sách Topics</h1>
+
+@if (Model.Topics != null && Model.Topics.Items.Any())
+{
+    <div class="content-table">
+        <div class="table-container">
+            <div class="table-header">
+                <div class="header-content">
+                    <div class="header-row">
+                        <div class="header-cell">Number</div>
+                        <div class="header-cell">Topic Name</div>
+                        @* <div class="header-cell">Tình Trạng</div> *@
+                        <div class="header-cell-wide">Action</div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-body">
+                @foreach (var item in Model.Topics!.Items)
+                {
+                    <div class="table-row">
+                        <div class="row-cell">@Html.DisplayFor(modelItem => item.Number)</div>
+                        <div class="row-cell">@Html.DisplayFor(modelItem => item.TopicName)</div>
+                        @*                                 <div class="row-cell">@Html.DisplayFor(modelItem => item.ChapterName)</div>
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.QuizName)</div> *@
+
+                        @* <div class="status-cell"> *@
+                        @*     <div class="status-true">@Html.DisplayFor(modelItem => item.Status)</div> *@
+                        @* </div> *@
+                        <div class="action-cell">
+                            <div class="action-buttons">
+                                <div class="action-button">
+                                    <div class="action-button-content">
+                                        <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/18d32b41cd37c7e6610f4da9e3879f1a24f3a30bf067b8a561aeb91581df3b6c?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" class="action-icon" alt="Detail icon" />
+                                        <a asp-page="/SubjectPages/Index" asp-route-topicId="@item.Id">Subject</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p>No topics found.</p>
+}
+
+<div>
+    <ul class="pagination">
+        @for (int i = 1; i <= Model.Topics.TotalPages; i++)
+        {
+            <li class="@(i == Model.Topics.CurrentPage ? "active" : "")">
+                <a asp-page="./Index" asp-route-chapterId="@Model.ChapterId" asp-route-pageNumber="@i">@i</a>
+            </li>
+        }
+    </ul>
+</div>

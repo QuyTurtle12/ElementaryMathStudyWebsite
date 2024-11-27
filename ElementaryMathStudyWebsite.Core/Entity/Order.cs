@@ -1,4 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Store;
 using System.Text.Json.Serialization;
 
 namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
@@ -11,15 +12,9 @@ namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 
         public string PaymentMethod { get; set; } = string.Empty;
 
-        public string Status { get; set; } = "Pending"; // Pending/Success/Failed
+        public string Status { get; set; } = PaymentStatusHelper.PENDING.ToString(); // Pending/Success/Failed
 
         // Navigation properties
-        [JsonIgnore]
-        public virtual User? CreatedByUser { get; set; }
-        [JsonIgnore]
-        public virtual User? LastUpdatedByUser { get; set; }
-        [JsonIgnore]
-        public virtual User? DeletedByUser { get; set; }
         [JsonIgnore]
         public virtual User? User { get; set; } // Navigation property, one order has one user
         [JsonIgnore]

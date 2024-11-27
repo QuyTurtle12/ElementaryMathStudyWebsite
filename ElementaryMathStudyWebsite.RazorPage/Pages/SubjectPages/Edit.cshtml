@@ -1,0 +1,54 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages.EditModel
+
+@{
+    ViewData["Title"] = "Edit Subject";
+}
+
+<h1>Edit Subject</h1>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Subject Name -->
+            <div class="form-group">
+                <label asp-for="Subject.SubjectName" class="control-label"></label>
+                <input asp-for="Subject.SubjectName" class="form-control" />
+                <span asp-validation-for="Subject.SubjectName" class="text-danger"></span>
+            </div>
+
+            <!-- Price -->
+            <div class="form-group">
+                <label asp-for="Subject.Price" class="control-label"></label>
+                <input asp-for="Subject.Price" class="form-control" />
+                <span asp-validation-for="Subject.Price" class="text-danger"></span>
+            </div>
+
+            <!-- Status -->
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="Subject.Status" />
+                    @Html.DisplayNameFor(model => model.Subject.Status)
+                </label>
+            </div>
+
+            <!-- Submit -->
+            @* <input type="hidden" asp-for="Subject.Id" /> *@
+            <div class="form-group">
+                <input type="submit" value="Save Changes" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="./Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

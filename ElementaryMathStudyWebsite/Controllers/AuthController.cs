@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+﻿using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
-using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using Swashbuckle.AspNetCore.Annotations;
-using Microsoft.AspNetCore.Authorization;
-using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
-using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using ElementaryMathStudyWebsite.Core.Base;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -35,9 +37,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <param name="loginDto">The login request data.</param>
         /// <returns>A JWT token if successful.</returns>
         [HttpPost("login")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> LoginAsync([FromBody] LoginDto loginDto)
         {
             if (!ModelState.IsValid)
@@ -45,35 +44,10 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return BadRequest(ModelState);
             }
 
-            try
-            {
-                // Authenticate and generate token
-                string token = await _authService.LoginAsync(loginDto);
-                return Ok(new { Token = token });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            // Authenticate and generate token
+            string token = await _authService.LoginAsync(loginDto);
+            return Ok(new { Token = token });
+
         }
 
         /// <summary>
@@ -82,9 +56,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <param name="registerDto">The registration request data.</param>
         /// <returns>A message indicating the result of the registration attempt.</returns>
         [HttpPost("register")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto registerDto)
         {
             if (!ModelState.IsValid)
@@ -92,36 +63,10 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return BadRequest(ModelState);
             }
 
-            try
-            {
-                await _authService.RegisterAsync(registerDto);
-                var response = BaseResponse<String>.OkResponse("Registration successful. Please check your email for verification.");
+            await _authService.RegisterAsync(registerDto);
+            var response = BaseResponse<string>.OkResponse("Registration successful. Please check your email for verification.");
 
-                return Ok(response);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(ex.Message); // Conflict for cases like existing role or invalid role
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
         }
 
         /// <summary>
@@ -130,9 +75,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <param name="registerDto">The registration request data.</param>
         /// <returns>A message indicating the result of the registration attempt.</returns>
         [HttpPost("student-register")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
         [Authorize(Policy = "Parent")]
         [SwaggerOperation(
             Summary = "Authorization: Parent",
@@ -144,15 +86,12 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-
-            // Extract role ID from the token
-            var userId = _tokenService.GetUserIdFromTokenHeader(token);
-
-            if (userId == Guid.Empty)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId) || userId == Guid.Empty)
             {
                 return Unauthorized();
             }
+
             var user = await _userServices.GetUserByIdAsync(userId.ToString());
 
             if (user == null || string.IsNullOrWhiteSpace(user.Email))
@@ -160,76 +99,19 @@ namespace ElementaryMathStudyWebsite.Controllers
                 throw new BaseException.NotFoundException("not_found", "User or Email not found");
             }
 
-            try
-            {
-                await _authService.StudentRegisterAsync(registerDto, user.Email, user.Id);
-                var response = BaseResponse<String>.OkResponse("Registration successful. Please check your email for verification.");
+            await _authService.StudentRegisterAsync(registerDto, user.Email, user.Id);
+            var response = BaseResponse<String>.OkResponse("Registration successful. Please check your email for verification.");
 
-                return Ok(response);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(ex.Message); // Conflict for cases like existing role or invalid role
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific BadRequestException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
         }
 
         [HttpGet("verify-email")]
         public async Task<IActionResult> VerifyEmailAsync([FromQuery] string token)
         {
-            try
-            {
-                await _authService.VerifyEmailAsync(token);
-                var response = BaseResponse<String>.OkResponse("Email verified successfully.");
+            await _authService.VerifyEmailAsync(token);
+            var response = BaseResponse<String>.OkResponse("Email verified successfully.");
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
         }
 
         [HttpGet]
@@ -240,44 +122,22 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> GetAllRoles([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            try
-            {
-                var paginatedRoles = await _roleService.GetAllRolesAsync(pageNumber, pageSize);
+            var paginatedRoles = await _roleService.GetAllRolesAsync(pageNumber, pageSize);
 
-                // Map users to UserResponseDto
-                var roleDtos = _mapper.Map<IEnumerable<RoleDto>>(paginatedRoles.Items);
+            // Map users to UserResponseDto
+            var roleDtos = _mapper.Map<IEnumerable<RoleDto>>(paginatedRoles.Items);
 
-                // Create a new paginated list of UserResponseDto
-                var paginatedRoleDtos = new BasePaginatedList<RoleDto>(
-                    roleDtos.ToList(),
-                    paginatedRoles.TotalItems,
-                    paginatedRoles.CurrentPage,
-                    paginatedRoles.PageSize
-                );
+            // Create a new paginated list of UserResponseDto
+            var paginatedRoleDtos = new BasePaginatedList<RoleDto>(
+                roleDtos.ToList(),
+                paginatedRoles.TotalItems,
+                paginatedRoles.CurrentPage,
+                paginatedRoles.PageSize
+            );
 
-                var response = BaseResponse<BasePaginatedList<RoleDto>>.OkResponse(paginatedRoleDtos);
+            var response = BaseResponse<BasePaginatedList<RoleDto>>.OkResponse(paginatedRoleDtos);
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
         }
 
         [HttpPost]
@@ -293,41 +153,17 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 throw new BaseException.BadRequestException("invalid_argument", "Role data is required.");
             }
-
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+            var role = await _roleService.CreateRoleAsync(createRoleDto);
+            var roleResponseDto = _mapper.Map<RoleDto>(role);
 
-            try
-            {
-                var role = await _roleService.CreateRoleAsync(createRoleDto);
-                var roleResponseDto = _mapper.Map<RoleDto>(role);
+            var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
 
-                var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
+            return Ok(response);
 
-                return Ok(response);
-
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
         }
 
         [HttpPut]
@@ -355,43 +191,13 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             }
 
-            try
-            {
-                var role = await _roleService.UpdateRoleAsync(roleId, roleDto);
-                var roleResponseDto = _mapper.Map<RoleDto>(role);
+            var role = await _roleService.UpdateRoleAsync(roleId, roleDto);
+            var roleResponseDto = _mapper.Map<RoleDto>(role);
 
-                var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
+            var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific BadRequestException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
+
         }
 
         [HttpGet]
@@ -407,45 +213,15 @@ namespace ElementaryMathStudyWebsite.Controllers
                 throw new BaseException.BadRequestException("invalid_argument", "Role ID is required.");
             }
 
-            try
-            {
-                var role = await _roleService.GetRoleByIdAsync(roleId);
+            var role = await _roleService.GetRoleByIdAsync(roleId);
 
 
-                var roleResponseDto = _mapper.Map<RoleDto>(role);
+            var roleResponseDto = _mapper.Map<RoleDto>(role);
 
-                var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
+            var response = BaseResponse<RoleDto>.OkResponse(roleResponseDto);
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific BadRequestException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
+
         }
 
         [HttpDelete]
@@ -468,42 +244,57 @@ namespace ElementaryMathStudyWebsite.Controllers
 
             }
 
-            try
-            {
-                var role = await _roleService.DeleteRoleAsync(roleId);
+            var role = await _roleService.DeleteRoleAsync(roleId);
 
-                var response = BaseResponse<string>.OkResponse("Delete successfully");
+            var response = BaseResponse<string>.OkResponse("Delete successfully");
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific BadRequestException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
+
+        }
+
+        /// <summary>
+        /// Sends a password reset link to the user's email.
+        /// </summary>
+        /// <param name="email">User's email</param>
+        /// <param name="userName">User's username</param>
+        /// <returns>ActionResult indicating the result of the operation.</returns>
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            await _authService.ForgotPasswordAsync(request.Email, request.UserName);
+            var response = BaseResponse<string>.OkResponse("Password reset link has been sent to your email.");
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Resets the user's password using a token.
+        /// </summary>
+        /// <param name="resetPasswordDto">The reset password DTO containing the token and new password.</param>
+        /// <returns>ActionResult indicating the result of the operation.</returns>
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto resetPasswordDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            await _authService.ResetPasswordAsync(resetPasswordDto.Token, resetPasswordDto.NewPassword);
+            var response = BaseResponse<string>.OkResponse("Password has been successfully reset.");
+
+            return Ok(response);
+        }
+
+        [HttpGet("verify-reset-password-token")]
+        public async Task<IActionResult> VerifyResetPasswordEmailAsync([FromQuery] string token)
+        {
+
+            await _authService.VerifyResetPasswordTokenAsync(token);
+            var response = BaseResponse<String>.OkResponse(token);
+
+            return Ok(response);
         }
     }
 }

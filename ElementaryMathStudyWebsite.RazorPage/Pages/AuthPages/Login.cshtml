@@ -1,0 +1,119 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.Login.LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h2>Login</h2>
+
+<div class="login-container">
+    <form method="post" id="loginForm">
+        <div class="form-group">
+            <label for="txtUserName">Username</label>
+            <input type="text" id="txtUserName" name="txtUserName" class="form-control" required
+                   placeholder="Enter your username" />
+            <div class="invalid-feedback" style="display:none;">
+                Username is required.
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="txtPassword">Password</label>
+            <input type="password" id="txtPassword" name="txtPassword" class="form-control" required
+                   placeholder="Enter your password" />
+            <div class="invalid-feedback" style="display:none;">
+                Password is required.
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <button type="submit" class="btn btn-primary">Login</button>
+            <a href="/AuthPages/Register" class="btn btn-secondary">Register</a>
+        </div>
+    </form>
+
+    <!-- Display error message if login fails -->
+    @if (!string.IsNullOrEmpty(ViewData["ErrorMessage"] as string))
+    {
+        <div class="alert alert-danger mt-3">
+            @ViewData["ErrorMessage"]
+        </div>
+    }
+</div>
+
+<!-- JavaScript for client-side validation -->
+<script>
+    document.getElementById('loginForm').addEventListener('submit', function (event) {
+        var form = event.target;
+        var username = form.txtUserName;
+        var password = form.txtPassword;
+
+        var valid = true;
+
+        // Check if username is empty
+        if (!username.value.trim()) {
+            valid = false;
+            username.classList.add('is-invalid');
+            username.nextElementSibling.style.display = 'block';
+        } else {
+            username.classList.remove('is-invalid');
+            username.nextElementSibling.style.display = 'none';
+        }
+
+        // Check if password is empty
+        if (!password.value.trim()) {
+            valid = false;
+            password.classList.add('is-invalid');
+            password.nextElementSibling.style.display = 'block';
+        } else {
+            password.classList.remove('is-invalid');
+            password.nextElementSibling.style.display = 'none';
+        }
+
+        // If the form is not valid, prevent submission
+        if (!valid) {
+            event.preventDefault();
+        }
+    });
+</script>
+
+<style>
+    .login-container {
+        max-width: 400px;
+        margin: auto;
+        padding: 1em;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .invalid-feedback {
+        color: red;
+        font-size: 0.875rem;
+    }
+
+    .is-invalid {
+        border-color: red;
+    }
+
+    .d-flex {
+        display: flex;
+    }
+
+    .justify-content-between {
+        justify-content: space-between;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+        text-decoration: none;
+        border: none;
+        padding: 0.5em 1em;
+        cursor: pointer;
+    }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+</style>

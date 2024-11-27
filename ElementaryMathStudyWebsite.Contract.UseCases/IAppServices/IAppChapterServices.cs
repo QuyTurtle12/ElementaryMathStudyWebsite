@@ -1,6 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
@@ -15,25 +14,28 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<ChapterAdminViewDto> UpdateChapterAsync(string id, ChapterUpdateDto subjectDTO);
 
         Task<bool> DeleteChapterAsync(string optionId);
-        Task<BasePaginatedList<ChapterViewDto?>> GetChapterDtosAsync(int pageNumber, int pageSize);
+        //Task<BasePaginatedList<object>> GetChapterDtosAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<ChapterViewDto>> GetChapterDtosAsync(int pageNumber, int pageSize, string? searchKeyword = null);
 
-        Task<ChapterViewDto?> GetChapterDtoByChapterIdAsync(string Id);
+        Task<object> GetChapterDtoByChapterIdAsync(string Id);
 
-        Task<string?> GetChapterNameAsync(string id);
+        Task<BasePaginatedList<object>> GetChaptersAsync(int pageNumber, int pageSize);
 
-        Task<BasePaginatedList<ChapterAdminViewDto?>> GetChaptersAsync(int pageNumber, int pageSize);
-
-        Task<ChapterAdminViewDto?> GetChapterByChapterIdAsync(string id);
+        Task<object> GetChapterByChapterIdAsync(string id);
 
         Task<ChapterAdminViewDto> ChangeChapterStatusAsync(string id);
 
+        Task<bool> AssignQuizIdToChapterAsync(string chapterId, string quizId);
+
         //Task<bool> ChangeChapterOrderAsync(int currentChapterNumber, int newChapterNumber);
 
-        Task<ChapterAdminDelete> rollbackChapterDeletedAsync(string chapterId);
+        Task<ChapterAdminViewDto> rollbackChapterDeletedAsync(string chapterId);
 
-        Task<BasePaginatedList<ChapterAdminDelete?>> GetChaptersDeletedAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<object>> GetChaptersDeletedAsync(int pageNumber, int pageSize);
 
-        Task<BasePaginatedList<ChapterViewDto>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId);
+        Task<BasePaginatedList<object>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId);
         Task<bool> UpdateChapterNumbersAsync(string subjectId, ChapterNumberDto chapterNumberDto);
+
+        Task<List<string>> GetChapterNamesAsync();
     }
 }

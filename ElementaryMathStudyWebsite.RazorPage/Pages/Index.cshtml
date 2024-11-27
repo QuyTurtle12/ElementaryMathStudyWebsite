@@ -1,0 +1,24 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+    bool isLoggedIn = !string.IsNullOrEmpty(HttpContext.Session.GetString("user_id"));
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+
+    @if (isLoggedIn)
+    {
+        <!-- Logout button -->
+        <form method="post" asp-page-handler="Logout">
+            <button type="submit" class="btn btn-danger">Logout</button>
+        </form>
+    }
+    else
+    {
+        <!-- Login button -->
+        <a href="/AuthPages/Login" class="btn btn-primary">Login</a>
+    }
+</div>

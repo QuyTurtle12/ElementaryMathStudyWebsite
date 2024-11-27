@@ -1,10 +1,10 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Core.Base;
-using System.ComponentModel.DataAnnotations;
+using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -12,288 +12,84 @@ namespace ElementaryMathStudyWebsite.Controllers
     [Route("api/[controller]")]
     public class QuestionController : ControllerBase
     {
+        private readonly IAppUserServices _userService;
         private readonly IAppQuestionServices _questionService;
 
-        public QuestionController(IAppQuestionServices questionService)
+        public QuestionController(IAppQuestionServices questionService, IAppUserServices userService)
         {
             _questionService = questionService;
+            _userService = userService;
         }
 
-        // GET: api/question/all
         [Authorize(Policy = "Admin-Content")]
         [HttpGet("all")]
-        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Retrieve all questions.")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Gets all available questions.")]
         public async Task<ActionResult<BaseResponse<List<QuestionMainViewDto>>>> GetAllQuestions()
         {
-            try
-            {
-                // Fetch all questions from the service
-                var questions = await _questionService.GetAllQuestionsMainViewDtoAsync()
-                      ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
-
-                // Return success response with the fetched questions
-                return BaseResponse<List<QuestionMainViewDto>>.OkResponse(questions);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle and return CoreException with its status code
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle and return BadRequestException with detailed error code and message
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            List<QuestionMainViewDto> questions = await _questionService.GetAllQuestionsMainViewDtoAsync();
+            return BaseResponse<List<QuestionMainViewDto>>.OkResponse(questions);
         }
 
-        // GET: api/question/{id}
-        [HttpGet("{id}")]
-        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Retrieve a specific question by its ID.")]
-        public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> GetQuestionById(string id)
+        //[Authorize(Policy = "Admin-Content")]
+        [HttpGet("search/question/{questionid}")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Gets a question by its id.")]
+        public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> GetQuestionById(string questionid)
         {
-            try
-            {
-                // Fetch a question by its ID
-                var question = await _questionService.GetQuestionByIdAsync(id)
-                      ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
-
-                // Return success response with the question details
-                return BaseResponse<QuestionMainViewDto>.OkResponse(question);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle and return CoreException with its status code
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle and return BadRequestException with detailed error code and message
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            QuestionMainViewDto question = await _questionService.GetQuestionByIdAsync(questionid);
+            return BaseResponse<QuestionMainViewDto>.OkResponse(question);
         }
 
-
-        // GET: api/question/search
-        [Authorize(Policy = "Admin-Content")]
-        [HttpGet("search")]
-        [SwaggerOperation(Summary = "Search questions by Content, Authorization: Manager & Admin", Description = "Search for questions where the Content contains the specified string.")]
-        public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions([FromQuery] string Content)
-        {
-            try
-            {
-                // Search questions by the provided Content string
-                var questions = await _questionService.SearchQuestionsByContextAsync(Content)
-                    ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
-
-                // Return success response with the search results
-                return BaseResponse<List<QuestionViewDto>>.OkResponse(questions);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle and return CoreException with its status code
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle and return BadRequestException with detailed error code and message
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-        }
-
-        // GET: api/question/quiz/{quizId}
-        [HttpGet("quiz/{quizId}")]
-        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Retrieve all questions for a specific quiz.")]
+        [HttpGet("search/quiz/{quizId}")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Gets all questions related to a specific quiz.")]
         public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> GetQuestionsByQuizId(string quizId)
         {
-            try
-            {
-                // Fetch all questions that belong to the specified quiz
-                var questions = await _questionService.GetQuestionsByQuizIdAsync(quizId)
-                    ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
-
-                // Return success response with the list of questions
-                return BaseResponse<List<QuestionViewDto>>.OkResponse(questions);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle and return CoreException with its status code
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle and return BadRequestException with detailed error code and message
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            List<QuestionViewDto> questions = await _questionService.GetQuestionsByQuizIdAsync(quizId);
+            return BaseResponse<List<QuestionViewDto>>.OkResponse(questions);
         }
 
-        // GET: api/question
         [Authorize(Policy = "Admin-Content")]
-        [HttpGet]
-        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Retrieve all questions with pagination.")]
-        public async Task<ActionResult<BaseResponse<BasePaginatedList<QuestionMainViewDto>>>> GetQuestions([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        [HttpPost("add")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Adds a new question to the system.")]
+        public async Task<ActionResult<BaseResponse<string>>> AddQuestionAsync(List<QuestionCreateDto> dtos)
         {
-            try
-            {
-                // Fetch paginated list of questions
-                var paginatedQuestions = await _questionService.GetQuestionsAsync(pageNumber, pageSize)
-                    ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
-
-                // Return success response with paginated data
-                return BaseResponse<BasePaginatedList<QuestionMainViewDto>>.OkResponse(paginatedQuestions);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle and return CoreException with its status code
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle and return BadRequestException with detailed error code and message
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            User currentUser = await _userService.GetCurrentUserAsync();
+            BaseResponse<string>? response = await _questionService.AddQuestionAsync(dtos, currentUser);
+            return Ok(response);
         }
 
-        // POST: api/question
-        [Authorize(Policy = "Admin-Content")]
-        [HttpPost]
-        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Creates a new question and returns the created question.")]
-        public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> AddQuestionAsync([FromBody] QuestionCreateDto dto)
+        //[Authorize(Policy = "Admin-Content")]
+        [HttpPut("update/{id}")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Updates a question by its unique identifier.")]
+        public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> UpdateQuestion(string id, QuestionUpdateDto dto)
         {
-            try
-            {
-                var createdQuestion = await _questionService.AddQuestionAsync(dto)
-                    ?? throw new BaseException.NotFoundException("not_found", "questions not found.");
-                return BaseResponse<QuestionMainViewDto>.OkResponse("Question created successfully.");
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
+            User currentUser = await _userService.GetCurrentUserAsync();
+            QuestionMainViewDto? updatedQuestion = await _questionService.UpdateQuestionAsync(id, dto, currentUser);
+            return BaseResponse<QuestionMainViewDto>.OkResponse(updatedQuestion, "Question udpated successfully");
         }
 
-        // PUT: api/question/{id}
         [Authorize(Policy = "Admin-Content")]
-        [HttpPut("{id}")]
-        [SwaggerOperation(Summary = "Authorization: Admin, Content Manager", Description = "Updates an existing question based on the provided data.")]
-        public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> UpdateQuestionAsync([Required] string id, [FromBody] QuestionUpdateDto dto)
+        [HttpDelete("delete/{id}")]
+        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Deletes a question by its unique identifier.")]
+        public async Task<ActionResult<BaseResponse<string>>> DeleteQuestion(string id)
         {
-            try
-            {
-                // Update the question and get the updated data
-                var updatedQuestionDto = await _questionService.UpdateQuestionAsync(id, dto)
-                    ?? throw new BaseException.NotFoundException("not_found", "question not found.");
-                return BaseResponse<QuestionMainViewDto>.OkResponse("Question updated successfully.");
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle core exceptions
-                return StatusCode(coreEx.StatusCode, new { code = coreEx.Code, message = coreEx.Message, additionalData = coreEx.AdditionalData });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle bad request exceptions
-                return BadRequest(new { errorCode = badRequestEx.ErrorDetail.ErrorCode, errorMessage = badRequestEx.ErrorDetail.ErrorMessage });
-            }
+            BaseResponse<string> response = await _questionService.DeleteQuestionAsync(id);
+            return Ok(response);
         }
 
-
-        // DELETE: api/question/{id}
-        [Authorize(Policy = "Admin-Content")]
-        [HttpDelete("{id}")]
-        [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Delete a question")]
-        public async Task<IActionResult> DeleteQuestion([Required] string id)
+        [HttpGet("paginated")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Gets a paginated list of questions based on the provided page number and page size.")]
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<QuestionViewDto>>>> GetQuestions(int pageNumber = 1, int pageSize = 10)
         {
-            try
-            {
-                var result = await _questionService.DeleteQuestion(id);
+            BasePaginatedList<QuestionViewDto> paginatedQuestions = await _questionService.GetQuestionsAsync(pageNumber, pageSize);
+            return BaseResponse<BasePaginatedList<QuestionViewDto>>.OkResponse(paginatedQuestions);
+        }
 
-                if (result)
-                {
-                    var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
-                    return Ok(successResponse);
-
-                }
-                var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
-
-                return Ok(failedResponse);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+        [HttpGet("search")]
+        [SwaggerOperation(Summary = "Authorization: N/A", Description = "Searches for questions that contain the specified context.")]
+        public async Task<ActionResult<BaseResponse<List<QuestionViewDto>>>> SearchQuestions(string context)
+        {
+            List<QuestionViewDto> questions = await _questionService.SearchQuestionsByContextAsync(context);
+            return BaseResponse<List<QuestionViewDto>>.OkResponse(questions);
         }
 
     }

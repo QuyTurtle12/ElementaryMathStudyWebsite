@@ -1,12 +1,13 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using Microsoft.AspNetCore.Authorization;
-using ElementaryMathStudyWebsite.Core.Base;
-using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
+using ElementaryMathStudyWebsite.Core.Base;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -30,47 +31,22 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// </summary>
         /// <returns>Returns the profile of the logged-in user.</returns>
         [HttpGet("profile")]
+        [Authorize]
         public async Task<ActionResult<BaseResponse<UserProfile>>> GetProfile()
         {
-            try
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId) || userId == Guid.Empty)
             {
-                // Get the token from the Authorization header
-                var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-
-                // Extract user ID from the token
-                var userId = _tokenService.GetUserIdFromTokenHeader(token);
-
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized();
-                }
-
-                // Fetch user profile using the user ID
-                var user = await _userServices.GetUserByIdAsync(userId.ToString());
-                var userProfile = _mapper.Map<UserProfile>(user);
-
-                var response = BaseResponse<UserProfile>.OkResponse(userProfile);
-                return Ok(response);
+                return Unauthorized();
             }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+
+            // Fetch user profile using the user ID
+            var user = await _userServices.GetUserByIdAsync(userId.ToString());
+            var userProfile = _mapper.Map<UserProfile>(user);
+
+            var response = BaseResponse<UserProfile>.OkResponse(userProfile);
+            return Ok(response);
         }
 
         /// <summary>
@@ -80,52 +56,26 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <returns>Returns the updated user profile along with a new JWT token.</returns>
         [HttpPut]
         [Route("profile/update")]
+        [Authorize]
         [SwaggerOperation(
             Summary = "Authorization: logged in user",
             Description = "Updating a user profile"
             )]
         public async Task<ActionResult<BaseResponse<UpdateProfileDto>>> UpdateProfile([FromBody] RequestUpdateProfileDto updateUserDto)
         {
-            // Get the token from the Authorization header
-            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-
-            // Extract user ID from the token
-            var userId = _tokenService.GetUserIdFromTokenHeader(token);
-
-            if (userId == Guid.Empty)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId) || userId == Guid.Empty)
             {
                 return Unauthorized();
             }
+            var user = await _userServices.UpdateProfileAsync(userId.ToString(), updateUserDto);
+            var UpdateProfileDto = _mapper.Map<UpdateProfileDto>(user);
+            UpdateProfileDto.Token = _tokenService.GenerateJwtToken(user);
 
-            try
-            {
-                var user = await _userServices.UpdateProfileAsync(userId.ToString(), updateUserDto);
-                var UpdateProfileDto = _mapper.Map<UpdateProfileDto>(user);
-                UpdateProfileDto.Token = _tokenService.GenerateJwtToken(user);
+            var response = BaseResponse<UpdateProfileDto>.OkResponse(UpdateProfileDto);
 
-                var response = BaseResponse<UpdateProfileDto>.OkResponse(UpdateProfileDto);
+            return Ok(response);
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
         }
 
         /// <summary>
@@ -143,55 +93,28 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> GetChildren([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            // Get the token from the Authorization header
-            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-
-            // Extract user ID from the token
-            var userId = _tokenService.GetUserIdFromTokenHeader(token);
-
-            if (userId == Guid.Empty)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId) || userId == Guid.Empty)
             {
                 return Unauthorized();
             }
 
-            try
-            {
-                var paginatedUsers = await _userServices.GetChildrenOfParentAsync(userId.ToString(), pageNumber, pageSize);
+            var paginatedUsers = await _userServices.GetChildrenOfParentAsync(userId.ToString(), pageNumber, pageSize);
 
-                // Map users to UserResponseDto
-                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+            // Map users to UserResponseDto
+            var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
 
-                // Create a new paginated list of UserResponseDto
-                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
-                    userDtos.ToList(),
-                    paginatedUsers.TotalItems,
-                    paginatedUsers.CurrentPage,
-                    paginatedUsers.PageSize
-                );
+            // Create a new paginated list of UserResponseDto
+            var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                userDtos.ToList(),
+                paginatedUsers.TotalItems,
+                paginatedUsers.CurrentPage,
+                paginatedUsers.PageSize
+            );
 
-                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+            var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
         }
 
         /// <summary>
@@ -199,9 +122,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// </summary>
         /// <param name="createUserDto">The user data required for creation.</param>
         /// <returns>Returns the created user along with its ID.</returns>
-        /// <response code="201">User created successfully.</response>
-        /// <response code="400">Invalid user data provided.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpPost]
         [Route("create")]
         [Authorize(Policy = "Admin-Manager")]
@@ -221,43 +141,18 @@ namespace ElementaryMathStudyWebsite.Controllers
                 return BadRequest(ModelState);
             }
 
-            try
-            {
-                var user = await _userServices.CreateUserAsync(createUserDto);
-                var userResponseDto = _mapper.Map<UserResponseDto>(user);
+            var user = await _userServices.CreateUserAsync(createUserDto);
+            var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
-                var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
+            var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
 
-                return Ok(response);
-
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
         }
 
         /// <summary>
         /// Retrieves a list of all users with their associated roles.
         /// </summary>
         /// <returns>Returns a list of users with their roles.</returns>
-        /// <response code="200">List of users retrieved successfully.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("all-list")]
         [Authorize(Policy = "Admin-Manager")]
@@ -267,36 +162,15 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> GetAllUsersWithRoles()
         {
-            try
-            {
-                var users = await _userServices.GetAllUsersWithRolesAsync();
 
-                // Map the users to UserResponseDto
-                var userResponseDtos = _mapper.Map<IEnumerable<UserResponseDto>>(users);
+            var users = await _userServices.GetAllUsersWithRolesAsync();
 
-                var response = BaseResponse<IEnumerable<UserResponseDto>>.OkResponse(userResponseDtos);
+            // Map the users to UserResponseDto
+            var userResponseDtos = _mapper.Map<IEnumerable<UserResponseDto>>(users);
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            var response = BaseResponse<IEnumerable<UserResponseDto>>.OkResponse(userResponseDtos);
+
+            return Ok(response);
         }
 
 
@@ -306,8 +180,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <param name="pageNumber">The page number to retrieve (default is 1).</param>
         /// <param name="pageSize">The number of users per page (default is 10).</param>
         /// <returns>Returns a paginated list of users.</returns>
-        /// <response code="200">List of users retrieved successfully.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("all-pagination")]
         [Authorize(Policy = "Admin-Manager")]
@@ -317,44 +189,23 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> GetAllUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            try
-            {
-                var paginatedUsers = await _userServices.GetAllUsersAsync(pageNumber, pageSize);
 
-                // Map users to UserResponseDto
-                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+            var paginatedUsers = await _userServices.GetAllUsersAsync(pageNumber, pageSize);
 
-                // Create a new paginated list of UserResponseDto
-                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
-                    userDtos.ToList(),
-                    paginatedUsers.TotalItems,
-                    paginatedUsers.CurrentPage,
-                    paginatedUsers.PageSize
-                );
+            // Map users to UserResponseDto
+            var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
 
-                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+            // Create a new paginated list of UserResponseDto
+            var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                userDtos.ToList(),
+                paginatedUsers.TotalItems,
+                paginatedUsers.CurrentPage,
+                paginatedUsers.PageSize
+            );
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+
+            return Ok(response);
         }
 
         /// <summary>
@@ -376,57 +227,31 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> SearchUsers([FromQuery] string? name, [FromQuery] bool? status, [FromQuery] string? phone, [FromQuery] string? email, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            try
-            {
-                var paginatedUsers = await _userServices.SearchUsersAsync(name, status, phone, email, pageNumber, pageSize);
 
-                // Map users to UserResponseDto
-                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+            var paginatedUsers = await _userServices.SearchUsersAsync(name, status, phone, email, pageNumber, pageSize);
 
-                // Create a new paginated list of UserResponseDto
-                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
-                    userDtos.ToList(),
-                    paginatedUsers.TotalItems,
-                    paginatedUsers.CurrentPage,
-                    paginatedUsers.PageSize
-                );
+            // Map users to UserResponseDto
+            var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
 
-                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+            // Create a new paginated list of UserResponseDto
+            var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                userDtos.ToList(),
+                paginatedUsers.TotalItems,
+                paginatedUsers.CurrentPage,
+                paginatedUsers.PageSize
+            );
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+
+            return Ok(response);
+
         }
-        
 
-        
         /// <summary>
         /// Retrieves a user by their ID.
         /// </summary>
         /// <param name="userId">The ID of the user to retrieve.</param>
         /// <returns>Returns the user details.</returns>
-        /// <response code="200">User found and details returned.</response>
-        /// <response code="400">Invalid user ID provided.</response>
-        /// <response code="404">User not found.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("get/{userId}")]
         [SwaggerOperation(
@@ -439,46 +264,13 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
+            var user = await _userServices.GetUserByIdAsync(userId);
 
-            try
-            {
-                var user = await _userServices.GetUserByIdAsync(userId);
+            var userResponseDto = _mapper.Map<UserResponseDto>(user);
 
+            var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
 
-                var userResponseDto = _mapper.Map<UserResponseDto>(user);
-
-                var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
-
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific BadRequestException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
         }
 
         /// <summary>
@@ -487,10 +279,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <param name="userId">The ID of the user to update.</param>
         /// <param name="updateUserDto">The updated user data.</param>
         /// <returns>Returns the updated user details.</returns>
-        /// <response code="200">User updated successfully.</response>
-        /// <response code="400">Invalid user ID or data provided.</response>
-        /// <response code="404">User not found.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpPut]
         [Route("update/{userId}")]
         [Authorize(Policy = "Admin-Manager")]
@@ -504,55 +292,18 @@ namespace ElementaryMathStudyWebsite.Controllers
             {
                 throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
-
             if (updateUserDto == null)
             {
                 throw new BaseException.BadRequestException("invalid_argument", "User data is required.");
             }
-
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
-
             }
-
-            try
-            {
-                var user = await _userServices.UpdateUserAsync(userId, updateUserDto);
-                var userResponseDto = _mapper.Map<UserResponseDto>(user);
-
-                var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
-
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific BadRequestException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            var user = await _userServices.UpdateUserAsync(userId, updateUserDto);
+            var userResponseDto = _mapper.Map<UserResponseDto>(user);
+            var response = BaseResponse<UserResponseDto>.OkResponse(userResponseDto);
+            return Ok(response);
         }
 
         /// <summary>
@@ -560,10 +311,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// </summary>
         /// <param name="userId">The ID of the user to disable.</param>
         /// <returns>Returns a success or failure message.</returns>
-        /// <response code="200">User successfully disabled.</response>
-        /// <response code="400">Invalid user ID provided.</response>
-        /// <response code="404">User not found.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpPatch]
         [Route("disable/{userId}")]
         [Authorize(Policy = "Admin-Manager")]
@@ -578,46 +325,45 @@ namespace ElementaryMathStudyWebsite.Controllers
                 throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
-            try
-            {
-                var result = await _userServices.DisableUserAsync(userId);
+            var result = await _userServices.DisableUserAsync(userId);
 
-                if (result)
-                {
-                    var response = BaseResponse<String>.OkResponse("User is disabled");
+            if (result)
+            {
+                var response = BaseResponse<String>.OkResponse("User is disabled");
 
-                    return Ok(response);
-                }
-                throw new BaseException.CoreException("unsuccess", "Disable unsuccessfully");
+                return Ok(response);
             }
-            catch (BaseException.CoreException coreEx)
+            throw new BaseException.CoreException("unsuccess", "Disable unsuccessfully");
+        }
+
+        /// <summary>
+        /// Enables a user.
+        /// </summary>
+        /// <param name="userId">The ID of the user to enable.</param>
+        /// <returns>Returns a success or failure message.</returns>
+        [HttpPatch]
+        [Route("enable/{userId}")]
+        [Authorize(Policy = "Admin-Manager")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin-Manager",
+            Description = "Enable a user"
+            )]
+        public async Task<IActionResult> EnsableUser(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
             {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
+                throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
-            catch (BaseException.BadRequestException badRequestEx)
+
+            var result = await _userServices.EnableUserAsync(userId);
+
+            if (result)
             {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
+                var response = BaseResponse<String>.OkResponse("User is enabled");
+
+                return Ok(response);
             }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific BadRequestException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            throw new BaseException.CoreException("unsuccess", "Enable unsuccessfully");
         }
 
         /// <summary>
@@ -639,46 +385,14 @@ namespace ElementaryMathStudyWebsite.Controllers
                 throw new BaseException.BadRequestException("invalid_argument", "User ID is required.");
             }
 
-            try
-            {
-                var result = await _userServices.DeleteUserAsync(userId);
+            var result = await _userServices.DeleteUserAsync(userId);
 
-                if (result)
-                {
-                    var response = BaseResponse<String>.OkResponse("User is deleted");
-
-                    return Ok(response);
-                }
-                throw new BaseException.CoreException("unsuccess", "Delete unsuccessfully");
-            }
-            catch (BaseException.CoreException coreEx)
+            if (result)
             {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
+                var response = BaseResponse<String>.OkResponse("User is deleted");
+                return Ok(response);
             }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific BadRequestException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            throw new BaseException.CoreException("unsuccess", "Delete unsuccessfully");
         }
 
         /// <summary>
@@ -688,9 +402,6 @@ namespace ElementaryMathStudyWebsite.Controllers
         /// <param name="pageNumber">The page number to retrieve (default is 1).</param>
         /// <param name="pageSize">The number of users per page (default is 10).</param>
         /// <returns>Returns a paginated list of users who are children of the specified parent.</returns>
-        /// <response code="200">List of children retrieved successfully.</response>
-        /// <response code="400">Invalid parent ID provided.</response>
-        /// <response code="500">Internal server error.</response>
         [HttpGet]
         [Route("children/{parentId}")]
         [SwaggerOperation(
@@ -704,46 +415,22 @@ namespace ElementaryMathStudyWebsite.Controllers
                 throw new BaseException.BadRequestException("invalid_argument", "Parent ID is required.");
             }
 
-            try
-            {
-                var paginatedUsers = await _userServices.GetChildrenOfParentAsync(parentId, pageNumber, pageSize);
+            var paginatedUsers = await _userServices.GetChildrenOfParentAsync(parentId, pageNumber, pageSize);
 
-                // Map users to UserResponseDto
-                var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
+            // Map users to UserResponseDto
+            var userDtos = _mapper.Map<IEnumerable<UserResponseDto>>(paginatedUsers.Items);
 
-                // Create a new paginated list of UserResponseDto
-                var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
-                    userDtos.ToList(),
-                    paginatedUsers.TotalItems,
-                    paginatedUsers.CurrentPage,
-                    paginatedUsers.PageSize
-                );
+            // Create a new paginated list of UserResponseDto
+            var paginatedUserDtos = new BasePaginatedList<UserResponseDto>(
+                userDtos.ToList(),
+                paginatedUsers.TotalItems,
+                paginatedUsers.CurrentPage,
+                paginatedUsers.PageSize
+            );
 
-                var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
+            var response = BaseResponse<BasePaginatedList<UserResponseDto>>.OkResponse(paginatedUserDtos);
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
         }
-
-
     }
 }

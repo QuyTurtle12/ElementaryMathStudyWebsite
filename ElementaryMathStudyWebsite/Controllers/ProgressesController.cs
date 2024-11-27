@@ -27,160 +27,59 @@ namespace ElementaryMathStudyWebsite.Controllers
         // Get 1 child learning progress of specific parent
         [Authorize(Policy = "Parent")]
         [HttpGet]
-        [Route("/parent/view/{studentId}")]
+        [Route("parent/view/{studentId}")]
         [SwaggerOperation(
             Summary = "Authorization: Parent",
             Description = "View a child progress list for Parent role. Insert -1 to get all items"
             )]
-        public async Task<ActionResult<BaseResponse<BasePaginatedList<ProgressViewDto>>>> GetStudentProgressByStudentId([Required] string studentId , int pageNumber = -1, int pageSize = -1)
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<ProgressViewDto>>>> GetStudentProgressByStudentId([Required] string studentId, int pageNumber = -1, int pageSize = -1)
         {
-            try
-            {
-                // Get logged in User info
-                User currentUser = await _userService.GetCurrentUserAsync();
+            BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetStudentProgressesDtoAsync(studentId, pageNumber, pageSize);
 
-                // Check if current logged user and the inputted student Id are parent-child relationship
-                if (!await _userService.IsCustomerChildren(currentUser.Id, studentId))
-                {
-                    throw new BaseException.BadRequestException("invalid_argument", "They are not parent and child");
-                }
+            var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
 
-                BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetStudentProgressesDtoAsync(studentId, pageNumber, pageSize);
-
-                var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
-
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return response;
         }
 
         // GET: api/progress/student/view
         // Get 1 child learning progress
         [Authorize(Policy = "Student")]
         [HttpGet]
-        [Route("/student/view")]
+        [Route("student/view")]
         [SwaggerOperation(
             Summary = "Authorization: Student",
             Description = "View a child progress list for Student role. Insert -1 to get all items"
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ProgressViewDto>>>> GetStudentProgressForStudent(int pageNumber = -1, int pageSize = -1)
         {
-            try
-            {
+            User currentUser = await _userService.GetCurrentUserAsync();
 
-                BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetStudentProgressesDtoForStudentAsync(pageNumber, pageSize);
+            BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetStudentProgressesDtoForStudentAsync(pageNumber, pageSize, currentUser);
 
-                var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
+            var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
 
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return response;
         }
 
         // GET: api/progress/parent/view
         // Get 1 child learning progress of specific parent
         [Authorize(Policy = "Parent")]
         [HttpGet]
-        [Route("/parent/view")]
+        [Route("parent/view")]
         [SwaggerOperation(
             Summary = "Authorization: Parent",
             Description = "View children progress list. Insert -1 to get all items"
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<ProgressViewDto>>>> GetStudentProgress(int pageNumber = -1, int pageSize = -1)
         {
-            try
-            {
-                // Get logged in User info
-                User currentUser = await _userService.GetCurrentUserAsync();
+            // Get logged in User info
+            User currentUser = await _userService.GetCurrentUserAsync();
 
-                BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetAllStudentProgressesDtoAsync(currentUser.Id, pageNumber, pageSize);
+            BasePaginatedList<ProgressViewDto> subjectProgresses = await _progressService.GetAllStudentProgressesDtoAsync(currentUser.Id, pageNumber, pageSize);
 
-                var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
+            var response = BaseResponse<BasePaginatedList<ProgressViewDto>>.OkResponse(subjectProgresses);
 
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return response;
         }
 
         //// POST: api/progress

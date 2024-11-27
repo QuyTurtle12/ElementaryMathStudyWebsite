@@ -1,0 +1,91 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages.DetailsModel
+
+@{
+    ViewData["Title"] = "Chi tiết";
+}
+
+<h1>Chi tiết</h1>
+
+<div>
+    <h4>Chương</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            Số thứ tự
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Chapter.Number)
+        </dd>
+        <dt class="col-sm-2">
+            Tên chương
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Chapter.ChapterName)
+        </dd>
+        <dt class="col-sm-2">
+            Trạng thái
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Chapter.Status)
+        </dd>
+        <dt class="col-sm-2">
+            Môn học
+        </dt>
+        <dd class="col-sm-10">
+            @Model.SubjectName
+        </dd>
+        <dt class="col-sm-2">
+            Câu hỏi
+        </dt>
+        <dd class="col-sm-10">
+            @Model.QuizName
+        </dd>
+        <dt class="col-sm-2">
+            Người tạo
+        </dt>
+        <dd class="col-sm-10">
+            @Model.CreatedByName
+        </dd>
+        <dt class="col-sm-2">
+            Người cập nhật cuối
+        </dt>
+        <dd class="col-sm-10">
+            @Model.LastUpdatedByName
+        </dd>
+        <dt class="col-sm-2">
+            Người xóa
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Chapter.DeletedBy)
+        </dd>
+        <dt class="col-sm-2">
+            Thời gian tạo
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Chapter.CreatedTime)
+        </dd>
+        <dt class="col-sm-2">
+            Thời gian cập nhật cuối
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Chapter.LastUpdatedTime)
+        </dd>
+        <dt class="col-sm-2">
+            Thời gian xóa
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Chapter.DeletedTime)
+        </dd>
+    </dl>
+</div>
+<div class="mt-3">
+    <div class="d-flex gap-2">
+        <a asp-page="./Edit" asp-route-id="@Model.Chapter.Id" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Chỉnh sửa
+        </a>
+        <a asp-page="./Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
+</div>

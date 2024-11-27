@@ -1,0 +1,91 @@
+﻿@page
+@using ElementaryMathStudyWebsite.Core.Repositories.Entity
+@model ElementaryMathStudyWebsite.RazorPage.Pages.CheckoutPages.StudentSelectModel
+@{
+	ViewData["Title"] = "Get a new course";
+}
+<h2>Select a student you want to register for this course:</h2>
+<form method="post">
+
+	<div class="student-list">
+		@if (Model.myChildren is not null && Model.myChildren.Items.Any())
+		{
+			foreach (User student in Model.myChildren.Items)
+			{
+				<div class="student-item" onclick="selectStudent('@student.Id', this)">
+					<h3>@student.FullName</h3>
+				</div>
+			}
+		}
+		else
+		{
+			<p>You have not registered any student accounts.</p>
+		}
+	</div>
+	<input type="hidden" id="selectedStudentId" name="SelectedStudentId" />
+
+	<button id="continueButton" class="btn btn-primary" disabled>Continue</button>
+</form>
+<style>
+	.student-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 20px;
+	}
+
+	.student-item {
+		border: 1px solid #ddd;
+		padding: 15px;
+		border-radius: 5px;
+		width: 250px;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+	}
+
+		.student-item:hover {
+			background-color: #f0f0f0;
+		}
+
+		.student-item.selected {
+			background-color: #cce5ff;
+			border-color: #007bff;
+		}
+
+		.student-item h3 {
+			font-size: 1.2em;
+			margin-bottom: 10px;
+		}
+
+		.student-item p {
+			margin-bottom: 8px;
+		}
+
+	.btn-primary {
+		background-color: #007bff;
+		color: #fff;
+		border: none;
+		padding: 10px 15px;
+		border-radius: 5px;
+		margin-top: 20px;
+	}
+</style>
+<script>
+	let selectedSubjectId = null;
+
+	function selectStudent(subjectId, element) {
+		// Deselect any previously selected item
+		const previouslySelected = document.querySelector('.student-item.selected');
+		if (previouslySelected) {
+			previouslySelected.classList.remove('selected');
+		}
+
+		// Select the current item
+		element.classList.add('selected');
+
+		// Set the selected subject's ID in the hidden input field
+		document.getElementById('selectedStudentId').value = subjectId;
+
+		// Enable the Continue button
+		document.getElementById('continueButton').disabled = false;
+	}
+</script>

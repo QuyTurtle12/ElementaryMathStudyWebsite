@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
+﻿namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs
 {
     public class QuizMainViewDto
     {
         public string Id { get; set; } = string.Empty;
         public string QuizName { get; set; } = string.Empty;
-        public double? Criteria { get; set; }
-        public bool? Status { get; set; }
+        public double Criteria { get; set; }
+        public bool Status { get; set; }
+
         public string ChapterName { get; set; } = string.Empty;
         public string TopicName { get; set; } = string.Empty;
+
         public string CreatedBy { get; set; } = string.Empty;
         public string CreatorName { get; set; } = string.Empty;
         public string CreatorPhone { get; set; } = string.Empty;

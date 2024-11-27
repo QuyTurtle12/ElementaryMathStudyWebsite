@@ -28,40 +28,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> AddItemsToCart(CartCreateDto dto)
         {
-            try
-            {
-                var response = BaseResponse<OrderViewDto>.OkResponse(await _orderService.AddItemsToCart(dto));
+            var response = await _orderService.AddItemsToCart(dto);
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(BaseResponse<OrderViewDto>.OkResponse(response));
+
         }
 
         [Authorize(Policy = "Parent")]
@@ -72,45 +42,17 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> RemoveCart()
         {
-            try
+            var result = await _orderService.RemoveCart();
+            if (result)
             {
-                var result = await _orderService.RemoveCart();
-                if (result)
-                {
-                    var successResponse = BaseResponse<string>.OkResponse("Successfully");
-                    return Ok(successResponse);
+                var successResponse = BaseResponse<string>.OkResponse("Successfully");
+                return Ok(successResponse);
 
-                }
-                var failedResponse = BaseResponse<string>.OkResponse("Unsuccessfully");
+            }
+            var failedResponse = BaseResponse<string>.OkResponse("Unsuccessfully");
 
-                return Ok(failedResponse);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(failedResponse);
+
         }
 
         [Authorize(Policy = "Parent")]
@@ -121,40 +63,10 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> ViewCart()
         {
-            try
-            {
-                var response = BaseResponse<OrderViewDto>.OkResponse(await _orderService.ViewCart());
+            var response = BaseResponse<OrderViewDto>.OkResponse(await _orderService.ViewCart());
 
 
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return Ok(response);
         }
-
     }
 }

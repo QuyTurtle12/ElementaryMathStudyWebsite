@@ -13,7 +13,6 @@ namespace ElementaryMathStudyWebsite.Core.Base
                 StatusCode = statusCode;
             }
 
-
             public string Code { get; }
 
             public int StatusCode { get; set; }
@@ -53,6 +52,23 @@ namespace ElementaryMathStudyWebsite.Core.Base
             }
         }
 
+        public class UnauthorizedException : ErrorException
+        {
+            public UnauthorizedException(string errorCode, string message)
+                : base(401, errorCode, message)
+            {
+            }
+
+            public UnauthorizedException(ICollection<KeyValuePair<string, ICollection<string>>> errors)
+                : base(401, new ErrorDetail
+                {
+                    ErrorCode = "unauthorized",
+                    ErrorMessage = errors
+                })
+            {
+            }
+        }
+
         public class ErrorException : Exception
         {
             public int StatusCode { get; }
@@ -75,11 +91,29 @@ namespace ElementaryMathStudyWebsite.Core.Base
                 ErrorDetail = errorDetail;
             }
         }
+
         public class ErrorDetail
         {
             public string? ErrorCode { get; set; }
 
             public object? ErrorMessage { get; set; }
         }
+
+        public class ValidationException : ErrorException
+        {
+            public ValidationException(string errorCode, string message)
+                : base(422, errorCode, message)
+            {
+            }
+            public ValidationException(ICollection<KeyValuePair<string, ICollection<string>>> errors)
+                : base(422, new ErrorDetail
+                {
+                    ErrorCode = "validation_error",
+                    ErrorMessage = errors
+                })
+            {
+            }
+        }
+
     }
 }

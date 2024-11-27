@@ -46,6 +46,68 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                     b.ToTable("Result");
                 });
 
+            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Entity.Subject", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<double>("Price")
+                        .HasColumnType("float");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SubjectName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Subject");
+                });
+
+            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Entity.UserAnswer", b =>
+                {
+                    b.Property<string>("QuestionId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AttemptNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OptionId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("QuestionId", "UserId", "AttemptNumber");
+
+                    b.HasIndex("OptionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserAnswer");
+                });
+
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Chapter", b =>
                 {
                     b.Property<string>("Id")
@@ -56,24 +118,24 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("CreatedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("LastUpdatedTime")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<int?>("Number")
+                    b.Property<int>("Number")
                         .HasColumnType("int");
 
                     b.Property<string>("QuizId")
@@ -87,12 +149,6 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("DeletedBy");
-
-                    b.HasIndex("LastUpdatedBy");
 
                     b.HasIndex("QuizId")
                         .IsUnique()
@@ -113,13 +169,13 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("CreatedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedTime")
                         .HasColumnType("datetimeoffset");
@@ -128,7 +184,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("LastUpdatedTime")
                         .HasColumnType("datetimeoffset");
@@ -138,12 +194,6 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("DeletedBy");
-
-                    b.HasIndex("LastUpdatedBy");
 
                     b.HasIndex("QuestionId");
 
@@ -156,7 +206,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("CreatedTime")
                         .HasColumnType("datetimeoffset");
@@ -166,13 +216,13 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("LastUpdatedTime")
                         .HasColumnType("datetimeoffset");
@@ -190,13 +240,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedBy");
-
                     b.HasIndex("CustomerId");
-
-                    b.HasIndex("DeletedBy");
-
-                    b.HasIndex("LastUpdatedBy");
 
                     b.ToTable("Order");
                 });
@@ -253,18 +297,27 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CreatedByUserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTimeOffset>("CreatedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DeletedByUserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTimeOffset?>("DeletedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastUpdatedByUserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTimeOffset>("LastUpdatedTime")
@@ -280,11 +333,11 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedBy");
+                    b.HasIndex("CreatedByUserId");
 
-                    b.HasIndex("DeletedBy");
+                    b.HasIndex("DeletedByUserId");
 
-                    b.HasIndex("LastUpdatedBy");
+                    b.HasIndex("LastUpdatedByUserId");
 
                     b.HasIndex("QuizId");
 
@@ -297,22 +350,22 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("CreatedTime")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<double?>("Criteria")
+                    b.Property<double>("Criteria")
                         .HasColumnType("float");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("LastUpdatedTime")
                         .HasColumnType("datetimeoffset");
@@ -321,16 +374,10 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool?>("Status")
+                    b.Property<bool>("Status")
                         .HasColumnType("bit");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("DeletedBy");
-
-                    b.HasIndex("LastUpdatedBy");
 
                     b.ToTable("Quiz");
                 });
@@ -341,19 +388,19 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("CreatedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("LastUpdatedTime")
                         .HasColumnType("datetimeoffset");
@@ -364,57 +411,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("DeletedBy");
-
-                    b.HasIndex("LastUpdatedBy");
-
                     b.ToTable("Role");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Subject", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<double>("Price")
-                        .HasColumnType("float");
-
-                    b.Property<bool>("Status")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("SubjectName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("DeletedBy");
-
-                    b.HasIndex("LastUpdatedBy");
-
-                    b.ToTable("Subject");
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Topic", b =>
@@ -427,24 +424,24 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("CreatedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("LastUpdatedTime")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<int?>("Number")
+                    b.Property<int>("Number")
                         .HasColumnType("int");
 
                     b.Property<string>("QuizId")
@@ -464,12 +461,6 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasIndex("ChapterId");
 
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("DeletedBy");
-
-                    b.HasIndex("LastUpdatedBy");
-
                     b.HasIndex("QuizId")
                         .IsUnique()
                         .HasFilter("[QuizId] IS NOT NULL");
@@ -483,13 +474,13 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("CreatedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedTime")
                         .HasColumnType("datetimeoffset");
@@ -502,10 +493,11 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Gender")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("LastUpdatedTime")
                         .HasColumnType("datetimeoffset");
@@ -514,8 +506,14 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PasswordResetToken")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("ResetTokenExpiry")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("RoleId")
                         .IsRequired()
@@ -533,39 +531,9 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("DeletedBy");
-
-                    b.HasIndex("LastUpdatedBy");
-
                     b.HasIndex("RoleId");
 
                     b.ToTable("User");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.UserAnswer", b =>
-                {
-                    b.Property<string>("QuestionId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("AttemptNumber")
-                        .HasColumnType("int");
-
-                    b.Property<string>("OptionId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("QuestionId", "UserId", "AttemptNumber");
-
-                    b.HasIndex("OptionId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserAnswer");
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Entity.Result", b =>
@@ -587,337 +555,7 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Chapter", b =>
-                {
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "LastUpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("LastUpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Quiz", "Quiz")
-                        .WithOne("Chapter")
-                        .HasForeignKey("ElementaryMathStudyWebsite.Core.Repositories.Entity.Chapter", "QuizId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Subject", "Subject")
-                        .WithMany("Chapters")
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("LastUpdatedByUser");
-
-                    b.Navigation("Quiz");
-
-                    b.Navigation("Subject");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Option", b =>
-                {
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "LastUpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("LastUpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Question", "Question")
-                        .WithMany("Options")
-                        .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("LastUpdatedByUser");
-
-                    b.Navigation("Question");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Order", b =>
-                {
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "User")
-                        .WithMany("Orders")
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "LastUpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("LastUpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("LastUpdatedByUser");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.OrderDetail", b =>
-                {
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Order", "Order")
-                        .WithMany("OrderDetails")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "User")
-                        .WithMany("OrderDetails")
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Subject", "Subject")
-                        .WithMany("Detail")
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Order");
-
-                    b.Navigation("Subject");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Progress", b =>
-                {
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Quiz", "Quiz")
-                        .WithMany("Progresses")
-                        .HasForeignKey("QuizId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Subject", "Subject")
-                        .WithMany("Progresses")
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "User")
-                        .WithMany("Progresses")
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("Quiz");
-
-                    b.Navigation("Subject");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Question", b =>
-                {
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "LastUpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("LastUpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Quiz", "Quiz")
-                        .WithMany("Questions")
-                        .HasForeignKey("QuizId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("LastUpdatedByUser");
-
-                    b.Navigation("Quiz");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Quiz", b =>
-                {
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "LastUpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("LastUpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("LastUpdatedByUser");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Role", b =>
-                {
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "LastUpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("LastUpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("LastUpdatedByUser");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Subject", b =>
-                {
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "LastUpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("LastUpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("LastUpdatedByUser");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Topic", b =>
-                {
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Chapter", "Chapter")
-                        .WithMany("Topics")
-                        .HasForeignKey("ChapterId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "LastUpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("LastUpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Quiz", "Quiz")
-                        .WithOne("Topic")
-                        .HasForeignKey("ElementaryMathStudyWebsite.Core.Repositories.Entity.Topic", "QuizId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("Chapter");
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("LastUpdatedByUser");
-
-                    b.Navigation("Quiz");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", b =>
-                {
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "LastUpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("LastUpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Role", "Role")
-                        .WithMany("Users")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("LastUpdatedByUser");
-
-                    b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.UserAnswer", b =>
+            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Entity.UserAnswer", b =>
                 {
                     b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Option", "Option")
                         .WithMany("Answers")
@@ -942,6 +580,165 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
                     b.Navigation("Question");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Chapter", b =>
+                {
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Quiz", "Quiz")
+                        .WithOne("Chapter")
+                        .HasForeignKey("ElementaryMathStudyWebsite.Core.Repositories.Entity.Chapter", "QuizId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Entity.Subject", "Subject")
+                        .WithMany("Chapters")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Quiz");
+
+                    b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Option", b =>
+                {
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Question", "Question")
+                        .WithMany("Options")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Order", b =>
+                {
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "User")
+                        .WithMany("Orders")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.OrderDetail", b =>
+                {
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Order", "Order")
+                        .WithMany("OrderDetails")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "User")
+                        .WithMany("OrderDetails")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Entity.Subject", "Subject")
+                        .WithMany("Detail")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Subject");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Progress", b =>
+                {
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Quiz", "Quiz")
+                        .WithMany("Progresses")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Entity.Subject", "Subject")
+                        .WithMany("Progresses")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "User")
+                        .WithMany("Progresses")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Quiz");
+
+                    b.Navigation("Subject");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Question", b =>
+                {
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId");
+
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedByUserId");
+
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", "LastUpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("LastUpdatedByUserId");
+
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Quiz", "Quiz")
+                        .WithMany("Questions")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
+                    b.Navigation("LastUpdatedByUser");
+
+                    b.Navigation("Quiz");
+                });
+
+            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Topic", b =>
+                {
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Chapter", "Chapter")
+                        .WithMany("Topics")
+                        .HasForeignKey("ChapterId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Quiz", "Quiz")
+                        .WithOne("Topic")
+                        .HasForeignKey("ElementaryMathStudyWebsite.Core.Repositories.Entity.Topic", "QuizId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Chapter");
+
+                    b.Navigation("Quiz");
+                });
+
+            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", b =>
+                {
+                    b.HasOne("ElementaryMathStudyWebsite.Core.Repositories.Entity.Role", "Role")
+                        .WithMany("Users")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Entity.Subject", b =>
+                {
+                    b.Navigation("Chapters");
+
+                    b.Navigation("Detail");
+
+                    b.Navigation("Progresses");
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Chapter", b =>
@@ -982,15 +779,6 @@ namespace ElementaryMathStudyWebsite.Repositories.Migrations
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Role", b =>
                 {
                     b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.Subject", b =>
-                {
-                    b.Navigation("Chapters");
-
-                    b.Navigation("Detail");
-
-                    b.Navigation("Progresses");
                 });
 
             modelBuilder.Entity("ElementaryMathStudyWebsite.Core.Repositories.Entity.User", b =>

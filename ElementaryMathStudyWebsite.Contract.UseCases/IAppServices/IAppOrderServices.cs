@@ -11,18 +11,24 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         // Add the cart to database
         Task<OrderViewDto> AddItemsToCart(CartCreateDto dto);
+		Task<OrderViewDto> AddItemsToCart(string userId, CartCreateDto dto);
 
-        // Remove the current cart of the user
-        Task<bool> RemoveCart();
-        
-        // View the current items in the user's cart
-        Task<OrderViewDto> ViewCart();
 
-        // Handle the database after the callback
-        Task<string> HandleVnPayCallback(string orderId, bool isSuccess);
+		// Remove the current cart of the user
+		Task<bool> RemoveCart();
+		Task<bool> RemoveCart(string userId);
+
+
+		// View the current items in the user's cart
+		Task<OrderViewDto> ViewCart();
+		Task<OrderViewDto> ViewCart(string userId);
+
+
+		// Handle the database after the callback
+		Task<string> HandleVnPayCallback(string orderId, bool isSuccess);
 
         // Get Order list for general user
-        Task<BasePaginatedList<OrderViewDto>?> GetOrderDtosAsync(int pageNumber, int pageSize);
+        Task<BasePaginatedList<OrderViewDto>?> GetOrderDtosAsync(int pageNumber, int pageSize, User currentUser);
 
         // Get Order for general user
         //Task<OrderViewDto?> GetOrderDtoByOrderIdAsync(string orderId);
@@ -34,6 +40,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<string?> IsGenerallyValidatedAsync(string subjectId, string studentId, CartCreateDto dto);
 
         Task<BasePaginatedList<OrderAdminViewDto>> GetOrderAdminDtosAsync(int pageNumber, int pageSize);
+
+        Task<OrderAdminViewDto> GetOrderAdminDtoASync(string orderId);
 
         //Task<Order?> GetOrderByOrderIdAsync(string orderId);
     }

@@ -1,0 +1,53 @@
+﻿@page "{questionId?}"
+@model ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages.CreateModel
+
+@{
+    ViewData["Title"] = "Create User Answer";
+}
+
+<h1>Create User Answer</h1>
+
+<h4>UserAnswer</h4>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="UserAnswerDTO.UserAnswerList.First().QuestionId" class="control-label">Question</label>
+                <select asp-for="UserAnswerDTO.UserAnswerList.First().QuestionId" class="form-control"
+                        asp-items="ViewBag.QuestionContext" onchange="filterOptions()">
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="UserAnswerDTO.UserAnswerList.First().OptionId" class="control-label">Option</label>
+                <select asp-for="UserAnswerDTO.UserAnswerList.First().OptionId" class="form-control"
+                        asp-items="ViewBag.OptionId">
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">User</label>
+                <input type="text" class="form-control" value="@Model.CurrentUserName" readonly />
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Submit" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <script>
+        function filterOptions() {
+            const questionId = document.querySelector('[name="UserAnswerDTO.UserAnswerList.First().QuestionId"]').value;
+            const url = `@Url.Page("./Create", new { questionId = "" })${questionId}`;
+            window.location.href = url;
+        }
+    </script>
+}

@@ -19,7 +19,69 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             _topicService = topicService ?? throw new ArgumentNullException(nameof(topicService));
         }
+        [HttpPut]
+        [Route("update-all/{id}")]
+        [Authorize(Policy = "Admin-Content")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "Cập nhật thông tin đầy đủ cho một chủ đề"
+        )]
+        public async Task<IActionResult> UpdateTopicAll(string id, [FromBody] TopicCreateAllDto topicCreateAllDto)
+        {
+            if (topicCreateAllDto == null)
+            {
+                return BadRequest("Thông tin chủ đề không hợp lệ.");
+            }
 
+            try
+            {
+                var updatedTopic = await _topicService.UpdateTopicAllAsync(id, topicCreateAllDto);
+                var successResponse = BaseResponse<TopicAdminViewDto>.OkResponse(updatedTopic);
+                return Ok(successResponse);
+            }
+            catch (BaseException.NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (BaseException.BadRequestException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Có lỗi xảy ra: " + ex.Message);
+            }
+        }
+
+        // GET: api/chapter/all
+        [HttpGet("allchapter")]
+        public async Task<ActionResult<List<ChapterDto>>> GetChaptersAll()
+        {
+            var chapters = await _topicService.GetChaptersAllAsync();
+            if (chapters == null || chapters.Count == 0)
+            {
+                return NotFound("No chapters found.");
+            }
+
+            return Ok(chapters);
+        }
+
+        [HttpGet("chapter/name/{chapterName}")]
+        [SwaggerOperation(
+            Summary = "Authorization: N/A",
+            Description = "Lấy danh sách Topics theo tên chương"
+        )]
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<TopicViewDto>>>> GetTopicsByChapterNameAsync(string chapterName, int pageNumber = 1, int pageSize = 10)
+        {
+            if (string.IsNullOrWhiteSpace(chapterName))
+            {
+                return BadRequest("Tên chương không được để trống.");
+            }
+
+            var topics = await _topicService.GetTopicsByChapterNameAsync(chapterName, pageNumber, pageSize);
+            var response = BaseResponse<BasePaginatedList<TopicViewDto>>.OkResponse(topics);
+            return Ok(response);
+        }
         [HttpGet]
         [Route("admin-content/all")]
         [Authorize(Policy = "Admin-Content")]
@@ -29,52 +91,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<TopicAdminViewDto>>>> GetAllTopics(int pageNumber = 1, int pageSize = 10)
         {
-            try
-            {
-                BasePaginatedList<TopicAdminViewDto>? topic = await _topicService.GetAllExistTopicsAsync(pageNumber, pageSize);
-                var response = BaseResponse<BasePaginatedList<TopicAdminViewDto>>.OkResponse(topic);
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        errorCode = "InternalServerError",
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
+            BasePaginatedList<TopicAdminViewDto>? topic = await _topicService.GetAllExistTopicsAsync(pageNumber, pageSize);
+            var response = BaseResponse<BasePaginatedList<TopicAdminViewDto>>.OkResponse(topic);
+            return response;
         }
 
         [Authorize(Policy = "Admin-Content")]
@@ -86,52 +105,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<BasePaginatedList<TopicAdminViewDto>>>> GetAllDeleteTopics(int pageNumber = 1, int pageSize = 10)
         {
-            try
-            {
-                BasePaginatedList<TopicAdminViewDto>? topic = await _topicService.GetAllDeleteTopicsAsync(pageNumber, pageSize);
-                var response = BaseResponse<BasePaginatedList<TopicAdminViewDto>>.OkResponse(topic);
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        errorCode = "InternalServerError",
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
+            BasePaginatedList<TopicAdminViewDto>? topic = await _topicService.GetAllDeleteTopicsAsync(pageNumber, pageSize);
+            var response = BaseResponse<BasePaginatedList<TopicAdminViewDto>>.OkResponse(topic);
+            return response;
         }
 
         [HttpGet]
@@ -143,61 +119,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<TopicAdminViewDto>> GetAllTopicById([Required] string id)
         {
-            //if (string.IsNullOrWhiteSpace(id))
-            //{
-            //    return BadRequest(new
-            //    {
-            //        errorCode = "InvalidId",
-            //        errorMessage = "The provided ID is invalid."
-            //    });
-            //}
-
-            try
-            {
-                var topic = await _topicService.GetTopicAllByIdAsync(id);
-                var response = BaseResponse<object>.OkResponse(topic);
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        errorCode = "InternalServerError",
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
+            var topic = await _topicService.GetTopicAllByIdAsync(id);
+            var response = BaseResponse<object>.OkResponse(topic);
+            return Ok(response);
         }
 
         [HttpGet]
@@ -208,50 +132,8 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> GetAllTopicsForUsers(int pageNumber = 1, int pageSize = 10)
         {
-            try
-            {
-                var result = await _topicService.GetAllTopicsAsync(pageNumber, pageSize);
-                return Ok(result);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        errorCode = "InternalServerError",
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
+            var result = await _topicService.GetAllTopicsAsync(pageNumber, pageSize);
+            return Ok(result);
         }
 
         [HttpGet]
@@ -262,60 +144,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<TopicViewDto>> GetTopicById([Required] string id)
         {
-            //if (string.IsNullOrWhiteSpace(id))
-            //{
-            //    return BadRequest(new
-            //    {
-            //        errorCode = "InvalidId",
-            //        errorMessage = "The provided ID is invalid."
-            //    });
-            //}
-
-            try
-            {
-                var topic = await _topicService.GetTopicByIdAsync(id);
-                var response = BaseResponse<object>.OkResponse(topic);
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        errorCode = "InternalServerError",
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
+            var topic = await _topicService.GetTopicByIdAsync(id);
+            var response = BaseResponse<object>.OkResponse(topic);
+            return Ok(response);
 
         }
 
@@ -326,60 +157,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<List<TopicViewDto>>> GetTopicsByChapterId(string chapterId)
         {
-            //if (string.IsNullOrWhiteSpace(chapterId))
-            //{
-            //    return BadRequest(new
-            //    {
-            //        errorCode = "InvalidId",
-            //        errorMessage = "The provided ID is invalid."
-            //    });
-            //}
-
-            try
-            {
-                var topic = await _topicService.GetTopicsByChapterIdAsync(chapterId);
-                var response = BaseResponse<object>.OkResponse(topic);
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        errorCode = "InternalServerError",
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
+            var topic = await _topicService.GetTopicsByChapterIdAsync(chapterId);
+            var response = BaseResponse<object>.OkResponse(topic);
+            return Ok(response);
         }
 
         [HttpGet("search")]
@@ -389,50 +169,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> SearchTopicByName([FromQuery] string searchTerm, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            try
-            {
-                var result = await _topicService.SearchTopicByNameAsync(searchTerm, pageNumber, pageSize);
-                return Ok(result);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            var result = await _topicService.SearchTopicByNameAsync(searchTerm, pageNumber, pageSize);
+            return Ok(result);
 
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        errorCode = "InternalServerError",
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
         }
 
         [HttpPost]
@@ -444,59 +183,17 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> AddTopic(TopicCreateDto topicCreateDto)
         {
-            try
+            var addTopic = await _topicService.AddTopicAsync(new TopicCreateDto
             {
-                var addTopic = await _topicService.AddTopicAsync(new TopicCreateDto
-                {
-                    Number = topicCreateDto.Number,
-                    TopicName = topicCreateDto.TopicName,
-                    TopicContext = topicCreateDto.TopicContext,
-                    QuizId = topicCreateDto.QuizId,
-                    ChapterId = topicCreateDto.ChapterId,
-                });
-                //return Ok(addTopic);
-                var response = BaseResponse<TopicAdminViewDto>.OkResponse(addTopic);
-                return CreatedAtAction(nameof(GetTopicById), new { id = addTopic.Id }, response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        errorCode = "InternalServerError",
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
+                Number = topicCreateDto.Number,
+                TopicName = topicCreateDto.TopicName,
+                TopicContext = topicCreateDto.TopicContext,
+                QuizId = topicCreateDto.QuizId,
+                ChapterId = topicCreateDto.ChapterId,
+            });
+            //return Ok(addTopic);
+            var response = BaseResponse<TopicAdminViewDto>.OkResponse(addTopic);
+            return CreatedAtAction(nameof(GetTopicById), new { id = addTopic.Id }, response);
         }
 
         [HttpPut]
@@ -508,57 +205,32 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> UpdateTopic(string id, [FromBody] TopicUpdateDto topicUpdateDto)
         {
-            try
+            var result = await _topicService.UpdateTopicAsync(id, new TopicUpdateDto
             {
-                var result = await _topicService.UpdateTopicAsync(id, new TopicUpdateDto
-                {
-                    TopicName = topicUpdateDto.TopicName,
-                    TopicContext = topicUpdateDto.TopicContext,
-                    QuizId = topicUpdateDto.QuizId,
-                    ChapterId = topicUpdateDto.ChapterId,
-                });
+                TopicName = topicUpdateDto.TopicName,
+                TopicContext = topicUpdateDto.TopicContext,
+            });
 
-                var successResponse = BaseResponse<object>.OkResponse(result);
-                return Ok(successResponse);
-            }
-            catch (BaseException.CoreException coreEx)
+            var successResponse = BaseResponse<object>.OkResponse(result);
+            return Ok(successResponse);
+        }
+
+        [HttpPut]
+        [Route("updateQuizId/{id}")]
+        [Authorize(Policy = "Admin-Content")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "Update QuizId Topic"
+            )]
+        public async Task<IActionResult> UpdateQuizIdTopic(string id, [FromBody] TopicUpdateQuizIdDto topicUpdateDto)
+        {
+            var result = await _topicService.UpdateQuizIdTopicAsync(id, new TopicUpdateQuizIdDto
             {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle specific NotFoundException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        errorCode = "InternalServerError",
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
+                QuizId = topicUpdateDto.QuizId,
+            });
+
+            var successResponse = BaseResponse<object>.OkResponse(result);
+            return Ok(successResponse);
         }
 
         [HttpDelete]
@@ -570,56 +242,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<IActionResult> DeleteTopic(string id)
         {
-            //if (string.IsNullOrWhiteSpace(id))
-            //{
-            //    return BadRequest(new
-            //    {
-            //        errorCode = "InvalidId",
-            //        errorMessage = "The provided ID is invalid."
-            //    });
-            //}
-            try
-            {
-                var result = await _topicService.DeleteTopicAsync(id);
-
-                if (result)
-                {
-                    var successResponse = BaseResponse<string>.OkResponse("Delete successfully");
-                    return Ok(successResponse);
-
-                }
-                var failedResponse = BaseResponse<string>.OkResponse("Delete unsuccessfully");
-
-                return Ok(failedResponse);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
+            var deletedTopic = await _topicService.DeleteTopicAsync(id);
+            var successResponse = BaseResponse<object>.OkResponse(deletedTopic);
+            return Ok(successResponse);
         }
 
         [HttpPut]
@@ -631,51 +256,9 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> RollBackTopicDeleted([Required] string id)
         {
-            try
-            {
-                var topic = await _topicService.RollBackTopicDeletedAsync(id);
-                var response = BaseResponse<object>.OkResponse(topic);
-                return Ok(response);
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        errorCode = "InternalServerError",
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
+            var topic = await _topicService.RollBackTopicDeletedAsync(id);
+            var response = BaseResponse<object>.OkResponse(topic);
+            return Ok(response);
         }
 
         [HttpPut]
@@ -687,63 +270,11 @@ namespace ElementaryMathStudyWebsite.Controllers
         )]
         public async Task<IActionResult> SwapTopicNumbers([Required] string topicId1, [Required] string topicId2)
         {
-            //if (string.IsNullOrWhiteSpace(topicId1) || string.IsNullOrWhiteSpace(topicId2))
-            //{
-            //    return BadRequest(new
-            //    {
-            //        errorCode = "InvalidIds",
-            //        errorMessage = "Both topic IDs must be provided."
-            //    });
-            //}
-
-            try
+            await _topicService.SwapTopicNumbersAsync(topicId1, topicId2);
+            return Ok(new
             {
-                await _topicService.SwapTopicNumbersAsync(topicId1, topicId2);
-                return Ok(new
-                {
-                    message = "Topic numbers swapped successfully."
-                });
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            catch (BaseException.NotFoundException notFoundEx)
-            {
-                // Handle general ArgumentException
-                return NotFound(new
-                {
-                    errorCode = notFoundEx.ErrorDetail.ErrorCode,
-                    errorMessage = notFoundEx.ErrorDetail.ErrorMessage
-                });
-            }
-
-            //catch (Exception ex)
-            //{
-            //    // Handle any other exceptions
-            //    return StatusCode(500, new
-            //    {
-            //        errorCode = "InternalServerError",
-            //        errorMessage = "An unexpected error occurred.",
-            //        details = ex.Message
-            //    });
-            //}
+                message = "Topic numbers swapped successfully."
+            });
         }
     }
 }

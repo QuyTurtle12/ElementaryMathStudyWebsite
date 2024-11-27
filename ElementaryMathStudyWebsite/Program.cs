@@ -1,3 +1,4 @@
+using ElementaryMathStudyWebsite.Middleware;
 using Microsoft.OpenApi.Models;
 
 namespace ElementaryMathStudyWebsite
@@ -61,6 +62,10 @@ namespace ElementaryMathStudyWebsite
             }
 
             app.UseHttpsRedirection();
+
+            app.UseMiddleware<ExceptionMiddleware>();
+
+            app.UseMiddleware<LoggingMiddleware>();
 
             app.UseAuthorization();
 

@@ -1,6 +1,5 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
@@ -11,16 +10,14 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         // Add option to database
         Task<OptionViewDto> AddOption(OptionCreateDto optionCreateDto);
+        Task<OptionViewDto> AddOption(string userId, OptionCreateDto optionCreateDto);
 
         // Edit an option by id
-        Task<OptionViewDto> UpdateOption(string optionId, OptionUpdateDto optionUpdateDto);
-        
+        Task<OptionViewDto> UpdateOption(OptionUpdateDto optionUpdateDto);
+        Task<OptionViewDto> UpdateOption(string userId, OptionUpdateDto optionUpdateDto);
+
+
         //Delete an option
         Task<bool> DeleteOption(string optionId);
-
-        Task<BasePaginatedList<Option>> GetOptions(int pageNumber, int pageSize);
-
-        // Get option with all properties
-        Task<Option> GetOptionById(string optionId);
     }
 }

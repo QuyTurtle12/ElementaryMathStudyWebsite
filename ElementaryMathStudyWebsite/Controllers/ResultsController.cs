@@ -1,6 +1,8 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Services.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -13,6 +15,7 @@ namespace ElementaryMathStudyWebsite.Controllers
     public class ResultsController : ControllerBase
     {
         private readonly IAppResultService _resultService;
+        private readonly IAppUserServices _userServices;
 
         // Constructor
         public ResultsController(IAppResultService resultService)
@@ -80,39 +83,15 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Student",
             Description = "Get a list of student result of specific quiz"
             )]
-        public async Task<ActionResult<BaseResponse<BasePaginatedList<ResultViewDto>>>> GetQuizResult([Required] string quizId , int pageSize = -1, int pageNumber = -1)
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<ResultViewDto>>>> GetQuizResult([Required] string quizId, int pageSize = -1, int pageNumber = -1)
         {
-            try
-            {
-                BasePaginatedList<ResultViewDto> results = await _resultService.GetStudentResultListAsync(quizId, pageNumber, pageSize);
+            // Get current logged in user info
+            User currentUser = await _userServices.GetCurrentUserAsync();
 
-                if (!results.Items.Any())
-                {
-                    throw new BaseException.BadRequestException("invalid_argument","This student hasn't done any test in this quiz yet");
-                }
+            BasePaginatedList<ResultViewDto> results = await _resultService.GetStudentResultListAsync(currentUser, quizId, pageNumber, pageSize);
 
-                var response = BaseResponse<BasePaginatedList<ResultViewDto>>.OkResponse(results);
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            var response = BaseResponse<BasePaginatedList<ResultViewDto>>.OkResponse(results);
+            return response;
         }
 
         // GET: api/results/parent
@@ -126,33 +105,11 @@ namespace ElementaryMathStudyWebsite.Controllers
             )]
         public async Task<ActionResult<BaseResponse<ResultParentViewDto>>> GetChildResult([Required] string studentId)
         {
-            try
-            {
-                ResultParentViewDto result = await _resultService.GetChildrenLatestResultAsync(studentId);
+            ResultParentViewDto result = await _resultService.GetChildrenLatestResultAsync(studentId);
 
-                var response = BaseResponse<ResultParentViewDto>.OkResponse(result);
+            var response = BaseResponse<ResultParentViewDto>.OkResponse(result);
 
-                return response;
-            }
-            catch (BaseException.CoreException coreEx)
-            {
-                // Handle specific CoreException
-                return StatusCode(coreEx.StatusCode, new
-                {
-                    code = coreEx.Code,
-                    message = coreEx.Message,
-                    additionalData = coreEx.AdditionalData
-                });
-            }
-            catch (BaseException.BadRequestException badRequestEx)
-            {
-                // Handle specific BadRequestException
-                return BadRequest(new
-                {
-                    errorCode = badRequestEx.ErrorDetail.ErrorCode,
-                    errorMessage = badRequestEx.ErrorDetail.ErrorMessage
-                });
-            }
+            return response;
         }
     }
 }
