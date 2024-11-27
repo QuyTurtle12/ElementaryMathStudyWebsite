@@ -1,67 +1,83 @@
 ﻿@page
+@using ElementaryMathStudyWebsite.Contract.UseCases.DTOs
 @model ElementaryMathStudyWebsite.RazorPage.Pages.OrderPages.DetailsModel
 
 @{
     ViewData["Title"] = "Details";
+    IEnumerable<OrderDetailViewDto> orderDetails = Model.orderDetails;
 }
 
-<h1>Chi tiết</h1>
+<h1>Details</h1>
 
 <div>
     <h4>Order</h4>
     <hr />
     <dl class="row">
         <dt class="col-sm-2">
-            Tổng tiền
+            Customer
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Order.CustomerName)
+        </dd>
+        <dt class="col-sm-2">
+            Subject - Student
+        </dt>
+        <dd class="col-sm-10">
+            @foreach (var detail in orderDetails)
+            {
+                <div>@detail.SubjectName - @detail.StudentName</div>
+            }
+        </dd>
+        <dt class="col-sm-2">
+            Total Price
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Order.TotalPrice)
         </dd>
         <dt class="col-sm-2">
-            Phương thức thanh toán
+            Payment Method
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Order.PaymentMethod)
         </dd>
         <dt class="col-sm-2">
-            Trạng thái
+            Order Date
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Order.OrderDate)
+        </dd>
+        <dt class="col-sm-2">
+            Status
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Order.Status)
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Order.User)
+            Created By
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Order.User!.Id)
+            @Html.DisplayFor(model => model.Order.CreatorName)
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Order.CreatedBy)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Order.CreatedBy)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Order.CreatedTime)
+            Created Time
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Order.CreatedTime)
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Order.LastUpdatedTime)
+            Last Updated Person Name
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Order.LastUpdatedPersonName)
+        </dd>
+        <dt class="col-sm-2">
+            Last Updated Time
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Order.LastUpdatedTime)
         </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Order.DeletedTime)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Order.DeletedTime)
-        </dd>
     </dl>
 </div>
 <div>
-    <a asp-page="./Edit" asp-route-id="@Model.Order.Id">Edit</a> |
-    <a asp-page="./Index">Back to List</a>
+    <a asp-page="./Admin">Back to List</a>
 </div>

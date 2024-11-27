@@ -6,64 +6,124 @@
     int resultNumber = 1;
 }
 
+<style>
+    body {
+        background-color: #f4f4f9;
+        margin: 0;
+    }
+
+    h1 {
+        color: #333;
+        text-align: left;
+        margin-bottom: 20px;
+        font-size: 2rem;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+        table thead {
+            background-color: #28a745;
+            color: white;
+        }
+
+        table th, table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            font-size: 1rem;
+        }
+
+        table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+    .pagination {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 1rem;
+    }
+
+        .pagination a {
+            color: #007bff;
+            text-decoration: none;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 4px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+            .pagination a:hover {
+                background-color: #007bff;
+                color: white;
+            }
+
+        .pagination span {
+            color: #555;
+            font-weight: bold;
+        }
+
+    div a {
+        color: #0066cc;
+        text-decoration: none;
+    }
+</style>
+
 <h1>Student</h1>
 
 <table class="table">
     <thead>
         <tr>
-            <th>
-                STT
-            </th>
-            <th>
-                Tên bài kiểm tra
-            </th>
-            <th>
-                Điểm
-            </th>
-            <th>
-                Lần Thử
-            </th>
-            <th>
-                Ngày thực hiện
-            </th>
+            <th>No.</th>
+            <th>Quiz Name</th>
+            <th>Mark</th>
+            <th>Attempt Number</th>
+            <th>Date Taken</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.Results.Items) {
+        @foreach (var item in Model.Results.Items)
+        {
             <tr>
-                <td>
-                    @resultNumber
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.QuizName)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Score)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Attempt)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.DateTaken)
-                </td>
-@*                 <td>
-                    @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                </td> *@
+                <td>@resultNumber</td>
+                <td>@Html.DisplayFor(modelItem => item.QuizName)</td>
+                <td>@Html.DisplayFor(modelItem => item.Score)</td>
+                <td>@Html.DisplayFor(modelItem => item.Attempt)</td>
+                <td>@Html.DisplayFor(modelItem => item.DateTaken)</td>
             </tr>
             resultNumber++;
         }
     </tbody>
 </table>
+
 <div class="pagination">
     @if (Model.Results.CurrentPage > 1)
     {
-        <a asp-page="./Student" asp-route-pageNumber="@(Model.Results.CurrentPage - 1)">Trước</a>
+        <a asp-page="./Student" asp-route-pageNumber="@(Model.Results.CurrentPage - 1)">Previous</a>
     }
 
     <span>Page @Model.Results.CurrentPage of @Model.Results.TotalPages</span>
 
     @if (Model.Results.CurrentPage < Model.Results.TotalPages)
     {
-        <a asp-page="./Student" asp-route-pageNumber="@(Model.Results.CurrentPage + 1)">Sau</a>
+        <a asp-page="./Student" asp-route-pageNumber="@(Model.Results.CurrentPage + 1)">Next</a>
     }
 </div>
+
+<div>
+        <a asp-page="/ProgressPages/Details">Back</a>
+</div>
+

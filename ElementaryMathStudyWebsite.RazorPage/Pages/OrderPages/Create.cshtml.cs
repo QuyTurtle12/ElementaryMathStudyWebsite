@@ -21,7 +21,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.OrderPages
 
         public IActionResult OnGet()
         {
-        ViewData["CustomerId"] = new SelectList(_context.User, "Id", "Id");
+            ViewData["CustomerId"] = new SelectList(_context.User, "Id", "Id");
             return Page();
         }
 

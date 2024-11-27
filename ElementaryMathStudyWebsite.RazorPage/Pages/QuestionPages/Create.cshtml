@@ -1,0 +1,93 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages.CreateModel
+
+@{
+    ViewData["Title"] = "Add New Question";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-primary text-white text-center rounded-top-4">
+                    <h3 class="mb-0 fw-bold">Add New Question</h3>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Display success or error messages -->
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show rounded-3" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show rounded-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <!-- Add Question Form -->
+                    <form method="post">
+                        <div class="form-group mb-4">
+                            <label for="QuestionContext" class="form-label fw-bold">Question Context</label>
+                            <textarea id="QuestionContext"
+                                      name="Question.QuestionContext"
+                                      class="form-control form-control-lg rounded-3"
+                                      rows="4"
+                                      placeholder="Enter the question context"
+                                      required>@Model.Question.QuestionContext</textarea>
+                        </div>
+
+                        <!-- Custom Quiz Selection (using divs or buttons) -->
+                        <div class="form-group mb-4">
+                            <label for="QuizId" class="form-label fw-bold">Quiz</label>
+                            <input type="hidden" id="QuizId" name="Question.QuizId" value="@Model.Question.QuizId" />
+                            <div class="btn-group-vertical w-100" role="group" aria-label="Quiz selection">
+                                @foreach (var quiz in Model.QuizList)
+                                {
+                                    <button type="button" class="btn btn-outline-primary quiz-option"
+                                            data-value="@quiz.Value">
+                                        @quiz.Text
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-center gap-3 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg px-5 shadow-sm rounded-pill">
+                                <i class="bi bi-save2-fill me-2"></i>Save Question
+                            </button>
+                            <a href="@Url.Page("./Index")" class="btn btn-secondary btn-lg px-5 shadow-sm rounded-pill">
+                                <i class="bi bi-arrow-left-circle-fill me-2"></i>Back to List
+                            </a>
+                        </div>
+                    </form>
+
+                    @if (!ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger mt-4 rounded-3">
+                            <i class="bi bi-x-circle-fill me-2"></i><strong>Error:</strong> Please check the form for errors.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // JavaScript to handle the quiz selection via button click
+        document.querySelectorAll('.quiz-option').forEach(button => {
+            button.addEventListener('click', function () {
+                var selectedValue = this.getAttribute('data-value');
+                document.getElementById('QuizId').value = selectedValue;
+            });
+        });
+    </script>
+}

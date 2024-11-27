@@ -1,33 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
+using ElementaryMathStudyWebsite.Services.Service;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos;
+using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Utils;
 using ElementaryMathStudyWebsite.Core.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
 {
     public class CreateModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly IAppSubjectServices _appSubjectService;
+        private readonly IAppUserServices _userService;
 
-        public CreateModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public CreateModel(IAppSubjectServices appSubjectService, IAppUserServices userService)
         {
-            _context = context;
+            _appSubjectService = appSubjectService;
+            _userService = userService;
         }
+
+        [BindProperty]
+        public SubjectCreateDTO Subject { get; set; } = new();
 
         public IActionResult OnGet()
         {
             return Page();
         }
 
-        [BindProperty]
-        public Subject Subject { get; set; } = default!;
-
-        // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
@@ -35,10 +37,45 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
                 return Page();
             }
 
-            _context.Subject.Add(Subject);
-            await _context.SaveChangesAsync();
+            try
+            {
+                // Create a new subject
+                var createdSubject = await _appSubjectService.CreateSubjectAsync(new SubjectDTO
+                {
+                    Id = string.Empty, // Let the service handle ID generation
+                    SubjectName = Subject.SubjectName,
+                    Price = Subject.Price,
+                    Status = true
+                });
 
-            return RedirectToPage("./Index");
+                var updateSubject = await _appSubjectService.SearchSubjectExactAsync(createdSubject.SubjectName);
+                var userId = HttpContext.Session.GetString("user_id");
+                await _appSubjectService.AuditSubjectAsync(updateSubject, userId, true);
+
+                TempData["SuccessMessage"] = "Subject created successfully!";
+                return RedirectToPage("./Index");
+            }
+            catch (BaseException.BadRequestException ex)
+            {
+                var existSubject = await _appSubjectService.SearchSubjectExactAsync(Subject.SubjectName);
+                if (existSubject != null)
+                {
+                    ModelState.AddModelError(string.Empty, "Subject name existed!");
+                }
+
+                if(Subject.Price <= 0)
+                {
+                    ModelState.AddModelError(string.Empty, "Price must be greater than 0");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle generic errors
+                ModelState.AddModelError(string.Empty, "An unexpected error occurred: " + ex.Message);
+            }
+
+            // Return to the same page with error messages displayed
+            return Page();
         }
     }
 }

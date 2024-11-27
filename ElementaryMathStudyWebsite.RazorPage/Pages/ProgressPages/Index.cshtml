@@ -2,49 +2,91 @@
 @model ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages.IndexModel
 
 @{
-	ViewData["Title"] = "Index";
-	int number = 1;
+    ViewData["Title"] = "Index";
+    int number = 1;
 }
 
-<h1>Tiến độ học tập</h1>
+<style>
+    body {
+        background-color: #f4f4f9;
+    }
+
+    h1 {
+        color: #333;
+        text-align: left;
+        margin-bottom: 20px;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 1rem;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+        .table th,
+        .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+        }
+
+        .table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .table td a {
+            color: #007BFF;
+            text-decoration: none;
+            padding: 5px 10px;
+            border: 1px solid #007BFF;
+            border-radius: 4px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+            .table td a:hover {
+                background-color: #007BFF;
+                color: white;
+            }
+</style>
+
+<h1>Study Progress</h1>
 
 <table class="table">
-	<thead>
-		<tr>
-			<th>
-				Số thứ tự
-			</th>
-			<th>
-				Tên môn học
-			</th>
-			<th>
-				Tiến độ
-			</th>
-			<th>
-				Hành Động
-			</th>
-		</tr>
-	</thead>
-	<tbody>
-		@foreach (var item in Model.Progresses!.Items)
-		{
-			<tr>
-				<td>
-					@number
-				</td>
-				<td>
-					@Html.DisplayFor(modelItem => item.SubjectName)
-				</td>
-				<td>
-					@Html.DisplayFor(modelItem => item.SubjectPercentage)
-				</td>
-				<td>
-					<a asp-page="./Details"
-					   asp-route-studentId="@item.StudentId"
-					   asp-route-subjectId="@item.SubjectId">Chi tiết</a>
-				</td>
-			</tr>
-			number++;
-		}
-	</tbody>
+    <thead>
+        <tr>
+            <th>No.</th>
+            <th>Subject</th>
+            <th>Progress</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Progresses!.Items)
+        {
+            <tr>
+                <td>@number</td>
+                <td>@Html.DisplayFor(modelItem => item.SubjectName)</td>
+                <td>@Html.DisplayFor(modelItem => item.SubjectPercentage)</td>
+                <td>
+                    <a asp-page="./Details"
+                       asp-route-studentId="@item.StudentId"
+                       asp-route-subjectId="@item.SubjectId">Details</a>
+                </td>
+            </tr>
+            number++;
+        }
+    </tbody>
 </table>

@@ -1,0 +1,61 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages.DetailsModel
+
+@{
+    ViewData["Title"] = "Question Details";
+}
+
+<div class="container mt-4">
+
+    @if (TempData["NotFoundMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["NotFoundMessage"]
+        </div>
+    }
+
+    @if (Model.Question != null)
+    {
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <strong>Question Information</strong>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Question Context</dt>
+                    <dd class="col-sm-9">@Html.Raw(@Model.Question.QuestionContext)</dd>
+
+                    <dt class="col-sm-3">Quiz Name</dt>
+                    <dd class="col-sm-9">@Model.Question.QuizName</dd>
+
+                    <dt class="col-sm-3">Creator Name</dt>
+                    <dd class="col-sm-9">@Model.Question.CreatorName</dd>
+
+                    <dt class="col-sm-3">Last Updator Name</dt>
+                    <dd class="col-sm-9">@Model.Question.LastUpdatedPersonName</dd>
+
+                    <dt class="col-sm-3">Created Time</dt>
+                    <dd class="col-sm-9">@Model.Question.createdTime.ToString("g")</dd>
+
+                    <dt class="col-sm-3">Last Updated Time</dt>
+                    <dd class="col-sm-9">@Model.Question.LastUpdatedTime.ToString("g")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <a asp-page="./Edit" asp-route-id="@Model.Question.Id" class="btn btn-warning btn-sm">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            <a asp-page="./Index" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            The requested question does not exist.
+        </div>
+    }
+</div>

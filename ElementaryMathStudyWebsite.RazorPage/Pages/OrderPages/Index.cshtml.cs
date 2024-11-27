@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.OrderPages
 {
-	[Authorize(Policy = "Parent")]
+	[Authorize(Policy = "Admin-Manager-Parent")]
 	public class IndexModel : PageModel
     {
         private readonly IAppOrderServices _orderService;
@@ -28,9 +28,14 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.OrderPages
             string currentUserId = HttpContext.Session.GetString("user_id")!;
             User? currentUser = await _userService.GetUserByIdAsync(currentUserId);
 
-            if (currentUser == null)
+            if (currentUser == null || currentUser.Role == null)
             {
                 return Unauthorized();
+            }
+
+            if (currentUser.Role.RoleName.Equals("Admin") || currentUser.Role.RoleName.Equals("Manager"))
+            {
+                return RedirectToPage("./Admin");
             }
 
             Orders = await _orderService.GetOrderDtosAsync(pageNumber, pageSize, currentUser);
