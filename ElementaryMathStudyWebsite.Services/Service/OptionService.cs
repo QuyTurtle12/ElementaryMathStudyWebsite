@@ -36,14 +36,35 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 LastUpdatedTime = CoreHelper.SystemTimeNow
             };
 
-            var userService = _userService;
-            userService.AuditFields(option, true);
+            _userService.AuditFields(option, true);
 
             await _unitOfWork.GetRepository<Option>().InsertAsync(option);
             await _unitOfWork.SaveAsync();
 
             return _mapper.Map<OptionViewDto>(option);
         }
+
+        public async Task<OptionViewDto> AddOption(string userId, OptionCreateDto createDto)
+        {
+            if (!_unitOfWork.IsValid<Question>(createDto.QuestionId)) throw new BaseException.NotFoundException("not_found", "Question ID not found");
+
+            Option option = new()
+            {
+                QuestionId = createDto.QuestionId,
+                Answer = createDto.Answer,
+                IsCorrect = createDto.IsCorrect,
+                CreatedTime = CoreHelper.SystemTimeNow,
+                LastUpdatedTime = CoreHelper.SystemTimeNow
+            };
+
+            _userService.AuditFields(userId, option, true);
+
+            await _unitOfWork.GetRepository<Option>().InsertAsync(option);
+            await _unitOfWork.SaveAsync();
+
+            return _mapper.Map<OptionViewDto>(option);
+        }
+
 
         //Delete an option
         public async Task<bool> DeleteOption(string optionId)
@@ -80,24 +101,43 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Update an option
-        public async Task<OptionViewDto> UpdateOption(string optionId, OptionUpdateDto optionUpdateDto)
+        public async Task<OptionViewDto> UpdateOption(OptionUpdateDto optionUpdateDto)
         {
             Option? option;
 
-            if (_unitOfWork.IsValid<Option>(optionId))
-                option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionId);
+            if (_unitOfWork.IsValid<Option>(optionUpdateDto.Id))
+                option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionUpdateDto.Id);
             else throw new BaseException.NotFoundException("not_found", "Option ID not found");
 
             option!.Answer = optionUpdateDto.Answer;
             option.IsCorrect = optionUpdateDto.IsCorrect;
 
-            var userService = _userService;
-            userService.AuditFields(option, false);
+            _userService.AuditFields(option, false);
 
             await _unitOfWork.SaveAsync();
 
             return _mapper.Map<OptionViewDto>(option);
 
         }
+
+        public async Task<OptionViewDto> UpdateOption(string userId, OptionUpdateDto optionUpdateDto)
+        {
+            Option? option;
+            Console.WriteLine(optionUpdateDto.Id);
+            if (_unitOfWork.IsValid<Option>(optionUpdateDto.Id))
+                option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionUpdateDto.Id);
+            else throw new BaseException.NotFoundException("not_found", "Option ID not found");
+
+            option!.Answer = optionUpdateDto.Answer;
+            option.IsCorrect = optionUpdateDto.IsCorrect;
+
+            _userService.AuditFields(userId, option, false);
+
+            await _unitOfWork.SaveAsync();
+
+            return _mapper.Map<OptionViewDto>(option);
+
+        }
+
     }
 }

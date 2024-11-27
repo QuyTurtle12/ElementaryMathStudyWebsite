@@ -25,16 +25,33 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages
 
         public async Task<IActionResult> OnGetAsync(string studentId, int pageNumber = 1, int pageSize = 5)
         {
-            if (!string.IsNullOrWhiteSpace(studentId)) localstudentId = studentId;
-
-            User? currentUser = await _userService.GetUserByIdAsync(localstudentId);
-
-            if (currentUser == null)
+            try
             {
-                return Unauthorized();
+                if (!string.IsNullOrWhiteSpace(studentId)) localstudentId = studentId;
+
+                User? currentUser = await _userService.GetUserByIdAsync(localstudentId);
+
+                if (currentUser == null)
+                {
+                    return Unauthorized();
+                }
+
+                Progresses = await _progressService.GetStudentProgressesDtoForStudentAsync(pageNumber, pageSize, currentUser);
+                
+            }
+            catch (BaseException.NotFoundException ex)
+            {
+                TempData["ErrorMessage"] = ex.ErrorDetail.ErrorMessage;
+                TempData["ErrorCode"] = ex.ErrorDetail.ErrorCode;
+                return Page();
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An unexpected error occurred.";
+                TempData["ErrorCode"] = "internal_error";
+                return Page();
             }
 
-            Progresses = await _progressService.GetStudentProgressesDtoForStudentAsync(pageNumber, pageSize, currentUser);
             return Page();
         }
     }

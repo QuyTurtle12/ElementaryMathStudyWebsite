@@ -72,9 +72,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: Admin & Content Manager",
             Description = "Edit an option (of a question)"
             )]
-        public async Task<IActionResult> UpdateOption([Required] string id, [Required] OptionUpdateDto dto)
+        public async Task<IActionResult> UpdateOption([Required] OptionUpdateDto dto)
         {
-            var response = await _optionService.UpdateOption(id, dto);
+            var response = await _optionService.UpdateOption(dto);
 
             return Ok(BaseResponse<OptionViewDto>.OkResponse(response));
         }

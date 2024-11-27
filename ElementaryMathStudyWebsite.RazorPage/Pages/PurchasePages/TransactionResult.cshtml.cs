@@ -1,9 +1,7 @@
 ﻿using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
-using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Services.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -39,12 +37,12 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.PurchasePages
             if (vnPayResponse.VnPayResponseCode != "00")
             {
                 response = await _orderService.HandleVnPayCallback(vnPayResponse.OrderId, false);
-				ViewData["Title"] = "Thanh toán thất bại";
+				ViewData["Title"] = "Transaction failed";
 			}
 			else
             {
                 response = await _orderService.HandleVnPayCallback(vnPayResponse.OrderId, true);
-				ViewData["Title"] = "Thanh toán thành công";
+				ViewData["Title"] = "Transaction successful";
 			}
 
 			HttpContext.Session.Remove("session_purchase");

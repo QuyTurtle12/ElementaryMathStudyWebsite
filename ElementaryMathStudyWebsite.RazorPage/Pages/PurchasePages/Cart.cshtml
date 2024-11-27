@@ -2,7 +2,7 @@
 @using System.Globalization
 @model ElementaryMathStudyWebsite.RazorPage.Pages.PurchasePages.CartModel
 @{
-	ViewData["Title"] = "Giỏ hàng";
+	ViewData["Title"] = "Cart";
 }
 @if (Model.student != null && Model.subject != null)
 {
@@ -20,7 +20,7 @@
 
 
 		</div>
-		<button id="continueButton" class="btn btn-primary">Thanh toán</button>
+		<button id="continueButton" class="btn btn-primary">Continue</button>
 	</form>
 }
 else

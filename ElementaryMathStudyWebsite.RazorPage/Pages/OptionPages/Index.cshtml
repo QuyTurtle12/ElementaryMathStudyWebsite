@@ -1,0 +1,47 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.OptionPages.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Text
+            </th>
+            <th>
+                Answer
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.options.Items)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Answer)
+                </td>
+                <td>
+                    @if (item.IsCorrect)
+                    {
+                        <strong style="color: #2d8a5f;">&#10003;</strong>
+                    }
+                    else
+                    {
+                        <strong style="color: #d9534f;">&#10005;</strong>
+                    }
+                </td>
+                <td>
+                    <a asp-page="./Details" asp-route-id="@item.Id">Details</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

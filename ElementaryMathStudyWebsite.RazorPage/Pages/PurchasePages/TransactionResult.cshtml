@@ -8,20 +8,20 @@
 		<div class="icon-circle">
 			<span class="icon">&#10003;</span> <!-- Check icon for success -->
 		</div>
-		<h1>Giao dịch thành công</h1>
+		<h1>Transaction successful</h1>
 
 		<p class="transaction-fee"><strong>@Model.userCart.TotalPrice.ToString("C", new CultureInfo("vi-VN"))</strong></p>
 		<div class="transaction-details">
 			<div class="transaction-detail-item">
-				<span class="detail-title"><strong>Thời gian thanh toán:</strong></span>
+				<span class="detail-title"><strong>Payment time:</strong></span>
 				<span class="detail-value">@Model.userCart.LastUpdatedTime.ToString("HH:mm - dd/MM/yyyy", new System.Globalization.CultureInfo("vi-VN"))</span>
 			</div>
 			<div class="transaction-detail-item">
-				<span class="detail-title"><strong>Mã giao dịch:</strong></span>
+				<span class="detail-title"><strong>Transaction code:</strong></span>
 				<span class="detail-value">@Model.vnPayResponse.OrderId</span>
 			</div>
 		</div>
-		<a href="/" class="back-button">Trở về trang chủ</a>
+		<a href="/" class="back-button">Homepage</a>
 	</div>
 
 }
@@ -31,8 +31,8 @@ else
 		<div class="icon-circle">
 			<span class="icon">&#10005;</span> <!-- "X" icon for failure -->
 		</div>
-		<h1>Giao dịch thất bại</h1>
-		<a href="/" class="back-button">Trở về trang chủ</a>
+		<h1>Transaction failed</h1>
+		<a href="/" class="back-button">Homepage</a>
 	</div>
 
 }
