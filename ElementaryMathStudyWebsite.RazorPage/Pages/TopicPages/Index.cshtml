@@ -179,6 +179,13 @@
                                                 <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/18d32b41cd37c7e6610f4da9e3879f1a24f3a30bf067b8a561aeb91581df3b6c?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" class="action-icon" alt="Detail icon" />
                                                 <a asp-page="/SubjectPages/Index" asp-route-topicId="@item.Id">Subject</a>
                                             </div>
+                                            <div class="action-button">
+                                                <div class="action-button-content">
+                                                    <button class="btn btn-info mt-2">
+                                                        <a asp-page="./TopicExam" asp-route-quizId="@item.QuizId" asp-route-chapterId="@item.ChapterId">Take Exam</a>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

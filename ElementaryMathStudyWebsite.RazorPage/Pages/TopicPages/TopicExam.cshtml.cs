@@ -1,17 +1,18 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
 using ElementaryMathStudyWebsite.Core.Entity;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using Microsoft.CodeAnalysis.Options;
 
-namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
+namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
 {
-    public class ExamModel : PageModel
+    public class TopicExamModel : PageModel
     {
         private readonly DatabaseContext _context;
 
-        public ExamModel(DatabaseContext context)
+        public TopicExamModel(DatabaseContext context)
         {
             _context = context;
         }
@@ -21,8 +22,9 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 
         public IList<Question> Questions { get; set; } = default!;
 
-        public async Task<IActionResult> OnGetAsync(string quizId, string subjectId)
+        public async Task<IActionResult> OnGetAsync(string quizId, string chapterId)
         {
+            Console.WriteLine(chapterId);
             var userId = HttpContext.Session.GetString("user_id");
             if (string.IsNullOrEmpty(userId))
             {
@@ -30,13 +32,19 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
                 return Page();
             }
 
+            // Retrieve the SubjectId associated with the ChapterId
+            var subjectId = await _context.Chapter
+                .Where(c => c.Id == chapterId)
+                .Select(c => c.SubjectId)
+                .FirstOrDefaultAsync();
+
             // Check if the user has access to this subject
             var hasAccess = await _context.OrderDetail
                 .AnyAsync(od => od.StudentId == userId && od.SubjectId == subjectId);
 
             if (!hasAccess)
             {
-                TempData["AlertMessage"] = "You do not have access to this chapter or exam.";
+                TempData["AlertMessage"] = "You do not have access to this topic or exam.";
                 return Page();
             }
 
@@ -78,47 +86,36 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
                 return Page();
             }
 
-            // Materialize Question IDs into a list
             var questionIds = Questions.Select(q => q.Id).ToList();
 
             // Load user answers for the current quiz into memory
-            var userAnswers = await _context.UserAnswer
+            var userAnswerAttemp = await _context.UserAnswer
                 .Where(ua => ua.UserId == userId && questionIds.Contains(ua.QuestionId))
                 .ToListAsync();
 
             // Calculate the max attempt number for this user and quiz
-            var maxAttemptNumber = userAnswers.Any()
-                ? userAnswers.Max(ua => ua.AttemptNumber)
+            var maxAttemptNumber = userAnswerAttemp.Any()
+                ? userAnswerAttemp.Max(ua => ua.AttemptNumber)
                 : 0;
 
-            var answers = new List<UserAnswer>();
+            // Process user answers and save to UserAnswer table
+            var userAnswers = new List<UserAnswer>();
             var correctAnswersCount = 0;
-
             foreach (var question in Questions)
             {
-                var selectedOptionValue = Request.Form[$"Answer_{question.Id}"];
-
-                // Convert the value to a string
-                var selectedOptionId = selectedOptionValue.FirstOrDefault();
-                if (string.IsNullOrEmpty(selectedOptionId)) // Check if an answer was provided
+                var selectedOptionId = Request.Form[$"Answer_{question.Id}"];
+                if (!string.IsNullOrEmpty(selectedOptionId))
                 {
-                    ModelState.AddModelError(string.Empty, $"Please answer question {Questions.IndexOf(question) + 1}.");
-                    return Page(); // Reload the page with the error message
-                }
+                    var option = await _context.Option
+                        .Where(o => o.Id == selectedOptionId.ToString())
+                        .FirstOrDefaultAsync();
 
-                // Query the database using the string ID
-                var option = await _context.Option
-                    .Where(o => o.Id == selectedOptionId)
-                    .FirstOrDefaultAsync();
-
-                if (option != null)
-                {
-                    answers.Add(new UserAnswer
+                    userAnswers.Add(new UserAnswer
                     {
                         UserId = userId,
                         QuestionId = question.Id,
-                        OptionId = option.Id,
-                        AttemptNumber = maxAttemptNumber + 1 // Increment the attempt number
+                        OptionId = selectedOptionId,
+                        AttemptNumber = maxAttemptNumber + 1
                     });
 
                     if (option.IsCorrect)
@@ -128,8 +125,14 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
                 }
             }
 
-            // Save all user answers
-            _context.UserAnswer.AddRange(answers);
+            if (userAnswers.Count != Questions.Count)
+            {
+                ModelState.AddModelError(string.Empty, "You must answer all questions.");
+                return Page();
+            }
+
+            // Save user answers
+            _context.UserAnswer.AddRange(userAnswers);
             await _context.SaveChangesAsync();
 
             // Calculate and format the score
@@ -155,11 +158,11 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
                 }
             }
 
-                // Store the formatted score and points as strings in TempData
-                TempData["Score"] = formattedScore;
-                TempData["Points"] = totalPoints.ToString("F1"); // Format as string with 1 decimal place
+            // Store the formatted score and points as strings in TempData
+            TempData["Score"] = formattedScore;
+            TempData["Points"] = totalPoints.ToString("F1"); // Format as string with 1 decimal place
 
-            return RedirectToPage("./ExamResult", new { score = formattedScore });
+            return RedirectToPage("./TopicExamResult", new { score = formattedScore });
         }
     }
 }

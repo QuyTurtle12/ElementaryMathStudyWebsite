@@ -1,100 +1,73 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using ElementaryMathStudyWebsite.Core.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
+using ElementaryMathStudyWebsite.Services.Service;
 using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages
 {
     [Authorize(Policy = "Student")]
     public class CreateModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly IAppUserServices _userService;
+        private readonly IAppQuestionServices _questionService;
+        private readonly IAppOptionServices _optionService;
+        private readonly IAppUserAnswerServices _userAnswerService;
 
-        public CreateModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public CreateModel(
+        IAppUserServices userService,
+            IAppQuestionServices questionService,
+            IAppUserAnswerServices userAnswerService,
+            IAppOptionServices optionService)
         {
-            _context = context;
+            _userService = userService;
+            _questionService = questionService;
+            _userAnswerService = userAnswerService;
+            _optionService = optionService;
         }
 
         [BindProperty]
-        public UserAnswer UserAnswer { get; set; } = default!;
+        public UserAnswerCreateDTO UserAnswerDTO { get; set; } = new();
 
-        public IActionResult OnGet(string? questionId = null)
+        public string CurrentUserName { get; private set; } = string.Empty;
+
+        [BindProperty(SupportsGet = true)]
+        public string? SelectedQuestionId { get; set; }
+
+        public async Task<IActionResult> OnGetAsync(string? questionId = null)
         {
-            // Get the current user ID from the session
-            string userId = HttpContext.Session.GetString("user_id") ?? "";
+            var currentUser = await _userService.GetCurrentUserAsync();
+            CurrentUserName = currentUser.FullName;
+            SelectedQuestionId = questionId;
 
-            // Retrieve the user's full name
-            string? userName = _context.User.FirstOrDefault(u => u.Id == userId)?.FullName;
+            var questions = await _questionService.GetAllQuestionsMainViewDtoAsync();
+            ViewData["QuestionContext"] = new SelectList(questions, "Id", "QuestionContent", questionId);
 
-            // Store the user's name in ViewData for display
-            ViewData["CurrentUserName"] = userName ?? "Unknown User";
-
-            // Populate the question dropdown
-            var questions = _context.Question.ToList();
-            ViewData["QuestionContext"] = new SelectList(questions, "Id", "QuestionContext", questionId);
-
-            // Ensure questionId is set to the current or default value
-            questionId ??= questions.FirstOrDefault()?.Id;
-
-            // Filter options for the specific question
-            ViewData["OptionId"] = new SelectList(
-                _context.Option
-                    .Where(o => o.QuestionId == questionId)
-                    .Select(o => new { Id = o.Id, Display = o.Answer }),
-                "Id",
-                "Display");
-
-            // Set the selected question in the model
-            UserAnswer = new UserAnswer
-            {
-                UserId = userId,
-                QuestionId = questionId
-            };
+            var options = await _optionService.GetOptionDtosByQuestion(-1, -1, questionId ?? questions.FirstOrDefault()?.Id);
+            ViewData["OptionId"] = new SelectList((System.Collections.IEnumerable)options, "Id", "Answer");
 
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync(string? questionId = null)
+        public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
             {
-                // Re-populate dropdowns to maintain state
-                var questions = _context.Question.ToList();
-                ViewData["QuestionContext"] = new SelectList(questions, "Id", "QuestionContext", questionId);
-                questionId ??= questions.FirstOrDefault()?.Id;
+                // Repopulate dropdowns
+                var questions = await _questionService.GetAllQuestionsMainViewDtoAsync();
+                ViewData["QuestionContext"] = new SelectList(questions, "Id", "QuestionContent", SelectedQuestionId);
 
-                ViewData["OptionId"] = new SelectList(
-                    _context.Option
-                        .Where(o => o.QuestionId == questionId)
-                        .Select(o => new { Id = o.Id, Display = o.Answer }),
-                    "Id",
-                    "Display");
-                ViewData["UserFullName"] = new SelectList(_context.User, "Id", "FullName");
+                var options = await _optionService.GetOptionDtosByQuestion(-1, -1, SelectedQuestionId);
+                ViewData["OptionId"] = new SelectList((System.Collections.IEnumerable) options, "Id", "Answer");
 
                 return Page();
             }
 
-            // Get the current user ID from the session
-            string userId = HttpContext.Session.GetString("user_id") ?? "";
-
-            // Check if the user has already answered this question
-            var existingAnswers = _context.UserAnswer
-                .Where(ua => ua.UserId == userId && ua.QuestionId == UserAnswer.QuestionId)
-                .OrderByDescending(ua => ua.AttemptNumber)
-                .FirstOrDefault();
-
-            // Set the attempt number for this answer
-            UserAnswer.UserId = userId;
-            UserAnswer.AttemptNumber = existingAnswers == null ? 0 : existingAnswers.AttemptNumber + 1;
-
-            // Add the new UserAnswer entry
-            _context.UserAnswer.Add(UserAnswer);
-            await _context.SaveChangesAsync();
+            // Create the user answer
+            await _userAnswerService.CreateUserAnswersAsync(UserAnswerDTO);
 
             return RedirectToPage("./Index");
         }
