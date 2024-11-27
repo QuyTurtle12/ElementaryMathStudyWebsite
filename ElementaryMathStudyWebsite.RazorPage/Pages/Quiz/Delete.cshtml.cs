@@ -50,13 +50,13 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.Quiz
             try
             {
                 // Attempt to delete the quiz through the service
-                var response = await _quizService.DeleteQuizAsync(id);
+                var response = await _quizService.DeleteQuizAsync(id);    
 
                 // Show success or error message
                 if (!string.IsNullOrEmpty(response.Data))
                 {
                     TempData["SuccessMessage"] = response.Data;
-                }
+                } 
                 else
                 {
                     TempData["ErrorMessage"] = "Unable to delete the quiz. Please try again.";

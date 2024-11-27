@@ -1,78 +1,91 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages
 {
     public class EditModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly IAppQuestionServices _questionService;
+        private readonly IAppUserServices _userService;
 
-        public EditModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public EditModel(IAppQuestionServices questionService, IAppUserServices userService)
         {
-            _context = context;
+            _questionService = questionService;
+            _userService = userService;
         }
 
         [BindProperty]
-        public Question Question { get; set; } = default!;
+        public QuestionMainViewDto Question { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
-            if (id == null)
+            if (string.IsNullOrEmpty(id))
             {
                 return NotFound();
             }
 
-            var question =  await _context.Question.FirstOrDefaultAsync(m => m.Id == id);
-            if (question == null)
+            // Fetch the Question details from the service by ID
+            Question = await _questionService.GetQuestionByIdAsync(id);
+
+            // If no question is found, return NotFound
+            if (Question == null)
             {
                 return NotFound();
             }
-            Question = question;
-           ViewData["QuizId"] = new SelectList(_context.Quiz, "Id", "Id");
+
             return Page();
         }
 
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more information, see https://aka.ms/RazorPagesCRUD.
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(string id)
         {
             if (!ModelState.IsValid)
             {
                 return Page();
             }
 
-            _context.Attach(Question).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!QuestionExists(Question.Id))
+                QuestionUpdateDto questionUpdateDto = new QuestionUpdateDto
                 {
-                    return NotFound();
+                    QuestionContext = Question.QuestionContext,
+                    QuizId = Question.QuizId
+                };
+
+                string currentUserId = HttpContext.Session.GetString("user_id")!;
+                if (string.IsNullOrEmpty(currentUserId))
+                {
+                    TempData["ErrorMessage"] = "User is not authenticated.";
+                    return Page();
+                }
+
+                User? currentUser = await _userService.GetUserByIdAsync(currentUserId);
+                if (currentUser == null)
+                {
+                    TempData["ErrorMessage"] = "User not found.";
+                    return Page();
+                }
+
+                QuestionMainViewDto? result = await _questionService.UpdateQuestionAsync(id, questionUpdateDto, currentUser);
+                if (result == null)
+                {
+                    TempData["ErrorMessage"] = "Question name already exists.";
+                    return Page();
                 }
                 else
                 {
-                    throw;
+                    TempData["SuccessMessage"] = "Question updated successfully!";
+                    return Page();
                 }
             }
-
-            return RedirectToPage("./Index");
-        }
-
-        private bool QuestionExists(string id)
-        {
-            return _context.Question.Any(e => e.Id == id);
+            catch (BaseException.ValidationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return Page();
+            }
         }
     }
 }

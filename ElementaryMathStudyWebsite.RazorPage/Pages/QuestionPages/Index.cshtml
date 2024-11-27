@@ -38,6 +38,7 @@
         <thead class="table-dark">
             <tr>
                 <th>Question Name</th>
+                <th>Quiz Name</th>
                 <th>Created By</th>
                 <th>Last Updated By</th>
                 <th>Actions</th>
@@ -48,6 +49,7 @@
             {
                 <tr>
                     <td>@Html.Raw(@question.QuestionContext)</td>
+                    <td>@question.QuizName</td>
                     <td style="white-space: nowrap;">@question.CreatorName</td>
                     <td style="white-space: nowrap;">@question.LastUpdatedPersonName</td>
 

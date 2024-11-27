@@ -7,28 +7,38 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Services.Service;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages
 {
     public class CreateModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
-
-        public CreateModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
-        {
-            _context = context;
-        }
-
-        public IActionResult OnGet()
-        {
-        ViewData["QuizId"] = new SelectList(_context.Quiz, "Id", "Id");
-            return Page();
-        }
+        private readonly IAppQuestionServices _questionService;
+        private readonly IAppQuizServices _quizService;
+        private readonly IAppUserServices _userService;
 
         [BindProperty]
-        public Question Question { get; set; } = default!;
+        public QuestionCreateDto Question { get; set; } = new QuestionCreateDto();
+        public List<SelectListItem> QuizList { get; set; } = new List<SelectListItem>();
+        public CreateModel(IAppQuestionServices questionService, IAppUserServices userService, IAppQuizServices quizService)
+        {
+            _questionService = questionService;
+            _userService = userService;
+            _quizService = quizService;
+        }
 
-        // For more information, see https://aka.ms/RazorPagesCRUD.
+        public async Task OnGetAsync()
+        {
+            List<QuizMainViewDto> quizzes = await _quizService.GetAllQuizzesAsync();
+            QuizList = quizzes.Select(q => new SelectListItem
+            {
+                Value = q.Id,
+                Text = q.QuizName     
+            }).ToList();
+        }
+
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
@@ -36,10 +46,38 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages
                 return Page();
             }
 
-            _context.Question.Add(Question);
-            await _context.SaveChangesAsync();
+            try
+            {
+                // Check if the question already exists or not
+                string currentUserId = HttpContext.Session.GetString("user_id")!;
+                if (string.IsNullOrEmpty(currentUserId))
+                {
+                    TempData["ErrorMessage"] = "User is not authenticated.";
+                    return Page();
+                }
 
-            return RedirectToPage("./Index");
+                User? currentUser = await _userService.GetUserByIdAsync(currentUserId);
+                if (currentUser == null)
+                {
+                    TempData["ErrorMessage"] = "User not found.";
+                    return Page();
+                }
+
+                var response = await _questionService.AddQuestionAsync(new List<QuestionCreateDto> { Question }, currentUser);
+                if (response == null)
+                {
+                    TempData["ErrorMessage"] = "One or more questions already exist.";
+                    return Page();
+                }
+
+                TempData["SuccessMessage"] = "Question has been added successfully!";
+                return RedirectToPage("./Index");
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "An unexpected error occurred.";
+                return Page();
+            }
         }
     }
 }

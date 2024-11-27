@@ -3,16 +3,19 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.Quiz
 {
     public class CreateModel : PageModel
     {
         private readonly IAppQuizServices _quizService;
+        private readonly IAppUserServices _userService;
 
-        public CreateModel(IAppQuizServices quizService)
+        public CreateModel(IAppQuizServices quizService, IAppUserServices userService)
         {
             _quizService = quizService;
+            _userService = userService;
         }
 
         [BindProperty]
@@ -44,17 +47,40 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.Quiz
                     Criteria = Quiz.Criteria
                 };
 
-                QuizMainViewDto result = await _quizService.AddQuizAsync(quizCreateDto);
 
-                TempData["SuccessMessage"] = "Quiz created successfully!";
-                return RedirectToPage("./Index");
+                string currentUserId = HttpContext.Session.GetString("user_id")!;
+                if (string.IsNullOrEmpty(currentUserId))
+                {
+                    TempData["ErrorMessage"] = "User is not authenticated.";
+                    return Page();
+                }
+
+                User? currentUser = await _userService.GetUserByIdAsync(currentUserId);
+                if (currentUser == null)
+                {
+                    TempData["ErrorMessage"] = "User not found.";
+                    return Page();
+                }
+
+                QuizMainViewDto? result = await _quizService.AddQuizAsync(quizCreateDto, currentUser);
+                if (result == null)
+                {
+                    TempData["ErrorMessage"] = "Quiz name already exists.";
+                    return Page();
+                }
+                else
+                {
+                    TempData["SuccessMessage"] = "Quiz created successfully!";
+                    return Page();
+                }    
             }
-            catch (BaseException.ValidationException ex)
+            catch (Exception)
             {
-                TempData["ErrorMessage"] = ex.Message;
+                TempData["ErrorMessage"] = "An unexpected error occurred.";
                 return Page();
             }
         }
+
 
     }
 }
