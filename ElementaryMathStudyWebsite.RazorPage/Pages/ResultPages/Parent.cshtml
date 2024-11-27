@@ -1,11 +1,10 @@
 ﻿@page
-@model ElementaryMathStudyWebsite.RazorPage.Pages.ResultPages.StudentModel
+@model ElementaryMathStudyWebsite.RazorPage.Pages.ResultPages.ParentModel
 
 @{
-    ViewData["Title"] = "Student";
+    ViewData["Title"] = "Parent";
     int resultNumber = 1;
 }
-
 <style>
     body {
         background-color: #f4f4f9;
@@ -82,7 +81,7 @@
     }
 </style>
 
-<h1>Student</h1>
+<h1>Parent</h1>
 
 <table class="table">
     <thead>
@@ -98,11 +97,24 @@
         @foreach (var item in Model.Results.Items)
         {
             <tr>
-                <td>@resultNumber</td>
-                <td>@Html.DisplayFor(modelItem => item.QuizName)</td>
-                <td>@Html.DisplayFor(modelItem => item.Score)</td>
-                <td>@Html.DisplayFor(modelItem => item.Attempt)</td>
-                <td>@Html.DisplayFor(modelItem => item.DateTaken)</td>
+                <td>
+                    @resultNumber
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.QuizName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Score)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Attempt)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DateTaken)
+                </td>
+                @*                 <td>
+                    @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+                </td> *@
             </tr>
             resultNumber++;
         }
@@ -112,18 +124,17 @@
 <div class="pagination">
     @if (Model.Results.CurrentPage > 1)
     {
-        <a asp-page="./Student" asp-route-pageNumber="@(Model.Results.CurrentPage - 1)">Previous</a>
+        <a asp-page="./Parent" asp-route-pageNumber="@(Model.Results.CurrentPage - 1)">Trước</a>
     }
 
     <span>Page @Model.Results.CurrentPage of @Model.Results.TotalPages</span>
 
     @if (Model.Results.CurrentPage < Model.Results.TotalPages)
     {
-        <a asp-page="./Student" asp-route-pageNumber="@(Model.Results.CurrentPage + 1)">Next</a>
+        <a asp-page="./Parent" asp-route-pageNumber="@(Model.Results.CurrentPage + 1)">Sau</a>
     }
 </div>
 
 <div>
-        <a asp-page="/ProgressPages/Details">Back</a>
+    <a asp-page="/ProgressPages/Details">Back</a>
 </div>
-

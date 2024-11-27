@@ -1,4 +1,19 @@
-﻿<!DOCTYPE html>
+﻿@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    string? userRole = HttpContextAccessor.HttpContext!.Session.GetString("role_name"); // Retrieve the role from session
+
+    bool? generalUser = (userRole == "Parent") ? true :
+                        (userRole == "Student") ? true : false;
+
+    bool? userManager = (userRole == "Manager") ? true :
+                        (userRole == "Admin") ? true : false;
+
+    bool? contextManager = (userRole == "Content Manager") ? true :
+                        (userRole == "Admin") ? true : false;
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -8,7 +23,6 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ElementaryMathStudyWebsite.RazorPage.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
 </head>
 <body>
     <header>
@@ -28,46 +42,92 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
                             </li>
-                            @* <li class="nav-item"> *@
-                            @*     <a class="nav-link text-dark" asp-area="" asp-page="/ResultPages/Index">Result</a> *@
-                            @* </li> *@
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/ProgressPages/Index">Progress</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/OrderPages/Index">Order</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/UserPages/Index">User</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/PurchasePages/StudentSelect">Mua khóa học</a>
-                            </li>
-                            <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/SubjectPages/Index">Subject</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/ChapterPages/Index">Chapter</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/Quiz/Index">Quiz</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/QuestionPages/Index">Question</a>
-                            </li>
-                            <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/TopicPages/Index">Topic</a>
-                            </li>
-                            <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/UserAnswerPages/Index">User Answer</a>
-                            </li>
+                            @if (generalUser == true) // General user permission
+                            {
+                                @if (userRole != "Parent") // If user role is Parent, the system won't show the link below
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/ProgressPages/Index">Progress</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/UserAnswerPages/Index">User Answer</a>
+                                    </li>
+
+                                }
+
+                                @if (userRole != "Student") // If user role is Student, the system won't show the link below
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/UserPages/ParentInfo">View children</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/PurchasePages/StudentSelect">Mua khóa học</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/OrderPages/Index">Order</a>
+                                    </li>
+                                }
+
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-page="/SubjectPages/Index">Subject</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-page="/ChapterPages/Index">Chapter</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-page="/TopicPages/Index">Topic</a>
+                                </li>
+                            }
+                            @if (userManager == true) // Manager user permission
+                            {
+                                @if (userRole != "Manager") // If user role is Manager, the system won't show the link below
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/SubjectPages/Index">Subject</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/ChapterPages/Index">Chapter</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/TopicPages/Index">Topic</a>
+                                    </li>
+                                }
+
+                            }
+
+                            @if (contextManager == true) // Content manager user permission
+                            {
+                                @if (userRole != "Content Manager") // If user role is Content Manager, the system won't show the link below
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/OrderPages/Index">Order</a>
+                                    </li>
+
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/UserPages/Index">User</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/Quiz/Index">Quiz</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/QuestionPages/Index">Question</a>
+                                    </li>
+                                }
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(userRole)) // Show profile if user is logged in
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-page="/AuthPages/profile">Profile</a>
+                                </li>
+                            }
+
                             <!-- Cart navigator positioned on the top right -->
                             <li class="nav-item cart-nav" style="position: absolute; top: 0; right: 0;">
                                 <a class="nav-link text-dark" asp-area="" asp-page="/PurchasePages/Cart">
                                     <i class="fas fa-shopping-cart"></i>
                                 </a>
                             </li>
-
                         </ul>
                     </div>
                 </div>

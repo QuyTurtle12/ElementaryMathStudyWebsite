@@ -1,9 +1,9 @@
 ﻿@page
-@model ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages.IndexModel
+@model ElementaryMathStudyWebsite.RazorPage.Pages.ProgressPages.ParentModel
 
 @{
-    ViewData["Title"] = "Index";
-    int number = 1;
+    ViewData["Title"] = "Parent";
+	int number = 1;
 }
 
 <style>
@@ -65,28 +65,34 @@
 <h1>Study Progress</h1>
 
 <table class="table">
-    <thead>
-        <tr>
-            <th>No.</th>
-            <th>Subject</th>
-            <th>Progress</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Progresses!.Items)
-        {
-            <tr>
-                <td>@number</td>
-                <td>@Html.DisplayFor(modelItem => item.SubjectName)</td>
-                <td>@Html.DisplayFor(modelItem => item.SubjectPercentage)</td>
-                <td>
-                    <a asp-page="./Details"
-                       asp-route-studentId="@item.StudentId"
-                       asp-route-subjectId="@item.SubjectId">Details</a>
-                </td>
-            </tr>
-            number++;
-        }
-    </tbody>
+	<thead>
+		<tr>
+			<th>No.</th>
+			<th>Subject</th>
+			<th>Progress</th>
+			<th>Action</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var item in Model.Progresses!.Items)
+		{
+			<tr>
+				<td>
+					@number
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.SubjectName)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.SubjectPercentage)
+				</td>
+				<td>
+					<a asp-page="./Details"
+					   asp-route-studentId="@item.StudentId"
+					   asp-route-subjectId="@item.SubjectId">Details</a>
+				</td>
+			</tr>
+			number++;
+		}
+	</tbody>
 </table>
