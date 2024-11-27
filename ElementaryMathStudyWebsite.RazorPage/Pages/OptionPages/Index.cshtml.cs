@@ -21,7 +21,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.OptionPages
 
         public BasePaginatedList<OptionViewDto> options = default!;  // Property should be public
 
-        public async Task<IActionResult> OnGetAsync()
+        public async Task<IActionResult> OnGetAsync(string id)
         {
             string? userId = HttpContext.Session.GetString("user_id");
 
@@ -30,15 +30,14 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.OptionPages
                 return Content("");
             }
 
-            string questionId = "15A8C741-E3FF-42BE-89BD-865DC9006113";
-            Question question = (await _unitOfWork.GetRepository<Question>().GetByIdAsync(questionId))!;
+            //Question question = (await _unitOfWork.GetRepository<Question>().GetByIdAsync(id))!;
 
-            if (string.IsNullOrWhiteSpace(questionId))
+            if (string.IsNullOrWhiteSpace(id))
             {
                 return Content("");
             }
 
-            options = await _optionService.GetOptionDtosByQuestion(-1, -1, questionId);
+            options = await _optionService.GetOptionDtosByQuestion(-1, -1, id);
 
             return Page();
         }
