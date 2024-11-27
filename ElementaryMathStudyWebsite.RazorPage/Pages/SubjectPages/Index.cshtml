@@ -2,83 +2,133 @@
 @model ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages.IndexModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Subjects";
+    var canManageSubjects = Model.UserRole == "Admin" || Model.UserRole == "Content Manager";
 }
 
-<h1>Index</h1>
+<h1>Subjects</h1>
 
-<p>
-    <a asp-page="Create">Create New</a>
-</p>
-<table class="table">
+@if (canManageSubjects)
+{
+    <p>
+        <a asp-page="Create" class="btn btn-primary">Create New</a>
+    </p>
+}
+
+<!-- Search Section -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <label for="search-name" class="form-label">Subject Name</label>
+        <input type="text" id="search-name" class="form-control" placeholder="Search by name" value="@Model.SearchName">
+    </div>
+    <div class="col-md-4">
+        <label for="price-range" class="form-label">Price Range</label>
+        <div class="input-group">
+            <input type="number" id="min-price" class="form-control" placeholder="Min" value="@Model.MinPrice" />
+            <input type="number" id="max-price" class="form-control" placeholder="Max" value="@Model.MaxPrice" />
+        </div>
+    </div>
+    <div class="col-md-4 align-self-end">
+        <button id="search-btn" class="btn btn-primary">Search</button>
+    </div>
+</div>
+
+<!-- Subjects Table -->
+<table class="table table-striped">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].SubjectName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].Price)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].CreatedBy)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].LastUpdatedBy)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].DeletedBy)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].CreatedTime)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].LastUpdatedTime)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject[0].DeletedTime)
-            </th>
-            <th></th>
+            <th>Subject Name</th>
+            <th>Price</th>
+            <th>Status</th>
+            @if (canManageSubjects)
+            {
+                <th>Created By</th>
+                <th>Last Updated By</th>
+                <th>Created Time</th>
+                <th>Last Updated Time</th>
+            }
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model.Subject) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.SubjectName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Price)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedBy)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LastUpdatedBy)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DeletedBy)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedTime)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LastUpdatedTime)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DeletedTime)
-            </td>
-            <td>
-                <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
+        @if (canManageSubjects)
+        {
+            if (Model.AdminSubjects != null && Model.AdminSubjects.Any())
+            {
+                @foreach (var subject in Model.AdminSubjects)
+                {
+                    <tr>
+                        <td>@subject.SubjectName</td>
+                        <td>@subject.Price</td>
+                        <td>@subject.Status</td>
+                        <td>@(subject.CreaterName)</td>
+                        <td>@(subject.UpdaterName)</td>
+                        <td>@(subject.CreatedTime)</td>
+                        <td>@(subject.LastUpdatedTime)</td>
+                        <td>
+                            <a asp-page="./Details" asp-route-id="@subject.Id" class="btn btn-info btn-sm">Details</a>
+                            <a asp-page="./Edit" asp-route-id="@subject.Id" class="btn btn-warning btn-sm">Edit</a>
+                            <a asp-page="./Delete"
+                               asp-route-id="@subject.Id"
+                               asp-route-subjectName="@subject.SubjectName"
+                               asp-route-price="@subject.Price"
+                               asp-route-createdByName="@subject.CreaterName"
+                               asp-route-lastUpdatedByName="@subject.UpdaterName"
+                               asp-route-createdTime="@subject.CreatedTime?.ToString("o")"
+                               asp-route-lastUpdatedTime="@subject.LastUpdatedTime?.ToString("o")"
+                               class="btn btn-danger btn-sm">Delete</a>
+                            <a asp-page="/ChapterPages/IndexPartial" asp-route-subjectId="@subject.Id">Chapter</a>
+                        </td>
+                    </tr>
+                }
+            }else{
+                <tr>
+                    <td colspan="8" class="text-center">No subjects found.</td>
+                </tr>
+            }
+        }
+        else
+        {
+            if (Model.UserSubjects != null && Model.UserSubjects.Any())
+            {
+                @foreach (var subject in Model.UserSubjects)
+                {
+                    <tr>
+                        <td>@subject.SubjectName</td>
+                        <td>@subject.Price</td>
+                        <td>@subject.Status</td>
+                        <td>
+                            <a asp-page="./Details" asp-route-id="@subject.Id" class="btn btn-info btn-sm">Details</a>
+                            <a asp-page="/ChapterPages/IndexPartial" asp-route-subjectId="@subject.Id">Chapter</a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="8" class="text-center">No subjects found.</td>
+                </tr>
+            }
+        }
     </tbody>
 </table>
+
+@section Scripts {
+    <script>
+                document.getElementById("search-btn").addEventListener("click", function () {
+            const name = document.getElementById("search-name").value;
+            const minPrice = document.getElementById("min-price").value || -1;
+            const maxPrice = document.getElementById("max-price").value || -1;
+
+            const queryParams = new URLSearchParams({
+                searchName: name,
+                minPrice: minPrice,
+                maxPrice: maxPrice
+            });
+
+            window.location.href = `?${queryParams.toString()}`;
+        });
+
+    </script>
+}

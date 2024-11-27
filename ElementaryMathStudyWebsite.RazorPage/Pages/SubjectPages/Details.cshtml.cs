@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -12,14 +11,17 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
 {
     public class DetailsModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly DatabaseContext _context;
 
-        public DetailsModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public DetailsModel(DatabaseContext context)
         {
             _context = context;
         }
 
         public Subject Subject { get; set; } = default!;
+        public string? CreatedByName { get; set; }
+        public string? LastUpdatedByName { get; set; }
+        public string? DeletedByName { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -33,10 +35,31 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.SubjectPages
             {
                 return NotFound();
             }
-            else
-            {
-                Subject = subject;
-            }
+
+            // Fetch user names
+            var userIds = new[] { subject.CreatedBy, subject.LastUpdatedBy, subject.DeletedBy }
+                .Where(id => !string.IsNullOrEmpty(id))
+                .Distinct()
+                .ToList();
+
+            var users = await _context.User
+                .Where(u => userIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => u.FullName);
+
+            // Map IDs to user names and add DeletedTime information
+            CreatedByName = !string.IsNullOrEmpty(subject.CreatedBy)
+                ? $"{users.GetValueOrDefault(subject.CreatedBy, "Unknown")} (Deleted: {(subject.DeletedTime.HasValue ? subject.DeletedTime.Value.ToString() : "None")})"
+                : "Unknown";
+
+            LastUpdatedByName = !string.IsNullOrEmpty(subject.LastUpdatedBy)
+                ? $"{users.GetValueOrDefault(subject.LastUpdatedBy, "Unknown")} (Deleted: {(subject.DeletedTime.HasValue ? subject.DeletedTime.Value.ToString() : "None")})"
+                : "Unknown";
+
+            DeletedByName = !string.IsNullOrEmpty(subject.DeletedBy)
+                ? $"{users.GetValueOrDefault(subject.DeletedBy, "Unknown")} (Deleted: {(subject.DeletedTime.HasValue ? subject.DeletedTime.Value.ToString() : "None")})"
+                : "Unknown";
+
+            Subject = subject;
             return Page();
         }
     }

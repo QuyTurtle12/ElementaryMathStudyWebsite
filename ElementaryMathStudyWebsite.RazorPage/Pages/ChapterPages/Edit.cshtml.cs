@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
@@ -22,6 +21,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 
         [BindProperty]
         public Chapter Chapter { get; set; } = default!;
+        public string LastUpdatedByName { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -30,14 +30,16 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
                 return NotFound();
             }
 
-            var chapter =  await _context.Chapter.FirstOrDefaultAsync(m => m.Id == id);
+            var chapter = await _context.Chapter.FirstOrDefaultAsync(m => m.Id == id);
             if (chapter == null)
             {
                 return NotFound();
             }
             Chapter = chapter;
-           ViewData["QuizId"] = new SelectList(_context.Quiz, "Id", "Id");
-           ViewData["SubjectId"] = new SelectList(_context.Subject, "Id", "Id");
+
+            var lastUpdatedByUser = await _context.User.FindAsync(Chapter.LastUpdatedBy);
+            LastUpdatedByName = lastUpdatedByUser?.FullName ?? "Unknown";
+
             return Page();
         }
 
@@ -50,21 +52,40 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
                 return Page();
             }
 
-            _context.Attach(Chapter).State = EntityState.Modified;
+            // Kiểm tra xem tên chương đã tồn tại hay chưa
+            var existingChapterName = await _context.Chapter
+                .FirstOrDefaultAsync(c => c.ChapterName == Chapter.ChapterName && c.Id != Chapter.Id);
 
-            try
+            if (existingChapterName != null)
             {
-                await _context.SaveChangesAsync();
+                ModelState.AddModelError(string.Empty, "Tên chương này đã tồn tại.");
+                return Page();
             }
-            catch (DbUpdateConcurrencyException)
+
+            // Lấy thông tin người dùng hiện tại từ session
+            string currentUserId = HttpContext.Session.GetString("user_id") ?? "";
+
+            var chapterToUpdate = await _context.Chapter.FirstOrDefaultAsync(c => c.Id == Chapter.Id);
+            if (chapterToUpdate != null)
             {
-                if (!ChapterExists(Chapter.Id))
+                chapterToUpdate.ChapterName = Chapter.ChapterName;
+                chapterToUpdate.LastUpdatedBy = currentUserId;  // Cập nhật ID người dùng hiện tại
+                chapterToUpdate.LastUpdatedTime = DateTime.UtcNow;  // Cập nhật thời gian
+
+                try
                 {
-                    return NotFound();
+                    await _context.SaveChangesAsync();
                 }
-                else
+                catch (DbUpdateConcurrencyException)
                 {
-                    throw;
+                    if (!ChapterExists(Chapter.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
             }
 

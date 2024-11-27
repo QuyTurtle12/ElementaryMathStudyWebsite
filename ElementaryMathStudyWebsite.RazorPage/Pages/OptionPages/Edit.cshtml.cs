@@ -6,7 +6,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 
-namespace ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages
+namespace ElementaryMathStudyWebsite.RazorPage.Pages.OptionPages
 {
     public class EditModel : PageModel
     {

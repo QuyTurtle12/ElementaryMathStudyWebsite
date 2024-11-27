@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
-namespace ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages
+namespace ElementaryMathStudyWebsite.RazorPage.Pages.OptionPages
 {
     public class DetailsModel : PageModel
     {

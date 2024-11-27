@@ -20,23 +20,37 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
         }
 
         public Chapter Chapter { get; set; } = default!;
+        public string SubjectName { get; set; } = default!;
+        public string QuizName { get; set; } = default!;
+        public string CreatedByName { get; set; } = default!;
+        public string LastUpdatedByName { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
-            if (id == null)
+            if (string.IsNullOrEmpty(id))
             {
                 return NotFound();
             }
 
-            var chapter = await _context.Chapter.FirstOrDefaultAsync(m => m.Id == id);
-            if (chapter == null)
+            Chapter = await _context.Chapter
+                .Include(c => c.Subject)
+                .Include(c => c.Quiz)
+                .FirstOrDefaultAsync(m => m.Id.ToString() == id);
+
+            if (Chapter == null)
             {
                 return NotFound();
             }
-            else
-            {
-                Chapter = chapter;
-            }
+
+            SubjectName = Chapter.Subject?.SubjectName ?? "";
+            QuizName = Chapter.Quiz?.QuizName ?? "";
+
+            var createdByUser = await _context.User.FindAsync(Chapter.CreatedBy);
+            CreatedByName = createdByUser?.FullName ?? "";
+
+            var lastUpdatedByUser = await _context.User.FindAsync(Chapter.LastUpdatedBy);
+            LastUpdatedByName = lastUpdatedByUser?.FullName ?? "";
+
             return Page();
         }
     }
