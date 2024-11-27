@@ -3,11 +3,11 @@
 @using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.SubjectDtos
 @using System.Globalization
 @{
-	ViewData["Title"] = "Mua khóa học";
+	ViewData["Title"] = "Get a new course";
 	var errorMessage = TempData["ErrorMessage"] as string;
 }
 
-<h2>Chọn khóa học bạn muốn</h2>
+<h2>Select a course:</h2>
 @if (!string.IsNullOrEmpty(errorMessage))
 {
 	<div class="alert alert-danger" role="alert">
@@ -29,12 +29,12 @@
 		}
 		else
 		{
-			<p>Tạm thời chưa có khóa học khả dụng.</p>
+			<p>There are no available courses at the moment.</p>
 		}
 	</div>
 	<input type="hidden" id="selectedSubjectId" name="SelectedSubjectId" />
 
-	<button id="continueButton" class="btn btn-primary" disabled>Tiếp tục</button>
+	<button id="continueButton" class="btn btn-primary" disabled>Continue to payment</button>
 </form>
 <style>
 	.course-list {
