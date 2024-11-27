@@ -2,7 +2,6 @@
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -74,13 +73,10 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.CheckoutPages
 			}
 			catch (Exception)
 			{
-				TempData["ErrorMessage"] = "Học sinh đã sở hữu khóa học này";  // Set a generic error message
+				TempData["ErrorMessage"] = "The student already has this course's license";  // Set a generic error message
 
 				return RedirectToPage();
 			}
-
-
-
 		}
 
 	}
