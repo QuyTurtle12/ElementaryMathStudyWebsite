@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using ElementaryMathStudyWebsite.Core.Base;
 using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -11,11 +12,13 @@ namespace ElementaryMathStudyWebsite.Controllers
     [Route("api/[controller]")]
     public class QuestionController : ControllerBase
     {
+        private readonly IAppUserServices _userService;
         private readonly IAppQuestionServices _questionService;
 
-        public QuestionController(IAppQuestionServices questionService)
+        public QuestionController(IAppQuestionServices questionService, IAppUserServices userService)
         {
             _questionService = questionService;
+            _userService = userService;
         }
 
         [Authorize(Policy = "Admin-Content")]
@@ -49,7 +52,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         [SwaggerOperation(Summary = "Authorization: N/A", Description = "Adds a new question to the system.")]
         public async Task<ActionResult<BaseResponse<string>>> AddQuestionAsync(List<QuestionCreateDto> dtos)
         {
-            BaseResponse<string> response = await _questionService.AddQuestionAsync(dtos);
+            User currentUser = await _userService.GetCurrentUserAsync();
+            BaseResponse<string>? response = await _questionService.AddQuestionAsync(dtos, currentUser);
             return Ok(response);
         }
 
@@ -58,7 +62,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Updates a question by its unique identifier.")]
         public async Task<ActionResult<BaseResponse<QuestionMainViewDto>>> UpdateQuestion(string id, QuestionUpdateDto dto)
         {
-            QuestionMainViewDto updatedQuestion = await _questionService.UpdateQuestionAsync(id, dto);
+            User currentUser = await _userService.GetCurrentUserAsync();
+            QuestionMainViewDto? updatedQuestion = await _questionService.UpdateQuestionAsync(id, dto, currentUser);
             return BaseResponse<QuestionMainViewDto>.OkResponse(updatedQuestion, "Question udpated successfully");
         }
 

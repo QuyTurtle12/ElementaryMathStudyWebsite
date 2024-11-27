@@ -46,7 +46,7 @@
                     }
                     else
                     {
-                        <th> scope = "row" class="font-weight-bold text-primary">Chapter or Topic</th>
+                        <th scope="row" class="font-weight-bold text-primary">Chapter or Topic</th>
                         <td><span>No Chapter or Topic available</span></td>
                     }
                 </tr>
@@ -64,7 +64,7 @@
 
         <h5 class="mt-5">List Questions</h5>
 
-        @if (Model.PaginatedQuestions?.Items != null && Model.PaginatedQuestions.Items.Any())
+        @if (Model.PaginatedQuestions?.Items != null && Model.PaginatedQuestions.Items.Any() && TempData["ErrorMessage"] == null)
         {
             <ul class="list-group">
                 @foreach (var question in Model.PaginatedQuestions.Items)
@@ -96,7 +96,9 @@
         }
         else
         {
-            <p>No questions available for this quiz.</p>
+            <div class="alert alert-danger">
+                @TempData["ErrorMessage"]
+            </div>
         }
 
 

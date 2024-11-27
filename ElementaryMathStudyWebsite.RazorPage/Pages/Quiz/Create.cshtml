@@ -5,43 +5,67 @@
 }
 
 <div class="container mt-5">
-    <h2 class="text-center mb-4">Create Quiz</h2>
-
-    <!-- Display success or error messages -->
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success">
-            @TempData["SuccessMessage"]
-        </div>
-    }
-
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger">
-            @TempData["ErrorMessage"]
-        </div>
-    }
-
-    <form method="post">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <!-- Quiz Name -->
-                <div class="form-group mb-3">
-                    <label for="QuizName" class="form-label">Quiz Name</label>
-                    <input type="text" class="form-control" id="QuizName" name="Quiz.QuizName" value="@Model.Quiz.QuizName" required placeholder="Enter quiz name" />
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">Create Quiz</h3>
                 </div>
+                <div class="card-body">
+                    <!-- Display success or error messages -->
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
 
-                <!-- Criteria -->
-                <div class="form-group mb-3">
-                    <label for="Criteria" class="form-label">Criteria</label>
-                    <input type="number" class="form-control" id="Criteria" name="Quiz.Criteria" value="@Model.Quiz.Criteria" required placeholder="Enter criteria" />
-                </div>
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
 
-                <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-primary">Create Quiz</button>
-                    <a href="@Url.Page("./Index")" class="btn btn-secondary">Back to List</a>
+                    <!-- Quiz Form -->
+                    <form method="post">
+                        <!-- Quiz Name -->
+                        <div class="form-group mb-4">
+                            <label for="QuizName" class="form-label fw-bold">Quiz Name</label>
+                            <input type="text"
+                                   class="form-control form-control-lg"
+                                   id="QuizName"
+                                   name="Quiz.QuizName"
+                                   value="@Model.Quiz.QuizName"
+                                   required
+                                   placeholder="Enter quiz name" />
+                        </div>
+
+                        <!-- Criteria -->
+                        <div class="form-group mb-4">
+                            <label for="Criteria" class="form-label fw-bold">Criteria (1 - 10)</label>
+                            <input type="number"
+                                   class="form-control form-control-lg"
+                                   id="Criteria"
+                                   name="Quiz.Criteria"
+                                   value="@Model.Quiz.Criteria"
+                                   required
+                                   min="1"
+                                   max="10"
+                                   step="1"
+                                   oninput="this.value = Math.min(Math.max(this.value, 1), 10)" />
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="submit" class="btn btn-success btn-lg px-4">Create Quiz</button>
+                            <a href="@Url.Page("./Index")" class="btn btn-secondary btn-lg px-4">Back to List</a>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
-    </form>
+    </div>
 </div>
