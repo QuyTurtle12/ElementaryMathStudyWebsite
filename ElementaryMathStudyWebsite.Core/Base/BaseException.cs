@@ -102,10 +102,9 @@ namespace ElementaryMathStudyWebsite.Core.Base
         public class ValidationException : ErrorException
         {
             public ValidationException(string errorCode, string message)
-                : base(422, errorCode, message) // 422 is the typical status code for validation errors
+                : base(422, errorCode, message)
             {
             }
-
             public ValidationException(ICollection<KeyValuePair<string, ICollection<string>>> errors)
                 : base(422, new ErrorDetail
                 {
@@ -115,5 +114,6 @@ namespace ElementaryMathStudyWebsite.Core.Base
             {
             }
         }
+
     }
 }

@@ -38,7 +38,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages
                 QuestionDtos = await _questionServices.SearchQuestionsByContextMainViewAsync(questionName, pageNumber, pageSize);
                 CurrentQuestionName = questionName;
             }
-            catch (BaseException.NotFoundException ex)
+            catch (BaseException.NotFoundException)
             {
                 TempData["NotFoundMessage"] = $"Question including '{questionName}' does not exist";
             }

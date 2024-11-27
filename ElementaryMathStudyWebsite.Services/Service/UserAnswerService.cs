@@ -218,8 +218,6 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return await _resultService.AddStudentResultAsync(resultCreateDto);
         }
 
-
-
         public async Task<UserAnswerDTO> UpdateUserAnswerAsync(string id, UserAnswerDTO userAnswerDTO)
         {
             UserAnswer userAnswer = await _unitOfWork.GetRepository<UserAnswer>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"User Answer with ID '{id}' not found.");

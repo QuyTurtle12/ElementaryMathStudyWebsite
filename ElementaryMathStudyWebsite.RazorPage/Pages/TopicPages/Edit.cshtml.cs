@@ -5,19 +5,22 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
 {
     public class EditModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly IAppTopicServices _topicService;
+        private readonly IAppUserServices _userService;
 
-        public EditModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public EditModel(IAppTopicServices topicService, IAppUserServices userService)
         {
-            _context = context;
+            _topicService = topicService ?? throw new ArgumentNullException(nameof(topicService));
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
 
         [BindProperty]
@@ -25,55 +28,83 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
-            if (id == null)
+            if (string.IsNullOrEmpty(id))
             {
-                return NotFound();
+                return BadRequest("ID không hợp lệ.");
             }
-
-            var topic =  await _context.Topic.FirstOrDefaultAsync(m => m.Id == id);
-            if (topic == null)
-            {
-                return NotFound();
-            }
-            Topic = topic;
-           ViewData["ChapterId"] = new SelectList(_context.Chapter, "Id", "Id");
-           ViewData["QuizId"] = new SelectList(_context.Quiz, "Id", "Id");
-            return Page();
-        }
-
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more information, see https://aka.ms/RazorPagesCRUD.
-        public async Task<IActionResult> OnPostAsync()
-        {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
-
-            _context.Attach(Topic).State = EntityState.Modified;
 
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TopicExists(Topic.Id))
+                var topicDto = await _topicService.GetTopicByIdAsync(id);
+                if (topicDto == null)
                 {
-                    return NotFound();
+                    return NotFound(); // Return 404 if topic is not found
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return RedirectToPage("./Index");
+                // Map DTO to Entity
+                Topic = new Topic
+                {
+                    Id = topicDto.Id,
+                    TopicName = topicDto.TopicName,
+                    TopicContext = topicDto.TopicContext,
+                    Number = topicDto.Number ?? 0,
+                    ChapterId = topicDto.ChapterId,
+                    QuizId = topicDto.QuizId,
+                };
+
+                ViewData["ChapterId"] = new SelectList(await _topicService.GetChaptersAllAsync(), "Id", "ChapterName");
+                ViewData["QuizId"] = new SelectList(await _topicService.GetQuizzesWithoutChapterOrTopicAsync(), "Id", "QuizName");
+                return Page();
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, "Có lỗi xảy ra: " + ex.Message);
+                return Page();
+            }
         }
 
-        private bool TopicExists(string id)
+        public async Task<IActionResult> OnPostAsync(string id)
         {
-            return _context.Topic.Any(e => e.Id == id);
+            string currentUserId = HttpContext.Session.GetString("user_id");
+            User? currentUser = await _userService.GetUserByIdAsync(currentUserId);
+
+            if (!ModelState.IsValid)
+            {
+                // If the model state is invalid, reload the necessary data for the dropdowns
+                ViewData["ChapterId"] = new SelectList(await _topicService.GetChaptersAllAsync(), "Id", "ChapterName");
+                ViewData["QuizId"] = new SelectList(await _topicService.GetQuizzesWithoutChapterOrTopicAsync(), "Id", "QuizName");
+                return Page();
+            }
+
+            try
+            {
+                // Prepare the DTO for the update
+                var topicCreateAllDto = new TopicCreateAllDto
+                {
+                    Id = id,
+                    Number = Topic.Number,
+                    TopicName = Topic.TopicName,
+                    TopicContext = Topic.TopicContext,
+                    ChapterId = Topic.ChapterId,
+                    QuizId = null,
+                    LastUpdatedByUser = currentUserId,
+                };
+
+                // Call the update service method
+                var updatedTopic = await _topicService.UpdateTopicAllAsync(id, topicCreateAllDto);
+
+                // Optionally, you can add a success message or redirect to a different page
+                TempData["SuccessMessage"] = "Cập nhật chủ đề thành công!";
+                return RedirectToPage("./Index"); // Redirect to the index page after update
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, "Có lỗi xảy ra: " + ex.Message);
+                // Reload the dropdown values on error
+                ViewData["ChapterId"] = new SelectList(await _topicService.GetChaptersAllAsync(), "Id", "ChapterName");
+                ViewData["QuizId"] = new SelectList(await _topicService.GetQuizzesWithoutChapterOrTopicAsync(), "Id", "QuizName");
+                return Page();
+            }
         }
     }
 }

@@ -2,45 +2,42 @@
 @model ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages.CreateModel
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create User Answer";
 }
 
-<h1>Create</h1>
+<h1>Create User Answer</h1>
 
 <h4>UserAnswer</h4>
 <hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <form method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="form-group">
-                <label asp-for="UserAnswer.QuestionId" class="control-label">Question</label>
-                <select asp-for="UserAnswer.QuestionId" class="form-control" asp-items="ViewBag.QuestionContext"
-                        onchange="filterOptions()">
+                <label asp-for="UserAnswerDTO.UserAnswerList.First().QuestionId" class="control-label">Question</label>
+                <select asp-for="UserAnswerDTO.UserAnswerList.First().QuestionId" class="form-control"
+                        asp-items="ViewBag.QuestionContext" onchange="filterOptions()">
                 </select>
             </div>
 
             <div class="form-group">
-                <label asp-for="UserAnswer.OptionId" class="control-label">Option</label>
-                <select asp-for="UserAnswer.OptionId" class="form-control" asp-items="ViewBag.OptionId"></select>
+                <label asp-for="UserAnswerDTO.UserAnswerList.First().OptionId" class="control-label">Option</label>
+                <select asp-for="UserAnswerDTO.UserAnswerList.First().OptionId" class="form-control"
+                        asp-items="ViewBag.OptionId">
+                </select>
             </div>
 
             <div class="form-group">
-                <label asp-for="UserAnswer.UserId" class="control-label">User</label>
-                <input type="text" class="form-control" value="@ViewData["CurrentUserName"]" readonly />
-                <input type="hidden" asp-for="UserAnswer.UserId" />
+                <label class="control-label">User</label>
+                <input type="text" class="form-control" value="@Model.CurrentUserName" readonly />
             </div>
 
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <input type="submit" value="Submit" class="btn btn-primary" />
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-page="Index">Back to List</a>
 </div>
 
 @section Scripts {
@@ -48,8 +45,8 @@
 
     <script>
         function filterOptions() {
-            const selectedQuestionId = document.querySelector('[name="UserAnswer.QuestionId"]').value;
-            const url = `@Url.Page("./Create")?questionId=${selectedQuestionId}`;
+            const questionId = document.querySelector('[name="UserAnswerDTO.UserAnswerList.First().QuestionId"]').value;
+            const url = `@Url.Page("./Create", new { questionId = "" })${questionId}`;
             window.location.href = url;
         }
     </script>

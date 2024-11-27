@@ -212,12 +212,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Create a new quizs
-        public async Task<QuizMainViewDto> AddQuizAsync(QuizCreateDto dto)
+        public async Task<QuizMainViewDto?> AddQuizAsync(QuizCreateDto dto, User? currentUser)
         {
             // Validate QuizName
             if (string.IsNullOrWhiteSpace(dto.QuizName))
             {
-                throw new BaseException.NotFoundException("Invalid_arguments", "Quizname and cannot be null or empty.");
+                throw new BaseException.ValidationException("Invalid_arguments", "Quizname and cannot be null or empty.");
             }
 
             // Validate data
@@ -227,8 +227,18 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (string.IsNullOrWhiteSpace(dto.QuizName))
                 throw new BaseException.ValidationException("Invalid_arguments", "Quiz name cannot be empty.");
 
+            Quiz? existingQuiz = await _unitOfWork.GetRepository<Quiz>()
+                .Entities
+                .FirstOrDefaultAsync(q => q.QuizName.ToLower() == dto.QuizName.ToLower());
+
+            if (existingQuiz != null)
+                throw new BaseException.ValidationException("quiz_name_exists", "A quiz with the same name already exists.");
+
+            if (currentUser == null)
+                throw new BaseException.ValidationException("user_not_exists", "User not found or not authorized.");
+
             // Get the current user for auditing purposes
-            User currentUser = await _userService.GetCurrentUserAsync();
+            //User currentUser = await _userService.GetCurrentUserAsync(); 
 
             // Create a new Quiz entity
             Quiz quiz = new()
@@ -255,7 +265,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Update an existing quiz
-        public async Task<QuizMainViewDto> UpdateQuizAsync(string quizId, QuizUpdateDto dto)
+        public async Task<QuizMainViewDto?> UpdateQuizAsync(string quizId, QuizUpdateDto dto, User? currentUser)
         {
             // Fetch the existing quiz by its ID
             Quiz quiz = await _unitOfWork.GetRepository<Quiz>().GetByIdAsync(quizId)
@@ -268,14 +278,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
             if (string.IsNullOrWhiteSpace(dto.QuizName))
                 throw new BaseException.ValidationException("Invalid_arguments", "Quiz name cannot be empty.");
 
+            Quiz? existingQuiz = await _unitOfWork.GetRepository<Quiz>()
+                .Entities
+                .FirstOrDefaultAsync(q => q.QuizName.ToLower() == dto.QuizName.ToLower());
+
+            if (existingQuiz != null)
+                return null;
+                //throw new BaseException.ValidationException("quiz_name_exists", "A quiz with the same name already exists.");
+
+            if (currentUser == null)
+                throw new BaseException.ValidationException("user_not_exists", "User not found or not authorized.");
+
             // Update quiz information with values from the DTO
             quiz.QuizName = dto.QuizName;
             quiz.Criteria = dto.Criteria;
             quiz.Status = dto.Status;
 
             // Get the current user for auditing purposes
-            User currentUser = await _userService.GetCurrentUserAsync();
-            quiz.LastUpdatedBy = currentUser.Id ?? string.Empty; // Update LastUpdatedBy
+            //User currentUser = await _userService.GetCurrentUserAsync();
+            //quiz.LastUpdatedBy = currentUser.Id ?? string.Empty; // Update LastUpdatedBy
 
             // Save changes to the database
             await _unitOfWork.SaveAsync();
@@ -291,6 +312,11 @@ namespace ElementaryMathStudyWebsite.Services.Service
         // Delete a quiz
         public async Task<BaseResponse<string>> DeleteQuizAsync(string quizId)
         {
+            if (string.IsNullOrWhiteSpace(quizId))
+            {
+                throw new BaseException.BadRequestException("invalid_arguments", "Quiz ID cannot be null or empty.");
+            }
+
             Quiz? quiz;
 
             if (_unitOfWork.IsValid<Quiz>(quizId))

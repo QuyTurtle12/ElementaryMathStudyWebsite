@@ -5,6 +5,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using ElementaryMathStudyWebsite.Core.Base;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Controllers
 {
@@ -13,10 +14,12 @@ namespace ElementaryMathStudyWebsite.Controllers
     public class QuizController : ControllerBase
     {
         private readonly IAppQuizServices _quizService;
+        private readonly IAppUserServices _userService;
 
-        public QuizController(IAppQuizServices quizService)
+        public QuizController(IAppQuizServices quizService, IAppUserServices userService)
         {
             _quizService = quizService;
+            _userService = userService;
         }
 
         // GET: api/quiz/all
@@ -45,7 +48,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Creates a new quiz.")]
         public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> AddQuizAsync([FromBody] QuizCreateDto dto)
         {
-            QuizMainViewDto createdQuiz = await _quizService.AddQuizAsync(dto);
+            User currentUser = await _userService.GetCurrentUserAsync();
+            QuizMainViewDto? createdQuiz = await _quizService.AddQuizAsync(dto, currentUser);
             return BaseResponse<QuizMainViewDto>.OkResponse(createdQuiz, "Quiz created successfully");
         }
 
@@ -55,8 +59,8 @@ namespace ElementaryMathStudyWebsite.Controllers
         [SwaggerOperation(Summary = "Authorization: Admin & Content Manager", Description = "Updates an existing quiz based on the provided data.")]
         public async Task<ActionResult<BaseResponse<QuizMainViewDto>>> UpdateQuizAsync([Required] string id, [FromBody] QuizUpdateDto dto)
         {
-            // Update the quiz and get the updated data
-            QuizMainViewDto updatedQuizDto = await _quizService.UpdateQuizAsync(id, dto);
+            User currentUser = await _userService.GetCurrentUserAsync();
+            QuizMainViewDto? updatedQuizDto = await _quizService.UpdateQuizAsync(id, dto, currentUser);
             return BaseResponse<QuizMainViewDto>.OkResponse(updatedQuizDto, "Quiz updated successfully.");
         }
 

@@ -3,20 +3,22 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.Quiz
 {
     public class EditModel : PageModel
     {
         private readonly IAppQuizServices _quizService;
-
-        public EditModel(IAppQuizServices quizService)
+        private readonly IAppUserServices _userService;
+        public EditModel(IAppQuizServices quizService, IAppUserServices userService)
         {
             _quizService = quizService;
+            _userService = userService;
         }
 
         [BindProperty]
-        public QuizMainViewDto Quiz { get; set; } = default!; // Đảm bảo sử dụng QuizMainViewDto
+        public QuizMainViewDto Quiz { get; set; } = default!;
 
         // GET method to load the quiz data by ID
         public async Task<IActionResult> OnGetAsync(string id)
@@ -55,10 +57,31 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.Quiz
                     Status = Quiz.Status
                 };
 
-                Quiz = await _quizService.UpdateQuizAsync(id, quizUpdateDto);
+                string currentUserId = HttpContext.Session.GetString("user_id")!;
+                if (string.IsNullOrEmpty(currentUserId))
+                {
+                    TempData["ErrorMessage"] = "User is not authenticated.";
+                    return Page();
+                }
 
-                TempData["SuccessMessage"] = "Quiz updated successfully!";
-                return RedirectToPage("./Index");
+                User? currentUser = await _userService.GetUserByIdAsync(currentUserId);
+                if (currentUser == null)
+                {
+                    TempData["ErrorMessage"] = "User not found.";
+                    return Page();
+                }
+
+                QuizMainViewDto? result = await _quizService.UpdateQuizAsync(id, quizUpdateDto, currentUser);
+                if (result == null)
+                {
+                    TempData["ErrorMessage"] = "Quiz name already exists.";
+                    return Page();
+                }
+                else
+                {
+                    TempData["SuccessMessage"] = "Quiz updated successfully!";
+                    return Page();
+                }
             }
             catch (BaseException.ValidationException ex)
             {

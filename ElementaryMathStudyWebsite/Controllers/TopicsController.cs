@@ -5,6 +5,7 @@ using ElementaryMathStudyWebsite.Core.Base;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Annotations;
+using ElementaryMathStudyWebsite.Services.Service;
 
 
 namespace ElementaryMathStudyWebsite.Controllers
@@ -18,7 +19,69 @@ namespace ElementaryMathStudyWebsite.Controllers
         {
             _topicService = topicService ?? throw new ArgumentNullException(nameof(topicService));
         }
+        [HttpPut]
+        [Route("update-all/{id}")]
+        [Authorize(Policy = "Admin-Content")]
+        [SwaggerOperation(
+            Summary = "Authorization: Admin & Content Manager",
+            Description = "Cập nhật thông tin đầy đủ cho một chủ đề"
+        )]
+        public async Task<IActionResult> UpdateTopicAll(string id, [FromBody] TopicCreateAllDto topicCreateAllDto)
+        {
+            if (topicCreateAllDto == null)
+            {
+                return BadRequest("Thông tin chủ đề không hợp lệ.");
+            }
 
+            try
+            {
+                var updatedTopic = await _topicService.UpdateTopicAllAsync(id, topicCreateAllDto);
+                var successResponse = BaseResponse<TopicAdminViewDto>.OkResponse(updatedTopic);
+                return Ok(successResponse);
+            }
+            catch (BaseException.NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (BaseException.BadRequestException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Có lỗi xảy ra: " + ex.Message);
+            }
+        }
+
+        // GET: api/chapter/all
+        [HttpGet("allchapter")]
+        public async Task<ActionResult<List<ChapterDto>>> GetChaptersAll()
+        {
+            var chapters = await _topicService.GetChaptersAllAsync();
+            if (chapters == null || chapters.Count == 0)
+            {
+                return NotFound("No chapters found.");
+            }
+
+            return Ok(chapters);
+        }
+
+        [HttpGet("chapter/name/{chapterName}")]
+        [SwaggerOperation(
+            Summary = "Authorization: N/A",
+            Description = "Lấy danh sách Topics theo tên chương"
+        )]
+        public async Task<ActionResult<BaseResponse<BasePaginatedList<TopicViewDto>>>> GetTopicsByChapterNameAsync(string chapterName, int pageNumber = 1, int pageSize = 10)
+        {
+            if (string.IsNullOrWhiteSpace(chapterName))
+            {
+                return BadRequest("Tên chương không được để trống.");
+            }
+
+            var topics = await _topicService.GetTopicsByChapterNameAsync(chapterName, pageNumber, pageSize);
+            var response = BaseResponse<BasePaginatedList<TopicViewDto>>.OkResponse(topics);
+            return Ok(response);
+        }
         [HttpGet]
         [Route("admin-content/all")]
         [Authorize(Policy = "Admin-Content")]

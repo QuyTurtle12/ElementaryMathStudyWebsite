@@ -27,7 +27,8 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.Quiz
         {
             if (string.IsNullOrEmpty(id))
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "Quiz ID is required.";
+                return RedirectToPage("./Index");
             }
 
             // Fetch the quiz details
@@ -36,10 +37,10 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.Quiz
             // Fetch paginated questions for the quiz
             PaginatedQuestions = await _questionService.GetQuestionsByQuizIdAsync(id, pageNumber, pageSize);
 
-            // If no quiz or questions are found, return NotFound
-            if (Quiz == null || PaginatedQuestions == null)
+            // If no questions exist
+            if (PaginatedQuestions == null || !PaginatedQuestions.Items.Any())
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "This quiz does not contain any questions.";
             }
 
             return Page();

@@ -1,5 +1,6 @@
 ﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 
 namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 {
@@ -21,8 +22,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
 
 
-        Task<BaseResponse<string>> AddQuestionAsync(List<QuestionCreateDto> dtos);
-        Task<QuestionMainViewDto> UpdateQuestionAsync(string id, QuestionUpdateDto dto);
+        Task<BaseResponse<string>?> AddQuestionAsync(List<QuestionCreateDto> dtos, User? currentUser);
+        Task<QuestionMainViewDto?> UpdateQuestionAsync(string id, QuestionUpdateDto dto, User currentUser);
         Task<BaseResponse<string>> DeleteQuestionAsync(string questionId);
     }
 }
