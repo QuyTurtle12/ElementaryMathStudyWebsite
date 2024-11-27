@@ -1,0 +1,13 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages.ExamResultModel
+
+@{
+    ViewData["Title"] = "Exam Result";
+}
+
+<h1>Exam Result</h1>
+
+<p>Your Score: <strong>@TempData["Score"]</strong></p>
+<p>Total Points: <strong>@TempData["Points"]</strong></p>
+
+<a asp-page="./Index" class="btn btn-primary mt-3">Back to Chapters</a>

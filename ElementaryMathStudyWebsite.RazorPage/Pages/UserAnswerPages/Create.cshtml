@@ -1,78 +1,53 @@
-﻿@page
+﻿@page "{questionId?}"
 @model ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages.CreateModel
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create User Answer";
 }
 
-<h1>Create</h1>
+<h1>Create User Answer</h1>
 
 <h4>UserAnswer</h4>
 <hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <form method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-            <!-- Question Selection -->
             <div class="form-group">
-                <label asp-for="UserAnswer.QuestionId" class="control-label">Question</label>
-                <select asp-for="UserAnswer.QuestionId" id="question-select" class="form-control">
-                    <option value="">-- Select a Question --</option>
-                    @foreach (var question in Model.Questions)
-                    {
-                        <option value="@question.Id">@question.QuestionContext</option>
-                    }
-                </select>
-            </div>
-
-            <!-- User ID (Hidden) -->
-            <input type="hidden" asp-for="UserAnswer.UserId" value="@Model.CurrentUserId" />
-
-            <!-- Options (Filtered by Question) -->
-            <div class="form-group">
-                <label asp-for="UserAnswer.OptionId" class="control-label">Option</label>
-                <select asp-for="UserAnswer.OptionId" id="option-select" class="form-control">
-                    <option value="">-- Select an Option --</option>
+                <label asp-for="UserAnswerDTO.UserAnswerList.First().QuestionId" class="control-label">Question</label>
+                <select asp-for="UserAnswerDTO.UserAnswerList.First().QuestionId" class="form-control"
+                        asp-items="ViewBag.QuestionContext" onchange="filterOptions()">
                 </select>
             </div>
 
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <label asp-for="UserAnswerDTO.UserAnswerList.First().OptionId" class="control-label">Option</label>
+                <select asp-for="UserAnswerDTO.UserAnswerList.First().OptionId" class="form-control"
+                        asp-items="ViewBag.OptionId">
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">User</label>
+                <input type="text" class="form-control" value="@Model.CurrentUserName" readonly />
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Submit" class="btn btn-primary" />
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-page="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @await Html.PartialAsync("_ValidationScriptsPartial")
 
     <script>
-        // Preload all options grouped by question
-        const allOptions = @Html.Raw(Json.Serialize(Model.Options));
-
-        // Event Listener: Update options when a question is selected
-        document.getElementById("question-select").addEventListener("change", function () {
-            const questionId = this.value;
-            const optionSelect = document.getElementById("option-select");
-            optionSelect.innerHTML = '<option value="">-- Select an Option --</option>'; // Clear options
-
-            if (!questionId) return; // No question selected
-
-            // Filter options by selected question
-            const options = allOptions.filter(option => option.QuestionId === questionId);
-            options.forEach(option => {
-                const opt = document.createElement("option");
-                opt.value = option.Id;
-                opt.textContent = option.Answer;
-                optionSelect.appendChild(opt);
-            });
-        });
+        function filterOptions() {
+            const questionId = document.querySelector('[name="UserAnswerDTO.UserAnswerList.First().QuestionId"]').value;
+            const url = `@Url.Page("./Create", new { questionId = "" })${questionId}`;
+            window.location.href = url;
+        }
     </script>
 }

@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Services.Service;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Core.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
-using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,11 +11,11 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages
 {
     public class IndexModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly IAppUserAnswerServices _userAnswerService;
 
-        public IndexModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public IndexModel(IAppUserAnswerServices userAnswerService)
         {
-            _context = context;
+            _userAnswerService = userAnswerService;
         }
 
         public List<UserAnswerWithDetailsDTO> UserAnswers { get; set; } = new();
@@ -51,46 +50,33 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserAnswerPages
                 return Page(); // Show the alert message
             }
 
-            // Base query
-            IQueryable<UserAnswer> query = _context.UserAnswer
-                .Include(u => u.Question)
-                .Include(u => u.Option)
-                .Include(u => u.User);
+            // Fetch all items using the service
+            var allItems = await _userAnswerService.GetAllUserAnswersAsync(-1, -1);
 
-            // If the user is a student, filter answers by their UserId
-            if (UserRole == "Student")
-            {
-                query = query.Where(u => u.UserId == UserId);
-            }
+            // Apply search filter if a keyword is provided
+            IEnumerable<UserAnswerWithDetailsDTO> filteredItems = allItems.Items
+                .Where(f => f.UserId == UserId)
+                .OrderBy(f => f.AttemptNumber);
 
-            // Apply search filter if keyword is provided
             if (!string.IsNullOrEmpty(SearchKeyword))
             {
-                query = query.Where(u => EF.Functions.Like(u.Question.QuestionContext, $"%{SearchKeyword}%"));
+                filteredItems = filteredItems.Where(u =>
+                    u.QuestionContent != null &&
+                    u.QuestionContent.Contains(SearchKeyword, StringComparison.OrdinalIgnoreCase));
             }
 
-            // Count total items for pagination
-            int totalItems = await query.CountAsync();
+            // Count total items after filtering
+            int totalFilteredItems = filteredItems.Count();
 
-            // Calculate total pages
-            TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
-            CurrentPage = PageNumber;
-
-            // Fetch paginated results
-            UserAnswers = await query
+            // Paginate the filtered items
+            UserAnswers = filteredItems
                 .Skip((PageNumber - 1) * PageSize)
                 .Take(PageSize)
-                .Select(u => new UserAnswerWithDetailsDTO
-                {
-                    QuestionId = u.QuestionId,
-                    QuestionContent = u.Question.QuestionContext,
-                    UserId = u.UserId,
-                    UserFullName = u.User.FullName,
-                    OptionId = u.OptionId,
-                    OptionAnswer = u.Option.Answer,
-                    AttemptNumber = u.AttemptNumber
-                })
-                .ToListAsync();
+                .ToList();
+
+            // Update pagination details
+            TotalPages = (int)Math.Ceiling(totalFilteredItems / (double)PageSize);
+            CurrentPage = PageNumber;
 
             return Page();
         }

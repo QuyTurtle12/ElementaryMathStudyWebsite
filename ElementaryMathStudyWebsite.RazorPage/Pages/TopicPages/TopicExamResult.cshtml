@@ -1,0 +1,13 @@
+﻿@page
+@model ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages.TopicExamResultModel
+
+@{
+    ViewData["Title"] = "Topic Exam Result";
+}
+
+<h1>Topic Exam Result</h1>
+
+<p>Your Score: <strong>@TempData["Score"]</strong></p>
+<p>Total Points: <strong>@TempData["Points"]</strong></p>
+
+<a asp-page="./Index" class="btn btn-primary mt-3">Back to Topics</a>
