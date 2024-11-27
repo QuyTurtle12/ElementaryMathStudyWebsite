@@ -34,5 +34,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         Task<BasePaginatedList<object>> GetChaptersBySubjectIdAsync(int pageNumber, int pageSize, string subjectId);
         Task<bool> UpdateChapterNumbersAsync(string subjectId, ChapterNumberDto chapterNumberDto);
+
+        Task<List<string>> GetChapterNamesAsync();
     }
 }

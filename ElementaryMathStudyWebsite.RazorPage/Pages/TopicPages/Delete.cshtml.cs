@@ -1,22 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
 {
     public class DeleteModel : PageModel
     {
-        private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
+        private readonly IAppTopicServices _topicService;
+        private readonly IAppUserServices _userService;
 
-        public DeleteModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        public DeleteModel(IAppTopicServices topicService, IAppUserServices userService)
         {
-            _context = context;
+            _topicService = topicService ?? throw new ArgumentNullException(nameof(topicService));
+            _userService = userService;
         }
 
         [BindProperty]
@@ -24,40 +24,66 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
-            if (id == null)
+            if (string.IsNullOrEmpty(id))
             {
                 return NotFound();
             }
 
-            var topic = await _context.Topic.FirstOrDefaultAsync(m => m.Id == id);
-
-            if (topic == null)
+            var topicDto = await _topicService.GetTopicByIdAsync(id);
+            if (topicDto == null)
             {
                 return NotFound();
             }
-            else
+
+            Topic = new Topic
             {
-                Topic = topic;
-            }
+                Id = topicDto.Id,
+                TopicName = topicDto.TopicName,
+                Number = topicDto.Number ?? 0,
+                TopicContext = topicDto.TopicContext,
+                Chapter = new Chapter // Assuming Chapter is a class with a property ChapterName
+                {
+                    ChapterName = topicDto.ChapterName // Replace with the actual property name for the chapter name
+                },
+                Quiz = new Quiz // Assuming Quiz is a class with a property QuizName
+                {
+                    QuizName = topicDto.QuizName // Replace with the actual property name for the quiz name
+                }
+            };
+
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(string id)
         {
-            if (id == null)
+            string currentUserId = HttpContext.Session.GetString("user_id");
+            User? currentUser = await _userService.GetUserByIdAsync(currentUserId);
+
+            if (string.IsNullOrEmpty(id))
             {
                 return NotFound();
             }
 
-            var topic = await _context.Topic.FindAsync(id);
-            if (topic != null)
+            var topicCreateAllDto = new TopicCreateAllDto
             {
-                Topic = topic;
-                _context.Topic.Remove(Topic);
-                await _context.SaveChangesAsync();
-            }
+                Id = id,
+                
+                LastUpdatedByUser = currentUserId,
+                LastUpdatedTime = DateTime.Now,
+                DeletedById = currentUserId,
+                DeletedTime = DateTime.UtcNow
+            };
 
-            return RedirectToPage("./Index");
+            try
+            {
+                var deletedTopic = await _topicService.DeleteTopicRazorAsync(id, topicCreateAllDto);
+                return RedirectToPage("./Index");
+            }
+            catch (Exception)
+            {
+                // Handle exception (e.g., log the error)
+                return RedirectToPage("./Index"); // Redirect on failure as well, or show an error message
+            }
         }
     }
 }

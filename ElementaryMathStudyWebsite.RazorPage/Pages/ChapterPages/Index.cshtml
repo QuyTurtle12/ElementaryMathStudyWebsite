@@ -72,6 +72,9 @@
                 <td>
                     @Html.DisplayFor(modelItem => item.QuizName)
                 </td>
+                 <td>
+                    <a asp-page="/TopicPages/Index" asp-route-chapterId="@item.Id">Topic</a>
+                </td>
                 @* <td>
             @Html.DisplayFor(modelItem => item.SubjectId)
             </td> *@

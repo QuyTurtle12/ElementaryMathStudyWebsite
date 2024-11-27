@@ -435,10 +435,10 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 ChapterAdminViewDto chapterAdminViewDTO = _mapper.Map<ChapterAdminViewDto>(chapter, opts =>
                 {
-                    opts.Items["CreatedUser"] = createdUser;  
-                    opts.Items["UpdatedUser"] = updatedUser; 
-                    opts.Items["Subject"] = subject; 
-                    opts.Items["Quiz"] = quiz;  
+                    opts.Items["CreatedUser"] = createdUser;
+                    opts.Items["UpdatedUser"] = updatedUser;
+                    opts.Items["Subject"] = subject;
+                    opts.Items["Quiz"] = quiz;
                 });
 
                 return chapterAdminViewDTO;
@@ -478,8 +478,8 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
                 ChapterViewDto chapterViewDTO = _mapper.Map<ChapterViewDto>(chapter, opts =>
                 {
-                    opts.Items["Subject"] = subject; 
-                    opts.Items["Quiz"] = quiz; 
+                    opts.Items["Subject"] = subject;
+                    opts.Items["Quiz"] = quiz;
                 });
 
                 return chapterViewDTO;
@@ -570,7 +570,7 @@ namespace ElementaryMathStudyWebsite.Services.Service
                 {
                     if (chapter != null)
                     {
-                        User? createdUser = chapter.CreatedBy != null ?  _unitOfWork.GetRepository<User>().GetById(chapter.CreatedBy) : null;
+                        User? createdUser = chapter.CreatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.CreatedBy) : null;
                         User? updatedUser = chapter.LastUpdatedBy != null ? _unitOfWork.GetRepository<User>().GetById(chapter.LastUpdatedBy) : null;
                         Subject? subject = _unitOfWork.GetRepository<Subject>().GetById(chapter.SubjectId);
                         Quiz? quiz = chapter.QuizId != null ? _unitOfWork.GetRepository<Quiz>().GetById(chapter.QuizId) : null;
@@ -994,6 +994,12 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             return new BasePaginatedList<object>(paginatedChapterViewTasks!, paginatedChapterViewTasks.Count, pageNumber, pageSize);
+        }
+
+        public async Task<List<string>> GetChapterNamesAsync()
+        {
+            var chapters = await _unitOfWork.GetRepository<Chapter>().GetAllAsync();
+            return chapters.Select(c => c.ChapterName).ToList();
         }
 
     }

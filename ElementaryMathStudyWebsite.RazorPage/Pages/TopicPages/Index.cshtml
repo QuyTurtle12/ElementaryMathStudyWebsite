@@ -3,100 +3,234 @@
 
 @{
     ViewData["Title"] = "Index";
+    var currentUserId = Model.UserRole == "Admin" || Model.UserRole == "Content Manager";
 }
 
-<h1>Index</h1>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ElementaryMathStudyWebsite.RazorPage</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ElementaryMathStudyWebsite.RazorPage.styles.css" asp-append-version="true" />
+</head>
 
-<p>
-    <a asp-page="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Topic[0].Number)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Topic[0].TopicName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Topic[0].TopicContext)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Topic[0].Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Topic[0].Chapter)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Topic[0].Quiz)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Topic[0].CreatedBy)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Topic[0].LastUpdatedBy)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Topic[0].DeletedBy)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Topic[0].CreatedTime)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Topic[0].LastUpdatedTime)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Topic[0].DeletedTime)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model.Topic) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Number)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TopicName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TopicContext)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Chapter.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Quiz.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedBy)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LastUpdatedBy)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DeletedBy)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedTime)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LastUpdatedTime)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DeletedTime)
-            </td>
-            <td>
-                <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+        <main class="main-content">
+    <aside class="sidebar">
+        <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/0e252c5141b9627c616edbab19df1f601c2c8e6a7d22b97d33235b111a6b70ab?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-icon" />
+        <div class="user-profile">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/1af14519efcbf329804ac80e195ed2b130eef1684fadc0ac79b4f0485a90a0ed?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="profile-image" />
+            <div class="profile-info">
+                John Smith
+                <span style="font-size: 10px; letter-spacing: 0.5px; color: #000;">
+                    johnsmith@gmail.com
+                </span>
+            </div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/fb4ca64bcd17de23568fe7ac9162c40597c3e50575595222fdde9ce9a96fa41b?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/Index">HOME</a></div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/153e23238f9840133cd8013501ca44096f73cd7e89189831a1c810324a69892d?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/SubjectPages/Index">SUBJECT</a></div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/f0dd31a77f56063a479c0894c2e581f96ba293578a27f87af6497d527a12245d?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/ChapterPages/Index">CHAPTER</a></div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/c1d54a19c8f6f62353f217982854a9199db870b90ecca5e84b635ad160d7fca6?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/TopicPages/Index">TOPIC</a></div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/f0458f7647e2a07cbcaae27d49a451553ae489681cbdf01a5c78bb9a52ce88e4?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text">QUIZ</div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/ed22e0d881d58079eefb2207bdf684c7e14b53adbad1bf7bc73b59df88c5794d?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text">QUESTION</div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/6fe503ef66f6596f249ce77be5f7f4ab4b3a6d7e0df86066b08ea969915fe75b?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text"><a class="nav-link text-dark" asp-area="" asp-page="/OrderPages/Index">ORDER</a></div>
+        </div>
+        <div class="sidebar-item">
+            <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/70bb38c8d61e1b5e5517d031471c4003b8178282b8d7ecd91bf6719eb10da215?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="sidebar-item-icon" />
+            <div class="sidebar-item-text"> <a class="nav-link text-dark" asp-area="" asp-page="/ProgressPages/Index">PROCESS</a></div>
+        </div>
+        <div class="sidebar-item">LOG OUT</div>
+    </aside>
+    <section class="content-area">
+        <div class="content-header">
+            <div class="header-left">
+                <div class="chapter-selector">
+                    <form method="get">
+                        <select name="chapterName" id="chapterSelect">
+                            <option value="">-- Chapter --</option>
+                            @foreach (var chapterName in Model.ChapterNames)
+                            {
+                                <option value="@chapterName">@chapterName</option>
+                            }
+                        </select>
+                        <input type="text" name="searchString" value="@Request.Query["searchString"]" placeholder="Search topics..." />
+                        <button type="submit">Search</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        @if (currentUserId)
+        {
+            <div class="content-header">
+                <div class="add-button">
+                    <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/63a37e8dc4ceb3683e81d53c95a8c2bac5f01943c08e2adec970308c2a43b148?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" alt="" class="add-icon" />
+                    <div class="add-text"> <a asp-page="Create">Add</a></div>
+                </div>
+            </div>
+            <div class="content-table">
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="header-content">
+                            <div class="header-row">
+                                <div class="header-cell">Number</div>
+                                <div class="header-cell">Topic Name</div>
+                                @* <div class="header-cell">Tình Trạng</div> *@
+                                <div class="header-cell-wide">Action</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-body">
+                        @foreach (var item in Model.Topics!.Items)
+                        {
+                            <div class="table-row">
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.Number)</div>
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.TopicName)</div>
+@*                                 <div class="row-cell">@Html.DisplayFor(modelItem => item.ChapterName)</div>
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.QuizName)</div> *@
+
+                                @* <div class="status-cell"> *@
+                                @*     <div class="status-true">@Html.DisplayFor(modelItem => item.Status)</div> *@
+                                @* </div> *@
+                                <div class="action-cell">
+                                    <div class="action-buttons">
+                                        <div class="action-button">
+                                            <div class="action-button-content">
+                                                <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/7b264e567c90ea1c81e046e198f43b4f106bfaeb17ac42b6ea37ad151fac9c57?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" class="action-icon" alt="Edit icon" />
+                                                <a asp-page="./Edit" asp-route-id="@item.Id" class="action-text">Edit</a>
+                                            </div>
+                                        </div>
+                                        <div class="action-button">
+                                            <div class="action-button-content">
+                                                <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/18d32b41cd37c7e6610f4da9e3879f1a24f3a30bf067b8a561aeb91581df3b6c?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" class="action-icon" alt="Delete icon" />
+                                                <a asp-page="./Delete" asp-route-id="@item.Id" class="action-text">Delete</a>
+                                            </div>
+                                        </div>
+                                        <div class="action-button">
+                                            <div class="action-button-content">
+                                                <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/18d32b41cd37c7e6610f4da9e3879f1a24f3a30bf067b8a561aeb91581df3b6c?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" class="action-icon" alt="Detail icon" />
+                                                <a asp-page="./Details" asp-route-id="@item.Id" class="action-text">Detail</a>
+                                            </div>
+                                        </div>
+                                        <div class="action-button">
+                                            <div class="action-button-content">
+                                                <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/18d32b41cd37c7e6610f4da9e3879f1a24f3a30bf067b8a561aeb91581df3b6c?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" class="action-icon" alt="Detail icon" />
+                                                <a asp-page="/SubjectPages/Index" asp-route-topicId="@item.Id">Subject</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="content-table">
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="header-content">
+                            <div class="header-row">
+                                <div class="header-cell">Number</div>
+                                <div class="header-cell">Topic Name</div>
+                                @* <div class="header-cell">Tình Trạng</div> *@
+                                <div class="header-cell-wide">Action</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-body">
+                        @foreach (var item in Model.Topics!.Items)
+                        {
+                            <div class="table-row">
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.Number)</div>
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.TopicName)</div>
+                                @*                                 <div class="row-cell">@Html.DisplayFor(modelItem => item.ChapterName)</div>
+                                <div class="row-cell">@Html.DisplayFor(modelItem => item.QuizName)</div> *@
+
+                                @* <div class="status-cell"> *@
+                                @*     <div class="status-true">@Html.DisplayFor(modelItem => item.Status)</div> *@
+                                @* </div> *@
+                                <div class="action-cell">
+                                    <div class="action-buttons">
+                                        <div class="action-button">
+                                            <div class="action-button-content">
+                                                <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/18d32b41cd37c7e6610f4da9e3879f1a24f3a30bf067b8a561aeb91581df3b6c?placeholderIfAbsent=true&apiKey=42ba309d927d4e6cab09a07fcf9687b8" class="action-icon" alt="Detail icon" />
+                                                <a asp-page="/SubjectPages/Index" asp-route-topicId="@item.Id">Subject</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        <div class="pagination">
+            @if (Model.Topics.CurrentPage > 1)
+            {
+                <a asp-page="./Index" asp-route-pageNumber="@(Model.Topics.CurrentPage - 1)">
+                    Previous
+                </a>
+            }
+
+            <span>Page @Model.Topics.CurrentPage of @Model.Topics.TotalPages</span>
+
+            @if (Model.Topics.CurrentPage < Model.Topics.TotalPages)
+            {
+                <a asp-page="./Index" asp-route-pageNumber="@(Model.Topics.CurrentPage + 1)">
+                    Next
+                </a>
+            }
+        </div>
+    </section>
+        </main>
+
+<footer class="border-top footer text-muted">
+    @*         <div class="container">
+            &copy; 2024 - ElementaryMathStudyWebsite.RazorPage - <a asp-area="" asp-page="/Privacy">Privacy</a>
+        </div> *@
+    <div class="footer-column">
+        Contact Information<br />
+        Address:<br />
+        Phone:<br />
+        Email:
+    </div>
+    <div class="footer-column-wide">
+        Support<br />
+        Frequently asked questions<br />
+        Instructions for use<br />
+        Payment instructions
+    </div>
+    <div class="contact-form">
+        <div class="form-text">
+            If you have any questions that need to be resolved, please send them to us
+        </div>
+        <div class="form-input-group">
+            <input type="text" class="form-input" aria-label="Enter your question" />
+            <button class="form-submit"> SEND</button>
+        </div>
+    </div>
+</footer>
