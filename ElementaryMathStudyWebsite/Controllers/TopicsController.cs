@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿﻿using Microsoft.AspNetCore.Mvc;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Core.Base;
@@ -155,9 +155,9 @@ namespace ElementaryMathStudyWebsite.Controllers
             Summary = "Authorization: N/A",
             Description = "Lấy danh sách Topics bằng ChapterId"
             )]
-        public async Task<ActionResult<List<TopicViewDto>>> GetTopicsByChapterId(string chapterId)
+        public async Task<ActionResult<List<TopicViewDto>>> GetTopicsByChapterId(string chapterId, int pageNumber = 1, int pageSize = 10)
         {
-            var topic = await _topicService.GetTopicsByChapterIdAsync(chapterId);
+            var topic = await _topicService.GetTopicsByChapterIdAsync(chapterId, pageNumber, pageSize);
             var response = BaseResponse<object>.OkResponse(topic);
             return Ok(response);
         }
