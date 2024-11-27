@@ -10,7 +10,7 @@ using ElementaryMathStudyWebsite.Infrastructure.Context;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
-namespace ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages
+namespace ElementaryMathStudyWebsite.RazorPage.Pages.OptionPages
 {
     public class CreateModel : PageModel
     {

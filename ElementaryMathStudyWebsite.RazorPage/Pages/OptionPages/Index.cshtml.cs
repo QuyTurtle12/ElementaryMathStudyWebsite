@@ -6,7 +6,7 @@ using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
 using ElementaryMathStudyWebsite.Core.Base;
 
-namespace ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages
+namespace ElementaryMathStudyWebsite.RazorPage.Pages.OptionPages
 {
     public class IndexModel : PageModel
     {
