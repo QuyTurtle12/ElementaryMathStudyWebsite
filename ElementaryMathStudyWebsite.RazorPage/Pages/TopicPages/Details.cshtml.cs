@@ -46,7 +46,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
                 {
                     ChapterName = topicDto.ChapterName // Replace with the actual property name for the chapter name
                 },
-                Quiz = new Quiz // Assuming Quiz is a class with a property QuizName
+                Quiz = new Core.Repositories.Entity.Quiz // Assuming Quiz is a class with a property QuizName
                 {
                     QuizName = topicDto.QuizName // Replace with the actual property name for the quiz name
                 }
