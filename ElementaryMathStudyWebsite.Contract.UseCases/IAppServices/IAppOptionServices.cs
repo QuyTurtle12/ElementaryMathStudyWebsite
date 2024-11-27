@@ -13,8 +13,10 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<OptionViewDto> AddOption(string userId, OptionCreateDto optionCreateDto);
 
         // Edit an option by id
-        Task<OptionViewDto> UpdateOption(string optionId, OptionUpdateDto optionUpdateDto);
-        
+        Task<OptionViewDto> UpdateOption(OptionUpdateDto optionUpdateDto);
+        Task<OptionViewDto> UpdateOption(string userId, OptionUpdateDto optionUpdateDto);
+
+
         //Delete an option
         Task<bool> DeleteOption(string optionId);
     }

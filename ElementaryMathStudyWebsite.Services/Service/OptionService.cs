@@ -101,24 +101,43 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
 
         // Update an option
-        public async Task<OptionViewDto> UpdateOption(string optionId, OptionUpdateDto optionUpdateDto)
+        public async Task<OptionViewDto> UpdateOption(OptionUpdateDto optionUpdateDto)
         {
             Option? option;
 
-            if (_unitOfWork.IsValid<Option>(optionId))
-                option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionId);
+            if (_unitOfWork.IsValid<Option>(optionUpdateDto.Id))
+                option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionUpdateDto.Id);
             else throw new BaseException.NotFoundException("not_found", "Option ID not found");
 
             option!.Answer = optionUpdateDto.Answer;
             option.IsCorrect = optionUpdateDto.IsCorrect;
 
-            var userService = _userService;
-            userService.AuditFields(option, false);
+            _userService.AuditFields(option, false);
 
             await _unitOfWork.SaveAsync();
 
             return _mapper.Map<OptionViewDto>(option);
 
         }
+
+        public async Task<OptionViewDto> UpdateOption(string userId, OptionUpdateDto optionUpdateDto)
+        {
+            Option? option;
+            Console.WriteLine(optionUpdateDto.Id);
+            if (_unitOfWork.IsValid<Option>(optionUpdateDto.Id))
+                option = await _unitOfWork.GetRepository<Option>().GetByIdAsync(optionUpdateDto.Id);
+            else throw new BaseException.NotFoundException("not_found", "Option ID not found");
+
+            option!.Answer = optionUpdateDto.Answer;
+            option.IsCorrect = optionUpdateDto.IsCorrect;
+
+            _userService.AuditFields(userId, option, false);
+
+            await _unitOfWork.SaveAsync();
+
+            return _mapper.Map<OptionViewDto>(option);
+
+        }
+
     }
 }

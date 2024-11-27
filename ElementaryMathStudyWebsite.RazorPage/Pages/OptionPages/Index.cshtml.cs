@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
 using ElementaryMathStudyWebsite.Contract.Core.IUOW;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
@@ -26,12 +20,18 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.QuestionPages
         }
 
         public BasePaginatedList<OptionViewDto> options = default!;  // Property should be public
-        public Question question = default!;
 
         public async Task<IActionResult> OnGetAsync()
         {
+            string? userId = HttpContext.Session.GetString("user_id");
+
+            if (userId == null) 
+            {
+                return Content("");
+            }
+
             string questionId = "15A8C741-E3FF-42BE-89BD-865DC9006113";
-            question = (await _unitOfWork.GetRepository<Question>().GetByIdAsync(questionId))!;
+            Question question = (await _unitOfWork.GetRepository<Question>().GetByIdAsync(questionId))!;
 
             if (string.IsNullOrWhiteSpace(questionId))
             {
