@@ -94,22 +94,16 @@ namespace ElementaryMathStudyWebsite.Services.Service
         }
         public async Task<BasePaginatedList<QuizMainViewDto>> GetQuizzesMainViewAsync(int pageNumber, int pageSize)
         {
-            // Query all quizzes excluding deleted ones
             List<Quiz> allQuizzes = await GetQuizzesAsync();
 
             if (allQuizzes == null)
                 throw new BaseException.NotFoundException("not_found", $"Quizzes not found.");
 
-            // Use AutoMapper to map quizzes to QuizMainViewDto
             List<QuizMainViewDto> quizDtos = await MapQuizzesToDto(allQuizzes);
 
-            // If pageNumber or pageSize are 0 or negative, return all quizzes without pagination
             if (pageNumber <= 0 || pageSize <= 0)
-            {
                 return new BasePaginatedList<QuizMainViewDto>(quizDtos, quizDtos.Count, 1, quizDtos.Count);
-            }
 
-            // Paginate the list of quizzes
             List<QuizMainViewDto> paginatedQuizzesDto = quizDtos.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
 
             return new BasePaginatedList<QuizMainViewDto>(paginatedQuizzesDto, quizDtos.Count, pageNumber, pageSize);
