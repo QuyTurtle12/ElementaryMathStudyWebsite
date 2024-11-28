@@ -1,20 +1,26 @@
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Entity;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Utils;
+using ElementaryMathStudyWebsite.Infrastructure.Context;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
-using ElementaryMathStudyWebsite.Core.Entity;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using Microsoft.CodeAnalysis.Options;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
 {
     public class TopicExamModel : PageModel
     {
         private readonly DatabaseContext _context;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IAppResultService _resultService;
 
-        public TopicExamModel(DatabaseContext context)
+        public TopicExamModel(DatabaseContext context, IAppResultService appResultService, IUnitOfWork unitOfWork)
         {
             _context = context;
+            _resultService = appResultService;
+            _unitOfWork = unitOfWork;
         }
 
         [BindProperty]
@@ -141,22 +147,37 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
             var formattedScore = $"{correctAnswersCount}/{totalQuestions}";
 
             // Add progress if the score is above 8
-            if (totalPoints > 8)
-            {
-                var subjectId = Request.Query["subjectId"].ToString(); // Retrieve subjectId from query string
-                if (Guid.TryParse(subjectId, out Guid parsedSubjectId))
-                {
-                    var progress = new Progress
-                    {
-                        StudentId = userId, // Assuming userId can be converted to Guid
-                        QuizId = QuizId, // Assuming QuizId is stored as string and convertible to Guid
-                        SubjectId = subjectId
-                    };
+            //if (totalPoints > 8)
+            //{
+            //    var subjectId = Request.Query["subjectId"].ToString(); // Retrieve subjectId from query string
+            //    if (Guid.TryParse(subjectId, out Guid parsedSubjectId))
+            //    {
+            //        var progress = new Progress
+            //        {
+            //            StudentId = userId, // Assuming userId can be converted to Guid
+            //            QuizId = QuizId, // Assuming QuizId is stored as string and convertible to Guid
+            //            SubjectId = subjectId
+            //        };
 
-                    _context.Progress.AddRange(progress);
-                    await _context.SaveChangesAsync();
-                }
-            }
+            //        _context.Progress.AddRange(progress);
+            //        await _context.SaveChangesAsync();
+            //    }
+            //}
+
+            // Get entities data from database
+            User? user = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Id.Equals(userId) && string.IsNullOrWhiteSpace(u.DeletedBy));
+
+            Result studentResult = new Result
+            {
+                QuizId = QuizId,
+                StudentId = userId,
+                AttemptNumber = maxAttemptNumber + 1,
+                Score = totalPoints,
+                DateTaken = CoreHelper.SystemTimeNow
+            };
+
+            await _unitOfWork.GetRepository<Result>().InsertAsync(studentResult);
+            await _unitOfWork.GetRepository<Result>().SaveAsync();
 
             // Store the formatted score and points as strings in TempData
             TempData["Score"] = formattedScore;
