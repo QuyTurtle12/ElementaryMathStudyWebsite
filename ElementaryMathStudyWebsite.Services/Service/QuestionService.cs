@@ -585,5 +585,27 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return BaseResponse<string>.OkResponse("Question deleted successfully.");
         }
 
+        public async Task<IList<Question>> GetQuestionsWithOptionsEntitiesByQuizIdAsync(string quizId)
+        {
+            // Validate input
+            if (string.IsNullOrWhiteSpace(quizId))
+            {
+                throw new BaseException.BadRequestException("invalid_quiz_id", "Quiz ID cannot be null or empty.");
+            }
+
+            // Fetch questions with options
+            var questions = await _unitOfWork.GetRepository<Question>().Entities
+                .Where(q => q.QuizId == quizId && string.IsNullOrWhiteSpace(q.DeletedBy))
+                .Include(q => q.Options) // Include navigation property
+                .ToListAsync();
+
+            // Throw an exception if no questions are found
+            if (!questions.Any())
+            {
+                throw new BaseException.NotFoundException("not_found", $"No questions found for Quiz ID {quizId}.");
+            }
+
+            return questions;
+        }
     }
 }

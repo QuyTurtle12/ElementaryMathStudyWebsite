@@ -4,16 +4,19 @@ using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
 using ElementaryMathStudyWebsite.Core.Entity;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 {
     public class ExamModel : PageModel
     {
         private readonly DatabaseContext _context;
+        private readonly IAppOrderDetailServices _orderDetailService;
 
-        public ExamModel(DatabaseContext context)
+        public ExamModel(DatabaseContext context, IAppOrderDetailServices orderDetailService)
         {
             _context = context;
+            _orderDetailService = orderDetailService;
         }
 
         [BindProperty]
@@ -31,8 +34,9 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             }
 
             // Check if the user has access to this subject
-            var hasAccess = await _context.OrderDetail
-                .AnyAsync(od => od.StudentId == userId && od.SubjectId == subjectId);
+            //var hasAccess = await _context.OrderDetail
+            //    .AnyAsync(od => od.StudentId == userId && od.SubjectId == subjectId);
+            var hasAccess = await _orderDetailService.IsOrderDetailExistsAsync(userId, subjectId);
 
             if (!hasAccess)
             {

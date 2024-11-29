@@ -19,5 +19,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         //Delete an option
         Task<bool> DeleteOption(string optionId);
+        Task<OptionViewDto> GetOptionByIdAsync(string optionId);
     }
 }
