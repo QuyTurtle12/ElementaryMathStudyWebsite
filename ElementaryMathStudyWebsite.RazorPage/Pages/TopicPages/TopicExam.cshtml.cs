@@ -1,20 +1,36 @@
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Core.Entity;
+using ElementaryMathStudyWebsite.Core.Repositories.Entity;
+using ElementaryMathStudyWebsite.Core.Utils;
+using ElementaryMathStudyWebsite.Infrastructure.Context;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using ElementaryMathStudyWebsite.Infrastructure.Context;
-using ElementaryMathStudyWebsite.Core.Entity;
-using ElementaryMathStudyWebsite.Core.Repositories.Entity;
-using Microsoft.CodeAnalysis.Options;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
 {
     public class TopicExamModel : PageModel
     {
         private readonly DatabaseContext _context;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IAppChapterServices _chapterService;
+        private readonly IAppOrderDetailServices _orderDetailService;
+        private readonly IAppQuestionServices _questionService;
+        private readonly IAppOptionServices _optionService;
+        private readonly IAppUserAnswerServices _userAnswerService;
 
-        public TopicExamModel(DatabaseContext context)
+        public TopicExamModel(DatabaseContext context, IAppChapterServices appChapterServices, IUnitOfWork unitOfWork, IAppOrderDetailServices orderDetailService, IAppQuestionServices appQuestionServices, IAppOptionServices optionService, IAppUserAnswerServices appUserAnswerServices)
         {
             _context = context;
+            _chapterService = appChapterServices;
+            _unitOfWork = unitOfWork;
+            _orderDetailService = orderDetailService;
+            _questionService = appQuestionServices;
+            _optionService = optionService;
+            _userAnswerService = appUserAnswerServices;
         }
 
         [BindProperty]
@@ -33,14 +49,11 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
             }
 
             // Retrieve the SubjectId associated with the ChapterId
-            var subjectId = await _context.Chapter
-                .Where(c => c.Id == chapterId)
-                .Select(c => c.SubjectId)
-                .FirstOrDefaultAsync();
+            ChapterAdminViewDto getChapter = (ChapterAdminViewDto) await _chapterService.GetChapterByChapterIdAsync(chapterId);
+            var subjectId = getChapter.SubjectId;
 
             // Check if the user has access to this subject
-            var hasAccess = await _context.OrderDetail
-                .AnyAsync(od => od.StudentId == userId && od.SubjectId == subjectId);
+            var hasAccess = await _orderDetailService.IsOrderDetailExistsAsync(userId, subjectId);
 
             if (!hasAccess)
             {
@@ -51,10 +64,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
             QuizId = quizId;
 
             // Fetch questions and options for the quiz
-            Questions = await _context.Question
-                .Where(q => q.QuizId == quizId)
-                .Include(q => q.Options)
-                .ToListAsync();
+            Questions = await _questionService.GetQuestionsWithOptionsEntitiesByQuizIdAsync(quizId);
 
             if (Questions == null || !Questions.Any())
             {
@@ -75,10 +85,11 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
             }
 
             // Fetch questions again since Questions is not persisted between requests
-            Questions = await _context.Question
-                .Where(q => q.QuizId == QuizId)
-                .Include(q => q.Options)
-                .ToListAsync();
+            //Questions = await _context.Question
+            //    .Where(q => q.QuizId == QuizId)
+            //    .Include(q => q.Options)
+            //    .ToListAsync();
+            Questions = await _questionService.GetQuestionsWithOptionsEntitiesByQuizIdAsync(QuizId);
 
             if (Questions == null || !Questions.Any())
             {
@@ -106,9 +117,10 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
                 var selectedOptionId = Request.Form[$"Answer_{question.Id}"];
                 if (!string.IsNullOrEmpty(selectedOptionId))
                 {
-                    var option = await _context.Option
-                        .Where(o => o.Id == selectedOptionId.ToString())
-                        .FirstOrDefaultAsync();
+                    //var option = await _context.Option
+                    //    .Where(o => o.Id == selectedOptionId.ToString())
+                    //    .FirstOrDefaultAsync();
+                    var option = await _optionService.GetOptionByIdAsync(selectedOptionId.ToString());
 
                     userAnswers.Add(new UserAnswer
                     {
@@ -131,32 +143,25 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
                 return Page();
             }
 
+            // Create a DTO for saving user answers
+            var userAnswerCreateDTO = new UserAnswerCreateDTO
+            {
+                UserAnswerList = userAnswers.Select(ua => new UserAnswersDTO
+                {
+                    QuestionId = ua.QuestionId,
+                    OptionId = ua.OptionId
+                }).ToList()
+            };
+
             // Save user answers
-            _context.UserAnswer.AddRange(userAnswers);
-            await _context.SaveChangesAsync();
+            //_context.UserAnswer.AddRange(userAnswers);
+            //await _context.SaveChangesAsync();
+            var result = await _userAnswerService.CreateUserAnswersUserAsync(userAnswerCreateDTO, userId);
 
             // Calculate and format the score
             var totalQuestions = Questions.Count;
             var totalPoints = (correctAnswersCount / (float)totalQuestions) * 10;
             var formattedScore = $"{correctAnswersCount}/{totalQuestions}";
-
-            // Add progress if the score is above 8
-            if (totalPoints > 8)
-            {
-                var subjectId = Request.Query["subjectId"].ToString(); // Retrieve subjectId from query string
-                if (Guid.TryParse(subjectId, out Guid parsedSubjectId))
-                {
-                    var progress = new Progress
-                    {
-                        StudentId = userId, // Assuming userId can be converted to Guid
-                        QuizId = QuizId, // Assuming QuizId is stored as string and convertible to Guid
-                        SubjectId = subjectId
-                    };
-
-                    _context.Progress.AddRange(progress);
-                    await _context.SaveChangesAsync();
-                }
-            }
 
             // Store the formatted score and points as strings in TempData
             TempData["Score"] = formattedScore;

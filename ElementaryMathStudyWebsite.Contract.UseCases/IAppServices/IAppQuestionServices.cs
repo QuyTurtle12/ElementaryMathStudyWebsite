@@ -20,7 +20,7 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<BasePaginatedList<QuestionMainViewDto>> GetQuestionsMainViewAsync(int pageNumber, int pageSize);
 
 
-
+        Task<IList<Question>> GetQuestionsWithOptionsEntitiesByQuizIdAsync(string quizId);
 
         Task<BaseResponse<string>?> AddQuestionAsync(List<QuestionCreateDto> dtos, User? currentUser);
         Task<QuestionMainViewDto?> UpdateQuestionAsync(string id, QuestionUpdateDto dto, User currentUser);

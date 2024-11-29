@@ -11,5 +11,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<BasePaginatedList<UserAnswerWithDetailsDTO>> GetAllUserAnswersAsync(int pageNumber, int pageSize);
         Task<UserAnswerDTO> GetUserAnswerByIdAsync(string id);
         Task<BasePaginatedList<UserAnswerWithDetailsDTO>> GetUserAnswersByQuizIdAsync(string quizId);
+        Task<ResultProgressDto> CreateUserAnswersUserAsync(UserAnswerCreateDTO userAnswerCreateDTO, string currentUserId);
     }
 }

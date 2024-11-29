@@ -103,5 +103,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
             return true; // Subject has not been assigned yet
         }
+
+        // Check if OrderDetail exists by SubjectId and UserId
+        public async Task<bool> IsOrderDetailExistsAsync(string userId, string subjectId)
+        {
+            // Validate inputs
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(subjectId))
+            {
+                throw new BaseException.BadRequestException("invalid_input", "User ID and Subject ID cannot be null or empty.");
+            }
+
+            // Query OrderDetail based on SubjectId and UserId
+            IQueryable<OrderDetail> query = _unitOfWork.GetRepository<OrderDetail>().Entities
+                .Where(od => od.StudentId.Equals(userId) && od.SubjectId.Equals(subjectId));
+
+            // Check if any record matches the query
+            bool exists = await query.AnyAsync();
+
+            return exists;
+        }
+
     }
 }
