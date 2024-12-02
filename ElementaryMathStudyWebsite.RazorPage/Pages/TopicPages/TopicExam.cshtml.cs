@@ -14,7 +14,6 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
 {
     public class TopicExamModel : PageModel
     {
-        private readonly DatabaseContext _context;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAppChapterServices _chapterService;
         private readonly IAppOrderDetailServices _orderDetailService;
@@ -22,9 +21,8 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
         private readonly IAppOptionServices _optionService;
         private readonly IAppUserAnswerServices _userAnswerService;
 
-        public TopicExamModel(DatabaseContext context, IAppChapterServices appChapterServices, IUnitOfWork unitOfWork, IAppOrderDetailServices orderDetailService, IAppQuestionServices appQuestionServices, IAppOptionServices optionService, IAppUserAnswerServices appUserAnswerServices)
+        public TopicExamModel(IAppChapterServices appChapterServices, IUnitOfWork unitOfWork, IAppOrderDetailServices orderDetailService, IAppQuestionServices appQuestionServices, IAppOptionServices optionService, IAppUserAnswerServices appUserAnswerServices)
         {
-            _context = context;
             _chapterService = appChapterServices;
             _unitOfWork = unitOfWork;
             _orderDetailService = orderDetailService;
@@ -85,10 +83,6 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
             }
 
             // Fetch questions again since Questions is not persisted between requests
-            //Questions = await _context.Question
-            //    .Where(q => q.QuizId == QuizId)
-            //    .Include(q => q.Options)
-            //    .ToListAsync();
             Questions = await _questionService.GetQuestionsWithOptionsEntitiesByQuizIdAsync(QuizId);
 
             if (Questions == null || !Questions.Any())
@@ -100,9 +94,10 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
             var questionIds = Questions.Select(q => q.Id).ToList();
 
             // Load user answers for the current quiz into memory
-            var userAnswerAttemp = await _context.UserAnswer
-                .Where(ua => ua.UserId == userId && questionIds.Contains(ua.QuestionId))
-                .ToListAsync();
+            //var userAnswerAttemp = await _context.UserAnswer
+            //    .Where(ua => ua.UserId == userId && questionIds.Contains(ua.QuestionId))
+            //    .ToListAsync();
+            var userAnswerAttemp = await _userAnswerService.GetUserAnswersByUserAndQuestionsAsync(userId, questionIds);
 
             // Calculate the max attempt number for this user and quiz
             var maxAttemptNumber = userAnswerAttemp.Any()
@@ -154,8 +149,6 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.TopicPages
             };
 
             // Save user answers
-            //_context.UserAnswer.AddRange(userAnswers);
-            //await _context.SaveChangesAsync();
             var result = await _userAnswerService.CreateUserAnswersUserAsync(userAnswerCreateDTO, userId);
 
             // Calculate and format the score

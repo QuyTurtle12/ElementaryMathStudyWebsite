@@ -5,18 +5,24 @@ using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using ElementaryMathStudyWebsite.Infrastructure.Context;
 using ElementaryMathStudyWebsite.Core.Entity;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
+using ElementaryMathStudyWebsite.Contract.Core.IUOW;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserAnswerDtos;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
 {
     public class ExamModel : PageModel
     {
-        private readonly DatabaseContext _context;
         private readonly IAppOrderDetailServices _orderDetailService;
+        private readonly IAppQuestionServices _questionService;
+        private readonly IAppOptionServices _optionService;
+        private readonly IAppUserAnswerServices _userAnswerService;
 
-        public ExamModel(DatabaseContext context, IAppOrderDetailServices orderDetailService)
+        public ExamModel(IAppOrderDetailServices orderDetailService, IAppQuestionServices appQuestionServices, IAppOptionServices optionService, IAppUserAnswerServices appUserAnswerServices)
         {
-            _context = context;
             _orderDetailService = orderDetailService;
+            _questionService = appQuestionServices;
+            _optionService = optionService;
+            _userAnswerService = appUserAnswerServices;
         }
 
         [BindProperty]
@@ -47,10 +53,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             QuizId = quizId;
 
             // Fetch questions and options for the quiz
-            Questions = await _context.Question
-                .Where(q => q.QuizId == quizId)
-                .Include(q => q.Options)
-                .ToListAsync();
+            Questions = await _questionService.GetQuestionsWithOptionsEntitiesByQuizIdAsync(quizId);
 
             if (Questions == null || !Questions.Any())
             {
@@ -71,10 +74,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             }
 
             // Fetch questions again since Questions is not persisted between requests
-            Questions = await _context.Question
-                .Where(q => q.QuizId == QuizId)
-                .Include(q => q.Options)
-                .ToListAsync();
+            Questions = await _questionService.GetQuestionsWithOptionsEntitiesByQuizIdAsync(QuizId);
 
             if (Questions == null || !Questions.Any())
             {
@@ -86,9 +86,10 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
             var questionIds = Questions.Select(q => q.Id).ToList();
 
             // Load user answers for the current quiz into memory
-            var userAnswers = await _context.UserAnswer
-                .Where(ua => ua.UserId == userId && questionIds.Contains(ua.QuestionId))
-                .ToListAsync();
+            //var userAnswers = await _context.UserAnswer
+            //    .Where(ua => ua.UserId == userId && questionIds.Contains(ua.QuestionId))
+            //    .ToListAsync();
+            var userAnswers = await _userAnswerService.GetUserAnswersByUserAndQuestionsAsync(userId, questionIds);
 
             // Calculate the max attempt number for this user and quiz
             var maxAttemptNumber = userAnswers.Any()
@@ -111,9 +112,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
                 }
 
                 // Query the database using the string ID
-                var option = await _context.Option
-                    .Where(o => o.Id == selectedOptionId)
-                    .FirstOrDefaultAsync();
+                var option = await _optionService.GetOptionByIdAsync(selectedOptionId.ToString());
 
                 if (option != null)
                 {
@@ -132,36 +131,27 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.ChapterPages
                 }
             }
 
-            // Save all user answers
-            _context.UserAnswer.AddRange(answers);
-            await _context.SaveChangesAsync();
+            // Create a DTO for saving user answers
+            var userAnswerCreateDTO = new UserAnswerCreateDTO
+            {
+                UserAnswerList = userAnswers.Select(ua => new UserAnswersDTO
+                {
+                    QuestionId = ua.QuestionId,
+                    OptionId = ua.OptionId
+                }).ToList()
+            };
+
+            // Save user answers
+            var result = await _userAnswerService.CreateUserAnswersUserAsync(userAnswerCreateDTO, userId);
 
             // Calculate and format the score
             var totalQuestions = Questions.Count;
             var totalPoints = (correctAnswersCount / (float)totalQuestions) * 10;
             var formattedScore = $"{correctAnswersCount}/{totalQuestions}";
 
-            // Add progress if the score is above 8
-            if (totalPoints > 8)
-            {
-                var subjectId = Request.Query["subjectId"].ToString(); // Retrieve subjectId from query string
-                if (Guid.TryParse(subjectId, out Guid parsedSubjectId))
-                {
-                    var progress = new Progress
-                    {
-                        StudentId = userId, // Assuming userId can be converted to Guid
-                        QuizId = QuizId, // Assuming QuizId is stored as string and convertible to Guid
-                        SubjectId = subjectId
-                    };
-
-                    _context.Progress.AddRange(progress);
-                    await _context.SaveChangesAsync();
-                }
-            }
-
-                // Store the formatted score and points as strings in TempData
-                TempData["Score"] = formattedScore;
-                TempData["Points"] = totalPoints.ToString("F1"); // Format as string with 1 decimal place
+            // Store the formatted score and points as strings in TempData
+            TempData["Score"] = formattedScore;
+            TempData["Points"] = totalPoints.ToString("F1"); // Format as string with 1 decimal place
 
             return RedirectToPage("./ExamResult", new { score = formattedScore });
         }

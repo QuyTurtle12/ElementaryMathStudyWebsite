@@ -15,6 +15,26 @@
         <form method="post" asp-page-handler="Logout">
             <button type="submit" class="btn btn-danger">Logout</button>
         </form>
+        <form method="post">
+            <div class="subject-list">
+                @if (Model.AvailableSubjects is not null && Model.AvailableSubjects.Any())
+                {
+                    @foreach (var subject in Model.AvailableSubjects)
+                    {
+                        <div class="subject-item" onclick="selectSubject('@subject.Id', this)">
+                            <h3>@subject.SubjectName</h3>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p>No subjects available. Please check back later.</p>
+                }
+            </div>
+
+            <input type="hidden" id="selectedSubjectId" name="SelectedSubjectId" />
+            <button id="continueButton" class="btn btn-primary" disabled>Continue</button>
+        </form>
     }
     else
     {
@@ -22,3 +42,44 @@
         <a href="/AuthPages/Login" class="btn btn-primary">Login</a>
     }
 </div>
+<style>
+    .subject-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .subject-item {
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 5px;
+        width: 250px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        .subject-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .subject-item.selected {
+            background-color: #cce5ff;
+            border-color: #007bff;
+        }
+
+    .btn-primary {
+        margin-top: 20px;
+    }
+</style>
+<script>
+     function selectSubject(subjectId, element) {
+        const previouslySelected = document.querySelector('.subject-item.selected');
+        if (previouslySelected) {
+            previouslySelected.classList.remove('selected');
+        }
+        element.classList.add('selected');
+
+        document.getElementById('selectedSubjectId').value = subjectId;
+        document.getElementById('continueButton').disabled = false;
+    }
+</script>
