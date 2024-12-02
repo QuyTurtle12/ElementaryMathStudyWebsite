@@ -5,12 +5,103 @@
     ViewData["Title"] = "Edit";
 }
 
+<style>
+    body {
+        background-color: #f4f4f9;
+        margin: 0;
+    }
+
+    h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    h4 {
+        text-align: center;
+        color: #555;
+    }
+
+    .row {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .form-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        width: 100%;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        font-size: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #007BFF;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+    .form-check-label {
+        margin-left: 5px;
+        font-size: 0.9rem;
+        color: #333;
+    }
+
+    .btn-primary {
+        background-color: #007BFF;
+        border: none;
+        padding: 10px 20px;
+        font-size: 1rem;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+    .text-danger {
+        font-size: 0.85rem;
+        color: #e74c3c;
+    }
+
+    .back-link {
+        display: block;
+        text-align: center;
+        margin-top: 20px;
+        text-decoration: none;
+        color: #007BFF;
+        font-weight: bold;
+        transition: color 0.3s;
+    }
+
+        .back-link:hover {
+            color: #0056b3;
+        }
+</style>
+
 <h1>Edit</h1>
 
 <h4>User</h4>
 <hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="form-container">
         <form method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
@@ -25,7 +116,12 @@
             </div>
             <div class="form-group">
                 <label asp-for="User.Gender" class="control-label"></label>
-                <input asp-for="User.Gender" class="form-control" />
+                <select asp-for="User.Gender" class="form-control">
+                    <option value="" disabled selected>-- Select Gender --</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
                 <span asp-validation-for="User.Gender" class="text-danger"></span>
             </div>
             <div class="form-group">
@@ -39,29 +135,9 @@
                 <span asp-validation-for="User.RoleId" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="User.VerificationToken" class="control-label"></label>
-                <input asp-for="User.VerificationToken" class="form-control" />
-                <span asp-validation-for="User.VerificationToken" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="User.PasswordResetToken" class="control-label"></label>
-                <input asp-for="User.PasswordResetToken" class="form-control" />
-                <span asp-validation-for="User.PasswordResetToken" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="User.ResetTokenExpiry" class="control-label"></label>
-                <input asp-for="User.ResetTokenExpiry" class="form-control" />
-                <span asp-validation-for="User.ResetTokenExpiry" class="text-danger"></span>
-            </div>
-            <div class="form-group">
                 <label asp-for="User.Username" class="control-label"></label>
                 <input asp-for="User.Username" class="form-control" />
                 <span asp-validation-for="User.Username" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="User.Password" class="control-label"></label>
-                <input asp-for="User.Password" class="form-control" />
-                <span asp-validation-for="User.Password" class="text-danger"></span>
             </div>
             <div class="form-group form-check">
                 <label class="form-check-label">
@@ -70,36 +146,6 @@
             </div>
             <input type="hidden" asp-for="User.Id" />
             <div class="form-group">
-                <label asp-for="User.CreatedBy" class="control-label"></label>
-                <input asp-for="User.CreatedBy" class="form-control" />
-                <span asp-validation-for="User.CreatedBy" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="User.LastUpdatedBy" class="control-label"></label>
-                <input asp-for="User.LastUpdatedBy" class="form-control" />
-                <span asp-validation-for="User.LastUpdatedBy" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="User.DeletedBy" class="control-label"></label>
-                <input asp-for="User.DeletedBy" class="form-control" />
-                <span asp-validation-for="User.DeletedBy" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="User.CreatedTime" class="control-label"></label>
-                <input asp-for="User.CreatedTime" class="form-control" />
-                <span asp-validation-for="User.CreatedTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="User.LastUpdatedTime" class="control-label"></label>
-                <input asp-for="User.LastUpdatedTime" class="form-control" />
-                <span asp-validation-for="User.LastUpdatedTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="User.DeletedTime" class="control-label"></label>
-                <input asp-for="User.DeletedTime" class="form-control" />
-                <span asp-validation-for="User.DeletedTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>
         </form>
@@ -107,9 +153,11 @@
 </div>
 
 <div>
-    <a asp-page="./Index">Back to List</a>
+    <a asp-page="./Index" class="back-link">Back to List</a>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

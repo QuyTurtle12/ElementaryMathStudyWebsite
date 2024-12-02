@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ElementaryMathStudyWebsite.Core.Repositories.Entity;
 using Microsoft.AspNetCore.Authorization;
+using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto;
+using AutoMapper;
+using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 
 namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
 {
@@ -11,14 +14,18 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
     public class EditModel : PageModel
     {
         private readonly ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext _context;
-
-        public EditModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context)
+        private readonly IAppUserServices _userService;
+        private readonly IMapper _mapper;
+        public EditModel(ElementaryMathStudyWebsite.Infrastructure.Context.DatabaseContext context, IAppUserServices userService, IMapper mapper)
         {
             _context = context;
+            _userService = userService;
+            _mapper = mapper;
         }
 
         [BindProperty]
         public new User User { get; set; } = default!;
+        public UpdateUserDto Update { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -46,11 +53,11 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
                 return Page();
             }
 
-            _context.Attach(User).State = EntityState.Modified;
+             Update = new UpdateUserDto() { Username = User.Username , Email = User.Email, FullName = User.FullName, Gender = User.Gender, PhoneNumber = User.PhoneNumber, RoleId = User.RoleId};
 
             try
             {
-                await _context.SaveChangesAsync();
+                await _userService.UpdateUserAsync(User.Id, Update);
             }
             catch (DbUpdateConcurrencyException)
             {
