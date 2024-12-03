@@ -33,7 +33,7 @@
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between align-items-center">
                     <div class="nav-container" style="position: relative; width: 100%;">
                         <ul class="navbar-nav flex-grow-1">
                             <li class="nav-item">
@@ -123,11 +123,32 @@
                             }
 
                             <!-- Cart navigator positioned on the top right -->
-                            <li class="nav-item cart-nav" style="position: absolute; top: 0; right: 0;">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/PurchasePages/Cart">
-                                    <i class="fas fa-shopping-cart"></i>
-                                </a>
-                            </li>
+                            <div class="d-flex justify-content-end align-items-center" style="position: relative; width: 100%;">
+                                <!-- Cart navigator -->
+                                <li class="nav-item cart-nav me-3 d-flex align-items-center">
+                                    <a class="nav-link text-dark" asp-area="" asp-page="/PurchasePages/Cart">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </a>
+                                </li>
+
+                                <!-- Login/Logout -->
+                                @if (!string.IsNullOrWhiteSpace(userRole))
+                                {
+                                    <form method="post" asp-page-handler="Logout" class="d-flex align-items-center">
+                                        <button type="submit" class="btn btn-danger">
+                                            Logout
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <li class="nav-item d-flex align-items-center">
+                                        <a href="/AuthPages/Login" class="btn btn-primary">
+                                            Login
+                                        </a>
+                                    </li>
+                                }
+                            </div>
                         </ul>
                     </div>
                 </div>

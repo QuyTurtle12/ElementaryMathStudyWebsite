@@ -12,9 +12,9 @@
     @if (isLoggedIn)
     {
         <!-- Logout button -->
-        <form method="post" asp-page-handler="Logout">
-            <button type="submit" class="btn btn-danger">Logout</button>
-        </form>
+        @* <form method="post" asp-page-handler="Logout"> *@
+        @*     <button type="submit" class="btn btn-danger">Logout</button> *@
+        @* </form> *@
         <form method="post">
             <div class="subject-list">
                 @if (Model.AvailableSubjects is not null && Model.AvailableSubjects.Any())
@@ -39,7 +39,7 @@
     else
     {
         <!-- Login button -->
-        <a href="/AuthPages/Login" class="btn btn-primary">Login</a>
+        @* <a href="/AuthPages/Login" class="btn btn-primary">Login</a> *@
     }
 </div>
 <style>
@@ -66,10 +66,6 @@
             background-color: #cce5ff;
             border-color: #007bff;
         }
-
-    .btn-primary {
-        margin-top: 20px;
-    }
 </style>
 <script>
      function selectSubject(subjectId, element) {
