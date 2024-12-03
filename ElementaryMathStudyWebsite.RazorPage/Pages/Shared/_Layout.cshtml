@@ -72,9 +72,9 @@
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" asp-area="" asp-page="/SubjectPages/Index">Subject</a>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-page="/ChapterPages/Index">Chapter</a>
-                                </li>
+                                @* <li class="nav-item"> *@
+                                @*     <a class="nav-link text-dark" asp-area="" asp-page="/ChapterPages/Index">Chapter</a> *@
+                                @* </li> *@
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" asp-area="" asp-page="/TopicPages/Index">Topic</a>
                                 </li>
@@ -108,19 +108,15 @@
                                         <a class="nav-link text-dark" asp-area="" asp-page="/UserPages/Index">User</a>
                                     </li>
                                     <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-page="/ChapterPages/Index">Chapter</a>
+                                    </li>
+                                    <li class="nav-item">
                                         <a class="nav-link text-dark" asp-area="" asp-page="/Quiz/Index">Quiz</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link text-dark" asp-area="" asp-page="/QuestionPages/Index">Question</a>
                                     </li>
                                 }
-                            }
-
-                            @if (!string.IsNullOrWhiteSpace(userRole)) // Show profile if user is logged in
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-page="/AuthPages/profile">Profile</a>
-                                </li>
                             }
 
                             <!-- Cart navigator positioned on the top right -->
@@ -144,7 +140,7 @@
                                                 <a class="dropdown-item" asp-area="" asp-page="/AuthPages/Profile">Profile</a>
                                             </li>
                                             <li>
-                                                <form method="Get" action="/AuthPages/Logout" class="d-inline">
+                                                <form method="GET" action="/AuthPages/Logout" class="d-inline">
                                                     <button type="submit" class="dropdown-item text-danger">Logout</button>
                                                 </form>
                                             </li>
