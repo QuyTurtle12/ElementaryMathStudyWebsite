@@ -2,6 +2,7 @@
 
 @{
     string? userRole = HttpContextAccessor.HttpContext!.Session.GetString("role_name"); // Retrieve the role from session
+    string? userFullname = HttpContextAccessor.HttpContext!.Session.GetString("user_fullname"); // Retrieve the name from session
 
     bool? generalUser = (userRole == "Parent") ? true :
                         (userRole == "Student") ? true : false;
@@ -134,19 +135,25 @@
                                 <!-- Login/Logout -->
                                 @if (!string.IsNullOrWhiteSpace(userRole))
                                 {
-                                    <form method="post" asp-page-handler="Logout" class="d-flex align-items-center">
-                                        <button type="submit" class="btn btn-danger">
-                                            Logout
+                                    <li class="dropdown">
+                                        <button class="btn avatar-btn dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <span class="avatar-icon">@userFullname</span>
                                         </button>
-                                    </form>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                            <li>
+                                                <a class="dropdown-item" asp-area="" asp-page="/AuthPages/Profile">Profile</a>
+                                            </li>
+                                            <li>
+                                                <form method="Get" action="/AuthPages/Logout" class="d-inline">
+                                                    <button type="submit" class="dropdown-item text-danger">Logout</button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </li>
                                 }
                                 else
                                 {
-                                    <li class="nav-item d-flex align-items-center">
-                                        <a href="/AuthPages/Login" class="btn btn-primary">
-                                            Login
-                                        </a>
-                                    </li>
+                                    <a href="/AuthPages/Login" class="btn btn-primary">Login</a>
                                 }
                             </div>
                         </ul>
