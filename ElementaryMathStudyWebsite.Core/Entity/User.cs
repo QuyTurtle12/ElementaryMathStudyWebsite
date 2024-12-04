@@ -1,12 +1,14 @@
 ﻿using ElementaryMathStudyWebsite.Core.Base;
 using ElementaryMathStudyWebsite.Core.Entity;
+using System.ComponentModel.DataAnnotations;
 
 namespace ElementaryMathStudyWebsite.Core.Repositories.Entity
 {
     public class User : BaseEntity
     {
+        [Display(Name = "Full Name")]
         public string FullName { get; set; } = string.Empty; // Using string.empty to avoid null reference issues
-
+        [Display(Name = "Phone Number")]
         public string? PhoneNumber { get; set; }
 
         public string Gender { get; set; } = "Male"; // Male, Female, Others

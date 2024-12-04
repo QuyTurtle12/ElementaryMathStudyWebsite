@@ -410,34 +410,42 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         public void AuditFields(BaseEntity entity, bool isCreating = false, bool isDisable = false)
         {
-            // Retrieve the JWT token from the Authorization header
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            var currentUserId = _tokenService.GetUserIdFromTokenHeader(token);
-
-            // If creating a new entity, set the CreatedBy field
-            if (isCreating)
+            if (entity == null)
             {
-                entity.CreatedBy = currentUserId.ToString().ToUpper(); // Set the creator's ID
+                throw new ArgumentNullException(nameof(entity), "Entity cannot be null.");
             }
 
+            // Retrieve the JWT token from the Authorization header or fallback to session
+            var context = _httpContextAccessor.HttpContext;
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            string currentUserId = !string.IsNullOrWhiteSpace(token)
+                ? _tokenService.GetUserIdFromTokenHeader(token).ToString() ?? string.Empty
+                : context.Session.GetString("user_id") ?? string.Empty;
+
+            // Convert to uppercase for consistency
+            currentUserId = currentUserId.ToUpper();
+
+            // Set CreatedBy field if creating a new entity
+            if (isCreating)
+            {
+                entity.CreatedBy = currentUserId;
+                entity.CreatedTime = CoreHelper.SystemTimeNow; // Ensure this is populated if not already set
+            }
+
+            // Set DeletedBy and DeletedTime fields if disabling an entity
             if (isDisable)
             {
-                entity.DeletedBy = currentUserId.ToString().ToUpper(); // Set the creator's ID
+                entity.DeletedBy = currentUserId;
                 entity.DeletedTime = CoreHelper.SystemTimeNow;
             }
 
-            // Always set LastUpdatedBy and LastUpdatedTime fields
-            entity.LastUpdatedBy = currentUserId.ToString().ToUpper(); // Set the current user's ID
-
-            // If is not created then update LastUpdatedTime
-            if (isCreating is false)
-            {
-                entity.LastUpdatedTime = CoreHelper.SystemTimeNow;
-            }
-            
+            // Always set LastUpdatedBy and LastUpdatedTime
+            entity.LastUpdatedBy = currentUserId;
+            entity.LastUpdatedTime = CoreHelper.SystemTimeNow;
         }
 
-		public void AuditFields(string userId, BaseEntity entity, bool isCreating = false, bool isDisable = false)
+
+        public void AuditFields(string userId, BaseEntity entity, bool isCreating = false, bool isDisable = false)
 		{
 
 			// If creating a new entity, set the CreatedBy field

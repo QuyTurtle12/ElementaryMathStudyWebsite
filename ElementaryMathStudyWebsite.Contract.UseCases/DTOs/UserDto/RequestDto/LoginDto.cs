@@ -10,4 +10,8 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.RequestDto
         [Required(ErrorMessage = "Password is required.")]
         public required string Password { get; set; }
     }
+    public class GoogleLoginRequestDto
+    {
+        public required string IdToken { get; set; }
+    }
 }

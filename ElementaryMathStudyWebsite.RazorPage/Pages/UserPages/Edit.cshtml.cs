@@ -25,7 +25,7 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
 
         [BindProperty]
         public new User User { get; set; } = default!;
-        public UpdateUserDto Update { get; set; }
+        public UpdateUserDto Update { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -34,7 +34,8 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
                 return NotFound();
             }
 
-            var user =  await _context.User.Include(u => u.Role).FirstOrDefaultAsync(m => m.Id == id);
+            User? user = await _context.User.Include(u => u.Role)
+                                            .FirstOrDefaultAsync(m => m.Id == id);
             if (user == null)
             {
                 return NotFound();
@@ -53,7 +54,15 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.UserPages
                 return Page();
             }
 
-             Update = new UpdateUserDto() { Username = User.Username , Email = User.Email, FullName = User.FullName, Gender = User.Gender, PhoneNumber = User.PhoneNumber, RoleId = User.RoleId};
+            Update = new UpdateUserDto()
+            {
+                Username = User.Username,
+                Email = User.Email,
+                FullName = User.FullName,
+                Gender = User.Gender,
+                PhoneNumber = User.PhoneNumber,
+                RoleId = User.RoleId
+            };
 
             try
             {

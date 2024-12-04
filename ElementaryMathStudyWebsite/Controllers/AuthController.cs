@@ -5,8 +5,12 @@ using ElementaryMathStudyWebsite.Contract.UseCases.DTOs.UserDto.ResponseDto;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices;
 using ElementaryMathStudyWebsite.Contract.UseCases.IAppServices.Authentication;
 using ElementaryMathStudyWebsite.Core.Base;
+using ElementaryMathStudyWebsite.Services.Service.Authentication;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Util.Store;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Security.Claims;
 
@@ -20,15 +24,19 @@ namespace ElementaryMathStudyWebsite.Controllers
         private readonly ITokenService _tokenService;
         private readonly IAppUserServices _userServices;
         private readonly IRoleService _roleService;
+        private readonly IGoogleAuthService _googleAuthService;
         private readonly IMapper _mapper;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAppAuthService authService, ITokenService tokenService, IAppUserServices userServices, IRoleService roleService, IMapper mapper)
+        public AuthController(IAppAuthService authService, ITokenService tokenService, IAppUserServices userServices, IRoleService roleService, IGoogleAuthService googleAuthService, IMapper mapper, IConfiguration configuration)
         {
-            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+            _authService = authService;
             _tokenService = tokenService;
             _userServices = userServices;
             _roleService = roleService;
+            _googleAuthService = googleAuthService;
             _mapper = mapper;
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -49,6 +57,102 @@ namespace ElementaryMathStudyWebsite.Controllers
             return Ok(new { Token = token });
 
         }
+
+        [HttpGet("google-id-token")]
+        public IActionResult GetGoogleIdToken()
+        {
+            try
+            {
+                // Google OAuth configuration
+                string clientId = _configuration["GoogleAuth:ClientId"] ?? "";
+                string redirectUri = "https://localhost:7137/api/auth/google-code"; // Redirect URI after user authenticates
+                string scope = "openid profile email";
+                string authorizationEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
+                string responseType = "code";
+                string accessType = "offline";
+
+                // Build the authorization URL
+                string authorizationUrl = $"{authorizationEndpoint}?response_type={responseType}&client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&scope={Uri.EscapeDataString(scope)}&access_type={accessType}";
+
+                return Ok(new { AuthorizationUrl = authorizationUrl });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        [HttpGet("google-code")]
+        public async Task<IActionResult> GoogleCodeCallback(string code)
+        {
+            try
+            {
+                // Get the client ID and secret
+                string clientId = _configuration["GoogleAuth:ClientId"];
+                string clientSecret = _configuration["GoogleAuth:ClientSecret"];
+                string redirectUri = "https://localhost:7137/api/auth/google-code"; // Same as the redirect URI in Google Console
+            
+                // Exchange the authorization code for an access token
+                var tokenRequestUrl = "https://oauth2.googleapis.com/token";
+                var tokenRequestBody = new Dictionary<string, string>
+                {
+                    { "code", code },
+                    { "client_id", clientId },
+                    { "client_secret", clientSecret },
+                    { "redirect_uri", redirectUri },
+                    { "grant_type", "authorization_code" }
+                };
+
+                using (var client = new HttpClient())
+                {
+                    var response = await client.PostAsync(tokenRequestUrl, new FormUrlEncodedContent(tokenRequestBody));
+                    response.EnsureSuccessStatusCode();
+
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    var tokenData = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseBody);
+
+                    // Extract the ID token from the response
+                    var idToken = tokenData["id_token"];
+
+                    // Return the ID token
+                    return Ok(new { IdToken = idToken });
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+        
+
+
+
+        [HttpGet("google-login")]
+        public async Task<IActionResult> GoogleLogin([FromQuery] string code)
+        {
+            try
+            {
+                // Ensure that the authorization code is present
+                if (string.IsNullOrEmpty(code))
+                {
+                    return BadRequest(new { Message = "Authorization code is missing." });
+                }
+
+                // Exchange the authorization code for an ID token
+                var idToken = await _googleAuthService.ExchangeCodeForIdToken(code);
+
+                // Use the ID token to authenticate the user and generate your own JWT
+                var jwtToken = await _googleAuthService.LoginWithGoogleAsync(idToken);
+
+                // Return the generated JWT token
+                return Ok(new { Token = jwtToken });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
 
         /// <summary>
         /// Registers a new role.
