@@ -1,24 +1,192 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home Page";
     bool isLoggedIn = !string.IsNullOrEmpty(HttpContext.Session.GetString("user_id"));
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="min-vh-100 bg-light">
+    <main>
+        <!-- Hero Section -->
+        <section class="py-5 bg-gradient bg-light">
+            <div class="container text-center text-md-start d-flex align-items-center">
+                <div class="row w-100">
+                    <div class="col-md-6 d-flex flex-column justify-content-center">
+                        <h1 class="display-4 fw-bold mb-4">
+                            Finding your online classroom with
+                            <span class="text-primary">TUTOR</span>
+                        </h1>
+                        <p class="lead text-muted mb-4">
+                            Help your children improve their learning at school.
+                        </p>
+                        @if (!isLoggedIn)
+                        {
+                            <a href="/AuthPages/Register" class="btn btn-primary btn-lg px-4">
+                                Register Now
+                            </a>
+                        }
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <img src="https://cdn1.iconfinder.com/data/icons/linefillix-education/128/education_school-06-512.png" alt="Hero Image" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    @if (isLoggedIn)
-    {
-        <!-- Logout button -->
-        <form method="post" asp-page-handler="Logout">
-            <button type="submit" class="btn btn-danger">Logout</button>
-        </form>
-    }
-    else
-    {
-        <!-- Login button -->
-        <a href="/AuthPages/Login" class="btn btn-primary">Login</a>
-    }
+        <!-- Feature Section -->
+        <section class="py-5 border-top">
+            <div class="container text-center">
+                <span class="badge bg-primary text-uppercase px-3 py-2">Features</span>
+                <h2 class="display-6 fw-bold mt-3">
+                    About <span class="text-primary">Us</span>
+                </h2>
+                <div class="row mt-5">
+                    @foreach (var feature in Model.Features)
+                    {
+                        <div class="col-md-4 mb-4">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <div class="icon mb-3 fs-3 text-primary">
+                                        @feature.Icon
+                                    </div>
+                                    <h5 class="card-title fw-bold">@feature.Title</h5>
+                                    <p class="card-text text-muted">@feature.Description</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <!-- Subjects Section -->
+        <section class="py-5 bg-light">
+            <div class="container text-center">
+                <h2 class="display-6 fw-bold">
+                    Explore Our <span class="text-primary">Subjects</span>
+                </h2>
+                <div class="mt-5 position-relative">
+                    <!-- Carousel Wrapper -->
+                    <div id="subjectsCarousel" class="d-flex overflow-hidden" style="cursor: grab;">
+                        @foreach (var subject in Model.AvailableSubjects)
+                        {
+                            <div class="card border-primary mx-2 flex-shrink-0" style="width: 30%; min-width: 300px;">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title fw-bold">@subject.SubjectName</h5>
+                                    <p class="display-6 text-primary fw-bold">@subject.Price VND</p>
+                                    <p class="text-muted">@((subject.Status) ? "Available" : "Not Available")</p>
+                                    @if (isLoggedIn)
+                                    {
+                                        <a href="/chapterpages/indexpartial/@subject.Id" class="btn btn-outline-primary">Learn More</a>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Navigation Arrows -->
+                    <button class="btn btn-primary position-absolute top-50 start-0 translate-middle-y" id="prevBtn" style="z-index: 10;">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                    <button class="btn btn-primary position-absolute top-50 end-0 translate-middle-y" id="nextBtn" style="z-index: 10;">
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials Section -->
+        <section class="py-5">
+            <div class="container">
+                <h2 class="display-6 fw-bold text-center mb-5">What People Are Saying</h2>
+                <div class="row">
+                    @foreach (var testimonial in Model.Testimonials)
+                    {
+                        <div class="col-md-4 mb-4">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <p class="card-text text-muted">"@testimonial.Text"</p>
+                                    <div class="d-flex align-items-center mt-4">
+                                        <img src="@testimonial.Image" alt="@testimonial.User" class="rounded-circle border border-primary me-3" style="width: 50px; height: 50px;">
+                                        <div>
+                                            <h6 class="mb-0">@testimonial.User</h6>
+                                            <small class="text-muted">@testimonial.Company</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3">
+        <p class="mb-0">&copy; 2024 TUTOR. All rights reserved.</p>
+    </footer>
 </div>
+<script>
+    const carousel = document.getElementById('subjectsCarousel');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    let isDragging = false, startX, scrollLeft;
+
+    // Mouse Events for Dragging
+    carousel.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        carousel.style.cursor = 'grabbing';
+        startX = e.pageX - carousel.offsetLeft;
+        scrollLeft = carousel.scrollLeft;
+    });
+
+    carousel.addEventListener('mouseleave', () => {
+        isDragging = false;
+        carousel.style.cursor = 'grab';
+    });
+
+    carousel.addEventListener('mouseup', () => {
+        isDragging = false;
+        carousel.style.cursor = 'grab';
+    });
+
+    carousel.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        const x = e.pageX - carousel.offsetLeft;
+        const walk = (x - startX) * 2; // Adjust scroll sensitivity
+        carousel.scrollLeft = scrollLeft - walk;
+    });
+
+    // Button Navigation
+    prevBtn.addEventListener('click', () => {
+        carousel.scrollBy({ left: -carousel.offsetWidth / 3, behavior: 'smooth' });
+    });
+
+    nextBtn.addEventListener('click', () => {
+        carousel.scrollBy({ left: carousel.offsetWidth / 3, behavior: 'smooth' });
+    });
+</script>
+<style>
+    #subjectsCarousel {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+    }
+
+        #subjectsCarousel::-webkit-scrollbar {
+            display: none; /* Hide scrollbar */
+        }
+
+    .card {
+        transition: transform 0.3s ease;
+    }
+
+        .card:hover {
+            background-color: #f0f8ff; /* Light blue background on hover */
+            border-color: #0056b3; /* Darker blue border on hover */
+        }
+</style>

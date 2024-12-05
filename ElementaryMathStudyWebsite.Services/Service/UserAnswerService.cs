@@ -17,17 +17,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IAppUserServices _userService;
         private readonly IMapper _mapper;
         private readonly IAppResultService _resultService;
+        private readonly IAppOrderDetailServices _orderDetailService;
 
         public UserAnswerService(
             IUnitOfWork unitOfWork,
             IAppUserServices userService,
             IAppResultService resultService, 
-            IMapper mapper)
+            IMapper mapper,
+            IAppOrderDetailServices orderDetailService)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _resultService = resultService;
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _orderDetailService = orderDetailService;
         }
 
         public async Task<BasePaginatedList<UserAnswerWithDetailsDTO>> GetAllUserAnswersAsync(int pageNumber, int pageSize)
@@ -271,16 +274,15 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             // Check if the student is assigned to the subject in the OrderDetail table
-            var isAssigned = await _unitOfWork.GetRepository<OrderDetail>()
-                .Entities
-                .AnyAsync(od => od.SubjectId == subjectId && od.StudentId == currentUserId);
+            //var isAssigned = await _unitOfWork.GetRepository<OrderDetail>()
+            //    .Entities
+            //    .AnyAsync(od => od.SubjectId == subjectId && od.StudentId == currentUserId);
+            var isAssigned = await _orderDetailService.IsOrderDetailExistsAsync(currentUserId, subjectId);
 
             if (!isAssigned)
             {
                 throw new BaseException.BadRequestException("invalid_argument", "Cannot answer a quiz of a subject not assigned to you.");
             }
-
-            // Rest of the logic remains the same...
 
             // Check for duplicate QuestionId entries in the user answer list
             List<string> duplicateQuestionIds = userAnswerCreateDTO.UserAnswerList
@@ -450,6 +452,24 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             return new BasePaginatedList<UserAnswerWithDetailsDTO>(result.OrderByDescending(x => x.AttemptNumber).ToList(), result.Count, 1, result.Count);
+        }
+
+        public async Task<List<UserAnswerDTO>> GetUserAnswersByUserAndQuestionsAsync(string userId, List<string> questionIds)
+        {
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentNullException(nameof(userId), "User ID cannot be null or empty.");
+
+            if (questionIds == null || !questionIds.Any())
+                throw new ArgumentException("Question IDs list cannot be null or empty.", nameof(questionIds));
+
+            // Fetch UserAnswers based on userId and questionIds
+            List<UserAnswer> userAnswers = await _unitOfWork.GetRepository<UserAnswer>()
+                .Entities
+                .Where(ua => ua.UserId == userId && questionIds.Contains(ua.QuestionId))
+                .ToListAsync();
+
+            // Map to DTO and return
+            return _mapper.Map<List<UserAnswerDTO>>(userAnswers);
         }
     }
 }
