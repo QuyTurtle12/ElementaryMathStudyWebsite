@@ -23,5 +23,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
 
         // Get a quiz id by chapter or topic Id 
         Task<string> GetQuizIdByChapterOrTopicId(string chapterOrTopicId);
+        Task<ResultProgressDto> AddStudentResultUserAsync(ResultCreateDto dto, string studentId);
     }
 }

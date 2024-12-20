@@ -17,17 +17,20 @@ namespace ElementaryMathStudyWebsite.Services.Service
         private readonly IAppUserServices _userService;
         private readonly IMapper _mapper;
         private readonly IAppResultService _resultService;
+        private readonly IAppOrderDetailServices _orderDetailService;
 
         public UserAnswerService(
             IUnitOfWork unitOfWork,
             IAppUserServices userService,
             IAppResultService resultService, 
-            IMapper mapper)
+            IMapper mapper,
+            IAppOrderDetailServices orderDetailService)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _resultService = resultService;
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _orderDetailService = orderDetailService;
         }
 
         public async Task<BasePaginatedList<UserAnswerWithDetailsDTO>> GetAllUserAnswersAsync(int pageNumber, int pageSize)
@@ -218,6 +221,159 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return await _resultService.AddStudentResultAsync(resultCreateDto);
         }
 
+        public async Task<ResultProgressDto> CreateUserAnswersUserAsync(UserAnswerCreateDTO userAnswerCreateDTO, string currentUserId)
+        {
+            //User currentUser = await _userService.GetCurrentUserAsync();
+            //string currentUserId = userId;
+
+            string? questionId = userAnswerCreateDTO.UserAnswerList.FirstOrDefault()?.QuestionId;
+
+            // Retrieve the quizId from the first question
+            string? quizId = await _unitOfWork.GetRepository<Question>()
+                .Entities
+                .Where(q => q.Id == questionId)
+                .Select(q => q.QuizId)
+                .FirstOrDefaultAsync();
+
+            // Ensure that all questions belong to the same quiz
+            var quizIds = userAnswerCreateDTO.UserAnswerList
+                .Select(ua => _unitOfWork.GetRepository<Question>()
+                    .Entities
+                    .Where(q => q.Id == ua.QuestionId)
+                    .Select(q => q.QuizId)
+                    .FirstOrDefault())
+                .Distinct()
+                .ToList();
+
+            if (quizIds.Count > 1)
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "Cannot answer different quizzes.");
+            }
+
+            // Retrieve the subjectId from the quiz, either via Chapter or Topic
+            var subjectId = await _unitOfWork.GetRepository<Chapter>()
+                .Entities
+                .Where(c => c.QuizId == quizId)
+                .Select(c => c.SubjectId)
+                .FirstOrDefaultAsync();
+
+            if (subjectId == null)
+            {
+                // If the quiz is not found in Chapter, search in Topic to find Chapter and then Subject
+                subjectId = await _unitOfWork.GetRepository<Topic>()
+                    .Entities
+                    .Where(t => t.QuizId == quizId)
+                    .Select(t => t.Chapter!.SubjectId)
+                    .FirstOrDefaultAsync();
+            }
+
+            // Ensure subjectId is found, otherwise throw error
+            if (subjectId == null)
+            {
+                throw new BaseException.NotFoundException("subject_not_found", "Subject associated with the quiz not found.");
+            }
+
+            // Check if the student is assigned to the subject in the OrderDetail table
+            //var isAssigned = await _unitOfWork.GetRepository<OrderDetail>()
+            //    .Entities
+            //    .AnyAsync(od => od.SubjectId == subjectId && od.StudentId == currentUserId);
+            var isAssigned = await _orderDetailService.IsOrderDetailExistsAsync(currentUserId, subjectId);
+
+            if (!isAssigned)
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "Cannot answer a quiz of a subject not assigned to you.");
+            }
+
+            // Check for duplicate QuestionId entries in the user answer list
+            List<string> duplicateQuestionIds = userAnswerCreateDTO.UserAnswerList
+                .GroupBy(ua => ua.QuestionId)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+
+            if (duplicateQuestionIds.Any())
+            {
+                string duplicateIds = string.Join(", ", duplicateQuestionIds);
+                throw new BaseException.BadRequestException("duplicate_questions", $"Duplicate Question IDs found: {duplicateIds}");
+            }
+
+            List<string> questionIds = userAnswerCreateDTO.UserAnswerList.Select(ua => ua.QuestionId).ToList();
+            List<string> optionIds = userAnswerCreateDTO.UserAnswerList.Select(ua => ua.OptionId).ToList();
+
+            // Check if all question IDs exist
+            List<string> existingQuestions = await _unitOfWork.GetRepository<Question>()
+                .Entities
+                .Where(q => questionIds.Contains(q.Id))
+                .Select(q => q.Id)
+                .ToListAsync();
+
+            if (existingQuestions.Count != questionIds.Count)
+            {
+                string? missingQuestionId = questionIds.Except(existingQuestions).FirstOrDefault();
+                throw new BaseException.NotFoundException("question_not_found", $"Question with ID '{missingQuestionId}' not found.");
+            }
+
+            // Check if all option IDs exist
+            List<string> existingOptions = await _unitOfWork.GetRepository<Option>()
+                .Entities
+                .Where(o => optionIds.Contains(o.Id))
+                .Select(o => o.Id)
+                .ToListAsync();
+
+            if (existingOptions.Count != optionIds.Count)
+            {
+                string? missingOptionId = optionIds.Except(existingOptions).FirstOrDefault();
+                throw new BaseException.NotFoundException("option_not_found", $"Option with ID '{missingOptionId}' not found.");
+            }
+
+            // Check if all questions of the quiz are answered
+            var totalQuestions = await _unitOfWork.GetRepository<Question>()
+                .Entities
+                .Where(q => q.QuizId == quizId)
+                .CountAsync();
+
+            if (userAnswerCreateDTO.UserAnswerList.Count() != totalQuestions)
+            {
+                throw new BaseException.BadRequestException("invalid_argument", "You need to answer all the questions.");
+            }
+
+            // Pre-fetch existing user answers to avoid querying inside the loop
+            List<UserAnswer> userAnswers = await _unitOfWork.GetRepository<UserAnswer>()
+                .Entities
+                .Where(ua => questionIds.Contains(ua.QuestionId) && ua.UserId == currentUserId)
+                .ToListAsync();
+
+            foreach (var userAnswerDTO in userAnswerCreateDTO.UserAnswerList)
+            {
+                UserAnswer? existingUserAnswer = userAnswers
+                    .Where(ua => ua.QuestionId == userAnswerDTO.QuestionId)
+                    .OrderByDescending(ua => ua.AttemptNumber)
+                    .FirstOrDefault();
+
+                int attemptNumber = existingUserAnswer != null ? existingUserAnswer.AttemptNumber + 1 : 1;
+
+                UserAnswer userAnswer = new UserAnswer
+                {
+                    QuestionId = userAnswerDTO.QuestionId,
+                    OptionId = userAnswerDTO.OptionId,
+                    UserId = currentUserId,
+                    AttemptNumber = attemptNumber
+                };
+
+                await _unitOfWork.GetRepository<UserAnswer>().InsertAsync(userAnswer);
+            }
+
+            // Save all changes after the loop
+            await _unitOfWork.GetRepository<UserAnswer>().SaveAsync();
+
+            ResultCreateDto resultCreateDto = new ResultCreateDto()
+            {
+                QuizId = quizId ?? string.Empty
+            };
+
+            return await _resultService.AddStudentResultUserAsync(resultCreateDto, currentUserId);
+        }
+
         public async Task<UserAnswerDTO> UpdateUserAnswerAsync(string id, UserAnswerDTO userAnswerDTO)
         {
             UserAnswer userAnswer = await _unitOfWork.GetRepository<UserAnswer>().GetByIdAsync(id) ?? throw new KeyNotFoundException($"User Answer with ID '{id}' not found.");
@@ -296,6 +452,24 @@ namespace ElementaryMathStudyWebsite.Services.Service
             }
 
             return new BasePaginatedList<UserAnswerWithDetailsDTO>(result.OrderByDescending(x => x.AttemptNumber).ToList(), result.Count, 1, result.Count);
+        }
+
+        public async Task<List<UserAnswerDTO>> GetUserAnswersByUserAndQuestionsAsync(string userId, List<string> questionIds)
+        {
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentNullException(nameof(userId), "User ID cannot be null or empty.");
+
+            if (questionIds == null || !questionIds.Any())
+                throw new ArgumentException("Question IDs list cannot be null or empty.", nameof(questionIds));
+
+            // Fetch UserAnswers based on userId and questionIds
+            List<UserAnswer> userAnswers = await _unitOfWork.GetRepository<UserAnswer>()
+                .Entities
+                .Where(ua => ua.UserId == userId && questionIds.Contains(ua.QuestionId))
+                .ToListAsync();
+
+            // Map to DTO and return
+            return _mapper.Map<List<UserAnswerDTO>>(userAnswers);
         }
     }
 }

@@ -12,6 +12,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.SERVICES", "3.SERVICES", "{90ABB2B4-EDCD-4499-AE6A-CAB97AABE9F4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.CORE", "4.CORE", "{9B5E4897-588B-495E-B060-ADE1FFCBEFBB}"
+	ProjectSection(SolutionItems) = preProject
+		..\ElementaryMathStudyWebsite.Services\Service\QuestionService.cs = ..\ElementaryMathStudyWebsite.Services\Service\QuestionService.cs
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElementaryMathStudyWebsite.Core", "..\ElementaryMathStudyWebsite.Core\ElementaryMathStudyWebsite.Core.csproj", "{4E314843-7C51-4CEA-BDCA-C93A23969EA4}"
 EndProject

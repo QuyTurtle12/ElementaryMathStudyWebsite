@@ -11,5 +11,6 @@ namespace ElementaryMathStudyWebsite.Contract.UseCases.IAppServices
         Task<BasePaginatedList<OrderDetailViewDto>> GetOrderDetailDtoListByOrderIdAsync(int pageNumber, int pageSize, string orderId);
 
         Task<bool> IsValidStudentSubjectBeforeCreateOrder(CartCreateDto orderCreateDto);
+        Task<bool> IsOrderDetailExistsAsync(string userId, string subjectId);
     }
 }

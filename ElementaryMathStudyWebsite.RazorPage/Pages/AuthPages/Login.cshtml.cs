@@ -27,8 +27,10 @@ namespace ElementaryMathStudyWebsite.RazorPage.Pages.Login
             {
                 string? roleId = user.RoleId ?? string.Empty;
                 string? userId = user.Id ?? string.Empty;
+                string? userFullname = user.FullName ?? string.Empty;
                 string? roleName = user.Role!.RoleName ?? string.Empty;
                 HttpContext.Session.SetString("user_id", userId);
+                HttpContext.Session.SetString("user_fullname", userFullname);
                 HttpContext.Session.SetString("role_name", roleName);
                 HttpContext.Session.SetString("role_id", roleId);
                 HttpContext.Session.SetString("user_status", user.Status.ToString() ?? "false");

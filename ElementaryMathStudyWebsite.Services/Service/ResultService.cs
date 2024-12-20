@@ -225,6 +225,69 @@ namespace ElementaryMathStudyWebsite.Services.Service
             return result;
         }
 
+        public async Task<ResultProgressDto> AddStudentResultUserAsync(ResultCreateDto dto, string studentId)
+        {
+            ResultProgressDto result = new ResultProgressDto();
+
+            //User student = await _userServices.GetCurrentUserAsync();
+
+            int latestAttemptNumber = await GetLatestAttemptNumber(studentId, dto.QuizId);
+            double Score = await CalculateLatestStudentScoreAsync(dto.QuizId, studentId);
+
+            // Get entities data from database
+            Quiz? quiz = await _unitOfWork.GetRepository<Quiz>().FindByConditionAsync(q => q.Id.Equals(dto.QuizId) && string.IsNullOrWhiteSpace(q.DeletedBy));
+            User? user = await _unitOfWork.GetRepository<User>().FindByConditionAsync(u => u.Id.Equals(studentId) && string.IsNullOrWhiteSpace(u.DeletedBy));
+
+            if (quiz != null && user != null && latestAttemptNumber != 0)
+            {
+
+                Result studentResult = new Result
+                {
+                    QuizId = dto.QuizId,
+                    StudentId = studentId,
+                    AttemptNumber = latestAttemptNumber,
+                    Score = Score,
+                    DateTaken = CoreHelper.SystemTimeNow,
+                    Quiz = quiz,
+                    Student = user
+                };
+
+                await _unitOfWork.GetRepository<Result>().InsertAsync(studentResult);
+                await _unitOfWork.GetRepository<Result>().SaveAsync();
+
+                // Added result to database successfully
+                result.IsAddedResult = true;
+
+                // Identify subject id using quiz id 
+                string subjectId = await _progressServices.GetSubjectIdFromQuizIdAsync(studentResult.QuizId);
+
+                // Update student progress
+                Progress newStudentProgress = new()
+                {
+                    StudentId = studentResult.StudentId,
+                    QuizId = studentResult.QuizId,
+                    SubjectId = subjectId,
+                };
+
+                result.IsPassedTheQuiz = await IsPassedTheQuizAsync(newStudentProgress.QuizId, newStudentProgress.StudentId);
+
+                if (result.IsPassedTheQuiz &&
+                    await IsAlreadyAddedProgress(newStudentProgress.QuizId, newStudentProgress.StudentId) == false)
+                {
+                    // Check if progress is added to database successfully
+                    await _progressServices.AddSubjectProgressAsync(newStudentProgress);
+                }
+
+                return result;
+            }
+            // Throw errors
+            else if (quiz == null) { throw new BaseException.BadRequestException("invalid_quiz", "This quiz is not existed"); }
+            else if (user == null) { throw new BaseException.BadRequestException("invalid_user", "This user is not existed"); }
+            else if (latestAttemptNumber == 0) { throw new BaseException.BadRequestException("invalid_latest_attempt_number", "This student hasn't done the quiz yet"); }
+
+            return result;
+        }
+
         private async Task<bool> IsAlreadyAddedProgress(string quizId, string studentId) 
         {
             Progress? studentProgress = await _unitOfWork.GetRepository<Progress>().FindByConditionAsync(p => p.QuizId.Equals(quizId) && p.StudentId.Equals(studentId));

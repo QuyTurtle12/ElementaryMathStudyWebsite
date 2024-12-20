@@ -139,5 +139,25 @@ namespace ElementaryMathStudyWebsite.Services.Service
 
         }
 
+        // Get an option by ID
+        public async Task<OptionViewDto> GetOptionByIdAsync(string optionId)
+        {
+            // Check if the ID is valid
+            if (!_unitOfWork.IsValid<Option>(optionId))
+                throw new BaseException.NotFoundException("not_found", "Option ID not found");
+
+            // Fetch the option entity
+            Option? option = await _unitOfWork.GetRepository<Option>()
+                .Entities
+                .FirstOrDefaultAsync(o => o.Id == optionId);
+
+            // Check if the option exists
+            if (option == null)
+                throw new BaseException.NotFoundException("not_found", "Option not found");
+
+            // Map to DTO and return
+            return _mapper.Map<OptionViewDto>(option);
+        }
+
     }
 }
